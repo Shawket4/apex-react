@@ -686,7 +686,10 @@
           "trips": "الرحلات"
         },
         "projectedRevenue": "الإيرادات الشهرية المتوقعة",
-        "projectedRevenueNote": "بناءً على متوسط يومي {{avg}} على مدار {{days}} يوماً"
+        "projectedRevenueNote": "بناءً على متوسط يومي {{avg}} على مدار {{days}} يوماً",
+        "min": "الحد الأدنى",
+        "max": "الحد الأقصى",
+        "avg": "المتوسط اليومي"
       },
       "companies": {
         "heading": "حسب الشركة",

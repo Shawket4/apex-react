@@ -25,8 +25,6 @@ import {
   formatNumber,
   formatCurrency,
   daysBetween,
-  firstDayOfMonth,
-  lastDayOfMonth,
   toDateOnly,
   parseISO,
 } from '@/shared/lib/format';
@@ -217,9 +215,7 @@ export function TripsStatisticsTimeline({
     const rangeDays = daysBetween(start, end);
     const dailyAvg = revenueToUse / rangeDays;
 
-    const monthStart = firstDayOfMonth(end);
-    const monthEnd = lastDayOfMonth(end);
-    const daysInMonth = daysBetween(monthStart, monthEnd);
+    const daysInMonth = new Date(end.getFullYear(), end.getMonth() + 1, 0).getDate();
 
     return {
       total: dailyAvg * daysInMonth,
@@ -227,6 +223,21 @@ export function TripsStatisticsTimeline({
       rangeDays,
     };
   }, [daily, hasFinancialAccess, metric, startDate, endDate]);
+
+  const dailyStats = React.useMemo(() => {
+    if (chartData.length === 0) return null;
+    const totalsPerDay = chartData.map((row) =>
+      visibleSeries.reduce((sum, s) => sum + (Number(row[s.key]) || 0), 0),
+    );
+    const nonZero = totalsPerDay.filter((v) => v > 0);
+    if (nonZero.length === 0) return { min: 0, max: 0, avg: 0 };
+
+    return {
+      min: Math.min(...nonZero),
+      max: Math.max(...totalsPerDay),
+      avg: totalsPerDay.reduce((a, b) => a + b, 0) / totalsPerDay.length,
+    };
+  }, [chartData, visibleSeries]);
 
   const metricOptions: Metric[] = hasFinancialAccess
     ? ['revenue', 'volume', 'trips']
@@ -353,15 +364,14 @@ export function TripsStatisticsTimeline({
                     </span>
                   )}
                 />
-                {/* Render each series as an overlapping Area with gradient fill.
-                NO stackId — areas overlap and blend visually, matching the
-                revenue chart design. */}
+                {/* Render each series as a stacked Area with gradient fill. */}
                 {visibleSeries.map((s) => (
                   <Area
                     key={s.key}
                     type="monotone"
                     dataKey={s.key}
                     name={s.label}
+                    stackId="a"
                     stroke={s.color}
                     strokeWidth={2}
                     fill={`url(#grad-${s.key})`}
@@ -371,25 +381,54 @@ export function TripsStatisticsTimeline({
             </ResponsiveContainer>
           </div>
 
-          {projection && (
+          {(projection || dailyStats) && (
             <div className="border-t bg-muted/20 px-4 py-3 md:px-5">
-              <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-                    {t('trips.statistics.timeline.projectedRevenue')}
-                  </p>
-                  <p className="text-xl font-bold tracking-tight text-success">
-                    {formatCurrency(projection.total)}
-                  </p>
-                </div>
-                <div className="text-[10px] text-muted-foreground sm:text-right">
-                  <p>
-                    {t('trips.statistics.timeline.projectedRevenueNote', {
-                      avg: formatCompactCurrency(projection.dailyAvg),
-                      days: projection.rangeDays,
-                    })}
-                  </p>
-                </div>
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                {projection && (
+                  <div>
+                    <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                      {t('trips.statistics.timeline.projectedRevenue')}
+                    </p>
+                    <p className="text-xl font-bold tracking-tight text-success">
+                      {formatCurrency(projection.total)}
+                    </p>
+                    <p className="mt-0.5 text-[10px] text-muted-foreground">
+                      {t('trips.statistics.timeline.projectedRevenueNote', {
+                        avg: formatCompactCurrency(projection.dailyAvg),
+                        days: projection.rangeDays,
+                      })}
+                    </p>
+                  </div>
+                )}
+
+                {dailyStats && (
+                  <div className="grid grid-cols-3 gap-4 border-t pt-3 sm:border-t-0 sm:pt-0">
+                    <div>
+                      <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                        {t('trips.statistics.timeline.min')}
+                      </p>
+                      <p className="text-sm font-bold tabular-nums">
+                        {formatValue(dailyStats.min)}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                        {t('trips.statistics.timeline.max')}
+                      </p>
+                      <p className="text-sm font-bold tabular-nums">
+                        {formatValue(dailyStats.max)}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                        {t('trips.statistics.timeline.avg')}
+                      </p>
+                      <p className="text-sm font-bold tabular-nums">
+                        {formatValue(dailyStats.avg)}
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}

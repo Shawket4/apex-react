@@ -681,7 +681,10 @@
           "trips": "Trips"
         },
         "projectedRevenue": "Projected monthly revenue",
-        "projectedRevenueNote": "Based on {{avg}} daily average over {{days}} days"
+        "projectedRevenueNote": "Based on {{avg}} daily average over {{days}} days",
+        "min": "Min",
+        "max": "Max",
+        "avg": "Daily Avg"
       },
       "companies": {
         "heading": "By company",
