@@ -124,7 +124,11 @@ export function FuelEventForm({
   // a historical event's odometer-before with the newest live reading
   // would corrupt the record.
   const watchedCarId = form.watch('car_id');
-  const previousCarIdRef = React.useRef<number | undefined>(initialValues?.car_id);
+  // If we have a driver_name in initial values, we skip the first auto-assignment
+  // to avoid overwriting existing data. If not (e.g. new from carId param), we allow it.
+  const previousCarIdRef = React.useRef<number | undefined>(
+    initialValues?.driver_name ? initialValues?.car_id : undefined,
+  );
 
   React.useEffect(() => {
     if (!watchedCarId || watchedCarId === previousCarIdRef.current) return;
