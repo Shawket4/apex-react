@@ -44,13 +44,11 @@ export function normalizeText(text: string | null | undefined): string {
 }
 
 export function toInputDate(date: Date | string | null | undefined): string {
-  const parsed = parseISO(date);
-  if (!parsed) return new Date().toISOString().split('T')[0];
-  return parsed.toISOString().split('T')[0];
+  return toDateOnly(date) || toDateOnly(new Date());
 }
 
 export function today(): string {
-  return new Date().toISOString().split('T')[0];
+  return toDateOnly(new Date());
 }
 
 export function firstDayOfMonth(date = new Date()): Date {

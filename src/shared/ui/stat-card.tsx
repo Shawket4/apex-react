@@ -15,19 +15,26 @@ const toneClasses: Record<StatCardTone, string> = {
 
 interface StatCardProps {
   label: React.ReactNode;
-  value: React.ReactNode;
+  value: React.ReactNode | { full: React.ReactNode; compact: React.ReactNode };
   subvalue?: React.ReactNode;
   icon?: LucideIcon;
   tone?: StatCardTone;
   className?: string;
+  valueClassName?: string;
 }
 
-/**
- * Compact KPI card. Designed to sit in grids of up to 6 across on desktop
- * without feeling empty, and collapse cleanly to 2 across on mobile.
- * Typography uses a tight scale: label is uppercase 10-11px, value is
- * responsive 14-18px, subvalue is muted 10-11px.
- */
+function isResponsiveValue(
+  v: StatCardProps['value'],
+): v is { full: React.ReactNode; compact: React.ReactNode } {
+  return (
+    typeof v === 'object' &&
+    v !== null &&
+    !React.isValidElement(v) &&
+    'full' in v &&
+    'compact' in v
+  );
+}
+
 export function StatCard({
   label,
   value,
@@ -35,9 +42,15 @@ export function StatCard({
   icon: Icon,
   tone = 'default',
   className,
+  valueClassName,
 }: StatCardProps) {
+  const responsive = isResponsiveValue(value);
+
   return (
-    <Card className={cn('overflow-hidden', className)}>
+    <Card
+      className={cn('overflow-hidden', className)}
+      style={{ containerType: 'inline-size' }}
+    >
       <CardContent className="flex items-center gap-3 p-3 sm:gap-3 sm:p-3.5">
         {Icon && (
           <div
@@ -53,11 +66,39 @@ export function StatCard({
           <p className="truncate text-[10px] font-medium uppercase tracking-wider text-muted-foreground sm:text-[11px]">
             {label}
           </p>
-          <p className="truncate text-sm font-semibold leading-tight tracking-tight sm:text-base md:text-lg">
-            {value}
-          </p>
+          {responsive ? (
+            <>
+              <p
+                className={cn(
+                  'stat-card-compact truncate text-sm font-semibold leading-tight tracking-tight tabular-nums sm:text-base md:text-lg',
+                  valueClassName,
+                )}
+              >
+                {value.compact}
+              </p>
+              <p
+                className={cn(
+                  'stat-card-full truncate text-sm font-semibold leading-tight tracking-tight tabular-nums sm:text-base md:text-lg',
+                  valueClassName,
+                )}
+              >
+                {value.full}
+              </p>
+            </>
+          ) : (
+            <p
+              className={cn(
+                'truncate text-sm font-semibold leading-tight tracking-tight tabular-nums sm:text-base md:text-lg',
+                valueClassName,
+              )}
+            >
+              {value as React.ReactNode}
+            </p>
+          )}
           {subvalue && (
-            <p className="truncate text-[10px] text-muted-foreground sm:text-[11px]">{subvalue}</p>
+            <p className="truncate text-[10px] tabular-nums text-muted-foreground sm:text-[11px]">
+              {subvalue}
+            </p>
           )}
         </div>
       </CardContent>

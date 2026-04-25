@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ArrowLeft, Fuel } from 'lucide-react';
 import { PageShell } from '@/shared/ui/page-shell';
@@ -10,6 +10,8 @@ import type { FuelEventFormValues } from '@/entities/fuel-event/schemas';
 export default function FuelEventNewPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const carIdParam = searchParams.get('carId');
   const addEvent = useAddFuelEvent();
 
   const handleSubmit = async (values: FuelEventFormValues) => {
@@ -39,6 +41,9 @@ export default function FuelEventNewPage() {
       <div className="mx-auto w-full max-w-3xl">
         <FuelEventForm
           mode="create"
+          initialValues={{
+            car_id: carIdParam ? parseInt(carIdParam, 10) : undefined,
+          }}
           submitting={addEvent.isPending}
           onSubmit={handleSubmit}
           onCancel={() => navigate(-1)}

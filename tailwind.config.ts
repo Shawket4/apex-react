@@ -4,6 +4,7 @@ import animate from 'tailwindcss-animate';
 const config: Config = {
   darkMode: ['class'],
   content: ['./index.html', './src/**/*.{ts,tsx}'],
+
   theme: {
     container: {
       center: true,
@@ -80,7 +81,7 @@ const config: Config = {
       },
     },
   },
-  plugins: [animate],
+  plugins: [animate, require('@tailwindcss/container-queries')],
 };
 
 export default config;

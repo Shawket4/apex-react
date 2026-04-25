@@ -1,55 +1,46 @@
 {
   "common": {
     "appName": "أبيكس",
-    "tagline": "إدارة أسطول مطوّرة",
+    "tagline": "إدارة أسطول",
     "search": "بحث",
     "searchPlaceholder": "ابحث...",
+    "refreshing": "تحديث",
     "filter": "تصفية",
-    "all": "الكل",
-    "none": "لا شيء",
     "save": "حفظ",
     "cancel": "إلغاء",
     "delete": "حذف",
     "edit": "تعديل",
-    "add": "إضافة",
     "confirm": "تأكيد",
     "close": "إغلاق",
     "back": "رجوع",
     "retry": "إعادة",
     "reset": "إعادة ضبط",
-    "continue": "متابعة",
-    "submit": "إرسال",
     "loading": "جاري التحميل...",
     "saving": "جاري الحفظ...",
-    "updating": "جاري التحديث...",
-    "deleting": "جاري الحذف...",
-    "yes": "نعم",
-    "no": "لا",
     "optional": "اختياري",
-    "required": "مطلوب",
     "selectOne": "اختر واحداً",
     "noResults": "لا توجد نتائج",
     "notFound": "غير موجود",
     "viewAll": "عرض الكل",
     "details": "التفاصيل",
-    "actions": "إجراءات",
     "status": "الحالة",
-    "welcomeBack": "مرحباً بعودتك",
     "goodMorning": "صباح الخير",
     "goodAfternoon": "مساء الخير",
     "goodEvening": "مساء الخير",
-    "unsavedChanges": "هناك تغييرات غير محفوظة",
     "signOut": "تسجيل الخروج",
     "profile": "الملف الشخصي",
     "viewOnly": "عرض فقط",
-    "today": "اليوم",
-    "thisMonth": "هذا الشهر",
-    "customRange": "نطاق مخصص",
     "from": "من",
     "to": "إلى",
     "export": "تصدير",
     "clear": "مسح",
-    "selectDate": "اختر تاريخاً"
+    "selectDate": "اختر تاريخاً",
+    "view": "عرض",
+    "remove": "إزالة",
+    "select": "اختر",
+    "selectedCount": "{{count}} محدد",
+    "options": "خيارات",
+    "noOptions": "لا توجد خيارات"
   },
   "nav": {
     "overview": "نظرة عامة",
@@ -72,13 +63,10 @@
     "users": "المستخدمون",
     "logs": "السجلات",
     "settings": "الإعدادات",
-    "speedAlerts": "تنبيهات السرعة",
     "speedViolations": "مخالفات السرعة",
-    "tablets": "الأجهزة اللوحية",
-    "sessions": "الجلسات"
+    "tablets": "الأجهزة اللوحية"
   },
   "auth": {
-    "login": "تسجيل الدخول",
     "loginTitle": "مرحباً بعودتك",
     "loginSubtitle": "سجّل الدخول للمتابعة إلى لوحة التحكم",
     "email": "البريد الإلكتروني أو اسم المستخدم",
@@ -87,17 +75,14 @@
     "passwordPlaceholder": "أدخل كلمة المرور",
     "signIn": "تسجيل الدخول",
     "signingIn": "جاري تسجيل الدخول...",
-    "invalidCredentials": "بيانات الدخول غير صحيحة. حاول مرة أخرى.",
     "loginError": "حدث خطأ أثناء تسجيل الدخول.",
     "showPassword": "إظهار كلمة المرور",
     "hidePassword": "إخفاء كلمة المرور",
-    "sessionExpired": "انتهت الجلسة. يرجى تسجيل الدخول مجدداً.",
     "loggedOut": "تم تسجيل الخروج.",
-    "brandHeadline": "إدارة الأسطول، بأناقة.",
+    "brandHeadline": "إدارة الأسطول.",
     "brandSubline": "تتبّع المركبات وراقب الوقود وحسّن العمليات في مكان واحد."
   },
   "dashboard": {
-    "title": "لوحة التحكم",
     "subtitle": "نظرة عامة على النظام",
     "greeting": "{{greeting}}، {{name}}",
     "totalVehicles": "المركبات",
@@ -105,15 +90,13 @@
     "fuelEventsThisMonth": "عمليات الوقود (الشهر)",
     "spendThisMonth": "الإنفاق (الشهر)",
     "quickActions": "إجراءات سريعة",
-    "recentFuelEvents": "عمليات الوقود الأخيرة",
-    "lowEfficiencyAlert": "تنبيهات كفاءة منخفضة"
+    "recentFuelEvents": "عمليات الوقود الأخيرة"
   },
   "fuelEvents": {
     "title": "عمليات الوقود",
     "subtitle": "تتبّع استهلاك الوقود عبر الأسطول",
     "addEvent": "إضافة عملية وقود",
     "editEvent": "تعديل عملية وقود",
-    "eventDetails": "تفاصيل العملية",
     "searchPlaceholder": "ابحث بالرقم أو السائق...",
     "noEvents": "لا توجد عمليات وقود بعد",
     "noEventsDescription": "ابدأ بتتبّع استهلاك الوقود بإضافة أول عملية.",
@@ -158,7 +141,6 @@
       "pairedWithDetail": "مدمجة مع {{date}} · {{rate}} {{unit}}"
     },
     "stats": {
-      "title": "إحصائيات الوقود",
       "totalFuel": "إجمالي الوقود",
       "totalCost": "إجمالي التكلفة",
       "avgEfficiency": "متوسط الكفاءة",
@@ -171,24 +153,8 @@
       "dayPeriod_one": "فترة يوم واحد",
       "pairedNote": "{{count}} مجمَّعة"
     },
-    "validation": {
-      "liters": "أدخل كمية لترات صحيحة",
-      "price": "أدخل سعراً صحيحاً",
-      "odometerAfterHigher": "يجب أن تكون القراءة الحالية أكبر من السابقة",
-      "selectCar": "الرجاء اختيار مركبة",
-      "selectDriver": "الرجاء اختيار سائق",
-      "selectDate": "الرجاء اختيار تاريخ",
-      "enterOdometerBefore": "أدخل القراءة السابقة",
-      "enterOdometerAfter": "أدخل القراءة الحالية"
-    },
     "filters": {
-      "title": "تصفية عمليات الوقود",
-      "dateRange": "النطاق الزمني",
-      "startDate": "تاريخ البداية",
-      "endDate": "تاريخ النهاية",
-      "applyFilter": "تطبيق",
       "clearFilter": "مسح التصفية",
-      "currentMonth": "الشهر الحالي",
       "byStatus": "حسب الحالة",
       "showingCount": "عرض {{shown}} من {{total}}"
     },
@@ -200,7 +166,6 @@
     },
     "noMatchingEvents": "لا توجد عمليات تطابق التصفية الحالية",
     "sort": {
-      "label": "ترتيب حسب",
       "date": "التاريخ",
       "rate": "كفاءة الوقود",
       "cost": "التكلفة",
@@ -216,28 +181,18 @@
     }
   },
   "settings": {
-    "title": "الإعدادات",
-    "appearance": "المظهر",
     "theme": "السمة",
     "themeLight": "فاتح",
     "themeDark": "داكن",
     "themeSystem": "النظام",
-    "language": "اللغة",
-    "english": "English",
-    "arabic": "العربية"
+    "language": "اللغة"
   },
   "errors": {
-    "network": "خطأ في الشبكة. تحقق من اتصالك.",
-    "unauthorized": "يلزم تسجيل الدخول للمتابعة.",
-    "forbidden": "ليس لديك صلاحية لتنفيذ هذا الإجراء.",
-    "notFound": "المورد المطلوب غير موجود.",
     "generic": "حدث خطأ. حاول مرة أخرى.",
     "pageNotFoundTitle": "الصفحة غير موجودة",
     "pageNotFoundDescription": "الصفحة التي تبحث عنها غير موجودة أو تم نقلها.",
     "goHome": "الذهاب إلى لوحة التحكم",
-    "boundaryTitle": "حدث خطأ",
-    "boundaryDescription": "حدث خطأ غير متوقع أثناء عرض هذه الصفحة.",
-    "boundaryReload": "إعادة تحميل الصفحة"
+    "invalidId": "معرف غير صالح"
   },
   "datePicker": {
     "today": "اليوم",
@@ -295,7 +250,6 @@
       "phone": "الهاتف",
       "phonePlaceholder": "أدخل رقم الهاتف",
       "transporter": "الناقل",
-      "activity": "النشاط",
       "expiryDate": "تاريخ الانتهاء",
       "driverLicenseExpiry": "انتهاء رخصة القيادة",
       "idExpiry": "انتهاء الهوية",
@@ -305,31 +259,26 @@
     },
     "status": {
       "approved": "معتمد",
-      "pending": "بانتظار الاعتماد",
-      "inTrip": "في رحلة",
-      "available": "متاح"
+      "pending": "بانتظار الاعتماد"
     },
     "expiry": {
       "valid": "ساري",
       "expired": "منتهي",
-      "expiresSoon": "ينتهي خلال {{days}} يوم",
-      "notSet": "غير محدد"
+      "notSet": "غير محدد",
+      "expiresInDays": "ينتهي خلال {{days}} يوم",
+      "inDays": "خلال {{days}} يوم",
+      "expiredDaysAgo": "منتهي منذ {{days}} يوم",
+      "summaryExpired": "{{count}} منتهي",
+      "summaryExpiring": "{{count}} على وشك الانتهاء"
     },
     "stats": {
       "total": "إجمالي السائقين",
       "approved": "معتمدون",
-      "pending": "بانتظار الاعتماد",
-      "inTrip": "في رحلة"
+      "pending": "بانتظار الاعتماد"
     },
     "sections": {
       "personalInfo": "المعلومات الشخصية",
       "licenses": "الرخص والشهادات"
-    },
-    "validation": {
-      "nameRequired": "اسم السائق مطلوب",
-      "driverLicenseRequired": "تاريخ انتهاء رخصة القيادة مطلوب",
-      "safetyLicenseRequired": "تاريخ انتهاء شهادة السلامة مطلوب",
-      "drugTestRequired": "تاريخ انتهاء فحص المخدرات مطلوب"
     },
     "docs": {
       "driverLicense": "رخصة القيادة",
@@ -339,8 +288,10 @@
       "front": "الوجه",
       "back": "الخلف",
       "noImage": "لم يتم رفع صورة",
-      "uploadFront": "رفع صورة الوجه",
-      "uploadBack": "رفع صورة الخلف"
+      "upload": "رفع",
+      "replace": "استبدال",
+      "filesReadyToUpload": "{{count}} ملف جاهز للرفع",
+      "filesReadyToUpload_other": "{{count}} ملفات جاهزة للرفع"
     },
     "pin": {
       "title": "إدارة الرقم السري",
@@ -359,7 +310,7 @@
       "loans": "السلف",
       "loansDescription": "عرض وإدارة سجلات سلف السائق",
       "salaries": "الرواتب",
-      "salariesDescription": "عرض سجلات الرواتب وإنشاء كشف حساب"
+      "salariesDescription": "عرض سجلات الرواتب وإنشاء كشوف المرتبات"
     }
   },
   "driverExpenses": {
@@ -415,5 +366,416 @@
       "paidCount": "المدفوع",
       "unpaid": "غير المدفوع"
     }
+  },
+  "trips": {
+    "title": "الرحلات",
+    "subtitle": "تتبع الإيصالات والمسارات والإيرادات لجميع شركاء النقل.",
+    "searchPlaceholder": "ابحث بالسائق أو السيارة أو رقم الإيصال...",
+    "showingCount": "{{shown}} من {{total}} رحلة",
+    "actions": {
+      "add": "إضافة رحلة",
+      "backToList": "العودة إلى الرحلات",
+      "deleteMultiContainer": "حذف الرحلة متعددة العيون",
+      "editMultiContainer": "تعديل الرحلة متعددة العيون",
+      "manageReceipts": "إدارة الإيصالات",
+      "statistics": "الإحصائيات",
+      "viewOnMap": "عرض على الخريطة",
+      "viewReceiptBatch": "عرض دفعة الإيصالات",
+      "viewRouteSummary": "عرض ملخص المسار",
+      "watanyaReport": "تقرير وطنية"
+    },
+    "columns": {
+      "actions": "إجراءات",
+      "company": "الشركة",
+      "date": "التاريخ",
+      "distanceFee": "المسافة / الأجرة",
+      "receipt": "الإيصال / النوع",
+      "route": "المسار",
+      "status": "الحالة",
+      "tank": "التنك",
+      "vehicleDriver": "السيارة / السائق"
+    },
+    "fields": {
+      "company": "الشركة",
+      "date": "التاريخ",
+      "distance": "المسافة",
+      "driver": "السائق",
+      "dropOffPoint": "نقطة التسليم",
+      "duration": "المدة",
+      "fee": "الأجرة",
+      "garageDate": "تاريخ الجراج",
+      "garageReceivedBy": "استلم بالجراج",
+      "gasType": "نوع البنزين",
+      "inGarage": "بالجراج",
+      "inOffice": "بالمكتب",
+      "officeDate": "تاريخ المكتب",
+      "officeReceivedBy": "استلم بالمكتب",
+      "receiptNo": "رقم الإيصال",
+      "stamped": "مختوم",
+      "tankCapacity": "سعة التنك",
+      "terminal": "المستودع",
+      "vehicle": "السيارة"
+    },
+    "filters": {
+      "allCompanies": "جميع الشركات",
+      "allReceipts": "جميع الإيصالات",
+      "missingAny": "أي بيانات مفقودة",
+      "missingData": "بيانات مفقودة",
+      "missingDriver": "سائق غير مسجل",
+      "missingRoute": "مسار غير مسجل",
+      "receiptStatus": "حالة الإيصال"
+    },
+    "receiptStatus": {
+      "pending": "معلق",
+      "inGarage": "بالجراج",
+      "inOffice": "بالمكتب",
+      "complete": "مكتمل"
+    },
+    "receiptLocation": {
+      "Garage": "الجراج",
+      "Office": "المكتب"
+    },
+    "row": {
+      "containerN": "عين {{n}}",
+      "containersCount_zero": "لا توجد عيون",
+      "containersCount_one": "عين واحدة",
+      "containersCount_two": "عينين اثنين",
+      "containersCount_few": "{{count}} عيون",
+      "containersCount_many": "{{count}} عين",
+      "containersCount_other": "{{count}} عين",
+      "destinationsCount_zero": "لا توجد وجهات",
+      "destinationsCount_one": "وجهة واحدة",
+      "destinationsCount_two": "وجهتين اثنين",
+      "destinationsCount_few": "{{count}} وجهات",
+      "destinationsCount_many": "{{count}} وجهة",
+      "destinationsCount_other": "{{count}} وجهة",
+      "hasReceiptBatch": "تحتوي على صور إيصالات مرفوعة",
+      "multiContainer": "متعددة العيون #{{id}}",
+      "singleTrip": "رحلة فردية"
+    },
+    "expanded": {
+      "audit": "السجل",
+      "author": "أنشأها",
+      "noReceiptSteps": "لم يتم تسجيل خطوات إيصال بعد.",
+      "overwriter": "آخر تعديل بواسطة",
+      "receiptTimeline": "تتبع الإيصال"
+    },
+    "empty": {
+      "title": "لا توجد رحلات",
+      "description": "حاول تعديل عوامل التصفية أو أضف رحلة جديدة."
+    },
+    "pagination": {
+      "firstPage": "الصفحة الأولى",
+      "go": "اذهب",
+      "goTo": "اذهب إلى",
+      "lastPage": "الصفحة الأخيرة",
+      "nextPage": "الصفحة التالية",
+      "of": "من",
+      "perPage": "لكل صفحة",
+      "previousPage": "الصفحة السابقة"
+    },
+    "delete": {
+      "titleSingle": "حذف الرحلة؟",
+      "titleParent": "حذف الرحلة متعددة العيون؟",
+      "descriptionSingle": "سيتم حذف هذه الرحلة بشكل دائم. لا يمكن التراجع عن هذا الإجراء.",
+      "descriptionParent_zero": "سيتم حذف الرحلة الأم والعيون نهائياً. لا يمكن التراجع.",
+      "descriptionParent_one": "سيتم حذف الرحلة الأم وعينها الـ{{count}} نهائياً. لا يمكن التراجع.",
+      "descriptionParent_two": "سيتم حذف الرحلة الأم والعينين الـ{{count}} نهائياً. لا يمكن التراجع.",
+      "descriptionParent_few": "سيتم حذف الرحلة الأم وعيونها الـ{{count}} نهائياً. لا يمكن التراجع.",
+      "descriptionParent_many": "سيتم حذف الرحلة الأم وعيونها الـ{{count}} نهائياً. لا يمكن التراجع.",
+      "descriptionParent_other": "سيتم حذف الرحلة الأم وعيونها الـ{{count}} نهائياً. لا يمكن التراجع.",
+      "successSingle": "تم حذف الرحلة",
+      "successParent_zero": "تم حذف الرحلة متعددة العيون",
+      "successParent_one": "تم حذف الرحلة متعددة العيون (عين واحدة)",
+      "successParent_two": "تم حذف الرحلة متعددة العيون (عينين اثنين)",
+      "successParent_few": "تم حذف الرحلة متعددة العيون ({{count}} عيون)",
+      "successParent_many": "تم حذف الرحلة متعددة العيون ({{count}} عين)",
+      "successParent_other": "تم حذف الرحلة متعددة العيون ({{count}} عين)",
+      "failed": "فشل حذف الرحلة"
+    },
+    "export": {
+      "empty": "لا توجد رحلات لتصديرها بعوامل التصفية الحالية",
+      "failed": "فشل تصدير الرحلات",
+      "watanyaNeedsDates": "يرجى اختيار نطاق تاريخ أولاً",
+      "watanyaSuccess": "تم تنزيل تقرير وطنية",
+      "watanyaFailed": "فشل تنزيل تقرير وطنية"
+    },
+    "stats": {
+      "totalTrips": "إجمالي الرحلات",
+      "totalVolume": "إجمالي الكمية (لتر)",
+      "totalDistance": "إجمالي المسافة (كم)",
+      "totalFees": "إجمالي الأجور",
+      "stamped": "مختوم"
+    },
+    "receipt": {
+      "addStep": "إضافة خطوة إيصال",
+      "addFailed": "فشل إضافة خطوة الإيصال",
+      "addedSuccessfully": "تمت إضافة خطوة الإيصال",
+      "deleteFailed": "فشل حذف خطوة الإيصال",
+      "deletedSuccessfully": "تم حذف خطوة الإيصال",
+      "dialogTitle": "إدارة خطوات الإيصال",
+      "dialogDescription": "تتبع تنقل إيصال هذه الرحلة بين الجراج والمكتب.",
+      "location": "الموقع",
+      "markStamped": "تمييز كمختوم",
+      "notes": "ملاحظات",
+      "notesPlaceholder": "ملاحظات اختيارية - مثلاً من راجعها، الحالة...",
+      "receivedBy": "استلم بواسطة",
+      "receivedByPlaceholder": "اسم الشخص الذي استلمها",
+      "stamp": "تمييز كمختوم",
+      "stamped": "مختوم",
+      "unstamp": "إزالة الختم",
+      "updateFailed": "فشل تحديث خطوة الإيصال",
+      "updatedSuccessfully": "تم تحديث خطوة الإيصال"
+    },
+    "receiptBatch": {
+      "dialogTitle": "صور دفعة الإيصالات",
+      "dialogDescription_zero": "لا توجد صور مرفقة.",
+      "dialogDescription_one": "صورة واحدة مرفقة من السائق.",
+      "dialogDescription_two": "صورتين مرفقتين من السائق.",
+      "dialogDescription_few": "{{count}} صور مرفقة من السائق.",
+      "dialogDescription_many": "{{count}} صورة مرفقة من السائق.",
+      "dialogDescription_other": "{{count}} صورة مرفقة من السائق.",
+      "imageAlt": "صورة الإيصال {{n}}",
+      "noImages": "لا توجد صور إيصالات مرفقة بهذه الرحلة"
+    },
+    "location": {
+      "dialogTitle": "موقع الرحلة",
+      "dialogDescription": "خريطة نقطة التحميل والتسليم والمسار لهذه الرحلة.",
+      "dropOff": "التسليم",
+      "loadFailed": "فشل تحميل موقع الرحلة",
+      "noCoordinates": "لا توجد إحداثيات متاحة لهذه الرحلة",
+      "openInGoogleMaps": "فتح في خرائط جوجل",
+      "route": "المسار",
+      "terminal": "المستودع"
+    },
+    "form": {
+      "titleCreate": "إضافة رحلة",
+      "titleEdit": "تعديل رحلة",
+      "descriptionCreate": "إنشاء رحلة فردية أو متعددة العيون.",
+      "descriptionEdit": "تعديل الرحلة متعددة العيون #{{id}}.",
+      "create": "إنشاء الرحلة",
+      "save": "حفظ التغييرات",
+      "createSuccess": "تم إنشاء الرحلة",
+      "createFailed": "فشل إنشاء الرحلة",
+      "updateSuccess": "تم تحديث الرحلة",
+      "updateFailed": "فشل تحديث الرحلة",
+      "addContainer": "إضافة عين",
+      "splitEvenly": "تقسيم بالتساوي",
+      "containerN": "عين {{n}}",
+      "driverUnregistered": "للرحلات بدون سائق مسجل",
+      "routeMapping": "بيانات المسار",
+      "section": {
+        "tripDetails": "تفاصيل الرحلة",
+        "containers": "العيون ({{count}}/{{max}})"
+      },
+      "placeholder": {
+        "selectCar": "اختر السيارة",
+        "selectDriver": "اختر السائق",
+        "selectCompany": "اختر الشركة",
+        "selectCompanyFirst": "اختر الشركة أولاً",
+        "selectTerminal": "اختر المستودع",
+        "selectTerminalFirst": "اختر المستودع أولاً",
+        "selectDropOff": "اختر نقطة التسليم",
+        "gasType": "مثلاً: 80، 92، 95"
+      },
+      "validation": {
+        "fillRequired": "يرجى ملء جميع الحقول المطلوبة",
+        "capacityMismatch": "سعات العيون لا تطابق السيارة (فرق {{delta}} لتر)",
+        "receiptTooShort": "يجب {{min}} أحرف على الأقل",
+        "duplicateInForm": {
+          "title": "رقم إيصال مكرر",
+          "description": "رقم الإيصال {{receipt}} مستخدم أيضاً في عين {{others}}"
+        }
+      },
+      "capacity": {
+        "hint": "سعة تنك السيارة {{capacity}} لتر. مجموع العيون يجب أن يطابق هذه القيمة.",
+        "match": "السعة متطابقة",
+        "mismatch": "السعة غير متطابقة"
+      },
+      "batchBanner": {
+        "title": "إنشاء من دفعة إيصالات",
+        "description": "يتم إنشاء هذه الرحلة من صور إيصالات رفعها {{driver}}."
+      },
+      "dropOffPicker": {
+        "title": "اختر نقطة التسليم",
+        "description": "حدد المكان الذي يتم تسليم هذه العين إليه.",
+        "descriptionWithRoute": "نقاط التسليم لـ {{terminal}} ({{company}}).",
+        "searchPlaceholder": "ابحث في نقاط التسليم...",
+        "alreadySelected": "محدد بالفعل",
+        "empty": "لا توجد نقاط تسليم مهيأة لهذا المسار",
+        "noMatches": "لا توجد نقاط تسليم مطابقة",
+        "resultsCount": "عرض {{shown}} من {{total}}",
+        "unregistered": "نقطة تسليم غير مسجلة",
+        "unregisteredHint": "استخدم هذا إذا كانت الوجهة لم تُضف لبيانات المسار بعد"
+      },
+      "duplicate": {
+        "title": "اكتشاف إيصالات مكررة",
+        "description_zero": "لا توجد إيصالات مكررة.",
+        "description_one": "رقم إيصال {{count}} موجود بالفعل. راجع الفروقات وقرر الاستبدال.",
+        "description_two": "رقمي إيصال {{count}} موجودان بالفعل. راجع الفروقات وقرر الاستبدال.",
+        "description_few": "{{count}} أرقام إيصالات موجودة بالفعل. راجع الفروقات وقرر الاستبدال.",
+        "description_many": "{{count}} رقم إيصال موجود بالفعل. راجع الفروقات وقرر الاستبدال.",
+        "description_other": "{{count}} رقم إيصال موجود بالفعل. راجع الفروقات وقرر الاستبدال.",
+        "duplicateNumber": "تكرار {{n}}",
+        "existing": "الموجود",
+        "existingParent": "رحلة متعددة العيون",
+        "existingStandalone": "رحلة فردية",
+        "forceCreate": "أنشئ على أي حال",
+        "forceUpdate": "حدّث على أي حال",
+        "new": "الجديد"
+      },
+      "gasType": {
+        "placeholder": "اختر نوع البنزين",
+        "heading": "أنواع البنزين",
+        "options": {
+          "80": "80",
+          "92": "92",
+          "95": "95",
+          "diesel": "سولار"
+        }
+      }
+    },
+    "tabs": {
+      "list": "القائمة",
+      "statistics": "الإحصائيات"
+    },
+    "statistics": {
+      "title": "إحصائيات الرحلات",
+      "exportExcel": "تصدير إكسل",
+      "exportSuccess": "تم تصدير الإحصائيات",
+      "exportFailed": "فشل تصدير الإحصائيات",
+      "errorTitle": "فشل تحميل الإحصائيات",
+      "errorDescription": "حدث خطأ أثناء جلب إحصائيات الرحلات. حاول مرة أخرى أو اختر نطاق تاريخ مختلف.",
+      "empty": {
+        "title": "لا توجد إحصائيات لهذه الفترة",
+        "description": "جرّب نطاق تاريخ أوسع أو مرشح شركة مختلف."
+      },
+      "subtabs": {
+        "overview": "نظرة عامة",
+        "routes": "المسارات",
+        "cars": "السيارات"
+      },
+      "kpi": {
+        "totalTrips": "إجمالي الرحلات",
+        "totalVolume": "إجمالي الكمية",
+        "totalDistance": "إجمالي المسافة",
+        "totalRevenue": "إجمالي الإيرادات",
+        "totalVat": "إجمالي الضريبة",
+        "totalWithVat": "الإجمالي شاملاً الضريبة",
+        "uniqueRoutes": "مسارات فريدة",
+        "activeVehicles": "السيارات النشطة",
+        "companiesActive": "الشركات",
+        "tripsPerDay": "{{n}} / يوم",
+        "volumePerDay": "{{n}} لتر / يوم",
+        "distancePerTrip": "{{n}} كم / رحلة",
+        "revenuePerTrip": "{{n}} / رحلة",
+        "vatLine": "ضريبة: {{n}}",
+        "daysSpanned": "{{n}} يوم"
+      },
+      "timeline": {
+        "title": {
+          "revenue": "الإيرادات عبر الزمن",
+          "volume": "الكمية عبر الزمن",
+          "trips": "الرحلات عبر الزمن"
+        },
+        "description": "تجميع يومي لنطاق التصفية النشط.",
+        "empty": "لا توجد بيانات يومية متاحة",
+        "metric": {
+          "revenue": "الإيرادات",
+          "volume": "الكمية",
+          "trips": "الرحلات"
+        }
+      },
+      "companies": {
+        "heading": "حسب الشركة",
+        "tripsBadge": "{{count}} رحلة",
+        "totalWithVat": "الإجمالي: {{amount}}",
+        "revenueShare": "نسبة الإيرادات",
+        "volumeShare": "نسبة الكمية",
+        "group": "المجموعة",
+        "routesInGroup": "المسارات ({{count}})",
+        "noRoutesForGroup": "لا توجد مسارات تطابق مجموعة \"{{group}}\"",
+        "carsForRoute": "السيارات ({{count}})",
+        "noCarsForRoute": "لا يوجد نشاط سيارات مسجل على هذا المسار",
+        "noGroupBreakdown": "لا يوجد تفصيل على مستوى المجموعة",
+        "noBreakdown": "لا يوجد تفصيل متاح",
+        "breakdownTitle": "التفصيل",
+        "distinctCars": "{{count}} سيارة",
+        "tripsX": "{{count}} رحلة",
+        "carsHeader": "السيارات ({{count}})",
+        "byVehicle": "الإيرادات حسب السيارة"
+      },
+      "routes": {
+        "title": "أهم المسارات",
+        "subtitle": "{{count}} مسار عبر جميع الشركات",
+        "byActivity": "حسب النشاط",
+        "byRevenue": "حسب الإيرادات",
+        "byDistance": "حسب المسافة",
+        "selectCompany": "اختر الشركة",
+        "headingFor": "مسارات {{company}}",
+        "empty": "لا توجد مسارات لهذه الشركة"
+      },
+      "cars": {
+        "title": "أهم السيارات",
+        "subtitle": "{{count}} سيارة في الفترة المحددة",
+        "byActivity": "حسب النشاط",
+        "byRevenue": "حسب الإيرادات",
+        "byDistance": "حسب المسافة",
+        "workingDays": "{{n}} أيام عمل",
+        "workingDaysShort": "أيام"
+      },
+      "excel": {
+        "metric": "المؤشر",
+        "value": "القيمة",
+        "sheets": {
+          "summary": "ملخص",
+          "companies": "الشركات",
+          "groups": "المجموعات",
+          "routes": "المسارات",
+          "cars": "السيارات",
+          "daily": "يومياً"
+        },
+        "cols": {
+          "trips": "الرحلات",
+          "volume": "الكمية (لتر)",
+          "distance": "المسافة (كم)",
+          "revenue": "الإيرادات",
+          "vat": "الضريبة",
+          "carRent": "إيجار السيارة",
+          "totalAmount": "الإجمالي",
+          "totalWithVat": "الإجمالي شاملاً الضريبة",
+          "group": "المجموعة",
+          "route": "المسار",
+          "distinctCars": "السيارات",
+          "distinctDays": "أيام النشاط",
+          "carsCount": "السيارات",
+          "workingDays": "أيام العمل",
+          "routeType": "نوع المسار"
+        }
+      },
+      "carTable": {
+        "title": "جميع السيارات",
+        "subtitle": "{{count}} سيارة · اضغط على أي عمود للترتيب",
+        "totals": "الإجماليات",
+        "liters": "الكمية (لتر)",
+        "distance": "المسافة (كم)",
+        "baseRevenue": "الإيراد الأساسي",
+        "vat": "الضريبة",
+        "rent": "الإيجار",
+        "total": "الإجمالي"
+      }
+    }
+  },
+  "commandPalette": {
+    "quickAddTrip": "إضافة رحلة سريعة",
+    "selectCompany": "اختر الشركة",
+    "goBack": "للرجوع",
+    "navigate": "تنقل",
+    "select": "اختر",
+    "back": "رجوع",
+    "close": "إغلاق",
+    "actionsFor": "إجراءات لـ {{name}}...",
+    "searchCompanies": "ابحث عن الشركات...",
+    "searchTerminals": "ابحث عن المستودعات في {{company}}..."
   }
 }

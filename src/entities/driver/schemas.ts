@@ -32,6 +32,15 @@ export type Driver = z.infer<typeof driverSchema>;
 export const driversResponseSchema = z.array(driverSchema);
 
 /* ──────────────────────────────────────────────────────────────────────────
+   Unregistered driver sentinel (used by the trip module).
+   Selecting "unregistered" in the driver dropdown saves driver_id=0 and
+   driver_name='غير مسجل' on the trip.
+   ────────────────────────────────────────────────────────────────────────── */
+
+export const UNREGISTERED_DRIVER_ID = 0;
+export const UNREGISTERED_DRIVER_NAME = 'غير مسجل';
+
+/* ──────────────────────────────────────────────────────────────────────────
    Form schema — for Add / Edit driver dialog.
    ────────────────────────────────────────────────────────────────────────── */
 

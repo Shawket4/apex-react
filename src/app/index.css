@@ -137,3 +137,22 @@
     padding-bottom: env(safe-area-inset-bottom);
   }
 }
+
+/* StatCard responsive value: show full form when card has room, compact otherwise */
+.stat-card-full {
+  display: none;
+}
+
+.stat-card-compact {
+  display: block;
+}
+
+@container (min-width: 11rem) {
+  .stat-card-full {
+    display: block;
+  }
+
+  .stat-card-compact {
+    display: none;
+  }
+}

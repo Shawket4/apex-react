@@ -14,8 +14,11 @@ import AddDriverExpensePage from '@/pages/driver-expenses/driver-expense-new';
 import DriverLoansPage from '@/pages/driver-loans/driver-loans';
 import AddDriverLoanPage from '@/pages/driver-loans/driver-loan-new';
 import NotFoundPage from '@/pages/error/not-found';
+import TripsPage from '@/pages/trips/trips';
+import TripNewPage from '@/pages/trips/trip-new';
+import TripEditPage from '@/pages/trips/trip-edit';
+
 import {
-  TripsPage,
   OilChangesPage,
   TrucksPage,
   CarsPage,
@@ -66,8 +69,12 @@ export const router = createBrowserRouter([
         ),
       },
 
+      // Trips
+      { path: '/trips', element: <TripsPage /> },
+      { path: '/trips/new', element: <TripNewPage /> },
+      { path: '/trips/multi-container/:parentId/edit', element: <TripEditPage /> },
+
       // Placeholder domains
-      { path: 'trips', element: <TripsPage /> },
       { path: 'oil-changes', element: <OilChangesPage /> },
       { path: 'trucks', element: <TrucksPage /> },
       { path: 'cars', element: <CarsPage /> },

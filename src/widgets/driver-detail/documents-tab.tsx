@@ -8,10 +8,14 @@ import {
   AlertTriangle,
   CheckCircle,
   Eye,
-  X,
   RotateCw,
   ZoomIn,
   ZoomOut,
+  IdCard,
+  HardHat,
+  FlaskConical,
+  Hash,
+  Check,
 } from 'lucide-react';
 import type { Driver } from '@/entities/driver/schemas';
 import { getDocumentImage } from '@/entities/driver/api';
@@ -29,6 +33,7 @@ import {
 import { fmtDate } from '@/shared/lib/format';
 import { usePermissions } from '@/shared/hooks/use-permissions';
 import { PERMISSION_LEVELS } from '@/shared/config/constants';
+import { cn } from '@/shared/lib/cn';
 
 interface DocumentsTabProps {
   driver: Driver;
@@ -37,9 +42,23 @@ interface DocumentsTabProps {
 interface DocumentCard {
   key: string;
   label: string;
+  icon: React.ComponentType<{ className?: string }>;
   dateField: keyof Driver;
   frontField: keyof Driver;
   backField?: keyof Driver;
+}
+
+type ExpiryStatus = 'valid' | 'warning' | 'expired' | 'unknown';
+
+function getExpiryStatus(dateStr: string | null | undefined): {
+  status: ExpiryStatus;
+  daysLeft: number | null;
+} {
+  if (!dateStr) return { status: 'unknown', daysLeft: null };
+  const diff = Math.ceil((new Date(dateStr).getTime() - Date.now()) / 86_400_000);
+  if (diff < 0) return { status: 'expired', daysLeft: diff };
+  if (diff <= 30) return { status: 'warning', daysLeft: diff };
+  return { status: 'valid', daysLeft: diff };
 }
 
 export function DocumentsTab({ driver }: DocumentsTabProps) {
@@ -65,6 +84,7 @@ export function DocumentsTab({ driver }: DocumentsTabProps) {
     {
       key: 'driver_license',
       label: t('drivers.docs.driverLicense'),
+      icon: IdCard,
       dateField: 'driver_license_expiration_date',
       frontField: 'driver_license_image_name',
       backField: 'driver_license_image_name_back',
@@ -72,6 +92,7 @@ export function DocumentsTab({ driver }: DocumentsTabProps) {
     {
       key: 'id_license',
       label: t('drivers.docs.idLicense'),
+      icon: Hash,
       dateField: 'id_license_expiration_date',
       frontField: 'id_license_image_name',
       backField: 'id_license_image_name_back',
@@ -79,16 +100,29 @@ export function DocumentsTab({ driver }: DocumentsTabProps) {
     {
       key: 'safety_license',
       label: t('drivers.docs.safetyLicense'),
+      icon: HardHat,
       dateField: 'safety_license_expiration_date',
       frontField: 'safety_license_image_name',
     },
     {
       key: 'drug_test',
       label: t('drivers.docs.drugTest'),
+      icon: FlaskConical,
       dateField: 'drug_test_expiration_date',
       frontField: 'drug_test_image_name',
     },
   ];
+
+  const cancelEditing = () => {
+    setEditing(false);
+    setFiles({});
+    setDates({
+      id_license_expiration_date: driver.id_license_expiration_date ?? '',
+      driver_license_expiration_date: driver.driver_license_expiration_date ?? '',
+      safety_license_expiration_date: driver.safety_license_expiration_date ?? '',
+      drug_test_expiration_date: driver.drug_test_expiration_date ?? '',
+    });
+  };
 
   const handleFileChange = (fieldKey: string, file: File) => {
     setFiles((prev) => ({ ...prev, [fieldKey]: file }));
@@ -139,25 +173,24 @@ export function DocumentsTab({ driver }: DocumentsTabProps) {
     setPreviewTitle('');
   };
 
-  const getExpiryStatus = (dateStr: string | null | undefined) => {
-    if (!dateStr) return 'unknown';
-    const diff = Math.ceil((new Date(dateStr).getTime() - Date.now()) / 86400000);
-    if (diff < 0) return 'expired';
-    if (diff <= 30) return 'warning';
-    return 'valid';
-  };
+  const hasDirtyFiles = Object.keys(files).length > 0;
 
   return (
-    <div className="space-y-6">
-      {/* Actions bar */}
+    <div className="space-y-4">
+      {/* Actions — right-aligned header bar */}
       {canEdit && (
-        <div className="flex justify-end gap-2">
+        <div className="flex items-center justify-end gap-2">
           {editing ? (
             <>
-              <Button variant="outline" onClick={() => { setEditing(false); setFiles({}); }}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={cancelEditing}
+                disabled={updateDocs.isPending}
+              >
                 {t('common.cancel')}
               </Button>
-              <Button onClick={handleSave} disabled={updateDocs.isPending}>
+              <Button size="sm" onClick={handleSave} disabled={updateDocs.isPending}>
                 {updateDocs.isPending ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
@@ -167,7 +200,7 @@ export function DocumentsTab({ driver }: DocumentsTabProps) {
               </Button>
             </>
           ) : (
-            <Button variant="outline" onClick={() => setEditing(true)}>
+            <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
               {t('common.edit')}
             </Button>
           )}
@@ -175,105 +208,123 @@ export function DocumentsTab({ driver }: DocumentsTabProps) {
       )}
 
       {/* Document cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         {docs.map((doc) => {
           const dateValue = driver[doc.dateField] as string | null;
           const frontImage = driver[doc.frontField] as string | null;
           const backImage = doc.backField ? (driver[doc.backField] as string | null) : null;
-          const status = getExpiryStatus(dateValue);
+          const { status, daysLeft } = getExpiryStatus(dateValue);
+          const DocIcon = doc.icon;
 
           return (
-            <Card key={doc.key}>
+            <Card
+              key={doc.key}
+              className={cn(
+                status === 'expired' && 'border-destructive/30',
+                status === 'warning' && 'border-warning/30',
+              )}
+            >
               <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center gap-2 text-sm">
-                    <FileImage className="h-4 w-4 text-muted-foreground" />
-                    {doc.label}
+                <div className="flex items-center justify-between gap-2">
+                  <CardTitle className="flex min-w-0 items-center gap-2 text-sm">
+                    <DocIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
+                    <span className="truncate">{doc.label}</span>
                   </CardTitle>
                   {status === 'valid' && (
-                    <Badge variant="success"><CheckCircle className="h-3 w-3" />{t('drivers.expiry.valid')}</Badge>
+                    <Badge variant="success" className="gap-1 shrink-0">
+                      <CheckCircle className="h-3 w-3" />
+                      {t('drivers.expiry.valid')}
+                    </Badge>
                   )}
                   {status === 'warning' && (
-                    <Badge variant="warning"><AlertTriangle className="h-3 w-3" />{t('drivers.expiry.expiresSoon', { days: '' })}</Badge>
+                    <Badge variant="warning" className="gap-1 shrink-0">
+                      <AlertTriangle className="h-3 w-3" />
+                      {t('drivers.expiry.expiresInDays', { days: daysLeft })}
+                    </Badge>
                   )}
                   {status === 'expired' && (
-                    <Badge variant="destructive"><AlertTriangle className="h-3 w-3" />{t('drivers.expiry.expired')}</Badge>
+                    <Badge variant="destructive" className="gap-1 shrink-0">
+                      <AlertTriangle className="h-3 w-3" />
+                      {t('drivers.expiry.expired')}
+                    </Badge>
+                  )}
+                  {status === 'unknown' && (
+                    <Badge variant="secondary" className="shrink-0">
+                      {t('drivers.expiry.notSet')}
+                    </Badge>
                   )}
                 </div>
               </CardHeader>
               <CardContent className="space-y-3">
                 {/* Expiry date */}
                 <div>
-                  <p className="text-xs text-muted-foreground mb-1">{t('drivers.fields.expiryDate')}</p>
+                  <p className="mb-1 text-xs text-muted-foreground">
+                    {t('drivers.fields.expiryDate')}
+                  </p>
                   {editing ? (
                     <DatePicker
                       value={dates[doc.dateField as keyof typeof dates] || ''}
                       onChange={(v) => handleDateChange(doc.dateField as string, v)}
                     />
                   ) : (
-                    <p className="text-sm font-medium">{dateValue ? fmtDate(dateValue) : '—'}</p>
+                    <p className="text-sm font-medium">
+                      {dateValue ? fmtDate(dateValue) : '—'}
+                    </p>
                   )}
                 </div>
 
-                {/* Image buttons */}
-                <div className="flex flex-wrap gap-2">
-                  {frontImage && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleViewImage(frontImage, `${doc.label} — ${t('drivers.docs.front')}`)}
-                    >
-                      <Eye className="h-3.5 w-3.5" />
-                      {t('drivers.docs.front')}
-                    </Button>
-                  )}
-                  {backImage && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleViewImage(backImage, `${doc.label} — ${t('drivers.docs.back')}`)}
-                    >
-                      <Eye className="h-3.5 w-3.5" />
-                      {t('drivers.docs.back')}
-                    </Button>
-                  )}
-                  {!frontImage && !editing && (
-                    <span className="text-xs text-muted-foreground">{t('drivers.docs.noImage')}</span>
+                {/* Document images — view + upload inline per side */}
+                <div className="space-y-2">
+                  {/* Front */}
+                  <DocumentImageRow
+                    label={t('drivers.docs.front')}
+                    existingImage={frontImage}
+                    selectedFile={files[`${doc.key}_front`]}
+                    editing={editing}
+                    onView={() =>
+                      frontImage &&
+                      handleViewImage(
+                        frontImage,
+                        `${doc.label} — ${t('drivers.docs.front')}`,
+                      )
+                    }
+                    onFileSelect={(f) => handleFileChange(`${doc.key}_front`, f)}
+                    t={t}
+                  />
+                  {/* Back (only on docs that have a back side) */}
+                  {doc.backField && (
+                    <DocumentImageRow
+                      label={t('drivers.docs.back')}
+                      existingImage={backImage}
+                      selectedFile={files[`${doc.key}_back`]}
+                      editing={editing}
+                      onView={() =>
+                        backImage &&
+                        handleViewImage(
+                          backImage,
+                          `${doc.label} — ${t('drivers.docs.back')}`,
+                        )
+                      }
+                      onFileSelect={(f) => handleFileChange(`${doc.key}_back`, f)}
+                      t={t}
+                    />
                   )}
                 </div>
-
-                {/* Upload inputs (edit mode) */}
-                {editing && (
-                  <div className="space-y-2">
-                    <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-dashed p-2 text-sm text-muted-foreground hover:bg-muted/30">
-                      <Upload className="h-4 w-4" />
-                      {files[`${doc.key}_front`]?.name ?? t('drivers.docs.uploadFront')}
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(e) => e.target.files?.[0] && handleFileChange(`${doc.key}_front`, e.target.files[0])}
-                      />
-                    </label>
-                    {doc.backField && (
-                      <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-dashed p-2 text-sm text-muted-foreground hover:bg-muted/30">
-                        <Upload className="h-4 w-4" />
-                        {files[`${doc.key}_back`]?.name ?? t('drivers.docs.uploadBack')}
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={(e) => e.target.files?.[0] && handleFileChange(`${doc.key}_back`, e.target.files[0])}
-                        />
-                      </label>
-                    )}
-                  </div>
-                )}
               </CardContent>
             </Card>
           );
         })}
       </div>
+
+      {/* Dirty-state hint when user has picked files but not saved */}
+      {editing && hasDirtyFiles && (
+        <div className="flex items-start gap-2 rounded-md border border-primary/20 bg-primary/5 p-2.5 text-xs text-muted-foreground">
+          <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
+          <span>
+            {t('drivers.docs.filesReadyToUpload', { count: Object.keys(files).length })}
+          </span>
+        </div>
+      )}
 
       {/* Image preview dialog */}
       <Dialog open={!!previewUrl} onOpenChange={(open) => !open && closePreview()}>
@@ -282,20 +333,35 @@ export function DocumentsTab({ driver }: DocumentsTabProps) {
             <DialogTitle>{previewTitle}</DialogTitle>
           </DialogHeader>
           <div className="flex items-center justify-center gap-2 py-2">
-            <Button variant="outline" size="icon" onClick={() => setZoom((z) => Math.max(0.5, z - 0.25))}>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setZoom((z) => Math.max(0.5, z - 0.25))}
+              aria-label="Zoom out"
+            >
               <ZoomOut className="h-4 w-4" />
             </Button>
-            <Button variant="outline" size="icon" onClick={() => setZoom((z) => Math.min(3, z + 0.25))}>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setZoom((z) => Math.min(3, z + 0.25))}
+              aria-label="Zoom in"
+            >
               <ZoomIn className="h-4 w-4" />
             </Button>
-            <Button variant="outline" size="icon" onClick={() => setRotation((r) => r + 90)}>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setRotation((r) => r + 90)}
+              aria-label="Rotate"
+            >
               <RotateCw className="h-4 w-4" />
             </Button>
-            <Button variant="outline" size="icon" onClick={closePreview}>
-              <X className="h-4 w-4" />
-            </Button>
           </div>
-          <div className="flex items-center justify-center overflow-auto rounded-lg bg-muted/30 p-4" style={{ maxHeight: '70vh' }}>
+          <div
+            className="flex items-center justify-center overflow-auto rounded-lg bg-muted/30 p-4"
+            style={{ maxHeight: '70vh' }}
+          >
             {previewUrl && (
               <img
                 src={previewUrl}
@@ -310,6 +376,79 @@ export function DocumentsTab({ driver }: DocumentsTabProps) {
           </div>
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/* DocumentImageRow — a single side of a document (front / back)               */
+/*                                                                             */
+/* View mode:  [👁 View]      or   "no image uploaded"                         */
+/* Edit mode:  [👁 View] [↑ Replace]  or  [↑ Upload]                           */
+/*             When a new file is picked, shows a green check + filename.      */
+/* -------------------------------------------------------------------------- */
+
+function DocumentImageRow({
+  label,
+  existingImage,
+  selectedFile,
+  editing,
+  onView,
+  onFileSelect,
+  t,
+}: {
+  label: string;
+  existingImage: string | null;
+  selectedFile?: File;
+  editing: boolean;
+  onView: () => void;
+  onFileSelect: (file: File) => void;
+  t: (k: string) => string;
+}) {
+  const fileInputId = React.useId();
+
+  return (
+    <div className="flex items-center gap-2 text-xs">
+      <span className="w-12 shrink-0 text-muted-foreground">{label}</span>
+
+      {existingImage && (
+        <Button variant="outline" size="sm" className="h-7" onClick={onView}>
+          <Eye className="h-3.5 w-3.5" />
+          {t('common.view')}
+        </Button>
+      )}
+
+      {editing && (
+        <>
+          <label
+            htmlFor={fileInputId}
+            className="inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-md border border-input bg-background px-2.5 text-xs font-medium shadow-sm hover:bg-muted/50"
+          >
+            <Upload className="h-3.5 w-3.5" />
+            {existingImage
+              ? t('drivers.docs.replace')
+              : t('drivers.docs.upload')}
+          </label>
+          <input
+            id={fileInputId}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => e.target.files?.[0] && onFileSelect(e.target.files[0])}
+          />
+        </>
+      )}
+
+      {!existingImage && !editing && (
+        <span className="text-muted-foreground">{t('drivers.docs.noImage')}</span>
+      )}
+
+      {selectedFile && (
+        <span className="flex min-w-0 items-center gap-1 text-primary">
+          <Check className="h-3 w-3 shrink-0" />
+          <span className="truncate">{selectedFile.name}</span>
+        </span>
+      )}
     </div>
   );
 }

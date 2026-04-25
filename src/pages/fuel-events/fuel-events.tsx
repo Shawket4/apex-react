@@ -63,6 +63,7 @@ import {
   type SortDirection,
 } from '@/widgets/fuel-events-table/fuel-events-filters';
 import type { FuelEvent } from '@/entities/fuel-event/schemas';
+import { formatCompactCurrency, formatCompactNumber } from '@/shared/lib/format-number';
 
 /* -------------------------------------------------------------------------- */
 /* Storage keys                                                                */
@@ -406,50 +407,63 @@ export default function FuelEventsPage() {
 
       {/* Stats */}
       {!isLoading && filtered.length > 0 && (
-        <div className="grid grid-cols-2 gap-2.5 md:grid-cols-3 lg:grid-cols-6">
-          <StatCard
-            label={t('fuelEvents.stats.totalFuel')}
-            value={`${formatNumber(stats.totalLiters, 1)} L`}
-            subvalue={t('fuelEvents.stats.events', { count: stats.totalEvents })}
-            icon={Droplet}
-            tone="primary"
-          />
-          <StatCard
-            label={t('fuelEvents.stats.avgEfficiency')}
-            value={`${formatNumber(stats.avgFuelRate, 1)} ${t('fuelEvents.efficiency.unit')}`}
-            subvalue={
-              stats.pairedCount > 0
-                ? t('fuelEvents.stats.pairedNote', { count: stats.pairedCount })
-                : undefined
-            }
-            icon={Gauge}
-            tone="success"
-          />
-          <StatCard
-            label={t('fuelEvents.stats.totalCost')}
-            value={formatCurrency(stats.totalCost)}
-            icon={DollarSign}
-            tone="primary"
-          />
-          <StatCard
-            label={t('fuelEvents.stats.costPerDay')}
-            value={formatCurrency(stats.avgCostPerDay)}
-            subvalue={t('fuelEvents.stats.dayPeriod', { count: stats.days })}
-            icon={TrendingUp}
-            tone="warning"
-          />
-          <StatCard
-            label={t('fuelEvents.stats.fuelPerDay')}
-            value={`${formatNumber(stats.avgLitersPerDay, 2)} L`}
-            subvalue={t('fuelEvents.stats.dayPeriod', { count: stats.days })}
-            icon={Droplet}
-          />
-          <StatCard
-            label={t('fuelEvents.stats.perFuelUp')}
-            value={`${formatNumber(stats.avgPerFuelUp, 1)} L`}
-            icon={Clock}
-          />
-        </div>
+<div className="grid grid-cols-2 gap-2.5 md:grid-cols-3 lg:grid-cols-5">
+  <StatCard
+    label={t('fuelEvents.stats.totalFuel')}
+    value={{
+      full: `${formatNumber(stats.totalLiters, 1)} L`,
+      compact: `${formatCompactNumber(stats.totalLiters, 1)} L`,
+    }}
+    subvalue={t('fuelEvents.stats.events', { count: stats.totalEvents })}
+    icon={Droplet}
+    tone="primary"
+  />
+  <StatCard
+    label={t('fuelEvents.stats.avgEfficiency')}
+    value={`${formatNumber(stats.avgFuelRate, 1)} ${t('fuelEvents.efficiency.unit')}`}
+    subvalue={
+      stats.pairedCount > 0
+        ? t('fuelEvents.stats.pairedNote', { count: stats.pairedCount })
+        : undefined
+    }
+    icon={Gauge}
+    tone="success"
+  />
+  <StatCard
+    label={t('fuelEvents.stats.totalCost')}
+    value={{
+      full: formatCurrency(stats.totalCost),
+      compact: formatCompactCurrency(stats.totalCost),
+    }}
+    icon={DollarSign}
+    tone="primary"
+  />
+  <StatCard
+    label={t('fuelEvents.stats.costPerDay')}
+    value={{
+      full: formatCurrency(stats.avgCostPerDay),
+      compact: formatCompactCurrency(stats.avgCostPerDay),
+    }}
+    subvalue={t('fuelEvents.stats.dayPeriod', { count: stats.days })}
+    icon={TrendingUp}
+    tone="warning"
+  />
+  <StatCard
+    label={t('fuelEvents.stats.fuelPerDay')}
+    value={{
+      full: `${formatNumber(stats.avgLitersPerDay, 2)} L`,
+      compact: `${formatCompactNumber(stats.avgLitersPerDay, 2)} L`,
+    }}
+    subvalue={t('fuelEvents.stats.dayPeriod', { count: stats.days })}
+    icon={Droplet}
+  />
+  <StatCard
+    label={t('fuelEvents.stats.perFuelUp')}
+    value={`${formatNumber(stats.avgPerFuelUp, 1)} L`}
+    icon={Clock}
+    className="lg:hidden"
+  />
+</div>
       )}
 
       {/* Paired events explainer */}

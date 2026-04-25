@@ -9,6 +9,9 @@ export const carSchema = z.object({
   car_no_plate: z.string(),
   driver_id: z.number().optional().nullable(),
   last_fuel_odometer: z.number().optional().nullable(),
+  // Trip module: capacity validation + dropdown subtitle
+  tank_capacity: z.number().optional().nullable(),
+  car_type: z.string().optional().nullable(),
 });
 
 export type Car = z.infer<typeof carSchema>;
