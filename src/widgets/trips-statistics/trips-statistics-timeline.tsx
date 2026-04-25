@@ -221,6 +221,7 @@ export function TripsStatisticsTimeline({
       total: dailyAvg * daysInMonth,
       dailyAvg,
       rangeDays,
+      daysInMonth,
     };
   }, [daily, hasFinancialAccess, metric, startDate, endDate]);
 
@@ -396,6 +397,7 @@ export function TripsStatisticsTimeline({
                       {t('trips.statistics.timeline.projectedRevenueNote', {
                         avg: formatCompactCurrency(projection.dailyAvg),
                         days: projection.rangeDays,
+                        monthDays: projection.daysInMonth,
                       })}
                     </p>
                   </div>
