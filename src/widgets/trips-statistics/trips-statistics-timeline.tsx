@@ -27,6 +27,7 @@ import {
   daysBetween,
   firstDayOfMonth,
   lastDayOfMonth,
+  toDateOnly,
 } from '@/shared/lib/format';
 import { formatCompactNumber, formatCompactCurrency } from '@/shared/lib/format-number';
 import {
@@ -113,10 +114,10 @@ export function TripsStatisticsTimeline({
   const { chartData, hasOther } = React.useMemo(() => {
     if (daily.length === 0) return { chartData: [], hasOther: false };
 
-    const dailyByDate = new Map(daily.map((d) => [d.date, d]));
+    const dailyByDate = new Map(daily.map((d) => [toDateOnly(d.date), d]));
     const sortedDates = [...dailyByDate.keys()].sort();
-    const minDate = startDate ?? sortedDates[0];
-    const maxDate = endDate ?? sortedDates[sortedDates.length - 1];
+    const minDate = startDate ? toDateOnly(startDate) : sortedDates[0];
+    const maxDate = endDate ? toDateOnly(endDate) : sortedDates[sortedDates.length - 1];
     if (!minDate || !maxDate) return { chartData: [], hasOther: false };
 
     const start = new Date(minDate + 'T00:00:00');
@@ -205,9 +206,14 @@ export function TripsStatisticsTimeline({
       0,
     );
 
-    const sortedDates = [...daily].map((d) => d.date).sort();
-    const start = new Date(sortedDates[0] + 'T00:00:00');
-    const end = new Date(sortedDates[sortedDates.length - 1] + 'T00:00:00');
+    // Use filter range if available, otherwise data range
+    const startStr = startDate || (daily.length > 0 ? toDateOnly(daily[0].date) : null);
+    const endStr = endDate || (daily.length > 0 ? toDateOnly(daily[daily.length - 1].date) : null);
+    
+    if (!startStr || !endStr) return null;
+
+    const start = new Date(startStr + 'T00:00:00');
+    const end = new Date(endStr + 'T00:00:00');
 
     const rangeDays = daysBetween(start, end);
     const dailyAvg = totalNetRevenue / rangeDays;

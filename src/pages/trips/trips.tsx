@@ -412,8 +412,8 @@ export default function TripsPage() {
   /* ------------------------------------------------------------------------ */
 
   const statisticsFilters = {
-    startDate: from ? toDateOnly(from) : undefined,
-    endDate: to ? toDateOnly(to) : undefined,
+    startDate: from || undefined,
+    endDate: to || undefined,
     company: company || undefined,
   };
 

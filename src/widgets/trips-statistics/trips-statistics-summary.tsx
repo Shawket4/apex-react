@@ -13,6 +13,7 @@ import {
   formatCurrency,
   daysBetween,
   parseISO,
+  toDateOnly,
 } from '@/shared/lib/format';
 import {
   formatCompactCurrency,
@@ -79,8 +80,8 @@ export function TripsStatisticsSummary({
   );
 
   // Determine the spanned days for daily averages
-  const start = parseISO(startDate);
-  const end = parseISO(endDate);
+  const start = parseISO(startDate ? toDateOnly(startDate) : null);
+  const end = parseISO(endDate ? toDateOnly(endDate) : null);
   const days =
     start && end
       ? daysBetween(start, end)
