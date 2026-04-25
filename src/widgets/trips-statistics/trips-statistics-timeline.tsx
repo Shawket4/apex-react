@@ -214,8 +214,7 @@ export function TripsStatisticsTimeline({
 
     const rangeDays = daysBetween(start, end);
     const dailyAvg = revenueToUse / rangeDays;
-
-    const daysInMonth = new Date(end.getFullYear(), end.getMonth() + 1, 0).getDate();
+    const daysInMonth = 31; // User requested 31 for the projection multiplier
 
     return {
       total: dailyAvg * daysInMonth,
