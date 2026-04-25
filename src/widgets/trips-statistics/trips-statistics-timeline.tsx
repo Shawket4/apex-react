@@ -20,8 +20,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/shared/ui/select';
-import { format, formatNumber, formatCurrency } from '@/shared/lib/format';
-import { formatCompactNumber } from '@/shared/lib/format-number';
+import {
+  format,
+  formatNumber,
+  formatCurrency,
+  daysBetween,
+  firstDayOfMonth,
+  lastDayOfMonth,
+} from '@/shared/lib/format';
+import { formatCompactNumber, formatCompactCurrency } from '@/shared/lib/format-number';
 import {
   CHART_SERIES_COLORS,
   CHART_OTHER_COLOR,
@@ -188,6 +195,34 @@ export function TripsStatisticsTimeline({
     return map;
   }, [visibleSeries]);
 
+  const projection = React.useMemo(() => {
+    if (!hasFinancialAccess || daily.length === 0 || metric !== 'revenue') {
+      return null;
+    }
+
+    const totalNetRevenue = daily.reduce(
+      (sum, d) => sum + (d.total_revenue ?? 0),
+      0,
+    );
+
+    const sortedDates = [...daily].map((d) => d.date).sort();
+    const start = new Date(sortedDates[0] + 'T00:00:00');
+    const end = new Date(sortedDates[sortedDates.length - 1] + 'T00:00:00');
+
+    const rangeDays = daysBetween(start, end);
+    const dailyAvg = totalNetRevenue / rangeDays;
+
+    const monthStart = firstDayOfMonth(end);
+    const monthEnd = lastDayOfMonth(end);
+    const daysInMonth = daysBetween(monthStart, monthEnd);
+
+    return {
+      total: dailyAvg * daysInMonth,
+      dailyAvg,
+      rangeDays,
+    };
+  }, [daily, hasFinancialAccess, metric]);
+
   const metricOptions: Metric[] = hasFinancialAccess
     ? ['revenue', 'volume', 'trips']
     : ['volume', 'trips'];
@@ -196,9 +231,9 @@ export function TripsStatisticsTimeline({
     <ChartCard
       title={t(`trips.statistics.timeline.title.${metric}`)}
       description={t('trips.statistics.timeline.description')}
-      height={360}
+      height="auto"
       padded={false}
-      bodyClassName="px-3 pt-2 pb-1"
+      bodyClassName="flex flex-col"
       actions={
         <Select value={metric} onValueChange={(v) => setMetric(v as Metric)}>
           <SelectTrigger className="h-8 w-[120px] text-xs">
@@ -215,100 +250,145 @@ export function TripsStatisticsTimeline({
       }
     >
       {chartData.length === 0 ? (
-        <EmptyState
-          icon={<ChartIcon className="h-5 w-5" />}
-          title={t('trips.statistics.timeline.empty')}
-        />
+        <div className="px-3 py-10">
+          <EmptyState
+            icon={<ChartIcon className="h-5 w-5" />}
+            title={t('trips.statistics.timeline.empty')}
+          />
+        </div>
       ) : (
-        <ResponsiveContainer width="100%" height="100%">
-          <AreaChart
-            data={chartData}
-            margin={{ top: 10, right: 20, left: 0, bottom: 0 }}
-          >
-            <defs>
-              {/* Gradient definitions matching the revenue chart style:
+        <>
+          <div className="px-3 pt-2 pb-1" style={{ height: '360px' }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart
+                data={chartData}
+                margin={{ top: 10, right: 20, left: 0, bottom: 0 }}
+              >
+                <defs>
+                  {/* Gradient definitions matching the revenue chart style:
                   55% opacity at top → 15% at bottom for visible blending */}
-              {visibleSeries.map((s) => (
-                <linearGradient
-                  key={s.key}
-                  id={`grad-${s.key}`}
-                  x1="0"
-                  y1="0"
-                  x2="0"
-                  y2="1"
-                >
-                  <stop offset="0%" stopColor={s.color} stopOpacity={0.55} />
-                  <stop offset="100%" stopColor={s.color} stopOpacity={0.15} />
-                </linearGradient>
-              ))}
-            </defs>
-            <CartesianGrid
-              strokeDasharray="3 3"
-              stroke="hsl(var(--border))"
-            />
-            <XAxis
-              dataKey="date"
-              tickFormatter={(d: string) => format(d, 'd MMM')}
-              tick={{ fontSize: 11 }}
-            />
-            <YAxis
-              tickFormatter={(v: number) => formatCompactNumber(v, 0)}
-              tick={{ fontSize: 11 }}
-            />
-            <Tooltip
-              content={({ active, payload, label }) => {
-                if (!active || !payload || payload.length === 0) return null;
-                
-                return (
-                  <div className="rounded-lg border bg-background p-2 shadow-sm">
-                    <div className="mb-1 text-xs font-medium">
-                      {format(String(label), 'PPP')}
-                    </div>
-                    <div className="space-y-1">
-                      {payload.map((entry: any) => {
-                        const key = String(entry.dataKey ?? '');
-                        const displayLabel = keyToLabel.get(key) ?? key;
-                        return (
-                          <div key={key} className="flex items-center justify-between gap-4 text-xs">
-                            <div className="flex items-center gap-2">
-                              <div
-                                className="h-2 w-2 rounded-full"
-                                style={{ backgroundColor: entry.color }}
-                              />
-                              <span>{displayLabel}</span>
-                            </div>
-                            <span className="font-semibold tabular">
-                              {formatValue(entry.value)}
-                            </span>
+                  {visibleSeries.map((s) => (
+                    <linearGradient
+                      key={s.key}
+                      id={`grad-${s.key}`}
+                      x1="0"
+                      y1="0"
+                      x2="0"
+                      y2="1"
+                    >
+                      <stop offset="0%" stopColor={s.color} stopOpacity={0.55} />
+                      <stop offset="100%" stopColor={s.color} stopOpacity={0.15} />
+                    </linearGradient>
+                  ))}
+                </defs>
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke="hsl(var(--border))"
+                />
+                <XAxis
+                  dataKey="date"
+                  tickFormatter={(d: string) => format(d, 'd MMM')}
+                  tick={{ fontSize: 11 }}
+                />
+                <YAxis
+                  tickFormatter={(v: number) => formatCompactNumber(v, 0)}
+                  tick={{ fontSize: 11 }}
+                />
+                <Tooltip
+                  content={({ active: _active, payload, label }) => {
+                    if (!_active || !payload || payload.length === 0) return null;
+
+                    const total = payload.reduce(
+                      (sum: number, entry: any) => sum + (Number(entry.value) || 0),
+                      0,
+                    );
+
+                    return (
+                      <div className="rounded-lg border bg-background p-2 shadow-sm">
+                        <div className="mb-1 text-xs font-medium">
+                          {format(String(label), 'PPP')}
+                        </div>
+                        <div className="space-y-1">
+                          {/* Total line */}
+                          <div className="mb-1 flex items-center justify-between gap-4 border-b pb-1 text-xs font-bold">
+                            <span>{t('trips.statistics.carTable.total')}</span>
+                            <span className="tabular">{formatValue(total)}</span>
                           </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                );
-              }}
-            />
-            <Legend
-              formatter={(value: string) => (
-                <span className="text-xs">{keyToLabel.get(value) ?? value}</span>
-              )}
-            />
-            {/* Render each series as an overlapping Area with gradient fill.
+
+                          {payload.map((entry: any) => {
+                            const key = String(entry.dataKey ?? '');
+                            const displayLabel = keyToLabel.get(key) ?? key;
+                            return (
+                              <div
+                                key={key}
+                                className="flex items-center justify-between gap-4 text-xs"
+                              >
+                                <div className="flex items-center gap-2">
+                                  <div
+                                    className="h-2 w-2 rounded-full"
+                                    style={{ backgroundColor: entry.color }}
+                                  />
+                                  <span>{displayLabel}</span>
+                                </div>
+                                <span className="font-semibold tabular">
+                                  {formatValue(entry.value)}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  }}
+                />
+                <Legend
+                  formatter={(value: string) => (
+                    <span className="text-xs">
+                      {keyToLabel.get(value) ?? value}
+                    </span>
+                  )}
+                />
+                {/* Render each series as an overlapping Area with gradient fill.
                 NO stackId — areas overlap and blend visually, matching the
                 revenue chart design. */}
-            {visibleSeries.map((s) => (
-              <Area
-                key={s.key}
-                type="monotone"
-                dataKey={s.key}
-                name={s.label}
-                stroke={s.color}
-                strokeWidth={2}
-                fill={`url(#grad-${s.key})`}
-              />
-            ))}
-          </AreaChart>
-        </ResponsiveContainer>
+                {visibleSeries.map((s) => (
+                  <Area
+                    key={s.key}
+                    type="monotone"
+                    dataKey={s.key}
+                    name={s.label}
+                    stroke={s.color}
+                    strokeWidth={2}
+                    fill={`url(#grad-${s.key})`}
+                  />
+                ))}
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+
+          {projection && (
+            <div className="border-t bg-muted/20 px-4 py-3 md:px-5">
+              <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                    {t('trips.statistics.timeline.projectedRevenue')}
+                  </p>
+                  <p className="text-xl font-bold tracking-tight text-success">
+                    {formatCurrency(projection.total)}
+                  </p>
+                </div>
+                <div className="text-[10px] text-muted-foreground sm:text-right">
+                  <p>
+                    {t('trips.statistics.timeline.projectedRevenueNote', {
+                      avg: formatCompactCurrency(projection.dailyAvg),
+                      days: projection.rangeDays,
+                    })}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+        </>
       )}
     </ChartCard>
   );
