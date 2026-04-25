@@ -771,6 +771,103 @@
       }
     }
   },
+  "oilChanges": {
+    "title": "Oil Changes",
+    "subtitle": "Service status for every vehicle in the fleet",
+    "addNew": "Add Oil Change",
+    "searchPlaceholder": "Search by plate, supervisor, or driver…",
+    "filters": {
+      "byStatus": "Filter by status",
+      "all": "All",
+      "showingCount": "Showing {{shown}} of {{total}}"
+    },
+    "status": {
+      "good": "Good",
+      "warning": "Warning",
+      "critical": "Critical"
+    },
+    "stats": {
+      "totalVehicles": "Total Vehicles",
+      "totalCost": "Total Cost"
+    },
+    "fields": {
+      "carPlate": "Car Plate",
+      "selectCar": "Select a vehicle…",
+      "date": "Date",
+      "driver": "Driver",
+      "selectDriver": "Select a driver…",
+      "driverAutoAssigned": "Auto-filled from vehicle",
+      "supervisor": "Supervisor",
+      "supervisorPlaceholder": "Supervisor name",
+      "odometerAtChange": "Odometer at Change",
+      "currentOdometer": "Current Odometer",
+      "kmUsed": "KM Used",
+      "kmRemaining": "KM Remaining",
+      "mileage": "Service Interval",
+      "cost": "Cost",
+      "lastUpdated": "Last Updated",
+      "totals": "Totals",
+      "avgRemaining": "Avg remaining"
+    },
+    "preview": {
+      "used": "Used",
+      "remaining": "Remaining",
+      "overdue": "Service interval exceeded"
+    },
+    "actions": {
+      "create": "Register Oil Change",
+      "save": "Save Changes",
+      "viewHistory": "View History"
+    },
+    "form": {
+      "sections": {
+        "vehicle": "Vehicle & Date",
+        "personnel": "Personnel",
+        "maintenance": "Maintenance Details"
+      }
+    },
+    "new": {
+      "title": "Add Oil Change",
+      "description": "Register a new oil change for a vehicle"
+    },
+    "edit": {
+      "title": "Edit Oil Change",
+      "description": "Update an existing oil change record",
+      "loadFailed": "Could not load this oil change"
+    },
+    "history": {
+      "title": "Oil Change History",
+      "subtitle": "All recorded oil changes for {{plate}}",
+      "description": "Full service history",
+      "stats": {
+        "totalRecords": "Records",
+        "totalSpent": "Total Spent",
+        "avgCost": "Avg Cost",
+        "latestInterval": "Latest Interval"
+      },
+      "empty": {
+        "title": "No history for {{plate}}",
+        "description": "Once an oil change is recorded for this vehicle it will appear here."
+      }
+    },
+    "empty": {
+      "title": "No oil changes recorded yet",
+      "description": "Register your first oil change to start tracking service status across the fleet.",
+      "noMatches": "No vehicles match these filters"
+    },
+    "delete": {
+      "title": "Delete oil change record?",
+      "description": "This will permanently remove the latest oil change record for {{plate}}. This action cannot be undone.",
+      "descriptionRecord": "This will permanently remove the oil change record from {{date}}. This action cannot be undone."
+    },
+    "messages": {
+      "created": "Oil change recorded successfully",
+      "updated": "Oil change updated successfully",
+      "deleted": "Oil change deleted",
+      "saveFailed": "Failed to save oil change",
+      "deleteFailed": "Failed to delete oil change"
+    }
+  },
   "commandPalette": {
     "quickAddTrip": "Quick Add Trip",
     "selectCompany": "Select Company",

@@ -26,8 +26,6 @@ export function Placeholder({ titleKey, icon: Icon }: PlaceholderProps) {
 }
 
 // Named placeholder components for convenient route registration
-export const TripsPage = () => <Placeholder titleKey="nav.trips" />;
-export const OilChangesPage = () => <Placeholder titleKey="nav.oilChanges" />;
 export const TrucksPage = () => <Placeholder titleKey="nav.trucks" />;
 export const CarsPage = () => <Placeholder titleKey="nav.cars" />;
 export const TiresPage = () => <Placeholder titleKey="nav.tires" />;

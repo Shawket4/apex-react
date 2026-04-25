@@ -52,7 +52,7 @@
     "dashboard": "لوحة التحكم",
     "fuelEvents": "الوقود",
     "trips": "الرحلات",
-    "oilChanges": "تغيير الزيت",
+    "oilChanges": "تغييرات الزيت",
     "trucks": "الشاحنات",
     "cars": "السيارات",
     "tires": "الإطارات",
@@ -769,6 +769,103 @@
         "rent": "الإيجار",
         "total": "الإجمالي"
       }
+    }
+  },
+  "oilChanges": {
+    "title": "تغييرات الزيت",
+    "subtitle": "حالة الصيانة لكل مركبة في الأسطول",
+    "addNew": "إضافة تغيير زيت",
+    "searchPlaceholder": "ابحث برقم اللوحة أو المشرف أو السائق…",
+    "filters": {
+      "byStatus": "تصفية حسب الحالة",
+      "all": "الكل",
+      "showingCount": "عرض {{shown}} من {{total}}"
+    },
+    "status": {
+      "good": "جيد",
+      "warning": "تحذير",
+      "critical": "حرج"
+    },
+    "stats": {
+      "totalVehicles": "إجمالي المركبات",
+      "totalCost": "إجمالي التكلفة"
+    },
+    "fields": {
+      "carPlate": "رقم اللوحة",
+      "selectCar": "اختر مركبة…",
+      "date": "التاريخ",
+      "driver": "السائق",
+      "selectDriver": "اختر سائقًا…",
+      "driverAutoAssigned": "تم تعبئته تلقائيًا من المركبة",
+      "supervisor": "المشرف",
+      "supervisorPlaceholder": "اسم المشرف",
+      "odometerAtChange": "العداد عند التغيير",
+      "currentOdometer": "العداد الحالي",
+      "kmUsed": "الكيلومترات المستخدمة",
+      "kmRemaining": "الكيلومترات المتبقية",
+      "mileage": "فترة الصيانة",
+      "cost": "التكلفة",
+      "lastUpdated": "آخر تحديث",
+      "totals": "الإجماليات",
+      "avgRemaining": "متوسط المتبقي"
+    },
+    "preview": {
+      "used": "المستخدم",
+      "remaining": "المتبقي",
+      "overdue": "تم تجاوز فترة الصيانة"
+    },
+    "actions": {
+      "create": "تسجيل تغيير الزيت",
+      "save": "حفظ التغييرات",
+      "viewHistory": "عرض السجل"
+    },
+    "form": {
+      "sections": {
+        "vehicle": "المركبة والتاريخ",
+        "personnel": "الموظفون",
+        "maintenance": "تفاصيل الصيانة"
+      }
+    },
+    "new": {
+      "title": "إضافة تغيير زيت",
+      "description": "تسجيل تغيير زيت جديد لمركبة"
+    },
+    "edit": {
+      "title": "تعديل تغيير الزيت",
+      "description": "تحديث سجل تغيير زيت قائم",
+      "loadFailed": "تعذر تحميل تغيير الزيت"
+    },
+    "history": {
+      "title": "سجل تغييرات الزيت",
+      "subtitle": "جميع تغييرات الزيت المسجلة للمركبة {{plate}}",
+      "description": "السجل الكامل للصيانة",
+      "stats": {
+        "totalRecords": "السجلات",
+        "totalSpent": "إجمالي المنصرف",
+        "avgCost": "متوسط التكلفة",
+        "latestInterval": "آخر فترة صيانة"
+      },
+      "empty": {
+        "title": "لا يوجد سجل للمركبة {{plate}}",
+        "description": "بمجرد تسجيل تغيير زيت لهذه المركبة سيظهر هنا."
+      }
+    },
+    "empty": {
+      "title": "لم يتم تسجيل أي تغيير زيت بعد",
+      "description": "سجّل أول تغيير زيت لبدء متابعة حالة الصيانة عبر الأسطول.",
+      "noMatches": "لا توجد مركبات مطابقة لعوامل التصفية"
+    },
+    "delete": {
+      "title": "حذف سجل تغيير الزيت؟",
+      "description": "سيؤدي هذا إلى حذف آخر سجل تغيير زيت للمركبة {{plate}} نهائيًا. لا يمكن التراجع عن هذا الإجراء.",
+      "descriptionRecord": "سيؤدي هذا إلى حذف سجل تغيير الزيت بتاريخ {{date}} نهائيًا. لا يمكن التراجع عن هذا الإجراء."
+    },
+    "messages": {
+      "created": "تم تسجيل تغيير الزيت بنجاح",
+      "updated": "تم تحديث تغيير الزيت بنجاح",
+      "deleted": "تم حذف تغيير الزيت",
+      "saveFailed": "تعذر حفظ تغيير الزيت",
+      "deleteFailed": "تعذر حذف تغيير الزيت"
     }
   },
   "commandPalette": {
