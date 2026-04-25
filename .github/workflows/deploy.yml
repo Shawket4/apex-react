@@ -1,0 +1,60 @@
+name: Build and Deploy Apex Fleet Dashboard
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check & build
+        run: npm run build
+        # Vite outputs to dist/ by default
+        # build script runs: tsc --noEmit && vite build
+        # If tsc finds type errors, the build will fail here — fix them or
+        # temporarily change the build script to just "vite build" in package.json
+
+      - name: Set up SSH
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          name: github-actions-deploy
+          known_hosts: ${{ secrets.SSH_KNOWN_HOSTS }}
+          if_key_exists: replace
+          config: |
+            Host vps
+              HostName ${{ secrets.SSH_HOST }}
+              User ${{ secrets.SSH_USER }}
+              Port ${{ secrets.SSH_PORT }}
+              IdentityFile ~/.ssh/github-actions-deploy
+              StrictHostKeyChecking yes
+
+      - name: Clear old build on VPS
+        run: ssh vps "rm -rf ${{ secrets.DEPLOY_PATH }}/* && mkdir -p ${{ secrets.DEPLOY_PATH }}"
+        # Clears stale files before deploying — important for Vite's hashed filenames
+
+      - name: Deploy dist to VPS
+        run: scp -r dist/* vps:${{ secrets.DEPLOY_PATH }}
+
+      - name: Set permissions
+        run: ssh vps "chmod -R 755 ${{ secrets.DEPLOY_PATH }}"
+
+      - name: Verify deployment
+        run: |
+          ssh vps "cd ${{ secrets.DEPLOY_PATH }} && ls -la"
+          echo "🚀 Apex Fleet Dashboard deployed successfully!"
