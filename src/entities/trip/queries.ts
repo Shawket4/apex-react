@@ -8,7 +8,6 @@ import {
 import { tripApi } from './api';
 import type {
   MultiContainerTripInput,
-  Trip,
   TripDetailsResponse,
   TripListParams,
   TripListResponse,

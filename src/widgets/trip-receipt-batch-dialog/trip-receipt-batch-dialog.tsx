@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { ChevronLeft, ChevronRight, ImageOff, Loader2, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ImageOff, X } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -11,6 +11,7 @@ import {
 import { Button } from '@/shared/ui/button';
 import { Skeleton } from '@/shared/ui/skeleton';
 import { useParentContainers } from '@/entities/trip/queries';
+import { type ReceiptImage } from '@/entities/trip/schemas';
 import { receiptBatchApi } from '@/entities/receipt-batch/api';
 import { cn } from '@/shared/lib/cn';
 
@@ -41,7 +42,7 @@ export function TripReceiptBatchDialog({
   const { data, isLoading } = useParentContainers(open ? parentId : null);
   const [enlargedIndex, setEnlargedIndex] = React.useState<number | null>(null);
 
-  const images = data?.parent_trip?.receipt_batch?.images ?? [];
+  const images = data?.parent_trip?.receipt_batch?.receipts ?? [];
 
   // Reset enlarged index when dialog opens / parent changes
   React.useEffect(() => {
@@ -94,7 +95,7 @@ export function TripReceiptBatchDialog({
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
-              {images.map((image, idx) => (
+              {images.map((image: ReceiptImage, idx: number) => (
                 <button
                   key={image.ID ?? idx}
                   type="button"
@@ -102,7 +103,7 @@ export function TripReceiptBatchDialog({
                   className="group relative aspect-square overflow-hidden rounded-md border bg-muted/30 transition-all hover:ring-2 hover:ring-primary"
                 >
                   <img
-                    src={receiptBatchApi.imageUrl(image.path)}
+                    src={receiptBatchApi.imageUrl(image.image_path)}
                     alt={t('trips.receiptBatch.imageAlt', { n: idx + 1 })}
                     loading="lazy"
                     className="h-full w-full object-cover transition-transform group-hover:scale-105"
@@ -168,7 +169,7 @@ export function TripReceiptBatchDialog({
             onClick={(e) => e.stopPropagation()}
           >
             <img
-              src={receiptBatchApi.imageUrl(images[enlargedIndex].path)}
+              src={receiptBatchApi.imageUrl(images[enlargedIndex].image_path)}
               alt={t('trips.receiptBatch.imageAlt', { n: enlargedIndex + 1 })}
               className="max-h-[90vh] max-w-[90vw] object-contain"
             />

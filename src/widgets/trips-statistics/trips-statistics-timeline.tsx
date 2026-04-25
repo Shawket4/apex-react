@@ -25,8 +25,6 @@ import { formatCompactNumber } from '@/shared/lib/format-number';
 import {
   CHART_SERIES_COLORS,
   CHART_OTHER_COLOR,
-  themedTooltipProps,
-  themedAxisTickProps,
 } from '@/shared/lib/chart-theme';
 import type { DailyStat } from '@/entities/trip-statistics/schemas';
 
