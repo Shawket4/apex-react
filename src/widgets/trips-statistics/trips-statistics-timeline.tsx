@@ -43,6 +43,8 @@ interface TripsStatisticsTimelineProps {
   hasFinancialAccess: boolean;
   startDate?: string | null;
   endDate?: string | null;
+  /** Total revenue from all companies (to ensure projection matches KPIs) */
+  totalRevenue?: number;
 }
 
 /**
@@ -69,6 +71,7 @@ export function TripsStatisticsTimeline({
   hasFinancialAccess,
   startDate,
   endDate,
+  totalRevenue,
 }: TripsStatisticsTimelineProps) {
   const { t } = useTranslation();
   const [metric, setMetric] = React.useState<Metric>(
@@ -121,7 +124,7 @@ export function TripsStatisticsTimeline({
     if (!minDate || !maxDate) return { chartData: [], hasOther: false };
 
     const start = new Date(minDate + 'T00:00:00');
-    const end = new Date(maxDate + 'T00:00:00');
+    const end = new Date(maxDate + 'T23:59:59');
     if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
       return buildRowsWithoutGapFill(daily, series, OTHER_KEY, metric);
     }
@@ -201,14 +204,14 @@ export function TripsStatisticsTimeline({
       return null;
     }
 
-    const totalNetRevenue = daily.reduce(
+    const revenueToUse = totalRevenue || daily.reduce(
       (sum, d) => sum + (d.total_revenue ?? 0),
       0,
     );
 
     // Use filter range if available, otherwise data range
-    const startStr = startDate || (daily.length > 0 ? toDateOnly(daily[0].date) : null);
-    const endStr = endDate || (daily.length > 0 ? toDateOnly(daily[daily.length - 1].date) : null);
+    const startStr = toDateOnly(startDate || (daily.length > 0 ? daily[0].date : null));
+    const endStr = toDateOnly(endDate || (daily.length > 0 ? daily[daily.length - 1].date : null));
     
     if (!startStr || !endStr) return null;
 
@@ -216,7 +219,7 @@ export function TripsStatisticsTimeline({
     const end = new Date(endStr + 'T00:00:00');
 
     const rangeDays = daysBetween(start, end);
-    const dailyAvg = totalNetRevenue / rangeDays;
+    const dailyAvg = revenueToUse / rangeDays;
 
     const monthStart = firstDayOfMonth(end);
     const monthEnd = lastDayOfMonth(end);
@@ -227,7 +230,7 @@ export function TripsStatisticsTimeline({
       dailyAvg,
       rangeDays,
     };
-  }, [daily, hasFinancialAccess, metric]);
+  }, [daily, hasFinancialAccess, metric, startDate, endDate, totalRevenue]);
 
   const metricOptions: Metric[] = hasFinancialAccess
     ? ['revenue', 'volume', 'trips']
