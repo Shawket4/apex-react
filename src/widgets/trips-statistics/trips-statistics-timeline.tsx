@@ -28,6 +28,7 @@ import {
   firstDayOfMonth,
   lastDayOfMonth,
   toDateOnly,
+  parseISO,
 } from '@/shared/lib/format';
 import { formatCompactNumber, formatCompactCurrency } from '@/shared/lib/format-number';
 import {
@@ -43,8 +44,6 @@ interface TripsStatisticsTimelineProps {
   hasFinancialAccess: boolean;
   startDate?: string | null;
   endDate?: string | null;
-  /** Total revenue from all companies (to ensure projection matches KPIs) */
-  totalRevenue?: number;
 }
 
 /**
@@ -71,7 +70,6 @@ export function TripsStatisticsTimeline({
   hasFinancialAccess,
   startDate,
   endDate,
-  totalRevenue,
 }: TripsStatisticsTimelineProps) {
   const { t } = useTranslation();
   const [metric, setMetric] = React.useState<Metric>(
@@ -121,54 +119,52 @@ export function TripsStatisticsTimeline({
     const sortedDates = [...dailyByDate.keys()].sort();
     const minDate = startDate ? toDateOnly(startDate) : sortedDates[0];
     const maxDate = endDate ? toDateOnly(endDate) : sortedDates[sortedDates.length - 1];
-    if (!minDate || !maxDate) return { chartData: [], hasOther: false };
-
-    const start = new Date(minDate + 'T00:00:00');
-    const end = new Date(maxDate + 'T23:59:59');
-    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
-      return buildRowsWithoutGapFill(daily, series, OTHER_KEY, metric);
-    }
+    
+    const startDateObj = minDate ? parseISO(minDate) : null;
+    const endDateObj = maxDate ? parseISO(maxDate) : null;
+    if (!startDateObj || !endDateObj) return { chartData: [], hasOther: false };
 
     const labelToKey = new Map(series.map((s) => [s.label, s.key]));
     const rows: Array<Record<string, number | string>> = [];
     let sawOther = false;
-    const cur = new Date(start);
+
+    // Use a while loop with a clone to avoid mutating the original startDateObj
+    const cur = new Date(startDateObj.getFullYear(), startDateObj.getMonth(), startDateObj.getDate());
+    const end = new Date(endDateObj.getFullYear(), endDateObj.getMonth(), endDateObj.getDate(), 23, 59, 59);
 
     while (cur <= end) {
-      const y = cur.getFullYear();
-      const m = String(cur.getMonth() + 1).padStart(2, '0');
-      const day = String(cur.getDate()).padStart(2, '0');
-      const iso = `${y}-${m}-${day}`;
-
+      const iso = toDateOnly(cur);
       const d = dailyByDate.get(iso);
+
       const row: Record<string, number | string> = { date: iso };
-      
-      // Initialize all top-N series AND the "Other" series to 0.
-      // This ensures every row has all keys for consistent rendering.
       for (const s of series) row[s.key] = 0;
       row[OTHER_KEY] = 0;
 
-      let otherValue = 0;
-      for (const cd of d?.company_details ?? []) {
-        const v =
-          metric === 'revenue'
-            ? cd.total_revenue ?? 0
-            : metric === 'volume'
-              ? cd.total_volume ?? 0
-              : cd.total_trips ?? 0;
-        const safeKey = labelToKey.get(cd.company);
-        if (safeKey) {
-          row[safeKey] = v;
-        } else {
-          otherValue += v;
+      if (d) {
+        let otherValue = 0;
+        for (const cd of d.company_details ?? []) {
+          let v =
+            metric === 'revenue'
+              ? cd.total_revenue ?? cd.total_with_vat ?? 0
+              : metric === 'volume'
+                ? cd.total_volume ?? 0
+                : cd.total_trips ?? 0;
+          
+          if (!Number.isFinite(v)) v = 0;
+
+          const safeKey = labelToKey.get(cd.company);
+          if (safeKey) {
+            row[safeKey] = v;
+          } else {
+            otherValue += v;
+          }
+        }
+        if (otherValue > 0) {
+          row[OTHER_KEY] = otherValue;
+          sawOther = true;
         }
       }
-      if (otherValue > 0) {
-        row[OTHER_KEY] = otherValue;
-        sawOther = true;
-      }
       rows.push(row);
-
       cur.setDate(cur.getDate() + 1);
     }
 
@@ -204,7 +200,7 @@ export function TripsStatisticsTimeline({
       return null;
     }
 
-    const revenueToUse = totalRevenue || daily.reduce(
+    const revenueToUse = daily.reduce(
       (sum, d) => sum + (d.total_revenue ?? 0),
       0,
     );
@@ -230,7 +226,7 @@ export function TripsStatisticsTimeline({
       dailyAvg,
       rangeDays,
     };
-  }, [daily, hasFinancialAccess, metric, startDate, endDate, totalRevenue]);
+  }, [daily, hasFinancialAccess, metric, startDate, endDate]);
 
   const metricOptions: Metric[] = hasFinancialAccess
     ? ['revenue', 'volume', 'trips']
@@ -401,49 +397,4 @@ export function TripsStatisticsTimeline({
       )}
     </ChartCard>
   );
-}
-
-/**
- * Fallback row builder for when start/end can't be parsed — emit only the
- * dates we have, no gap fill. Same safe-key transform as the main path.
- */
-function buildRowsWithoutGapFill(
-  daily: DailyStat[],
-  series: Array<{ key: string; label: string }>,
-  otherKey: string,
-  metric: Metric,
-): { chartData: Array<Record<string, number | string>>; hasOther: boolean } {
-  const labelToKey = new Map(series.map((s) => [s.label, s.key]));
-  let sawOther = false;
-
-  const chartData = daily.map((d) => {
-    const row: Record<string, number | string> = { date: d.date };
-    
-    // Initialize all series keys to 0
-    for (const s of series) row[s.key] = 0;
-    row[otherKey] = 0;
-
-    let otherValue = 0;
-    for (const cd of d.company_details ?? []) {
-      const v =
-        metric === 'revenue'
-          ? cd.total_revenue ?? 0
-          : metric === 'volume'
-            ? cd.total_volume ?? 0
-            : cd.total_trips ?? 0;
-      const safeKey = labelToKey.get(cd.company);
-      if (safeKey) {
-        row[safeKey] = v;
-      } else {
-        otherValue += v;
-      }
-    }
-    if (otherValue > 0) {
-      row[otherKey] = otherValue;
-      sawOther = true;
-    }
-    return row;
-  });
-
-  return { chartData, hasOther: sawOther };
 }

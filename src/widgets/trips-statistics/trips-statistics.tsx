@@ -140,23 +140,7 @@ export function TripsStatistics({ filters }: TripsStatisticsProps) {
     );
   }
 
-  /* ---- Totals --------------------------------------------------------- */
-  
-  const totals = React.useMemo(() => {
-    if (!data) return null;
-    return data.data.reduce(
-      (acc, c) => ({
-        trips: acc.trips + (c.total_trips || 0),
-        volume: acc.volume + (c.total_volume || 0),
-        distance: acc.distance + (c.total_distance || 0),
-        revenue: acc.revenue + (c.total_revenue || 0),
-        vat: acc.vat + (c.total_vat || 0),
-        total_with_vat:
-          acc.total_with_vat + (c.total_amount || c.total_revenue || 0),
-      }),
-      { trips: 0, volume: 0, distance: 0, revenue: 0, vat: 0, total_with_vat: 0 },
-    );
-  }, [data]);
+
 
   /* ---- Render --------------------------------------------------------- */
 
@@ -215,7 +199,6 @@ export function TripsStatistics({ filters }: TripsStatisticsProps) {
             hasFinancialAccess={data.hasFinancialAccess}
             startDate={filters.startDate}
             endDate={filters.endDate}
-            totalRevenue={totals?.revenue}
           />
           <TripsStatisticsCompanies
             companies={data.data}
