@@ -31,7 +31,6 @@ const darkMapStyle: google.maps.MapTypeStyle[] = [
   { elementType: 'labels.text.stroke', stylers: [{ color: '#1c2333' }] },
   { elementType: 'labels.text.fill', stylers: [{ color: '#8892a4' }] },
   { featureType: 'administrative.locality', elementType: 'labels.text.fill', stylers: [{ color: '#c9d1db' }] },
-  { featureType: 'poi', elementType: 'labels', stylers: [{ visibility: 'off' }] },
   { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#283044' }] },
   { featureType: 'road', elementType: 'geometry.stroke', stylers: [{ color: '#1a2030' }] },
   { featureType: 'road', elementType: 'labels.text.fill', stylers: [{ color: '#6b7a90' }] },
@@ -39,15 +38,12 @@ const darkMapStyle: google.maps.MapTypeStyle[] = [
   { featureType: 'road.highway', elementType: 'geometry.stroke', stylers: [{ color: '#1a2030' }] },
   { featureType: 'road.highway', elementType: 'labels.text.fill', stylers: [{ color: '#a0aec0' }] },
   { featureType: 'transit', elementType: 'geometry', stylers: [{ color: '#222d40' }] },
-  { featureType: 'transit.station', elementType: 'labels', stylers: [{ visibility: 'off' }] },
   { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#0f1724' }] },
   { featureType: 'water', elementType: 'labels.text.fill', stylers: [{ color: '#3d5166' }] },
   { featureType: 'landscape.natural', elementType: 'geometry', stylers: [{ color: '#1a2638' }] },
 ];
 
 const lightMapStyle: google.maps.MapTypeStyle[] = [
-  { featureType: 'poi', elementType: 'labels', stylers: [{ visibility: 'off' }] },
-  { featureType: 'transit', elementType: 'labels.icon', stylers: [{ visibility: 'off' }] },
   { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#f5f5f5' }] },
   { featureType: 'road', elementType: 'geometry.stroke', stylers: [{ color: '#e0e0e0' }] },
   { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#ffffff' }] },
@@ -135,9 +131,9 @@ export function MapView({
   const mapRef = React.useRef<google.maps.Map | null>(null);
   const boundsRef = React.useRef<google.maps.LatLngBounds | null>(null);
   const [mapReady, setMapReady] = React.useState(false);
-  const [terrain, setTerrain] = React.useState(false);
+  const [hybrid, setHybrid] = React.useState(false);
   // Ref so the MutationObserver closure always sees the live value
-  const terrainRef = React.useRef(false);
+  const hybridRef = React.useRef(false);
 
   // ── Initialise ─────────────────────────────────────────────────────────────
   React.useEffect(() => {
@@ -185,7 +181,7 @@ export function MapView({
 
         // ── Theme observer ───────────────────────────────────────────────────
         const observer = new MutationObserver(() => {
-          if (terrainRef.current) return; // styles don't apply to TERRAIN type
+          if (hybridRef.current) return; // styles don't apply to HYBRID type
           const dark = document.documentElement.classList.contains('dark');
           map.setOptions({ styles: dark ? darkMapStyle : lightMapStyle });
         });
@@ -290,25 +286,23 @@ export function MapView({
     map.fitBounds(bounds, { top: 64, right: 64, bottom: 64, left: 64 });
   }, []);
 
-  const toggleTerrain = React.useCallback(() => {
+  const toggleHybrid = React.useCallback(() => {
     const map = mapRef.current;
     if (!map) return;
 
-    // Snapshot current viewport so switching map type doesn't reset the camera.
     const center = map.getCenter();
     const zoom = map.getZoom();
 
-    const next = !terrainRef.current;
-    terrainRef.current = next;
-    setTerrain(next);
+    const next = !hybridRef.current;
+    hybridRef.current = next;
+    setHybrid(next);
 
     if (next) {
-      // Switch to TERRAIN first, then restore viewport.
-      // setMapTypeId() is used directly (not via setOptions) — setOptions can
-      // trigger internal layout reflows that reset center/zoom on some versions.
-      map.setMapTypeId(google.maps.MapTypeId.TERRAIN);
-      // Custom styles are silently ignored on TERRAIN; clearing them avoids a
-      // console warning and keeps the option object clean.
+      // HYBRID = satellite imagery + road/label overlay. Always looks
+      // dramatically different from roadmap regardless of geography.
+      // Custom styles are not applied to non-roadmap types; clearing them
+      // avoids a silent console warning from the SDK.
+      map.setMapTypeId(google.maps.MapTypeId.HYBRID);
       map.setOptions({ styles: [] });
     } else {
       map.setMapTypeId(google.maps.MapTypeId.ROADMAP);
@@ -316,7 +310,6 @@ export function MapView({
       map.setOptions({ styles: isDark ? darkMapStyle : lightMapStyle });
     }
 
-    // Restore viewport after the type switch.
     if (center) map.setCenter(center);
     if (zoom !== undefined) map.setZoom(zoom);
   }, []);
@@ -332,10 +325,10 @@ export function MapView({
         <div className="absolute right-3 top-3 z-10 flex flex-col gap-1.5">
           <Button
             size="icon"
-            variant={terrain ? 'default' : 'secondary'}
+            variant={hybrid ? 'default' : 'secondary'}
             className="h-8 w-8 rounded-md shadow-md backdrop-blur-sm"
-            onClick={toggleTerrain}
-            title={terrain ? 'Switch to road map' : 'Show terrain'}
+            onClick={toggleHybrid}
+            title={hybrid ? 'Switch to road map' : 'Switch to satellite'}
           >
             <Mountain className="h-4 w-4" />
           </Button>
