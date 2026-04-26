@@ -250,3 +250,5 @@ export function FeeMappingsPage() {
     </div>
   );
 }
+
+export default FeeMappingsPage;
