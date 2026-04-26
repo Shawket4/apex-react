@@ -4,13 +4,13 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslation } from 'react-i18next';
 import {
   Car,
-  User,
   Wrench,
   Loader2,
   Save,
   RotateCcw,
   Sparkles,
   X,
+  History,
 } from 'lucide-react';
 import {
   oilChangeFormSchema,
@@ -79,14 +79,9 @@ function getDefaults(initial?: OilChangeFormInitialValues): OilChangeFormValues 
 /**
  * Shared create + edit form for oil-change records.
  *
- * Three logical sections (vehicle, personnel, maintenance) following the
- * fuel-event form pattern. The driver auto-fills from the picked car's
- * `driver_id` in both modes — switching the car on an existing record
- * almost always means the new car's driver is the right one.
- *
- * `current_odometer` is hidden in create mode (the API copies
- * `odometer_at_change` into it server-side) and visible in edit mode for
- * mid-cycle updates.
+ * Re-structured to match the fuel-event-form architecture. Fields are grouped
+ * into logical cards with consistent grid layouts and standard controlled-input
+ * patterns.
  */
 export function OilChangeForm({
   mode,
@@ -131,8 +126,7 @@ export function OilChangeForm({
     [drivers],
   );
 
-  // Auto-fill driver on car change. Same approach as the fuel-event form:
-  // a ref guards against the initial render firing the effect.
+  // Auto-fill driver on car change. Same architecture as fuel-event-form.
   const watchedCarId = form.watch('car_id');
   const previousCarIdRef = React.useRef<number | undefined>(initialValues?.car_id);
 
@@ -156,7 +150,7 @@ export function OilChangeForm({
     }
   }, [watchedCarId, cars, drivers, form]);
 
-  // Watched values for the live preview card
+  // Watched values for the live status preview
   const mileage = form.watch('mileage');
   const odometerAtChange = form.watch('odometer_at_change');
   const currentOdometer = form.watch('current_odometer');
@@ -175,12 +169,12 @@ export function OilChangeForm({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        {/* Vehicle + date */}
+        {/* Vehicle & Personnel */}
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
               <Car className="h-4 w-4 text-muted-foreground" />
-              {t('oilChanges.form.sections.vehicle')}
+              {t('oilChanges.form.sections.vehicle')} &amp; {t('oilChanges.form.sections.personnel')}
             </CardTitle>
           </CardHeader>
           <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -202,35 +196,7 @@ export function OilChangeForm({
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="date"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('oilChanges.fields.date')}</FormLabel>
-                  <FormControl>
-                    <DatePicker
-                      value={field.value}
-                      onChange={field.onChange}
-                      max={today()}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </CardContent>
-        </Card>
 
-        {/* Personnel */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <User className="h-4 w-4 text-muted-foreground" />
-              {t('oilChanges.form.sections.personnel')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <FormField
               control={form.control}
               name="driver_name"
@@ -272,6 +238,36 @@ export function OilChangeForm({
                 </FormItem>
               )}
             />
+          </CardContent>
+        </Card>
+
+        {/* Maintenance Info */}
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <History className="h-4 w-4 text-muted-foreground" />
+              {t('oilChanges.title')}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <FormField
+              control={form.control}
+              name="date"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>{t('oilChanges.fields.date')}</FormLabel>
+                  <FormControl>
+                    <DatePicker
+                      value={field.value}
+                      onChange={field.onChange}
+                      max={today()}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
             <FormField
               control={form.control}
               name="supervisor"
@@ -283,6 +279,8 @@ export function OilChangeForm({
                       type="text"
                       placeholder={t('oilChanges.fields.supervisorPlaceholder')}
                       {...field}
+                      value={field.value ?? ''}
+                      onChange={(e) => field.onChange(e.target.value)}
                     />
                   </FormControl>
                   <FormMessage />
@@ -292,7 +290,7 @@ export function OilChangeForm({
           </CardContent>
         </Card>
 
-        {/* Maintenance details */}
+        {/* Maintenance Details */}
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
@@ -300,13 +298,8 @@ export function OilChangeForm({
               {t('oilChanges.form.sections.maintenance')}
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div
-              className={cn(
-                'grid grid-cols-1 gap-4',
-                mode === 'edit' ? 'sm:grid-cols-3' : 'sm:grid-cols-2',
-              )}
-            >
+          <CardContent className="space-y-6">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <FormField
                 control={form.control}
                 name="odometer_at_change"
@@ -332,10 +325,7 @@ export function OilChangeForm({
                 )}
               />
 
-              {/* Current odometer is only relevant when amending an existing
-                  record — on create, the API copies odometer_at_change into
-                  it. Hiding it removes a confusing field. */}
-              {mode === 'edit' && (
+              {mode === 'edit' ? (
                 <FormField
                   control={form.control}
                   name="current_odometer"
@@ -360,6 +350,9 @@ export function OilChangeForm({
                     </FormItem>
                   )}
                 />
+              ) : (
+                /* Empty space in grid for create mode to keep layout balanced */
+                <div className="hidden sm:block" />
               )}
 
               <FormField
@@ -386,51 +379,53 @@ export function OilChangeForm({
                   </FormItem>
                 )}
               />
+
+              <FormField
+                control={form.control}
+                name="cost"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{t('oilChanges.fields.cost')}</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Input
+                          type="number"
+                          step="0.01"
+                          inputMode="decimal"
+                          placeholder="0.00"
+                          className="pe-12"
+                          {...field}
+                          value={field.value ?? ''}
+                          onChange={(e) =>
+                            field.onChange(
+                              e.target.value === '' ? undefined : e.target.value,
+                            )
+                          }
+                        />
+                        <span className="pointer-events-none absolute end-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-muted-foreground">
+                          EGP
+                        </span>
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
 
-            <FormField
-              control={form.control}
-              name="cost"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('oilChanges.fields.cost')}</FormLabel>
-                  <FormControl>
-                    <div className="relative">
-                      <Input
-                        type="number"
-                        step="0.01"
-                        inputMode="decimal"
-                        placeholder="0.00"
-                        className="pe-14"
-                        {...field}
-                        value={field.value ?? ''}
-                        onChange={(e) =>
-                          field.onChange(
-                            e.target.value === '' ? undefined : e.target.value,
-                          )
-                        }
-                      />
-                      <span className="pointer-events-none absolute end-3 top-1/2 -translate-y-1/2 text-xs font-medium text-muted-foreground">
-                        EGP
-                      </span>
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <OilChangeStatusPreview
-              mileage={Number(mileage) || 0}
-              odometerAtChange={Number(odometerAtChange) || 0}
-              currentOdometer={
-                currentOdometer != null ? Number(currentOdometer) : undefined
-              }
-            />
+            <div className="pt-2">
+              <OilChangeStatusPreview
+                mileage={Number(mileage) || 0}
+                odometerAtChange={Number(odometerAtChange) || 0}
+                currentOdometer={
+                  currentOdometer != null ? Number(currentOdometer) : undefined
+                }
+              />
+            </div>
           </CardContent>
         </Card>
 
-        {/* Action bar */}
+        {/* Actions */}
         <div className="sticky bottom-0 -mx-4 flex flex-col gap-2 border-t bg-background/90 p-4 backdrop-blur supports-[backdrop-filter]:bg-background/70 md:-mx-6 md:flex-row md:justify-end md:gap-3 md:px-6">
           {showResetChanges && form.formState.isDirty && (
             <Button
