@@ -80,14 +80,26 @@ export default defineConfig({
          * important for `@radix-ui/*` where the exact sub-packages depend
          * on which shadcn primitives we use.
          *
-         * exceljs and leaflet are NOT listed here — they're already
-         * dynamically imported at their call sites, so Rollup gives them
-         * their own chunks automatically.
+         * exceljs is NOT listed here — it's already dynamically imported at
+         * its call site, so Rollup gives it its own chunk automatically.
+         *
+         * The Google Maps JS SDK itself is also excluded: it is fetched at
+         * runtime directly from Google's CDN by @googlemaps/js-api-loader,
+         * so Rollup never sees those bytes. Only the loader package ends up
+         * in our bundle, and it goes into its own chunk below.
          *
          * Order matters: more-specific matches above the catch-alls.
          */
         manualChunks(id) {
           if (!id.includes('node_modules')) return undefined;
+
+          // Google Maps loader — small package (~8 kB minified) that barely
+          // ever changes. Isolated into its own chunk so:
+          //   1. The lazy map-view chunk stays small and cache-busts only
+          //      when our map code actually changes.
+          //   2. The loader itself enjoys near-permanent cache hits because
+          //      it only invalidates when we bump @googlemaps/js-api-loader.
+          if (id.includes('@googlemaps/')) return 'maps-vendor';
 
           // Charts — recharts pulls in a chunk of d3-* sub-packages.
           // Splitting these out means the dashboard chunk stays small.
