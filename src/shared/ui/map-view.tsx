@@ -240,10 +240,29 @@ export function MapView({
           }
 
           // Double click → smooth zoom-in on the marker (zoom 18 = street level)
-          marker.addListener('dblclick', () => {
+         marker.addListener('dblclick', () => {
             infoWindow.close();
+            
+            const targetZoom = 18;
+            const currentZoom = map.getZoom() ?? 11;
+            
+            // 1. Start the smooth pan
             map.panTo(position);
-            map.setZoom(18);
+
+            if (currentZoom === targetZoom) return;
+
+            // 2. Step the zoom gradually to simulate an animation
+            const step = currentZoom < targetZoom ? 1 : -1;
+            let z = currentZoom;
+
+            const zoomInterval = setInterval(() => {
+              z += step;
+              map.setZoom(z);
+              
+              if (z === targetZoom) {
+                clearInterval(zoomInterval);
+              }
+            }, 80); // 80ms per step gives a fluid "fly-in" feel
           });
         });
 
