@@ -141,12 +141,13 @@ export function MapView({
     let isMounted = true;
     injectInfoWindowStyles();
 
-    const lang = i18n.language || 'en';
+const lang = i18n.language || 'en';
     if (googleMapsLanguage !== lang) {
       setOptions({
         key: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '',
         v: 'weekly',
         language: lang,
+        mapIds: [import.meta.env.VITE_GOOGLE_MAPS_MAP_ID || 'DEMO_MAP_ID'], 
       });
       googleMapsLanguage = lang;
     }
