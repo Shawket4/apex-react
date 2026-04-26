@@ -13,7 +13,7 @@
     "confirm": "تأكيد",
     "close": "إغلاق",
     "back": "رجوع",
-    "retry": "إعادة",
+    "retry": "إعادة المحاولة",
     "reset": "إعادة ضبط",
     "loading": "جاري التحميل...",
     "saving": "جاري الحفظ...",
@@ -542,13 +542,19 @@
       "dialogTitle": "تفاصيل مسار الرحلة",
       "dialogDescription": "عرض المستودع ونقطة التسليم والمسار المحسن.",
       "invalidCoordinates": "إحداثيات نقطة التسليم مفقودة أو غير صالحة.",
+      "bothInvalidCoords": "لا توجد إحداثيات صالحة لكل من المحطة ونقطة التسليم لهذه الرحلة",
+      "partialRoute": {
+        "title": "بيانات المسار غير مكتملة",
+        "missingTerminal": "موقع المحطة غير صالح أو مفقود. يتم عرض نقطة التسليم فقط.",
+        "missingDropoff": "موقع نقطة التسليم غير صالح أو مفقود. يتم عرض المحطة فقط."
+      },
       "loadFailed": "فشل تحميل بيانات الخريطة.",
       "terminal": "المستودع",
       "dropOff": "نقطة التسليم",
       "route": "المسار",
-      "openTerminal": "فتح المستودع",
+      "openTerminal": "فتح المحطة",
       "openDropoff": "فتح نقطة التسليم",
-      "openRoute": "عرض المسار"
+      "openRoute": "فتح المسار"
     },
     "form": {
       "titleCreate": "إضافة رحلة",
@@ -881,5 +887,92 @@
     "actionsFor": "إجراءات لـ {{name}}...",
     "searchCompanies": "ابحث عن الشركات...",
     "searchTerminals": "ابحث عن المستودعات في {{company}}..."
+  },
+  "feeMappings": {
+    "pageTitle": "خرائط الأسعار",
+    "pageSubtitle": "مسافات وأسعار الطرق لشركة أبيكس للنقل",
+    "fields": {
+      "company": "الشركة",
+      "terminal": "المحطة",
+      "dropOffPoint": "نقطة التسليم",
+      "distance": "المسافة (كم)",
+      "distanceShort": "المسافة",
+      "distanceManual": "المسافة اليدوية",
+      "osrmDistance": "OSRM (كم)",
+      "osrmDuration": "المدة",
+      "fee": "الرسوم (ج.م)",
+      "accuracy": "الدقة"
+    },
+    "form": {
+      "createTitle": "إضافة خريطة جديدة",
+      "editTitle": "تعديل الخريطة",
+      "add": "إضافة",
+      "save": "حفظ",
+      "createSuccess": "تم إنشاء الخريطة",
+      "createFailed": "فشل إنشاء الخريطة",
+      "updateSuccess": "تم تحديث الخريطة",
+      "updateFailed": "فشل تحديث الخريطة",
+      "validation": {
+        "fillRequired": "يرجى ملء جميع الحقول المطلوبة بقيم صحيحة"
+      }
+    },
+    "filters": {
+      "searchPlaceholder": "البحث عن شركة، محطة، نقطة تسليم…",
+      "allCompanies": "كل الشركات",
+      "allAccuracies": "كل الدقات"
+    },
+    "stats": {
+      "total": "الإجمالي",
+      "accurate": "دقيق",
+      "conservative": "محافظ",
+      "overestimate": "زائد",
+      "unknown": "بدون OSRM"
+    },
+    "accuracy": {
+      "accurate": "دقيق",
+      "conservative": "محافظ",
+      "overestimate": "زائد",
+      "unknown": "بدون OSRM"
+    },
+    "actions": {
+      "setLocation": "تعيين الموقع",
+      "updateLocation": "تحديث الموقع",
+      "bulkEnrich": "إثراء OSRM المجمع",
+      "export": "تصدير"
+    },
+    "location": {
+      "title": "تعيين موقع نقطة التسليم",
+      "latitude": "خط العرض",
+      "longitude": "خط الطول",
+      "hint": "انقر على الخريطة أو اسحب الدبوس لتعيين الموقع",
+      "saveAndEnrich": "حفظ وحساب OSRM",
+      "saveSuccess": "تم حفظ الموقع وتحديث بيانات OSRM",
+      "saveFailed": "فشل حفظ الموقع",
+      "invalidCoords": "يرجى إدخال أو اختيار إحداثيات صحيحة"
+    },
+    "bulkEnrich": {
+      "title": "إثراء OSRM المجمع",
+      "processed": "تمت المعالجة",
+      "succeeded": "نجحت",
+      "failed": "فشلت"
+    },
+    "delete": {
+      "confirmTitle": "حذف خريطة الأسعار؟",
+      "confirmDescription": "هل تريد حذف خريطة {{company}} → {{dropoff}} نهائياً؟ لا يمكن التراجع عن هذا الإجراء.",
+      "success": "تم حذف الخريطة",
+      "failed": "فشل حذف الخريطة"
+    },
+    "export": {
+      "empty": "لا يوجد ما يمكن تصديره"
+    },
+    "excel": {
+      "sheetName": "خرائط الأسعار",
+      "discrepancy": "الفارق (كم)",
+      "located": "محدد الموقع",
+      "totalFee": "إجمالي الرسوم"
+    },
+    "errors": {
+      "loadFailed": "فشل تحميل خرائط الأسعار"
+    }
   }
 }

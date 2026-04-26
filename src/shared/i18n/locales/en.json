@@ -542,13 +542,19 @@
       "dialogTitle": "Trip Route Details",
       "dialogDescription": "View the terminal, drop-off, and optimized route.",
       "invalidCoordinates": "Drop-off coordinates are missing or invalid.",
+      "bothInvalidCoords": "This trip has no valid coordinates for either the terminal or the drop-off point",
+      "partialRoute": {
+        "title": "Incomplete route data",
+        "missingTerminal": "The terminal location is missing or invalid. Showing only the drop-off point.",
+        "missingDropoff": "The drop-off location is missing or invalid. Showing only the terminal."
+      },
       "loadFailed": "Failed to load map data.",
       "terminal": "Terminal",
       "dropOff": "Drop-off",
       "route": "Route",
-      "openTerminal": "Open Terminal",
-      "openDropoff": "Open Drop-off",
-      "openRoute": "View Route"
+      "openTerminal": "Open terminal",
+      "openDropoff": "Open drop-off",
+      "openRoute": "Open route"
     },
     "form": {
       "titleCreate": "Add trip",
@@ -881,5 +887,92 @@
     "actionsFor": "Actions for {{name}}...",
     "searchCompanies": "Search companies...",
     "searchTerminals": "Search terminals in {{company}}..."
+  },
+  "feeMappings": {
+    "pageTitle": "Fee Mappings",
+    "pageSubtitle": "Route distances and pricing for Apex Transport",
+    "fields": {
+      "company": "Company",
+      "terminal": "Terminal",
+      "dropOffPoint": "Drop-off Point",
+      "distance": "Distance (km)",
+      "distanceShort": "Distance",
+      "distanceManual": "Manual Distance",
+      "osrmDistance": "OSRM (km)",
+      "osrmDuration": "Duration",
+      "fee": "Fee (EGP)",
+      "accuracy": "Accuracy"
+    },
+    "form": {
+      "createTitle": "Add new mapping",
+      "editTitle": "Edit mapping",
+      "add": "Add",
+      "save": "Save",
+      "createSuccess": "Mapping created",
+      "createFailed": "Failed to create mapping",
+      "updateSuccess": "Mapping updated",
+      "updateFailed": "Failed to update mapping",
+      "validation": {
+        "fillRequired": "Please fill in all required fields with valid values"
+      }
+    },
+    "filters": {
+      "searchPlaceholder": "Search company, terminal, drop-off…",
+      "allCompanies": "All companies",
+      "allAccuracies": "All accuracies"
+    },
+    "stats": {
+      "total": "Total",
+      "accurate": "Accurate",
+      "conservative": "Conservative",
+      "overestimate": "Overestimate",
+      "unknown": "No OSRM"
+    },
+    "accuracy": {
+      "accurate": "Accurate",
+      "conservative": "Conservative",
+      "overestimate": "Overestimate",
+      "unknown": "No OSRM"
+    },
+    "actions": {
+      "setLocation": "Set location",
+      "updateLocation": "Update location",
+      "bulkEnrich": "Bulk OSRM enrich",
+      "export": "Export"
+    },
+    "location": {
+      "title": "Set drop-off location",
+      "latitude": "Latitude",
+      "longitude": "Longitude",
+      "hint": "Click anywhere on the map or drag the pin to set the position",
+      "saveAndEnrich": "Save & calculate OSRM",
+      "saveSuccess": "Location saved and OSRM data updated",
+      "saveFailed": "Failed to save location",
+      "invalidCoords": "Please enter or select valid coordinates"
+    },
+    "bulkEnrich": {
+      "title": "Bulk OSRM enrichment",
+      "processed": "Processed",
+      "succeeded": "Succeeded",
+      "failed": "Failed"
+    },
+    "delete": {
+      "confirmTitle": "Delete fee mapping?",
+      "confirmDescription": "Permanently delete the mapping for {{company}} → {{dropoff}}? This action cannot be undone.",
+      "success": "Mapping deleted",
+      "failed": "Failed to delete mapping"
+    },
+    "export": {
+      "empty": "Nothing to export"
+    },
+    "excel": {
+      "sheetName": "Fee Mappings",
+      "discrepancy": "Discrepancy (km)",
+      "located": "Located",
+      "totalFee": "Total Fee"
+    },
+    "errors": {
+      "loadFailed": "Failed to load fee mappings"
+    }
   }
 }
