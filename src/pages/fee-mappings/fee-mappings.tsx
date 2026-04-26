@@ -1,11 +1,12 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { AlertCircle, Download, Loader2, RefreshCw } from 'lucide-react';
+import { AlertCircle, Banknote, Download, Loader2, RefreshCw } from 'lucide-react';
 import { Button } from '@/shared/ui/button';
 import { Card, CardContent } from '@/shared/ui/card';
 import { Skeleton } from '@/shared/ui/skeleton';
 import { ConfirmDialog } from '@/shared/ui/confirm-dialog';
+import { PageShell } from '@/shared/ui/page-shell';
 import { extractErrorMessage } from '@/shared/api/errors';
 import {
   useBulkEnrichFeeMappings,
@@ -123,44 +124,41 @@ export function FeeMappingsPage() {
 
   /* ---- Render ---- */
 
+  const actions = (
+    <>
+      <Button
+        size="sm"
+        variant="outline"
+        onClick={() => void handleBulkEnrich()}
+        disabled={bulkEnrich.isPending}
+        className="gap-1.5"
+      >
+        {bulkEnrich.isPending ? (
+          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+        ) : (
+          <RefreshCw className="h-3.5 w-3.5" />
+        )}
+        {t('feeMappings.actions.bulkEnrich')}
+      </Button>
+      <Button
+        size="sm"
+        onClick={handleExport}
+        disabled={filtered.length === 0}
+        className="gap-1.5"
+      >
+        <Download className="h-3.5 w-3.5" />
+        {t('feeMappings.actions.export')}
+      </Button>
+    </>
+  );
+
   return (
-    <div className="space-y-4">
-      {/* Page header */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-xl font-bold tracking-tight">
-            {t('feeMappings.pageTitle')}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            {t('feeMappings.pageSubtitle')}
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => void handleBulkEnrich()}
-            disabled={bulkEnrich.isPending}
-            className="gap-1.5"
-          >
-            {bulkEnrich.isPending ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <RefreshCw className="h-3.5 w-3.5" />
-            )}
-            {t('feeMappings.actions.bulkEnrich')}
-          </Button>
-          <Button
-            size="sm"
-            onClick={handleExport}
-            disabled={filtered.length === 0}
-            className="gap-1.5"
-          >
-            <Download className="h-3.5 w-3.5" />
-            {t('feeMappings.actions.export')}
-          </Button>
-        </div>
-      </div>
+    <PageShell
+      title={t('feeMappings.pageTitle')}
+      description={t('feeMappings.pageSubtitle')}
+      icon={<Banknote className="h-5 w-5" />}
+      actions={actions}
+    >
 
       {/* Error banner */}
       {isError && (
@@ -247,7 +245,7 @@ export function FeeMappingsPage() {
         loading={deleteMutation.isPending}
         onConfirm={() => void handleDelete()}
       />
-    </div>
+    </PageShell>
   );
 }
 

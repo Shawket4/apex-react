@@ -111,7 +111,7 @@ export function DatePicker({
           role="combobox"
           disabled={disabled}
           className={cn(
-            'h-10 w-full justify-between font-normal',
+            'h-9 w-full justify-between font-normal',
             !value && 'text-muted-foreground',
             className,
           )}
