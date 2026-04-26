@@ -215,7 +215,7 @@ export function TripLocationDialog({
         title: t('trips.fields.terminal'),
         popupHtml: `
           <div style="
-            padding: 14px 16px;
+            padding: 20px 16px 14px;
             min-width: 170px;
             font-family: inherit;
             text-align: center;
@@ -252,7 +252,7 @@ export function TripLocationDialog({
         title: t('trips.fields.dropOffPoint'),
         popupHtml: `
           <div style="
-            padding: 14px 16px;
+            padding: 20px 16px 14px;
             min-width: 170px;
             font-family: inherit;
             text-align: center;

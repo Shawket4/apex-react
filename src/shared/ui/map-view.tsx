@@ -166,6 +166,7 @@ export function MapView({
         const map = new mapsLib.Map(containerRef.current, {
           center: { lat: centerFallback[0], lng: centerFallback[1] },
           zoom: 11,
+          mapId: import.meta.env.VITE_GOOGLE_MAPS_MAP_ID || 'DEMO_MAP_ID',
           mapTypeId: google.maps.MapTypeId.ROADMAP,
           styles: isDark ? darkMapStyle : lightMapStyle,
           mapTypeControl: false,
@@ -290,28 +291,24 @@ export function MapView({
     const map = mapRef.current;
     if (!map) return;
 
-    const center = map.getCenter();
-    const zoom = map.getZoom();
-
     const next = !hybridRef.current;
     hybridRef.current = next;
     setHybrid(next);
 
     if (next) {
-      // HYBRID = satellite imagery + road/label overlay. Always looks
-      // dramatically different from roadmap regardless of geography.
-      // Custom styles are not applied to non-roadmap types; clearing them
-      // avoids a silent console warning from the SDK.
-      map.setMapTypeId(google.maps.MapTypeId.HYBRID);
-      map.setOptions({ styles: [] });
+      // HYBRID = satellite imagery + road/label overlay
+      // Custom styles are not applied to non-roadmap types
+      map.setOptions({ 
+        mapTypeId: google.maps.MapTypeId.HYBRID,
+        styles: [] 
+      });
     } else {
-      map.setMapTypeId(google.maps.MapTypeId.ROADMAP);
       const isDark = document.documentElement.classList.contains('dark');
-      map.setOptions({ styles: isDark ? darkMapStyle : lightMapStyle });
+      map.setOptions({ 
+        mapTypeId: google.maps.MapTypeId.ROADMAP,
+        styles: isDark ? darkMapStyle : lightMapStyle 
+      });
     }
-
-    if (center) map.setCenter(center);
-    if (zoom !== undefined) map.setZoom(zoom);
   }, []);
 
   // ── Render ──────────────────────────────────────────────────────────────────
