@@ -106,42 +106,6 @@ function buildMarkerSvg(color: string, filterId: string): string {
   `)}`;
 }
 
-/**
- * Custom animation function to simultaneously pan and zoom smoothly
- * Requires map option: isFractionalZoomEnabled: true
- */
-function smoothFlyTo(map: google.maps.Map, target: google.maps.LatLngLiteral, targetZoom: number) {
-  const startZoom = map.getZoom() ?? 11;
-  const startCenter = map.getCenter();
-  if (!startCenter) return;
-
-  const startLat = startCenter.lat();
-  const startLng = startCenter.lng();
-  
-  const startTime = performance.now();
-  const duration = 800; // ms
-
-  // easeInOutCubic for a natural feel
-  const ease = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
-
-  function animate(currentTime: number) {
-    const elapsed = currentTime - startTime;
-    const progress = Math.min(elapsed / duration, 1);
-    const easeProgress = ease(progress);
-
-    map.setZoom(startZoom + (targetZoom - startZoom) * easeProgress);
-    map.setCenter({
-      lat: startLat + (target.lat - startLat) * easeProgress,
-      lng: startLng + (target.lng - startLng) * easeProgress,
-    });
-
-    if (progress < 1) {
-      requestAnimationFrame(animate);
-    }
-  }
-
-  requestAnimationFrame(animate);
-}
 
 let googleMapsLanguage: string | null = null;
 
@@ -300,10 +264,17 @@ export function MapView({
       }
 
       // Smooth custom fly-in
-      marker.addListener('dblclick', () => {
-        if (infoWindow) infoWindow.close();
-        smoothFlyTo(map, position, 18);
-      });
+     marker.addListener('dblclick', () => {
+  if (infoWindow) infoWindow.close();
+  
+  // 1. Native smooth pan
+  map.panTo(position);
+  
+  // 2. Wait for the pan to finish, then zoom
+  google.maps.event.addListenerOnce(map, 'idle', () => {
+    map.setZoom(18); 
+  });
+});
     });
 
     boundsRef.current = hasBounds ? bounds : null;
@@ -327,7 +298,7 @@ export function MapView({
     map.fitBounds(bounds, { top: 64, right: 64, bottom: 64, left: 64 });
   }, []);
 
-  const toggleSatellite = React.useCallback(() => {
+const toggleSatellite = React.useCallback(() => {
     const map = mapRef.current;
     if (!map) return;
 
@@ -335,8 +306,14 @@ export function MapView({
       const next = !prev;
       
       if (next) {
-        map.setMapTypeId(google.maps.MapTypeId.SATELLITE);
+        // 1. Use HYBRID to get satellite imagery WITH place labels and roads
+        map.setMapTypeId(google.maps.MapTypeId.HYBRID);
+        
+        // 2. CRITICAL: You must clear your custom styles, otherwise the labels 
+        // will conflict and fail to show up on top of the satellite imagery.
+        map.setOptions({ styles: null }); 
       } else {
+        // 3. Switch back to ROADMAP and re-apply your custom light/dark themes
         const isDark = document.documentElement.classList.contains('dark');
         map.setMapTypeId(google.maps.MapTypeId.ROADMAP);
         map.setOptions({ styles: isDark ? darkMapStyle : lightMapStyle });

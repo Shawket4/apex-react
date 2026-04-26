@@ -154,8 +154,6 @@ export function TripLocationDialog({
   const routeData = data?.route_data;
 
   // ── Validate coordinates ────────────────────────────────────────────────────
-  // Show a toast and keep the dialog open in an error state rather than
-  // dismissing it silently (which is confusing for the user).
   const hasValidDropoff = isValidCoordinate(
     rawDropOffLocation?.lat,
     rawDropOffLocation?.lng
@@ -165,11 +163,18 @@ export function TripLocationDialog({
     rawTerminalLocation?.lng
   );
 
+  // Pop a toast if map data is missing for either valid point, 
+  // without rendering a fatal error in the DOM.
   React.useEffect(() => {
-    if (open && data && !isLoading && !hasValidDropoff) {
-      toast.error(t('trips.location.invalidCoordinates'));
+    if (open && data && !isLoading) {
+      const missingTerminal = trip?.terminal && !hasValidTerminal;
+      const missingDropoff = trip?.drop_off_point && !hasValidDropoff;
+
+      if (missingTerminal || missingDropoff) {
+        toast.error(t('trips.location.invalidCoordinates'));
+      }
     }
-  }, [open, data, isLoading, hasValidDropoff, t]);
+  }, [open, data, isLoading, hasValidTerminal, hasValidDropoff, trip, t]);
 
   // ── Decode route ────────────────────────────────────────────────────────────
   const route = React.useMemo<Array<[number, number]>>(() => {
@@ -366,11 +371,8 @@ export function TripLocationDialog({
               />
             )}
 
-            {!hasValidDropoff && !isLoading && !isError && (
-              <MapErrorState message={t('trips.location.invalidCoordinates')} />
-            )}
-
-            {showMap && hasValidDropoff && (
+            {/* We let the map mount regardless. If no markers exist, MapView's centerFallback handles it */}
+            {showMap && (
               <React.Suspense fallback={<MapLoadingState />}>
                 <LazyMapView
                   markers={markers}
