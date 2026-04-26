@@ -19,6 +19,7 @@ import {
   ChevronLeft,
   Tablet,
   Gauge,
+  Banknote,
   type LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/shared/lib/cn';
@@ -86,6 +87,12 @@ export const NAV_SECTIONS: NavSection[] = [
     titleKey: 'nav.finance',
     items: [
       { to: '/vendors', labelKey: 'nav.vendors', icon: Building2 },
+      {
+        to: '/fee-mappings',
+        labelKey: 'nav.feeMappings',
+        icon: Banknote,
+        minPermission: PERMISSION_LEVELS.MANAGER,
+      },
       {
         to: '/fleet-expenses',
         labelKey: 'nav.fleetExpenses',

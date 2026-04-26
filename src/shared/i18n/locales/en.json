@@ -64,7 +64,8 @@
     "logs": "Logs",
     "settings": "Settings",
     "speedViolations": "Speed Violations",
-    "tablets": "Tablets"
+    "tablets": "Tablets",
+    "feeMappings": "Fee Mappings"
   },
   "auth": {
     "loginTitle": "Welcome back",

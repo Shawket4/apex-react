@@ -64,7 +64,8 @@
     "logs": "السجلات",
     "settings": "الإعدادات",
     "speedViolations": "مخالفات السرعة",
-    "tablets": "الأجهزة اللوحية"
+    "tablets": "الأجهزة اللوحية",
+    "feeMappings": "خرائط الأسعار"
   },
   "auth": {
     "loginTitle": "مرحباً بعودتك",

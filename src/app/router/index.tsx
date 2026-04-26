@@ -47,6 +47,7 @@ const OilChangeEditPage = React.lazy(() => import('@/pages/oil-changes/oil-chang
 const OilChangeHistoryPage = React.lazy(
   () => import('@/pages/oil-changes/oil-change-history'),
 );
+const FeeMappingsPage = React.lazy(() => import('@/pages/fee-mappings/fee-mappings'));
 
 // Named exports — placeholder file. All resolve to the same chunk; the
 // browser fetches it once and React picks the right component per route.
@@ -200,6 +201,14 @@ export const router = createBrowserRouter([
             element: (
               <ProtectedRoute minPermissionLevel={PERMISSION_LEVELS.ADMIN}>
                 <FleetExpensesPage />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: 'fee-mappings',
+            element: (
+              <ProtectedRoute minPermissionLevel={PERMISSION_LEVELS.MANAGER}>
+                <FeeMappingsPage />
               </ProtectedRoute>
             ),
           },
