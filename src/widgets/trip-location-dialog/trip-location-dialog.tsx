@@ -2,7 +2,7 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Loader2, MapPin, Navigation, ExternalLink } from 'lucide-react';
-import { toast } from '@/shared/ui/toaster'; // <-- Uses your precise toaster module
+import { toast } from '@/shared/ui/toaster';
 import {
   Dialog,
   DialogContent,
@@ -20,7 +20,6 @@ import { cn } from '@/shared/lib/cn';
 import { isValidCoordinate } from '@/shared/lib/coords';
 import type { MapMarker } from '@/shared/ui/map-view';
 
-// Lazy loading the MapView to prevent pulling Google Map scripts/React wrappers into the main bundle
 const LazyMapView = React.lazy(() => 
   import('@/shared/ui/map-view').then((mod) => ({ default: mod.MapView }))
 );
@@ -40,57 +39,81 @@ export function TripLocationDialog({
   const { data, isLoading, isError } = useTripDetails(open ? tripId : null);
 
   const trip = data?.data;
-  const terminalLocation = data?.terminal_location;
-  const dropOffLocation = data?.drop_off_point_location;
+  const rawTerminalLocation = data?.terminal_location;
+  const rawDropOffLocation = data?.drop_off_point_location;
   const routeData = data?.route_data;
 
-  // Intercept bad coordinates immediately upon load
+  // Intercept bad coordinates immediately
   React.useEffect(() => {
     if (open && data && !isLoading) {
-      if (!isValidCoordinate(dropOffLocation?.lat, dropOffLocation?.lng)) {
-        toast.error(t('trips.location.invalidCoordinates', 'Drop-off coordinates are missing or invalid.'));
+      if (!isValidCoordinate(rawDropOffLocation?.lat, rawDropOffLocation?.lng)) {
+        toast.error(t('trips.location.invalidCoordinates'));
         onOpenChange(false);
       }
     }
-  }, [open, data, isLoading, dropOffLocation, onOpenChange, t]);
+  }, [open, data, isLoading, rawDropOffLocation, onOpenChange, t]);
 
-  const markers: MapMarker[] = React.useMemo(() => {
-    const arr: MapMarker[] = [];
-    if (isValidCoordinate(terminalLocation?.lat, terminalLocation?.lng)) {
-      arr.push({
-        id: 'terminal',
-        lat: Number(terminalLocation!.lat),
-        lng: Number(terminalLocation!.lng),
-        color: '#16A34A',
-        title: t('trips.fields.terminal'),
-        popupHtml: `<div style="padding: 4px; font-family: sans-serif;"><b>${t('trips.fields.terminal')}</b><br>${trip?.terminal ?? ''}</div>`
-      });
-    }
-    if (isValidCoordinate(dropOffLocation?.lat, dropOffLocation?.lng)) {
-      arr.push({
-        id: 'dropoff',
-        lat: Number(dropOffLocation!.lat),
-        lng: Number(dropOffLocation!.lng),
-        color: '#DC2626',
-        title: t('trips.fields.dropOffPoint'),
-        popupHtml: `<div style="padding: 4px; font-family: sans-serif;"><b>${t('trips.fields.dropOffPoint')}</b><br>${trip?.drop_off_point ?? ''}</div>`
-      });
-    }
-    return arr;
-  }, [terminalLocation, dropOffLocation, trip, t]);
-
+  // Decode route first, because we use it to snap the markers
   const route: Array<[number, number]> = React.useMemo(() => {
     if (routeData?.geometry) {
-      try {
-        return decodePolyline(routeData.geometry);
-      } catch {
-        return [];
-      }
+      try { return decodePolyline(routeData.geometry); } catch { return []; }
     } else if (routeData?.coordinates?.length) {
       return routeData.coordinates.map(([lng, lat]) => [lat, lng]);
     }
     return [];
   }, [routeData]);
+
+  // Snap markers to the exact ends of the polyline if a route exists
+  const markers: MapMarker[] = React.useMemo(() => {
+    const arr: MapMarker[] = [];
+    
+    const terminalLat = route.length > 0 ? route[0][0] : Number(rawTerminalLocation?.lat);
+    const terminalLng = route.length > 0 ? route[0][1] : Number(rawTerminalLocation?.lng);
+    
+    const dropoffLat = route.length > 0 ? route[route.length - 1][0] : Number(rawDropOffLocation?.lat);
+    const dropoffLng = route.length > 0 ? route[route.length - 1][1] : Number(rawDropOffLocation?.lng);
+
+    if (isValidCoordinate(terminalLat, terminalLng)) {
+      arr.push({
+        id: 'terminal',
+        lat: terminalLat,
+        lng: terminalLng,
+        color: '#16A34A',
+        title: t('trips.fields.terminal'),
+        popupHtml: `
+          <div style="min-width: 150px; font-family: inherit;">
+            <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: #71717a; margin-bottom: 2px;">
+              ${t('trips.fields.terminal')}
+            </div>
+            <div style="font-size: 14px; font-weight: 500; color: inherit;">
+              ${trip?.terminal ?? '—'}
+            </div>
+          </div>
+        `
+      });
+    }
+
+    if (isValidCoordinate(dropoffLat, dropoffLng)) {
+      arr.push({
+        id: 'dropoff',
+        lat: dropoffLat,
+        lng: dropoffLng,
+        color: '#DC2626',
+        title: t('trips.fields.dropOffPoint'),
+        popupHtml: `
+          <div style="min-width: 150px; font-family: inherit;">
+            <div style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: #71717a; margin-bottom: 2px;">
+              ${t('trips.fields.dropOffPoint')}
+            </div>
+            <div style="font-size: 14px; font-weight: 500; color: inherit;">
+              ${trip?.drop_off_point ?? '—'}
+            </div>
+          </div>
+        `
+      });
+    }
+    return arr;
+  }, [rawTerminalLocation, rawDropOffLocation, route, trip, t]);
 
   const distance = trip ? trip.mileage || trip.distance || 0 : 0;
   const duration = routeData?.duration ?? 0;
@@ -154,7 +177,7 @@ export function TripLocationDialog({
             </span>
             {route.length > 0 && (
               <span className="inline-flex items-center gap-1.5">
-                <span className="h-1 w-4 bg-[#1F4DC0]" />
+                <span className="h-1 w-4 bg-[#3b82f6]" />
                 {t('trips.location.route')}
               </span>
             )}
@@ -163,29 +186,29 @@ export function TripLocationDialog({
 
         <DialogFooter className="sm:justify-between">
           <div className="flex flex-wrap gap-2">
-            {isValidCoordinate(terminalLocation?.lat, terminalLocation?.lng) && (
+            {isValidCoordinate(rawTerminalLocation?.lat, rawTerminalLocation?.lng) && (
               <Button asChild variant="outline" size="sm" className="gap-1.5">
-                <a href={`https://www.google.com/maps/search/?api=1&query=${terminalLocation!.lat},${terminalLocation!.lng}`} target="_blank" rel="noopener noreferrer">
+                <a href={`https://www.google.com/maps/search/?api=1&query=${rawTerminalLocation!.lat},${rawTerminalLocation!.lng}`} target="_blank" rel="noopener noreferrer">
                   <ExternalLink className="h-3.5 w-3.5" />
-                  {t('trips.location.openTerminal', 'Terminal')}
+                  {t('trips.location.openTerminal')}
                 </a>
               </Button>
             )}
             
-            {isValidCoordinate(dropOffLocation?.lat, dropOffLocation?.lng) && (
+            {isValidCoordinate(rawDropOffLocation?.lat, rawDropOffLocation?.lng) && (
                <Button asChild variant="outline" size="sm" className="gap-1.5">
-                 <a href={`https://www.google.com/maps/search/?api=1&query=${dropOffLocation!.lat},${dropOffLocation!.lng}`} target="_blank" rel="noopener noreferrer">
+                 <a href={`https://www.google.com/maps/search/?api=1&query=${rawDropOffLocation!.lat},${rawDropOffLocation!.lng}`} target="_blank" rel="noopener noreferrer">
                    <ExternalLink className="h-3.5 w-3.5" />
-                   {t('trips.location.openDropoff', 'Drop-off')}
+                   {t('trips.location.openDropoff')}
                  </a>
                </Button>
             )}
 
-            {isValidCoordinate(terminalLocation?.lat, terminalLocation?.lng) && isValidCoordinate(dropOffLocation?.lat, dropOffLocation?.lng) && (
+            {isValidCoordinate(rawTerminalLocation?.lat, rawTerminalLocation?.lng) && isValidCoordinate(rawDropOffLocation?.lat, rawDropOffLocation?.lng) && (
               <Button asChild variant="default" size="sm" className="gap-1.5">
-                <a href={`https://www.google.com/maps/dir/?api=1&origin=${terminalLocation!.lat},${terminalLocation!.lng}&destination=${dropOffLocation!.lat},${dropOffLocation!.lng}`} target="_blank" rel="noopener noreferrer">
+                <a href={`https://www.google.com/maps/dir/?api=1&origin=${rawTerminalLocation!.lat},${rawTerminalLocation!.lng}&destination=${rawDropOffLocation!.lat},${rawDropOffLocation!.lng}`} target="_blank" rel="noopener noreferrer">
                   <Navigation className="h-3.5 w-3.5" />
-                  {t('trips.location.openRoute', 'Route')}
+                  {t('trips.location.openRoute')}
                 </a>
               </Button>
             )}

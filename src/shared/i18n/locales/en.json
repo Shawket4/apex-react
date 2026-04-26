@@ -400,7 +400,7 @@
       "date": "Date",
       "distance": "Distance",
       "driver": "Driver",
-      "dropOffPoint": "Drop-off point",
+      "dropOffPoint": "Drop-off Point",
       "duration": "Duration",
       "fee": "Fee",
       "garageDate": "Garage date",
@@ -539,14 +539,16 @@
       "noImages": "No receipt images attached to this trip"
     },
     "location": {
-      "dialogTitle": "Trip location",
-      "dialogDescription": "Pickup, drop-off, and route map for this trip.",
+      "dialogTitle": "Trip Route Details",
+      "dialogDescription": "View the terminal, drop-off, and optimized route.",
+      "invalidCoordinates": "Drop-off coordinates are missing or invalid.",
+      "loadFailed": "Failed to load map data.",
+      "terminal": "Terminal",
       "dropOff": "Drop-off",
-      "loadFailed": "Failed to load trip location",
-      "noCoordinates": "No coordinates available for this trip",
-      "openInGoogleMaps": "Open in Google Maps",
       "route": "Route",
-      "terminal": "Terminal"
+      "openTerminal": "Open Terminal",
+      "openDropoff": "Open Drop-off",
+      "openRoute": "View Route"
     },
     "form": {
       "titleCreate": "Add trip",

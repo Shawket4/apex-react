@@ -539,14 +539,16 @@
       "noImages": "لا توجد صور إيصالات مرفقة بهذه الرحلة"
     },
     "location": {
-      "dialogTitle": "موقع الرحلة",
-      "dialogDescription": "خريطة نقطة التحميل والتسليم والمسار لهذه الرحلة.",
-      "dropOff": "التسليم",
-      "loadFailed": "فشل تحميل موقع الرحلة",
-      "noCoordinates": "لا توجد إحداثيات متاحة لهذه الرحلة",
-      "openInGoogleMaps": "فتح في خرائط جوجل",
+      "dialogTitle": "تفاصيل مسار الرحلة",
+      "dialogDescription": "عرض المستودع ونقطة التسليم والمسار المحسن.",
+      "invalidCoordinates": "إحداثيات نقطة التسليم مفقودة أو غير صالحة.",
+      "loadFailed": "فشل تحميل بيانات الخريطة.",
+      "terminal": "المستودع",
+      "dropOff": "نقطة التسليم",
       "route": "المسار",
-      "terminal": "المستودع"
+      "openTerminal": "فتح المستودع",
+      "openDropoff": "فتح نقطة التسليم",
+      "openRoute": "عرض المسار"
     },
     "form": {
       "titleCreate": "إضافة رحلة",
