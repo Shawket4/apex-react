@@ -101,6 +101,7 @@ export default defineConfig({
           //      it only invalidates when we bump @googlemaps/js-api-loader.
           if (id.includes('@googlemaps/')) return 'maps-vendor';
 
+          if (id.includes('/leaflet/')) return 'leaflet-vendor';
           // Charts — recharts pulls in a chunk of d3-* sub-packages.
           // Splitting these out means the dashboard chunk stays small.
           if (id.includes('recharts') || id.includes('/d3-')) {
