@@ -59,8 +59,6 @@ function injectInfoWindowStyles() {
   if (document.getElementById(styleId)) return;
   const style = document.createElement('style');
   style.id = styleId;
-  // Strip all default padding/chrome from the InfoWindow so our HTML
-  // controls every pixel of the popup's appearance.
   style.textContent = `
     .gm-style-iw-c {
       padding: 0 !important;
@@ -79,7 +77,6 @@ function injectInfoWindowStyles() {
       overflow: hidden !important;
       padding: 0 !important;
     }
-    /* Close button */
     .gm-ui-hover-effect {
       top: 6px !important;
       right: 6px !important;
@@ -91,12 +88,7 @@ function injectInfoWindowStyles() {
   document.head.appendChild(style);
 }
 
-/**
- * Compact teardrop pin — 24×30 px rendered. Uses a unique filter id per
- * colour to avoid SVG filter collisions when multiple markers are on screen.
- */
 function buildMarkerSvg(color: string, filterId: string): string {
-  // Encode color for use in filter flood-color (hashes cause issues in URLs)
   return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
     <svg width="24" height="30" viewBox="0 0 24 30" fill="none" xmlns="http://www.w3.org/2000/svg">
       <defs>
@@ -114,6 +106,43 @@ function buildMarkerSvg(color: string, filterId: string): string {
   `)}`;
 }
 
+/**
+ * Custom animation function to simultaneously pan and zoom smoothly
+ * Requires map option: isFractionalZoomEnabled: true
+ */
+function smoothFlyTo(map: google.maps.Map, target: google.maps.LatLngLiteral, targetZoom: number) {
+  const startZoom = map.getZoom() ?? 11;
+  const startCenter = map.getCenter();
+  if (!startCenter) return;
+
+  const startLat = startCenter.lat();
+  const startLng = startCenter.lng();
+  
+  const startTime = performance.now();
+  const duration = 800; // ms
+
+  // easeInOutCubic for a natural feel
+  const ease = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+
+  function animate(currentTime: number) {
+    const elapsed = currentTime - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    const easeProgress = ease(progress);
+
+    map.setZoom(startZoom + (targetZoom - startZoom) * easeProgress);
+    map.setCenter({
+      lat: startLat + (target.lat - startLat) * easeProgress,
+      lng: startLng + (target.lng - startLng) * easeProgress,
+    });
+
+    if (progress < 1) {
+      requestAnimationFrame(animate);
+    }
+  }
+
+  requestAnimationFrame(animate);
+}
+
 let googleMapsLanguage: string | null = null;
 
 // ─── Component ─────────────────────────────────────────────────────────────────
@@ -128,16 +157,23 @@ export function MapView({
 }: MapViewProps) {
   const { i18n } = useTranslation();
   const containerRef = React.useRef<HTMLDivElement>(null);
+  
+  // Keep stable references to map entities so we don't recreate the map
   const mapRef = React.useRef<google.maps.Map | null>(null);
+  const infoWindowRef = React.useRef<google.maps.InfoWindow | null>(null);
+  const entitiesRef = React.useRef<{
+    markers: google.maps.Marker[];
+    polylines: google.maps.Polyline[];
+  }>({ markers: [], polylines: [] });
+  
   const boundsRef = React.useRef<google.maps.LatLngBounds | null>(null);
   const [mapReady, setMapReady] = React.useState(false);
-  const [hybrid, setHybrid] = React.useState(false);
-  // Ref so the MutationObserver closure always sees the live value
-  const hybridRef = React.useRef(false);
+  const [isSatellite, setIsSatellite] = React.useState(false);
 
-  // ── Initialise ─────────────────────────────────────────────────────────────
+  // ── 1. Initialise Map Once ─────────────────────────────────────────────────
   React.useEffect(() => {
-    if (!containerRef.current) return;
+    if (!containerRef.current || mapRef.current) return;
+    
     let isMounted = true;
     injectInfoWindowStyles();
 
@@ -147,16 +183,15 @@ export function MapView({
         key: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '',
         v: 'weekly',
         language: lang,
-        mapIds: [import.meta.env.VITE_GOOGLE_MAPS_MAP_ID || 'DEMO_MAP_ID'],
       });
       googleMapsLanguage = lang;
     }
 
-    const init = async () => {
+    const initMap = async () => {
       try {
         const [mapsLib] = await Promise.all([
           importLibrary('maps') as Promise<google.maps.MapsLibrary>,
-          importLibrary('marker'), // pre-warm for future AdvancedMarkerElement
+          importLibrary('marker'),
         ]);
 
         if (!isMounted || !containerRef.current) return;
@@ -172,132 +207,118 @@ export function MapView({
           mapTypeControl: false,
           streetViewControl: false,
           fullscreenControl: false,
-          // Keep zoom controls at RIGHT_CENTER; our custom buttons sit top-right
           zoomControlOptions: { position: google.maps.ControlPosition.RIGHT_CENTER },
           gestureHandling: 'cooperative',
           keyboardShortcuts: false,
+          isFractionalZoomEnabled: true, // Required for smooth animations
         });
 
         mapRef.current = map;
+        infoWindowRef.current = new mapsLib.InfoWindow({ disableAutoPan: false });
 
-        // ── Theme observer ───────────────────────────────────────────────────
+        // Theme observer
         const observer = new MutationObserver(() => {
-          if (hybridRef.current) return; // styles don't apply to HYBRID type
+          if (map.getMapTypeId() === google.maps.MapTypeId.SATELLITE) return;
           const dark = document.documentElement.classList.contains('dark');
           map.setOptions({ styles: dark ? darkMapStyle : lightMapStyle });
         });
+        
         observer.observe(document.documentElement, {
           attributes: true,
           attributeFilter: ['class'],
         });
 
-        // ── Route polylines ──────────────────────────────────────────────────
-        const bounds = new google.maps.LatLngBounds();
-        let hasBounds = false;
-
-        if (route.length > 0) {
-          const path = route.map(([lat, lng]) => ({ lat, lng }));
-
-          // Soft glow halo
-          new google.maps.Polyline({ path, geodesic: true, strokeColor: '#3b82f6', strokeOpacity: 0.12, strokeWeight: 16, map });
-          // Casing
-          new google.maps.Polyline({ path, geodesic: true, strokeColor: isDark ? '#1e3a5f' : '#bfdbfe', strokeOpacity: 1, strokeWeight: 7, map });
-          // Core line
-          new google.maps.Polyline({ path, geodesic: true, strokeColor: '#3b82f6', strokeOpacity: 0.95, strokeWeight: 4, map });
-
-          path.forEach((pt) => { bounds.extend(pt); hasBounds = true; });
-        }
-
-        // ── Markers ──────────────────────────────────────────────────────────
-        const infoWindow = new google.maps.InfoWindow({ disableAutoPan: false });
-
-        markers.forEach((info, idx) => {
-          const position = { lat: info.lat, lng: info.lng };
-          // Unique filter id per marker avoids SVG <filter> id collisions
-          const filterId = `mf${idx}`;
-
-          const marker = new google.maps.Marker({
-            position,
-            map,
-            title: info.title,
-            icon: {
-              url: buildMarkerSvg(info.color, filterId),
-              scaledSize: new google.maps.Size(24, 30),
-              anchor: new google.maps.Point(12, 30),
-            },
-            optimized: false,
-          });
-
-          bounds.extend(position);
-          hasBounds = true;
-
-          // Single click → open popup
-          if (info.popupHtml) {
-            marker.addListener('click', () => {
-              infoWindow.setContent(info.popupHtml!);
-              infoWindow.open({ map, anchor: marker });
-            });
-          }
-
-          // Double click → smooth zoom-in on the marker (zoom 18 = street level)
-         marker.addListener('dblclick', () => {
-            infoWindow.close();
-            
-            const targetZoom = 18;
-            const currentZoom = map.getZoom() ?? 11;
-            
-            // 1. Start the smooth pan
-            map.panTo(position);
-
-            if (currentZoom === targetZoom) return;
-
-            // 2. Step the zoom gradually to simulate an animation
-            const step = currentZoom < targetZoom ? 1 : -1;
-            let z = currentZoom;
-
-            const zoomInterval = setInterval(() => {
-              z += step;
-              map.setZoom(z);
-              
-              if (z === targetZoom) {
-                clearInterval(zoomInterval);
-              }
-            }, 80); // 80ms per step gives a fluid "fly-in" feel
-          });
-        });
-
-        boundsRef.current = hasBounds ? bounds : null;
-
-        if (hasBounds) {
-          if (markers.length === 1 && route.length === 0) {
-            map.setCenter(bounds.getCenter());
-            map.setZoom(14);
-          } else {
-            map.fitBounds(bounds, { top: 64, right: 64, bottom: 64, left: 64 });
-          }
-        }
-
         if (isMounted) setMapReady(true);
-
-        return () => observer.disconnect();
       } catch (err) {
         console.error('MapView: failed to initialize Google Maps', err);
         onError?.(err);
       }
     };
 
-    void init();
+    void initMap();
 
     return () => {
       isMounted = false;
-      mapRef.current = null;
-      boundsRef.current = null;
-      setMapReady(false);
+      // Note: We don't nullify mapRef on simple unmount to avoid 
+      // tearing down if React StrictMode runs double-invocation
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [markers, route, centerFallback, i18n.language]);
+  }, [centerFallback, i18n.language, onError]);
 
-  // ── Controls ────────────────────────────────────────────────────────────────
+  // ── 2. Update Entities (Markers & Routes) ──────────────────────────────────
+  React.useEffect(() => {
+    if (!mapReady || !mapRef.current) return;
+    const map = mapRef.current;
+    const infoWindow = infoWindowRef.current;
+
+    // Clear old entities
+    entitiesRef.current.markers.forEach((m) => m.setMap(null));
+    entitiesRef.current.polylines.forEach((p) => p.setMap(null));
+    entitiesRef.current = { markers: [], polylines: [] };
+
+    const bounds = new google.maps.LatLngBounds();
+    let hasBounds = false;
+    const isDark = document.documentElement.classList.contains('dark');
+
+    // Draw route
+    if (route.length > 0) {
+      const path = route.map(([lat, lng]) => ({ lat, lng }));
+
+      const halo = new google.maps.Polyline({ path, geodesic: true, strokeColor: '#3b82f6', strokeOpacity: 0.12, strokeWeight: 16, map });
+      const casing = new google.maps.Polyline({ path, geodesic: true, strokeColor: isDark ? '#1e3a5f' : '#bfdbfe', strokeOpacity: 1, strokeWeight: 7, map });
+      const core = new google.maps.Polyline({ path, geodesic: true, strokeColor: '#3b82f6', strokeOpacity: 0.95, strokeWeight: 4, map });
+
+      entitiesRef.current.polylines.push(halo, casing, core);
+      path.forEach((pt) => { bounds.extend(pt); hasBounds = true; });
+    }
+
+    // Draw markers
+    markers.forEach((info, idx) => {
+      const position = { lat: info.lat, lng: info.lng };
+      const filterId = `mf${idx}`;
+
+      const marker = new google.maps.Marker({
+        position,
+        map,
+        title: info.title,
+        icon: {
+          url: buildMarkerSvg(info.color, filterId),
+          scaledSize: new google.maps.Size(24, 30),
+          anchor: new google.maps.Point(12, 30),
+        },
+        optimized: false,
+      });
+
+      entitiesRef.current.markers.push(marker);
+      bounds.extend(position);
+      hasBounds = true;
+
+      if (info.popupHtml && infoWindow) {
+        marker.addListener('click', () => {
+          infoWindow.setContent(info.popupHtml!);
+          infoWindow.open({ map, anchor: marker });
+        });
+      }
+
+      // Smooth custom fly-in
+      marker.addListener('dblclick', () => {
+        if (infoWindow) infoWindow.close();
+        smoothFlyTo(map, position, 18);
+      });
+    });
+
+    boundsRef.current = hasBounds ? bounds : null;
+
+    if (hasBounds) {
+      if (markers.length === 1 && route.length === 0) {
+        map.setCenter(bounds.getCenter());
+        map.setZoom(14);
+      } else {
+        map.fitBounds(bounds, { top: 64, right: 64, bottom: 64, left: 64 });
+      }
+    }
+  }, [mapReady, markers, route]);
+
+  // ── 3. Controls ─────────────────────────────────────────────────────────────
 
   const fitBounds = React.useCallback(() => {
     const map = mapRef.current;
@@ -306,28 +327,23 @@ export function MapView({
     map.fitBounds(bounds, { top: 64, right: 64, bottom: 64, left: 64 });
   }, []);
 
-  const toggleHybrid = React.useCallback(() => {
+  const toggleSatellite = React.useCallback(() => {
     const map = mapRef.current;
     if (!map) return;
 
-    const next = !hybridRef.current;
-    hybridRef.current = next;
-    setHybrid(next);
-
-    if (next) {
-      // HYBRID = satellite imagery + road/label overlay
-      // Custom styles are not applied to non-roadmap types
-      map.setOptions({ 
-        mapTypeId: google.maps.MapTypeId.HYBRID,
-        styles: [] 
-      });
-    } else {
-      const isDark = document.documentElement.classList.contains('dark');
-      map.setOptions({ 
-        mapTypeId: google.maps.MapTypeId.ROADMAP,
-        styles: isDark ? darkMapStyle : lightMapStyle 
-      });
-    }
+    setIsSatellite((prev) => {
+      const next = !prev;
+      
+      if (next) {
+        map.setMapTypeId(google.maps.MapTypeId.SATELLITE);
+      } else {
+        const isDark = document.documentElement.classList.contains('dark');
+        map.setMapTypeId(google.maps.MapTypeId.ROADMAP);
+        map.setOptions({ styles: isDark ? darkMapStyle : lightMapStyle });
+      }
+      
+      return next;
+    });
   }, []);
 
   // ── Render ──────────────────────────────────────────────────────────────────
@@ -336,15 +352,14 @@ export function MapView({
     <div className={cn('relative', className)} style={{ height }}>
       <div ref={containerRef} className="h-full w-full" />
 
-      {/* Custom controls — top-right, clear of Google's zoom widget */}
       {mapReady && (
         <div className="absolute right-3 top-3 z-10 flex flex-col gap-1.5">
           <Button
             size="icon"
-            variant={hybrid ? 'default' : 'secondary'}
+            variant={isSatellite ? 'default' : 'secondary'}
             className="h-8 w-8 rounded-md shadow-md backdrop-blur-sm"
-            onClick={toggleHybrid}
-            title={hybrid ? 'Switch to road map' : 'Switch to satellite'}
+            onClick={toggleSatellite}
+            title={isSatellite ? 'Switch to road map' : 'Switch to satellite'}
           >
             <Mountain className="h-4 w-4" />
           </Button>
