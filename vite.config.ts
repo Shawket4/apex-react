@@ -1,24 +1,72 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react-swc';
+import compression from 'vite-plugin-compression';
 import path from 'node:path';
+import { constants as zlibConstants } from 'node:zlib';
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+
+    /**
+     * Pre-compress every chunk to .br at build time using brotli's MAXIMUM
+     * quality level (11). The build is slower — expect a few extra seconds
+     * for the big chunks like exceljs and chart-vendor — but every byte
+     * shaved here is bytes the user never downloads, on every request,
+     * forever. Worth it.
+     *
+     * Nginx serves these directly via `brotli_static on` (zero CPU at
+     * request time). We keep the original uncompressed file too, so
+     * clients without brotli support (very old browsers, server-to-server
+     * curl etc.) still work via the .gz fallback or raw response.
+     */
+    compression({
+      algorithm: 'brotliCompress',
+      ext: '.br',
+      threshold: 1024,
+      deleteOriginFile: false,
+      compressionOptions: {
+        params: {
+          [zlibConstants.BROTLI_PARAM_QUALITY]: 11,
+          // Hint that the input is text — brotli has a separate dictionary
+          // for text content that improves compression on JS/CSS/HTML.
+          [zlibConstants.BROTLI_PARAM_MODE]: zlibConstants.BROTLI_MODE_TEXT,
+        },
+      },
+    }),
+
+    /**
+     * Pre-compress every chunk to .gz too, at the maximum gzip level (9).
+     * About 96% of users hit the brotli path; the gzip path is the
+     * fallback for the remaining 4% (very old browsers, some corporate
+     * proxies that strip Accept-Encoding: br).
+     */
+    compression({
+      algorithm: 'gzip',
+      ext: '.gz',
+      threshold: 1024,
+      deleteOriginFile: false,
+      compressionOptions: {
+        level: 9,
+      },
+    }),
+  ],
+
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './src'),
     },
   },
+
   server: {
     port: 5173,
     host: true,
   },
+
   build: {
     /**
-     * exceljs and leaflet are already split into their own chunks via
-     * dynamic import at their call sites — they are large but loaded
-     * lazily. Bumping the warning limit silences exceljs (~940 kB) which
-     * we cannot do anything about without losing functionality.
+     * exceljs is ~940 kB on its own and that's after minification — it's
+     * already a lazy chunk, so this limit just silences the warning.
      */
     chunkSizeWarningLimit: 1000,
 
@@ -27,10 +75,14 @@ export default defineConfig({
         /**
          * Vendor chunk strategy.
          *
-         * Note: exceljs and leaflet are NOT listed here. They're already
+         * Function form (rather than the object form) lets us catch every
+         * package in a namespace without listing each one by name —
+         * important for `@radix-ui/*` where the exact sub-packages depend
+         * on which shadcn primitives we use.
+         *
+         * exceljs and leaflet are NOT listed here — they're already
          * dynamically imported at their call sites, so Rollup gives them
-         * their own chunks automatically — adding them here would be
-         * redundant.
+         * their own chunks automatically.
          *
          * Order matters: more-specific matches above the catch-alls.
          */
@@ -44,11 +96,9 @@ export default defineConfig({
           }
 
           // MessagePack decoder — only the trip-statistics page uses it.
-          // Keeping it as its own chunk lets the rest of the app skip it.
           if (id.includes('@msgpack/')) return 'msgpack-vendor';
 
           // Forms + validation — react-hook-form, zod, hookform resolver.
-          // Loaded together on every form page.
           if (
             id.includes('react-hook-form') ||
             id.includes('@hookform') ||
