@@ -214,11 +214,29 @@ export function TripLocationDialog({
         color: '#16A34A',
         title: t('trips.fields.terminal'),
         popupHtml: `
-          <div style="padding:12px 14px;min-width:160px;font-family:inherit;">
-            <p style="font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:#71717a;margin:0 0 4px;">
+          <div style="
+            padding: 14px 16px;
+            min-width: 170px;
+            font-family: inherit;
+            text-align: center;
+          ">
+            <div style="
+              display: inline-flex;
+              align-items: center;
+              justify-content: center;
+              width: 28px; height: 28px;
+              border-radius: 50%;
+              background: #dcfce7;
+              margin: 0 auto 8px;
+            ">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/>
+              </svg>
+            </div>
+            <p style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#71717a;margin:0 0 3px;font-weight:500;">
               ${t('trips.fields.terminal')}
             </p>
-            <p style="font-size:14px;font-weight:600;margin:0;color:inherit;">
+            <p style="font-size:13px;font-weight:600;margin:0;color:inherit;line-height:1.3;">
               ${trip?.terminal ?? '—'}
             </p>
           </div>`,
@@ -233,11 +251,29 @@ export function TripLocationDialog({
         color: '#DC2626',
         title: t('trips.fields.dropOffPoint'),
         popupHtml: `
-          <div style="padding:12px 14px;min-width:160px;font-family:inherit;">
-            <p style="font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:#71717a;margin:0 0 4px;">
+          <div style="
+            padding: 14px 16px;
+            min-width: 170px;
+            font-family: inherit;
+            text-align: center;
+          ">
+            <div style="
+              display: inline-flex;
+              align-items: center;
+              justify-content: center;
+              width: 28px; height: 28px;
+              border-radius: 50%;
+              background: #fee2e2;
+              margin: 0 auto 8px;
+            ">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#DC2626" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/><polyline points="12 8 12 12 14 14"/>
+              </svg>
+            </div>
+            <p style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#71717a;margin:0 0 3px;font-weight:500;">
               ${t('trips.fields.dropOffPoint')}
             </p>
-            <p style="font-size:14px;font-weight:600;margin:0;color:inherit;">
+            <p style="font-size:13px;font-weight:600;margin:0;color:inherit;line-height:1.3;">
               ${trip?.drop_off_point ?? '—'}
             </p>
           </div>`,

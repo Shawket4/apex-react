@@ -59,41 +59,61 @@ const lightMapStyle: google.maps.MapTypeStyle[] = [
 // ─── Helpers ────────────────────────────────────────────────────────────────────
 
 function injectInfoWindowStyles() {
-  const styleId = 'gmaps-info-window-styles-v2';
+  const styleId = 'gmaps-info-window-styles-v3';
   if (document.getElementById(styleId)) return;
   const style = document.createElement('style');
   style.id = styleId;
+  // Strip all default padding/chrome from the InfoWindow so our HTML
+  // controls every pixel of the popup's appearance.
   style.textContent = `
-    .gm-style-iw.gm-style-iw-c {
+    .gm-style-iw-c {
       padding: 0 !important;
-      border-radius: 10px !important;
-      box-shadow: 0 8px 30px rgba(0,0,0,0.18) !important;
-      border: 1px solid rgba(0,0,0,0.08) !important;
+      border-radius: 12px !important;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.15), 0 1px 4px rgba(0,0,0,0.08) !important;
+      border: 1px solid rgba(0,0,0,0.07) !important;
+      overflow: hidden !important;
     }
-    .dark .gm-style-iw.gm-style-iw-c {
+    .dark .gm-style-iw-c {
       background-color: #1e2535 !important;
-      border-color: rgba(255,255,255,0.08) !important;
-      box-shadow: 0 8px 30px rgba(0,0,0,0.5) !important;
+      border-color: rgba(255,255,255,0.07) !important;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.5) !important;
     }
     .dark .gm-style-iw-tc::after { background: #1e2535 !important; }
-    .gm-style-iw-d { overflow: hidden !important; padding: 0 !important; }
-    .gm-ui-hover-effect { top: 4px !important; right: 4px !important; }
-    .dark .gm-ui-hover-effect > span { background-color: #8892a4 !important; }
-    .dark .gm-style .gm-style-iw-t::after { background: #1e2535 !important; }
+    .gm-style-iw-d {
+      overflow: hidden !important;
+      padding: 0 !important;
+    }
+    /* Close button */
+    .gm-ui-hover-effect {
+      top: 6px !important;
+      right: 6px !important;
+      opacity: 0.5 !important;
+    }
+    .gm-ui-hover-effect:hover { opacity: 1 !important; }
+    .dark .gm-ui-hover-effect > span { background-color: #94a3b8 !important; }
   `;
   document.head.appendChild(style);
 }
 
-function buildMarkerSvg(color: string): string {
+/**
+ * Compact teardrop pin — 24×30 px rendered. Uses a unique filter id per
+ * colour to avoid SVG filter collisions when multiple markers are on screen.
+ */
+function buildMarkerSvg(color: string, filterId: string): string {
+  // Encode color for use in filter flood-color (hashes cause issues in URLs)
   return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
-    <svg width="40" height="48" viewBox="0 0 40 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <filter id="shadow" x="-30%" y="-10%" width="160%" height="140%">
-        <feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="rgba(0,0,0,0.35)"/>
-      </filter>
-      <path d="M20 2C11.163 2 4 9.163 4 18C4 30 20 46 20 46C20 46 36 30 36 18C36 9.163 28.837 2 20 2Z"
-        fill="${color}" filter="url(#shadow)"/>
-      <circle cx="20" cy="18" r="6.5" fill="white" fill-opacity="0.95"/>
-      <circle cx="20" cy="18" r="3.5" fill="${color}"/>
+    <svg width="24" height="30" viewBox="0 0 24 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <filter id="${filterId}" x="-40%" y="-20%" width="180%" height="180%">
+          <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000000" flood-opacity="0.28"/>
+        </filter>
+      </defs>
+      <path
+        d="M12 1C7.029 1 3 5.029 3 10C3 16.5 12 29 12 29C12 29 21 16.5 21 10C21 5.029 16.971 1 12 1Z"
+        fill="${color}"
+        filter="url(#${filterId})"
+      />
+      <circle cx="12" cy="10" r="4" fill="white" fill-opacity="0.92"/>
     </svg>
   `)}`;
 }
@@ -116,10 +136,10 @@ export function MapView({
   const boundsRef = React.useRef<google.maps.LatLngBounds | null>(null);
   const [mapReady, setMapReady] = React.useState(false);
   const [terrain, setTerrain] = React.useState(false);
-  // Ref so the MutationObserver closure always sees the current value
+  // Ref so the MutationObserver closure always sees the live value
   const terrainRef = React.useRef(false);
 
-  // ── Initialise once ────────────────────────────────────────────────────────
+  // ── Initialise ─────────────────────────────────────────────────────────────
   React.useEffect(() => {
     if (!containerRef.current) return;
     let isMounted = true;
@@ -131,7 +151,6 @@ export function MapView({
         key: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '',
         v: 'weekly',
         language: lang,
-        // mapIds is required for AdvancedMarkerElement
         mapIds: [import.meta.env.VITE_GOOGLE_MAPS_MAP_ID || 'DEMO_MAP_ID'],
       });
       googleMapsLanguage = lang;
@@ -141,7 +160,7 @@ export function MapView({
       try {
         const [mapsLib] = await Promise.all([
           importLibrary('maps') as Promise<google.maps.MapsLibrary>,
-          importLibrary('marker'), // pre-warm; needed for future AdvancedMarkerElement
+          importLibrary('marker'), // pre-warm for future AdvancedMarkerElement
         ]);
 
         if (!isMounted || !containerRef.current) return;
@@ -151,10 +170,12 @@ export function MapView({
         const map = new mapsLib.Map(containerRef.current, {
           center: { lat: centerFallback[0], lng: centerFallback[1] },
           zoom: 11,
+          mapTypeId: google.maps.MapTypeId.ROADMAP,
           styles: isDark ? darkMapStyle : lightMapStyle,
           mapTypeControl: false,
           streetViewControl: false,
-          fullscreenControl: false,   // We provide our own controls
+          fullscreenControl: false,
+          // Keep zoom controls at RIGHT_CENTER; our custom buttons sit top-right
           zoomControlOptions: { position: google.maps.ControlPosition.RIGHT_CENTER },
           gestureHandling: 'cooperative',
           keyboardShortcuts: false,
@@ -162,70 +183,50 @@ export function MapView({
 
         mapRef.current = map;
 
-        // ── React to theme changes ───────────────────────────────────────────
+        // ── Theme observer ───────────────────────────────────────────────────
         const observer = new MutationObserver(() => {
-          if (terrainRef.current) return; // terrain has no custom styles
+          if (terrainRef.current) return; // styles don't apply to TERRAIN type
           const dark = document.documentElement.classList.contains('dark');
           map.setOptions({ styles: dark ? darkMapStyle : lightMapStyle });
         });
-        observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+        observer.observe(document.documentElement, {
+          attributes: true,
+          attributeFilter: ['class'],
+        });
 
-        // ── Draw route ───────────────────────────────────────────────────────
+        // ── Route polylines ──────────────────────────────────────────────────
         const bounds = new google.maps.LatLngBounds();
         let hasBounds = false;
 
         if (route.length > 0) {
           const path = route.map(([lat, lng]) => ({ lat, lng }));
 
-          // Casing layer (glow effect)
-          new google.maps.Polyline({
-            path,
-            geodesic: true,
-            strokeColor: isDark ? '#3b82f6' : '#2563eb',
-            strokeOpacity: 0.15,
-            strokeWeight: 14,
-            map,
-          });
-
-          // Outer stroke
-          new google.maps.Polyline({
-            path,
-            geodesic: true,
-            strokeColor: isDark ? '#1e3a5f' : '#bfdbfe',
-            strokeOpacity: 1.0,
-            strokeWeight: 7,
-            map,
-          });
-
-          // Main line
-          new google.maps.Polyline({
-            path,
-            geodesic: true,
-            strokeColor: '#3b82f6',
-            strokeOpacity: 0.95,
-            strokeWeight: 4,
-            map,
-          });
+          // Soft glow halo
+          new google.maps.Polyline({ path, geodesic: true, strokeColor: '#3b82f6', strokeOpacity: 0.12, strokeWeight: 16, map });
+          // Casing
+          new google.maps.Polyline({ path, geodesic: true, strokeColor: isDark ? '#1e3a5f' : '#bfdbfe', strokeOpacity: 1, strokeWeight: 7, map });
+          // Core line
+          new google.maps.Polyline({ path, geodesic: true, strokeColor: '#3b82f6', strokeOpacity: 0.95, strokeWeight: 4, map });
 
           path.forEach((pt) => { bounds.extend(pt); hasBounds = true; });
         }
 
-        // ── Draw markers ─────────────────────────────────────────────────────
+        // ── Markers ──────────────────────────────────────────────────────────
         const infoWindow = new google.maps.InfoWindow({ disableAutoPan: false });
 
-        for (const info of markers) {
+        markers.forEach((info, idx) => {
           const position = { lat: info.lat, lng: info.lng };
+          // Unique filter id per marker avoids SVG <filter> id collisions
+          const filterId = `mf${idx}`;
 
-          // Use legacy Marker as safe fallback for all map configs
-          // (AdvancedMarkerElement requires a cloud mapId which may not be set)
           const marker = new google.maps.Marker({
             position,
             map,
             title: info.title,
             icon: {
-              url: buildMarkerSvg(info.color),
-              scaledSize: new google.maps.Size(40, 48),
-              anchor: new google.maps.Point(20, 48),
+              url: buildMarkerSvg(info.color, filterId),
+              scaledSize: new google.maps.Size(24, 30),
+              anchor: new google.maps.Point(12, 30),
             },
             optimized: false,
           });
@@ -233,13 +234,21 @@ export function MapView({
           bounds.extend(position);
           hasBounds = true;
 
+          // Single click → open popup
           if (info.popupHtml) {
             marker.addListener('click', () => {
               infoWindow.setContent(info.popupHtml!);
               infoWindow.open({ map, anchor: marker });
             });
           }
-        }
+
+          // Double click → smooth zoom-in on the marker (zoom 18 = street level)
+          marker.addListener('dblclick', () => {
+            infoWindow.close();
+            map.panTo(position);
+            map.setZoom(18);
+          });
+        });
 
         boundsRef.current = hasBounds ? bounds : null;
 
@@ -269,45 +278,58 @@ export function MapView({
       boundsRef.current = null;
       setMapReady(false);
     };
-    // Re-initialize when markers/route data fundamentally changes
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [markers, route, centerFallback, i18n.language]);
 
+  // ── Controls ────────────────────────────────────────────────────────────────
+
   const fitBounds = React.useCallback(() => {
-    if (mapRef.current && boundsRef.current) {
-      mapRef.current.fitBounds(boundsRef.current, { top: 64, right: 64, bottom: 64, left: 64 });
-    }
+    const map = mapRef.current;
+    const bounds = boundsRef.current;
+    if (!map || !bounds) return;
+    map.fitBounds(bounds, { top: 64, right: 64, bottom: 64, left: 64 });
   }, []);
 
   const toggleTerrain = React.useCallback(() => {
     const map = mapRef.current;
     if (!map) return;
 
+    // Snapshot current viewport so switching map type doesn't reset the camera.
+    const center = map.getCenter();
+    const zoom = map.getZoom();
+
     const next = !terrainRef.current;
     terrainRef.current = next;
     setTerrain(next);
 
     if (next) {
-      // TERRAIN gives the richest topographic detail Google Maps offers.
-      // Styles are intentionally cleared — custom styles are ignored on
-      // non-roadmap types and clearing them avoids a console warning.
-      map.setOptions({ mapTypeId: google.maps.MapTypeId.TERRAIN, styles: [] });
+      // Switch to TERRAIN first, then restore viewport.
+      // setMapTypeId() is used directly (not via setOptions) — setOptions can
+      // trigger internal layout reflows that reset center/zoom on some versions.
+      map.setMapTypeId(google.maps.MapTypeId.TERRAIN);
+      // Custom styles are silently ignored on TERRAIN; clearing them avoids a
+      // console warning and keeps the option object clean.
+      map.setOptions({ styles: [] });
     } else {
+      map.setMapTypeId(google.maps.MapTypeId.ROADMAP);
       const isDark = document.documentElement.classList.contains('dark');
-      map.setOptions({
-        mapTypeId: google.maps.MapTypeId.ROADMAP,
-        styles: isDark ? darkMapStyle : lightMapStyle,
-      });
+      map.setOptions({ styles: isDark ? darkMapStyle : lightMapStyle });
     }
+
+    // Restore viewport after the type switch.
+    if (center) map.setCenter(center);
+    if (zoom !== undefined) map.setZoom(zoom);
   }, []);
+
+  // ── Render ──────────────────────────────────────────────────────────────────
 
   return (
     <div className={cn('relative', className)} style={{ height }}>
       <div ref={containerRef} className="h-full w-full" />
 
-      {/* Overlay controls — stacked vertically, bottom-right */}
+      {/* Custom controls — top-right, clear of Google's zoom widget */}
       {mapReady && (
-        <div className="absolute bottom-3 right-3 z-10 flex flex-col gap-1.5">
+        <div className="absolute right-3 top-3 z-10 flex flex-col gap-1.5">
           <Button
             size="icon"
             variant={terrain ? 'default' : 'secondary'}
