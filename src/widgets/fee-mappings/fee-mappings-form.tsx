@@ -6,12 +6,15 @@ import { Card, CardContent } from '@/shared/ui/card';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { Label } from '@/shared/ui/label';
+import { SearchableSelect } from '@/shared/ui/searchable-select';
 import { extractErrorMessage } from '@/shared/api/errors';
 import {
   useCreateFeeMapping,
   useUpdateFeeMapping,
+  useFeeMappings,
 } from '@/entities/fee-mapping/queries';
 import type { FeeMapping } from '@/entities/fee-mapping/schemas';
+import type { SelectOption } from '@/shared/types';
 
 interface FeeMappingsFormProps {
   /** Set when editing an existing mapping; null for create mode. */
@@ -51,6 +54,27 @@ export function FeeMappingsForm({
   const { t } = useTranslation();
   const [form, setForm] = React.useState<FormState>(emptyForm);
   const isEdit = editing !== null;
+
+  const { data: mappings = [] } = useFeeMappings();
+
+  // Extract unique companies from existing mappings
+  const companyOptions = React.useMemo<SelectOption<string>[]>(() => {
+    const companies = Array.from(new Set(mappings.map((m) => m.company)));
+    return companies.sort().map((c) => ({ value: c, label: c }));
+  }, [mappings]);
+
+  // Extract unique drop-off points for the selected company
+  const dropOffOptions = React.useMemo<SelectOption<string>[]>(() => {
+    if (!form.company) return [];
+    const points = Array.from(
+      new Set(
+        mappings
+          .filter((m) => m.company === form.company)
+          .map((m) => m.dropOffPoint),
+      ),
+    );
+    return points.sort().map((p) => ({ value: p, label: p }));
+  }, [mappings, form.company]);
 
   // Hydrate form when entering edit mode
   React.useEffect(() => {
@@ -133,14 +157,21 @@ export function FeeMappingsForm({
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-            <Field
-              id="fm-company"
-              label={t('feeMappings.fields.company')}
-              value={form.company}
-              onChange={(v) => update({ company: v })}
-              placeholder="Watanya"
-              required
-            />
+            <div className="space-y-1">
+              <Label htmlFor="fm-company" className="text-xs">
+                {t('feeMappings.fields.company')}
+                <span className="text-destructive">*</span>
+              </Label>
+              <SearchableSelect<string>
+                id="fm-company"
+                options={companyOptions}
+                value={form.company}
+                onChange={(v) => update({ company: v })}
+                allowCustom
+                placeholder="Watanya"
+              />
+            </div>
+
             <Field
               id="fm-terminal"
               label={t('feeMappings.fields.terminal')}
@@ -149,14 +180,23 @@ export function FeeMappingsForm({
               placeholder="Cairo"
               required
             />
-            <Field
-              id="fm-dropoff"
-              label={t('feeMappings.fields.dropOffPoint')}
-              value={form.drop_off_point}
-              onChange={(v) => update({ drop_off_point: v })}
-              placeholder="Qena"
-              required
-            />
+
+            <div className="space-y-1">
+              <Label htmlFor="fm-dropoff" className="text-xs">
+                {t('feeMappings.fields.dropOffPoint')}
+                <span className="text-destructive">*</span>
+              </Label>
+              <SearchableSelect<string>
+                id="fm-dropoff"
+                options={dropOffOptions}
+                value={form.drop_off_point}
+                onChange={(v) => update({ drop_off_point: v })}
+                allowCustom
+                placeholder="Qena"
+                disabled={!form.company}
+              />
+            </div>
+
             <Field
               id="fm-distance"
               label={t('feeMappings.fields.distance')}
@@ -210,7 +250,16 @@ interface FieldProps {
   required?: boolean;
 }
 
-function Field({ id, label, value, onChange, type = 'text', step, placeholder, required }: FieldProps) {
+function Field({
+  id,
+  label,
+  value,
+  onChange,
+  type = 'text',
+  step,
+  placeholder,
+  required,
+}: FieldProps) {
   return (
     <div className="space-y-1">
       <Label htmlFor={id} className="text-xs">

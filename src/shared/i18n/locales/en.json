@@ -40,7 +40,8 @@
     "select": "Select",
     "selectedCount": "{{count}} selected",
     "options": "Options",
-    "noOptions": "No options"
+    "noOptions": "No options",
+    "use": "Use"
   },
   "nav": {
     "overview": "Overview",

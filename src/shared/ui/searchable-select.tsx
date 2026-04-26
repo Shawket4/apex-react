@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Check, ChevronsUpDown } from 'lucide-react';
+import { Check, ChevronsUpDown, Plus } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/shared/lib/cn';
 import { normalize } from '@/shared/lib/normalize';
@@ -26,6 +26,8 @@ interface SearchableSelectProps<T extends string | number> {
   id?: string;
   /** Lock width so trigger width matches popover content; on by default */
   matchTriggerWidth?: boolean;
+  /** Allow entering custom values not present in the options list */
+  allowCustom?: boolean;
 }
 
 export function SearchableSelect<T extends string | number>({
@@ -38,6 +40,7 @@ export function SearchableSelect<T extends string | number>({
   disabled,
   id,
   matchTriggerWidth = true,
+  allowCustom = false,
 }: SearchableSelectProps<T>) {
   const { t } = useTranslation();
   const [open, setOpen] = React.useState(false);
@@ -62,11 +65,11 @@ export function SearchableSelect<T extends string | number>({
 
   // Custom filter function using our comprehensive normalization
   const filteredOptions = React.useMemo(() => {
-    if (!search.trim()) return options;
-
     const normalizedSearch = normalize(search);
 
-    return options.filter((option) => {
+    const filtered = options.filter((option) => {
+      if (!normalizedSearch) return true;
+
       // Search in label
       const normalizedLabel = normalize(option.label);
       if (normalizedLabel.includes(normalizedSearch)) {
@@ -89,6 +92,13 @@ export function SearchableSelect<T extends string | number>({
 
       return false;
     });
+
+    return filtered;
+  }, [options, search]);
+
+  const hasExactMatch = React.useMemo(() => {
+    const normalizedSearch = normalize(search);
+    return options.some((o) => normalize(o.label) === normalizedSearch);
   }, [options, search]);
 
   return (
@@ -120,14 +130,29 @@ export function SearchableSelect<T extends string | number>({
         align="start"
       >
         <Command shouldFilter={false}>
-          <CommandInput 
-            placeholder={t('common.searchPlaceholder')} 
+          <CommandInput
+            placeholder={t('common.searchPlaceholder')}
             value={search}
             onValueChange={setSearch}
           />
           <CommandList>
             <CommandEmpty>{emptyText ?? t('common.noResults')}</CommandEmpty>
             <CommandGroup>
+              {allowCustom && search.trim() && !hasExactMatch && (
+                <CommandItem
+                  value={search}
+                  onSelect={() => {
+                    onChange(search as T);
+                    setOpen(false);
+                  }}
+                  className="text-primary font-medium"
+                >
+                  <Plus className="me-2 h-4 w-4" />
+                  <span>
+                    {t('common.use')} "{search}"
+                  </span>
+                </CommandItem>
+              )}
               {filteredOptions.map((option) => (
                 <CommandItem
                   key={String(option.value)}
@@ -147,7 +172,9 @@ export function SearchableSelect<T extends string | number>({
                   <div className="flex flex-col">
                     <span>{option.label}</span>
                     {option.description && (
-                      <span className="text-xs text-muted-foreground">{option.description}</span>
+                      <span className="text-xs text-muted-foreground text-start">
+                        {option.description}
+                      </span>
                     )}
                   </div>
                 </CommandItem>

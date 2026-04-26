@@ -40,7 +40,8 @@
     "select": "اختر",
     "selectedCount": "{{count}} محدد",
     "options": "خيارات",
-    "noOptions": "لا توجد خيارات"
+    "noOptions": "لا توجد خيارات",
+    "use": "استخدام"
   },
   "nav": {
     "overview": "نظرة عامة",
