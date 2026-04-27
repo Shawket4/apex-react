@@ -119,7 +119,11 @@ export function SearchableSelect<T extends string | number>({
           )}
         >
           <span className="truncate">
-            {selected ? selected.label : (placeholder ?? t('common.selectOne'))}
+            {selected
+              ? selected.label
+              : value !== null && value !== undefined && value !== ''
+                ? String(value)
+                : (placeholder ?? t('common.selectOne'))}
           </span>
           <ChevronsUpDown className="h-4 w-4 opacity-50" />
         </Button>

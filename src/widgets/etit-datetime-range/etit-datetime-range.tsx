@@ -462,11 +462,6 @@ export function EtitDateTimeRange({
                 </div>
               </div>
 
-              <div className="mt-2 flex items-center justify-end">
-                <span className="rounded bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
-                  {t('etit.controls.cairoTime')}
-                </span>
-              </div>
             </div>
 
             {/* Footer */}
@@ -499,9 +494,6 @@ export function EtitDateTimeRange({
         <span className="text-muted-foreground">→</span>
         <span className="truncate font-medium text-foreground">
           {formatCairo(value.to, 'datetime')}
-        </span>
-        <span className="ms-auto rounded bg-muted px-1.5 py-0.5 text-[10px]">
-          {t('etit.controls.cairoTime')}
         </span>
       </div>
     </div>

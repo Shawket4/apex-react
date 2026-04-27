@@ -554,7 +554,10 @@ export function EtitPage() {
 
         {/* Right pane — desktop only */}
         {isDesktop && !rightCollapsed && !isFullScreen && (
-          <aside className="flex h-full w-[360px] shrink-0 flex-col gap-3 overflow-y-auto border-s bg-background p-3">
+          <aside className={cn(
+            "flex h-full shrink-0 flex-col gap-3 overflow-y-auto border-s bg-background p-3 transition-[width] duration-300 ease-in-out",
+            leftCollapsed ? "w-[420px]" : "w-[360px]"
+          )}>
             {controlsNode}
             {playerNode}
           </aside>

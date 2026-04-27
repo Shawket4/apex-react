@@ -80,18 +80,28 @@ function vehicleSvg(color: string, filterId: string, heading: number): string {
   return `
     <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
       <defs>
-        <filter id="${filterId}-shadow" x="-30%" y="-30%" width="160%" height="160%">
-          <feDropShadow dx="0" dy="2" stdDeviation="2.5" flood-color="#000000" flood-opacity="0.35"/>
+        <filter id="${filterId}-shadow" x="-50%" y="-50%" width="200%" height="200%">
+          <feDropShadow dx="0" dy="2.5" stdDeviation="2.5" flood-color="#000000" flood-opacity="0.35"/>
         </filter>
       </defs>
-      <!-- Base circle with shadow -->
-      <circle cx="18" cy="18" r="11.5" fill="white" filter="url(#${filterId}-shadow)"/>
-      <circle cx="18" cy="18" r="9.5" fill="${color}"/>
-      <circle cx="18" cy="18" r="9.5" fill="white" fill-opacity="0.08"/>
       
-      <!-- Directional indicator -->
+      <!-- High-end outer glow -->
+      <circle cx="18" cy="18" r="14" fill="${color}" fill-opacity="0.15" />
+      
+      <!-- Premium Badge Base -->
+      <circle cx="18" cy="18" r="11" fill="white" filter="url(#${filterId}-shadow)" />
+      <circle cx="18" cy="18" r="9.5" fill="${color}" />
+      
+      <!-- Depth layers -->
+      <circle cx="18" cy="18" r="9.5" fill="black" fill-opacity="0.12" />
+      <circle cx="18" cy="18" r="8" fill="${color}" />
+      
+      <!-- Glassmorphic highlight -->
+      <path d="M18 10 A 8 8 0 0 1 26 18 L 10 18 A 8 8 0 0 1 18 10" fill="white" fill-opacity="0.15" />
+
+      <!-- Sleek Directional Indicator -->
       <g transform="rotate(${rotation} 18 18)">
-        <path d="M18 6.5 L23.5 16.5 L18 14.5 L12.5 16.5 Z" fill="white" style="filter: drop-shadow(0px 1px 1.5px rgba(0,0,0,0.2))"/>
+        <path d="M18 7.2 L24 17.5 L18 15.5 L12 17.5 Z" fill="white" style="filter: drop-shadow(0px 1px 1px rgba(0,0,0,0.2))" />
       </g>
     </svg>
   `;
