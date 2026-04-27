@@ -32,26 +32,27 @@ export function EtitVehicleHistorySelector({
   const { t } = useTranslation();
 
   const [isRefreshing, setIsRefreshing] = React.useState(false);
-  const longPressTimerRef = React.useRef<NodeJS.Timeout | null>(null);
+  const [longPressTimer, setLongPressTimer] = React.useState<NodeJS.Timeout | null>(null);
 
   const handlePointerDown = React.useCallback(() => {
     setIsRefreshing(false);
-    longPressTimerRef.current = setTimeout(() => {
+    const timer = setTimeout(() => {
       setIsRefreshing(true);
       onLoad(true);
-      longPressTimerRef.current = null;
+      setLongPressTimer(null);
     }, 700);
+    setLongPressTimer(timer);
   }, [onLoad]);
 
   const handlePointerUp = React.useCallback(() => {
-    if (longPressTimerRef.current) {
-      clearTimeout(longPressTimerRef.current);
-      longPressTimerRef.current = null;
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      setLongPressTimer(null);
       if (!isRefreshing) {
         onLoad(false);
       }
     }
-  }, [onLoad, isRefreshing]);
+  }, [longPressTimer, onLoad, isRefreshing]);
 
   // Reset local refreshing state when parent loading starts/ends
   React.useEffect(() => {
@@ -87,7 +88,7 @@ export function EtitVehicleHistorySelector({
           className="w-full gap-2 shadow-lg shadow-primary/20 transition-all active:scale-[0.98]"
           onPointerDown={handlePointerDown}
           onPointerUp={handlePointerUp}
-          onPointerCancel={() => longPressTimerRef.current && clearTimeout(longPressTimerRef.current)}
+          onPointerCancel={() => longPressTimer && clearTimeout(longPressTimer)}
           disabled={loading}
         >
           {loading ? (
