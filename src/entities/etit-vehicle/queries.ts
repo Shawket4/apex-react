@@ -55,15 +55,7 @@ export function useEtitVehicles(
 
 /* -------------------------------------------------------------------------- */
 /* Live snapshot                                                               */
-/*                                                                             *
- * The page combines two sources for live data:                              *
- *   1. SSE stream (`useEtitLiveStream`) — preferred, deltas in real time     *
- *   2. Snapshot poll (`useEtitLive`)    — seed + safety net                  *
- *                                                                             *
- * When the stream is healthy we let the snapshot back off to a long          *
- * interval (5 min) so we don't pay for duplicate work; when the stream       *
- * disconnects we tighten back to 30s.                                        *
- * -------------------------------------------------------------------------- */
+/* -------------------------------------------------------------------------- */
 
 export interface UseEtitLiveOptions
   extends Omit<UseQueryOptions<EtitLiveStatus[]>, 'queryKey' | 'queryFn'> {
@@ -138,25 +130,10 @@ export function useEtitTripSummary(
 
 /* -------------------------------------------------------------------------- */
 /* Live stream (SSE)                                                           */
-/*                                                                             *
- * Wires the proxy's SSE endpoint into the same `etitKeys.live()` cache the   *
- * snapshot poll uses, so consumers (vehicle list, map) read one source.      *
- *                                                                             *
- * Reconnect strategy: on any error we close the EventSource and schedule a   *
- * reopen with exponential backoff (1s → 30s capped). EventSource has its    *
- * own auto-reconnect, but it does not fire on permanent close states and    *
- * skips the close/open `onerror` cycle, so we manage it manually for        *
- * deterministic behaviour.                                                   *
- *                                                                             *
- * Auth: the proxy sits on the same origin and accepts the same JWT cookie   *
- * as the REST endpoints. We append `?token=...` as a fallback because       *
- * EventSource cannot set a custom `Authorization` header.                   *
- * -------------------------------------------------------------------------- */
+/* -------------------------------------------------------------------------- */
 
 export interface UseEtitLiveStreamResult {
-  /** Whether the stream is currently open and receiving events. */
   connected: boolean;
-  /** Last error encountered (best-effort; cleared on next successful open). */
   error: Error | null;
 }
 
@@ -194,13 +171,10 @@ export function useEtitLiveStream(): UseEtitLiveStreamResult {
       };
 
       es.onerror = () => {
-        // EventSource's onerror does not include details — synthesise.
         setConnected(false);
         scheduleRetry(new Error('SSE connection lost'));
       };
 
-      // The proxy emits one named "live" event per delta. We also tolerate
-      // the default unnamed `message` event for back-compat.
       const handleMessage = (e: MessageEvent) => {
         applyDelta(e.data);
       };
@@ -232,7 +206,6 @@ export function useEtitLiveStream(): UseEtitLiveStreamResult {
             indexById.set(u.id, next.length);
             next.push(u);
           } else {
-            // Merge so we don't drop fields the delta omitted.
             next[existing] = { ...next[existing], ...u };
           }
         }
@@ -242,10 +215,7 @@ export function useEtitLiveStream(): UseEtitLiveStreamResult {
 
     const scheduleRetry = (err: unknown) => {
       setError(err instanceof Error ? err : new Error(String(err)));
-      if (es) {
-        es.close();
-        es = null;
-      }
+      if (es) { es.close(); es = null; }
       if (cancelled) return;
       const delay = Math.min(30_000, 1000 * 2 ** attempt);
       attempt += 1;
@@ -256,17 +226,56 @@ export function useEtitLiveStream(): UseEtitLiveStreamResult {
 
     return () => {
       cancelled = true;
-      if (retryTimer !== null) {
-        window.clearTimeout(retryTimer);
-        retryTimer = null;
-      }
-      if (es) {
-        es.close();
-        es = null;
-      }
+      if (retryTimer !== null) window.clearTimeout(retryTimer);
+      if (es) es.close();
       setConnected(false);
     };
   }, [queryClient]);
 
   return { connected, error };
+}
+
+/* -------------------------------------------------------------------------- */
+/* Fleet Hook (Consolidated)                                                   */
+/* -------------------------------------------------------------------------- */
+
+export function useEtitFleet() {
+  const metadata = useEtitVehicles();
+  const liveStream = useEtitLiveStream();
+  const snapshots = useEtitLive({ streamConnected: liveStream.connected });
+
+  const fleet = React.useMemo(() => {
+    if (!metadata.data) return [];
+    
+    const liveMap = new Map<string, EtitLiveStatus>();
+    if (snapshots.data) {
+      for (const s of snapshots.data) liveMap.set(s.id, s);
+    }
+
+    return metadata.data.map((v) => {
+      const live = liveMap.get(v.id);
+      if (!live) return v;
+      
+      return {
+        ...v,
+        speed: live.speed,
+        status: live.status,
+        statusLabel: live.statusLabel,
+        lat: live.lat,
+        lng: live.lng,
+      };
+    });
+  }, [metadata.data, snapshots.data]);
+
+  return {
+    fleet,
+    loading: metadata.isLoading || snapshots.isLoading,
+    isLoading: metadata.isLoading || snapshots.isLoading,
+    error: metadata.error || snapshots.error,
+    liveConnected: liveStream.connected,
+    liveError: liveStream.error,
+    refreshMetadata: () => metadata.refetch(),
+    liveStatuses: snapshots.data ?? [],
+    isError: metadata.isError || snapshots.isError,
+  };
 }

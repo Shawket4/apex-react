@@ -3,13 +3,12 @@ import type { MarkerKind } from './types';
 /**
  * Build a marker SVG as a data URL.
  *
- * One factory for all marker kinds keeps the visual language consistent
- * across providers — Google and Leaflet both render the same SVG, so a
- * fallback transition is invisible to the user.
+ * One factory, one visual language. Both Google and Leaflet render the
+ * same SVG, so a fallback transition between providers is invisible.
  *
- * The filter ID must be unique per marker — multiple markers in one
- * document with duplicate filter IDs cause SVG rendering bugs (filter
- * only applies to the first marker).
+ * Every <defs> id is suffixed from the caller-supplied `filterId` —
+ * multiple inline SVGs in one document with duplicate ids cause SVG to
+ * apply each def only to the first match (silent rendering bug).
  */
 export function buildMarkerSvg(
   color: string,
@@ -17,172 +16,219 @@ export function buildMarkerSvg(
   kind: MarkerKind = 'pin',
   heading = 0,
 ): string {
-  let svg: string;
-  switch (kind) {
-    case 'vehicle':
-      svg = vehicleSvg(color, filterId, heading);
-      break;
-    case 'stop':
-      svg = stopSvg(color, filterId);
-      break;
-    case 'ignition-on':
-      svg = ignitionSvg(color, filterId, true);
-      break;
-    case 'ignition-off':
-      svg = ignitionSvg(color, filterId, false);
-      break;
-    case 'route-start':
-      svg = routeStartSvg(color, filterId);
-      break;
-    case 'route-end':
-      svg = routeEndSvg(color, filterId);
-      break;
-    case 'pin':
-    default:
-      svg = pinSvg(color, filterId);
-      break;
-  }
+  const builder = BUILDERS[kind] ?? BUILDERS.pin;
+  const svg = builder(color, filterId, heading);
   return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
 }
 
+type Builder = (color: string, id: string, heading: number) => string;
+
+const BUILDERS: Record<MarkerKind, Builder> = {
+  pin: pinSvg,
+  vehicle: vehicleSvg,
+  stop: stopSvg,
+  'ignition-on': (c, id) => ignitionSvg(c, id, true),
+  'ignition-off': (c, id) => ignitionSvg(c, id, false),
+  'route-start': routeStartSvg,
+  'route-end': routeEndSvg,
+};
+
 /* -------------------------------------------------------------------------- */
-/* Pin (classic teardrop, used by stops/forms/one-shot displays)               */
+/* Shared visual ingredients                                                   */
+/*                                                                             */
+/* Centralising these is what gives the markers a coherent feel — every kind  */
+/* gets the same shadow recipe and the same top-light sheen.                  */
 /* -------------------------------------------------------------------------- */
 
-function pinSvg(color: string, filterId: string): string {
-  return `
-    <svg width="24" height="30" viewBox="0 0 24 30" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <filter id="${filterId}" x="-40%" y="-20%" width="180%" height="180%">
-          <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000000" flood-opacity="0.28"/>
-        </filter>
-      </defs>
-      <path
-        d="M12 1C7.029 1 3 5.029 3 10C3 16.5 12 29 12 29C12 29 21 16.5 21 10C21 5.029 16.971 1 12 1Z"
-        fill="${color}"
-        filter="url(#${filterId})"
-      />
-      <circle cx="12" cy="10" r="4" fill="white" fill-opacity="0.92"/>
-    </svg>
-  `;
+function shadowDef(id: string): string {
+  return `<filter id="${id}" x="-50%" y="-50%" width="200%" height="200%">
+    <feDropShadow dx="0" dy="1.4" stdDeviation="1.6" flood-color="#0b1620" flood-opacity="0.32"/>
+  </filter>`;
+}
+
+/** Top-light gradient. Layered over a flat fill it gives a "molded" feel. */
+function sheenDef(id: string): string {
+  return `<linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="white" stop-opacity="0.32"/>
+    <stop offset="55%" stop-color="white" stop-opacity="0"/>
+    <stop offset="100%" stop-color="black" stop-opacity="0.18"/>
+  </linearGradient>`;
 }
 
 /* -------------------------------------------------------------------------- */
-/* Vehicle (round badge with tanker silhouette + heading arrow)                */
+/* Pin (teardrop, anchored at the tip)                                         */
+/* -------------------------------------------------------------------------- */
+
+function pinSvg(color: string, filterId: string): string {
+  const sId = `${filterId}-s`;
+  const gId = `${filterId}-g`;
+  const body =
+    'M13 1.5C6.65 1.5 1.5 6.65 1.5 13C1.5 21.5 13 32.5 13 32.5' +
+    'C13 32.5 24.5 21.5 24.5 13C24.5 6.65 19.35 1.5 13 1.5Z';
+  return `<svg width="26" height="34" viewBox="0 0 26 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>${shadowDef(sId)}${sheenDef(gId)}</defs>
+    <g filter="url(#${sId})">
+      <path d="${body}" fill="${color}"/>
+    </g>
+    <path d="${body}" fill="url(#${gId})"/>
+    <circle cx="13" cy="13" r="4.4" fill="white"/>
+  </svg>`;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Vehicle (top-down tanker; rotates with heading around the centre)           */
 /*                                                                             */
-/* Anchors at the centre of the badge — that's where the GPS coordinate is.   */
-/* The heading arrow rotates with `heading` (degrees from north). When the    */
-/* heading is zero or unknown, no arrow is drawn.                             */
+/* The silhouette is a single combined path so cab + tank read as one truck   */
+/* rather than two floating boxes. Going clockwise from the cab top-left:     */
+/*                                                                             */
+/*   start ──┐                                                                 */
+/*           ├── rounded cab top                                               */
+/*           │                                                                 */
+/*           ├── cab side, then a sharp step out to the wider tank            */
+/*           │                                                                 */
+/*           ╰── tank side, then a half-circle around the rear                */
+/*                                                                             */
+/* Front = up at heading 0 (north). Anchor is centre — that's the GPS fix.    */
 /* -------------------------------------------------------------------------- */
 
 function vehicleSvg(color: string, filterId: string, heading: number): string {
+  const sId = `${filterId}-s`;
+  const tId = `${filterId}-t`;
+  const cId = `${filterId}-c`;
   const rotation = Number.isFinite(heading) ? heading : 0;
-  return `
-    <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <filter id="${filterId}-shadow" x="-50%" y="-50%" width="200%" height="200%">
-          <feDropShadow dx="0" dy="2.5" stdDeviation="2.5" flood-color="#000000" flood-opacity="0.35"/>
-        </filter>
-      </defs>
-      
-      <!-- High-end outer glow -->
-      <circle cx="18" cy="18" r="14" fill="${color}" fill-opacity="0.15" />
-      
-      <!-- Premium Badge Base -->
-      <circle cx="18" cy="18" r="11" fill="white" filter="url(#${filterId}-shadow)" />
-      <circle cx="18" cy="18" r="9.5" fill="${color}" />
-      
-      <!-- Depth layers -->
-      <circle cx="18" cy="18" r="9.5" fill="black" fill-opacity="0.12" />
-      <circle cx="18" cy="18" r="8" fill="${color}" />
-      
-      <!-- Glassmorphic highlight -->
-      <path d="M18 10 A 8 8 0 0 1 26 18 L 10 18 A 8 8 0 0 1 18 10" fill="white" fill-opacity="0.15" />
 
-      <!-- Sleek Directional Indicator -->
-      <g transform="rotate(${rotation} 18 18)">
-        <path d="M18 7.2 L24 17.5 L18 15.5 L12 17.5 Z" fill="white" style="filter: drop-shadow(0px 1px 1px rgba(0,0,0,0.2))" />
+  // Single combined silhouette: rounded cab on top, step out to the wider
+  // tank, half-circle rear. Drawn once for the white outline (stroke) and
+  // again for the colour fill — avoids a visible seam at the cab/tank joint.
+  const body =
+    'M16.5 4 H23.5 ' +
+    'A2.5 2.5 0 0 1 26 6.5 V12 ' +
+    'H29 V27 ' +
+    'A9 9 0 0 1 11 27 V12 ' +
+    'H14 V6.5 ' +
+    'A2.5 2.5 0 0 1 16.5 4 Z';
+
+  return `<svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      ${shadowDef(sId)}
+      <linearGradient id="${cId}" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="white" stop-opacity="0.34"/>
+        <stop offset="55%" stop-color="white" stop-opacity="0"/>
+        <stop offset="100%" stop-color="black" stop-opacity="0.22"/>
+      </linearGradient>
+      <linearGradient id="${tId}" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="white" stop-opacity="0"/>
+        <stop offset="50%" stop-color="white" stop-opacity="0.20"/>
+        <stop offset="100%" stop-color="white" stop-opacity="0"/>
+      </linearGradient>
+    </defs>
+    <g filter="url(#${sId})">
+      <g transform="rotate(${rotation} 20 20)">
+        <!-- white halo (outline) -->
+        <path d="${body}" fill="white" stroke="white" stroke-width="3" stroke-linejoin="round"/>
+        <!-- body fill -->
+        <path d="${body}" fill="${color}"/>
+        <!-- top-light molding -->
+        <path d="${body}" fill="url(#${cId})"/>
+        <!-- vertical highlight stripe down the tank suggests cylindrical curve -->
+        <rect x="13.5" y="14" width="13" height="20" fill="url(#${tId})"/>
+        <!-- windshield: the strongest "front" cue -->
+        <rect x="15" y="6" width="10" height="2.6" rx="1.3" fill="white" fill-opacity="0.92"/>
+        <!-- headlights -->
+        <circle cx="16" cy="11" r="0.85" fill="white" fill-opacity="0.95"/>
+        <circle cx="24" cy="11" r="0.85" fill="white" fill-opacity="0.95"/>
       </g>
-    </svg>
-  `;
+    </g>
+  </svg>`;
 }
 
 /* -------------------------------------------------------------------------- */
 /* Stop (rounded square with pause glyph)                                      */
+/*                                                                             */
+/* Square instead of round so it reads differently from the vehicle marker    */
+/* at a glance — important when both kinds appear on the same map.            */
 /* -------------------------------------------------------------------------- */
 
 function stopSvg(color: string, filterId: string): string {
-  return `
-    <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <filter id="${filterId}" x="-25%" y="-25%" width="150%" height="150%">
-          <feDropShadow dx="0" dy="1.5" stdDeviation="1.6" flood-color="#000000" flood-opacity="0.28"/>
-        </filter>
-      </defs>
-      <rect x="2" y="2" width="18" height="18" rx="6" fill="white" filter="url(#${filterId})"/>
-      <rect x="3" y="3" width="16" height="16" rx="5" fill="${color}"/>
-      <rect x="7.5" y="6.8" width="2.4" height="8.4" rx="0.8" fill="white"/>
-      <rect x="12.1" y="6.8" width="2.4" height="8.4" rx="0.8" fill="white"/>
-    </svg>
-  `;
+  const sId = `${filterId}-s`;
+  const gId = `${filterId}-g`;
+  return `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>${shadowDef(sId)}${sheenDef(gId)}</defs>
+    <g filter="url(#${sId})">
+      <rect x="2" y="2" width="20" height="20" rx="6" fill="white"/>
+    </g>
+    <rect x="3.2" y="3.2" width="17.6" height="17.6" rx="4.8" fill="${color}"/>
+    <rect x="3.2" y="3.2" width="17.6" height="17.6" rx="4.8" fill="url(#${gId})"/>
+    <rect x="8" y="7.2" width="2.6" height="9.6" rx="0.9" fill="white"/>
+    <rect x="13.4" y="7.2" width="2.6" height="9.6" rx="0.9" fill="white"/>
+  </svg>`;
 }
 
 /* -------------------------------------------------------------------------- */
-/* Ignition (lightning bolt; "off" gets a slash overlay)                       */
+/* Ignition (universal power glyph; "off" gets a haloed slash)                 */
+/*                                                                             */
+/* The slash is drawn as a dark wide stroke beneath a thinner white stroke    */
+/* — gives it a visible "knocked-out" edge against the power symbol so it     */
+/* doesn't mush together with the glyph when colours don't contrast enough.   */
 /* -------------------------------------------------------------------------- */
 
 function ignitionSvg(color: string, filterId: string, on: boolean): string {
+  const sId = `${filterId}-s`;
+  const gId = `${filterId}-g`;
   const slash = on
     ? ''
-    : '<line x1="5" y1="5" x2="19" y2="19" stroke="white" stroke-width="2.4" stroke-linecap="round"/>';
-  return `
-    <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <filter id="${filterId}" x="-25%" y="-25%" width="150%" height="150%">
-          <feDropShadow dx="0" dy="1.5" stdDeviation="1.6" flood-color="#000000" flood-opacity="0.28"/>
-        </filter>
-      </defs>
-      <circle cx="11" cy="11" r="9.5" fill="white" filter="url(#${filterId})"/>
-      <circle cx="11" cy="11" r="8.5" fill="${color}"/>
-      <path d="M12 4 L7 12 L10.5 12 L9 18 L15 9.5 L11.5 9.5 L13 4 Z" fill="white"/>
-      ${slash}
-    </svg>
-  `;
+    : `<line x1="6" y1="6" x2="18" y2="18" stroke="#0b1620" stroke-opacity="0.55" stroke-width="3.6" stroke-linecap="round"/>
+       <line x1="6" y1="6" x2="18" y2="18" stroke="white" stroke-width="2" stroke-linecap="round"/>`;
+  return `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>${shadowDef(sId)}${sheenDef(gId)}</defs>
+    <g filter="url(#${sId})">
+      <circle cx="12" cy="12" r="10" fill="white"/>
+    </g>
+    <circle cx="12" cy="12" r="8.6" fill="${color}"/>
+    <circle cx="12" cy="12" r="8.6" fill="url(#${gId})"/>
+    <path d="M8.4 8.6 A 5 5 0 1 0 15.6 8.6"
+          stroke="white" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <line x1="12" y1="6.6" x2="12" y2="12.4"
+          stroke="white" stroke-width="2" stroke-linecap="round"/>
+    ${slash}
+  </svg>`;
 }
 
-
 /* -------------------------------------------------------------------------- */
-/* Route Endpoints (start = play/green, end = stop/red)                       */
+/* Route endpoints                                                             */
+/*                                                                             */
+/* Pair design: start = play triangle, end = solid square. They mirror the    */
+/* media-player metaphor everyone already knows, and stay legible when both   */
+/* are dropped at zoomed-out map levels.                                      */
 /* -------------------------------------------------------------------------- */
 
 function routeStartSvg(color: string, filterId: string): string {
-  return `
-    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <filter id="${filterId}" x="-30%" y="-30%" width="160%" height="160%">
-          <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000000" flood-opacity="0.3"/>
-        </filter>
-      </defs>
-      <circle cx="14" cy="14" r="12" fill="white" filter="url(#${filterId})"/>
-      <circle cx="14" cy="14" r="10" fill="${color}"/>
-      <path d="M12 10 L18 14 L12 18 Z" fill="white"/>
-    </svg>
-  `;
+  const sId = `${filterId}-s`;
+  const gId = `${filterId}-g`;
+  return `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>${shadowDef(sId)}${sheenDef(gId)}</defs>
+    <g filter="url(#${sId})">
+      <circle cx="14" cy="14" r="12" fill="white"/>
+    </g>
+    <circle cx="14" cy="14" r="10.6" fill="${color}"/>
+    <circle cx="14" cy="14" r="10.6" fill="url(#${gId})"/>
+    <path d="M11.5 9.5 L19 14 L11.5 18.5 Z"
+          fill="white" stroke="white" stroke-width="1.2" stroke-linejoin="round"/>
+  </svg>`;
 }
 
 function routeEndSvg(color: string, filterId: string): string {
-  return `
-    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <filter id="${filterId}" x="-30%" y="-30%" width="160%" height="160%">
-          <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000000" flood-opacity="0.3"/>
-        </filter>
-      </defs>
-      <circle cx="14" cy="14" r="12" fill="white" filter="url(#${filterId})"/>
-      <circle cx="14" cy="14" r="10" fill="${color}"/>
-      <rect x="10.5" y="10.5" width="7" height="7" rx="1" fill="white"/>
-    </svg>
-  `;
+  const sId = `${filterId}-s`;
+  const gId = `${filterId}-g`;
+  return `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>${shadowDef(sId)}${sheenDef(gId)}</defs>
+    <g filter="url(#${sId})">
+      <circle cx="14" cy="14" r="12" fill="white"/>
+    </g>
+    <circle cx="14" cy="14" r="10.6" fill="${color}"/>
+    <circle cx="14" cy="14" r="10.6" fill="url(#${gId})"/>
+    <rect x="9.5" y="9.5" width="9" height="9" rx="1.4" fill="white"/>
+  </svg>`;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -197,11 +243,11 @@ export interface MarkerSize {
 }
 
 const SIZES: Record<MarkerKind, MarkerSize> = {
-  pin: { width: 24, height: 30, anchorX: 12, anchorY: 30 },
-  vehicle: { width: 36, height: 36, anchorX: 18, anchorY: 18 },
-  stop: { width: 22, height: 22, anchorX: 11, anchorY: 11 },
-  'ignition-on': { width: 22, height: 22, anchorX: 11, anchorY: 11 },
-  'ignition-off': { width: 22, height: 22, anchorX: 11, anchorY: 11 },
+  pin: { width: 26, height: 34, anchorX: 13, anchorY: 34 },
+  vehicle: { width: 40, height: 40, anchorX: 20, anchorY: 20 },
+  stop: { width: 24, height: 24, anchorX: 12, anchorY: 12 },
+  'ignition-on': { width: 24, height: 24, anchorX: 12, anchorY: 12 },
+  'ignition-off': { width: 24, height: 24, anchorX: 12, anchorY: 12 },
   'route-start': { width: 28, height: 28, anchorX: 14, anchorY: 14 },
   'route-end': { width: 28, height: 28, anchorX: 14, anchorY: 14 },
 };

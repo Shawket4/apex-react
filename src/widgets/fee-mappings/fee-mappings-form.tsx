@@ -76,6 +76,19 @@ export function FeeMappingsForm({
     return points.sort().map((p) => ({ value: p, label: p }));
   }, [mappings, form.company]);
 
+  // Extract unique terminals for the selected company
+  const terminalOptions = React.useMemo<SelectOption<string>[]>(() => {
+    if (!form.company) return [];
+    const points = Array.from(
+      new Set(
+        mappings
+          .filter((m) => m.company === form.company)
+          .map((m) => m.terminal),
+      ),
+    );
+    return points.sort().map((p) => ({ value: p, label: p }));
+  }, [mappings, form.company]);
+
   // Hydrate form when entering edit mode
   React.useEffect(() => {
     if (editing) {
@@ -172,14 +185,21 @@ export function FeeMappingsForm({
               />
             </div>
 
-            <Field
-              id="fm-terminal"
-              label={t('feeMappings.fields.terminal')}
-              value={form.terminal}
-              onChange={(v) => update({ terminal: v })}
-              placeholder="Cairo"
-              required
-            />
+            <div className="space-y-1">
+              <Label htmlFor="fm-terminal" className="text-xs">
+                {t('feeMappings.fields.terminal')}
+                <span className="text-destructive">*</span>
+              </Label>
+              <SearchableSelect<string>
+                id="fm-terminal"
+                options={terminalOptions}
+                value={form.terminal}
+                onChange={(v) => update({ terminal: v })}
+                allowCustom
+                placeholder="Cairo"
+                disabled={!form.company}
+              />
+            </div>
 
             <div className="space-y-1">
               <Label htmlFor="fm-dropoff" className="text-xs">

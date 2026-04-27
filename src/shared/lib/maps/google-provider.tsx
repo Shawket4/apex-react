@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Locate, Mountain } from 'lucide-react';
+import { Locate, Layers } from 'lucide-react';
 import { setOptions, importLibrary } from '@googlemaps/js-api-loader';
 import { Button } from '@/shared/ui/button';
 import { cn } from '@/shared/lib/cn';
@@ -514,7 +514,7 @@ export function GoogleMapView({
       <div ref={containerRef} className="h-full w-full rounded-lg" />
 
       {mapReady && (
-        <div className="absolute end-3 top-3 z-10 flex flex-col gap-1.5">
+        <div className="absolute end-3 bottom-16 z-10 flex flex-col-reverse gap-1.5">
           <Button
             size="icon"
             variant={isSatellite ? 'default' : 'secondary'}
@@ -522,7 +522,7 @@ export function GoogleMapView({
             onClick={toggleSatellite}
             title={isSatellite ? 'Road map' : 'Satellite'}
           >
-            <Mountain className="h-4 w-4" />
+            <Layers className="h-4 w-4" />
           </Button>
           <Button
             size="icon"

@@ -50,7 +50,7 @@ export interface EtitHistoryControlsProps {
 /* Component                                                                   */
 /* -------------------------------------------------------------------------- */
 
-export function EtitHistoryControls({
+function EtitHistoryControlsBase({
   vehicle,
   history,
   summary,
@@ -295,3 +295,5 @@ function PlaceholderStat({ label }: { label: string }) {
     </div>
   );
 }
+
+export const EtitHistoryControls = React.memo(EtitHistoryControlsBase);

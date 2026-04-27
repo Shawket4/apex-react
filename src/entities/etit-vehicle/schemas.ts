@@ -67,6 +67,8 @@ export const etitVehicleSchema = z.object({
   status: z.number(),
   statusLabel: z.string(),
   lastLocationAt: optionalIso,
+  lat: z.number().optional(),
+  lng: z.number().optional(),
   // The proxy carries an `extra` map for forward-compat. Pass through so
   // we don't break when the upstream adds new columns.
   extra: z.record(z.unknown()).optional().default({}),

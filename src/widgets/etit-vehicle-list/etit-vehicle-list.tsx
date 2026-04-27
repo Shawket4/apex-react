@@ -25,19 +25,13 @@ import {
 export interface EtitVehicleListProps {
   vehicles: EtitVehicle[];
   liveStatuses: EtitLiveStatus[];
-  /** Vehicle currently driving the right-hand pane (history + player). */
   activeId: string | null;
-  /** Set of vehicles whose markers should be shown on the map. */
   visibleIds: Set<string>;
   loading?: boolean;
-  /** Click on a row → make this the active vehicle. Does not toggle visibility. */
   onActivate: (id: string) => void;
-  /** Toggle the visibility checkbox for a single vehicle. */
   onToggleVisible: (id: string) => void;
-  /** Bulk visibility helpers. */
   onSetAllVisible: (ids: string[]) => void;
   onClearVisible: () => void;
-  /** Crosshair → fly camera to this vehicle (also marks it visible). */
   onFocus: (id: string) => void;
   className?: string;
 }
@@ -45,10 +39,124 @@ export interface EtitVehicleListProps {
 type StatusFilter = 'all' | 'online' | 'moving' | 'idling' | 'offline';
 
 /* -------------------------------------------------------------------------- */
-/* Component                                                                   */
+/* Vehicle Row                                                                 */
 /* -------------------------------------------------------------------------- */
 
-export function EtitVehicleList({
+interface VehicleRowProps {
+  vehicle: EtitVehicle;
+  live: EtitLiveStatus | undefined;
+  activeId: string | null;
+  visibleIds: Set<string>;
+  onActivate: (id: string) => void;
+  onToggleVisible: (id: string) => void;
+  onFocus: (id: string) => void;
+}
+
+const VehicleRow = React.memo(({
+  vehicle,
+  live,
+  activeId,
+  visibleIds,
+  onActivate,
+  onToggleVisible,
+  onFocus,
+}: VehicleRowProps) => {
+  const { t } = useTranslation();
+  const group = live ? classifyStatus(live.status) : classifyStatus(vehicle.status);
+  const color = ETIT_STATUS_COLOR[group];
+  const speed = live?.speed ?? vehicle.speed;
+  const lastSeen = live?.timestamp ?? vehicle.lastLocationAt;
+  const isActive = activeId === vehicle.id;
+  const isVisible = visibleIds.has(vehicle.id);
+  const displayName = vehicle.plate || vehicle.codename;
+  const isOnline = vehicle.online && group !== 'offline';
+
+  return (
+    <li>
+      <div
+        className={cn(
+          'group flex items-center gap-2 rounded-md border border-transparent px-2 py-2 transition-colors',
+          isActive
+            ? 'border-primary/40 bg-primary/5'
+            : 'hover:bg-accent hover:text-accent-foreground',
+        )}
+      >
+        <Checkbox
+          checked={isVisible}
+          onCheckedChange={() => onToggleVisible(vehicle.id)}
+          aria-label={
+            isVisible
+              ? t('etit.list.hideFromMap', { name: displayName })
+              : t('etit.list.showOnMap', { name: displayName })
+          }
+          onClick={(e) => e.stopPropagation()}
+        />
+
+        <span
+          className="h-2.5 w-2.5 shrink-0 rounded-full ring-2 ring-background"
+          style={{ backgroundColor: color }}
+          aria-hidden
+        />
+
+        <button
+          type="button"
+          onClick={() => onActivate(vehicle.id)}
+          className="min-w-0 flex-1 text-start"
+        >
+          <div className="flex items-center gap-1.5">
+            <span className="truncate text-sm font-semibold">{displayName}</span>
+            {isOnline ? (
+              <Wifi className="h-3 w-3 shrink-0 text-success" />
+            ) : (
+              <WifiOff className="h-3 w-3 shrink-0 text-muted-foreground" />
+            )}
+            {isVisible ? (
+              <Eye className="h-3 w-3 shrink-0 text-primary" />
+            ) : (
+              <EyeOff className="h-3 w-3 shrink-0 text-muted-foreground/40" />
+            )}
+          </div>
+          <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
+            <span className="truncate">{live?.statusLabel ?? vehicle.statusLabel}</span>
+            {speed > 0 && (
+              <span className="tabular-nums">
+                · {speed} {t('etit.units.kmh')}
+              </span>
+            )}
+          </div>
+          {lastSeen && (
+            <div className="mt-0.5 truncate text-[10px] text-muted-foreground/80">
+              {formatCairo(lastSeen, 'datetime')}
+            </div>
+          )}
+        </button>
+
+        <Button
+          type="button"
+          variant={isActive ? 'default' : 'ghost'}
+          size="icon"
+          className="h-7 w-7 shrink-0"
+          onClick={(e) => {
+            e.stopPropagation();
+            onFocus(vehicle.id);
+          }}
+          title={t('etit.list.focusOnMap')}
+          aria-label={t('etit.list.focusOnMapFor', { name: displayName })}
+        >
+          <Crosshair className="h-3.5 w-3.5" />
+        </Button>
+      </div>
+    </li>
+  );
+});
+
+VehicleRow.displayName = 'VehicleRow';
+
+/* -------------------------------------------------------------------------- */
+/* Main Component                                                              */
+/* -------------------------------------------------------------------------- */
+
+function EtitVehicleListBase({
   vehicles,
   liveStatuses,
   activeId,
@@ -89,7 +197,12 @@ export function EtitVehicleList({
         return true;
       })
       .sort((a, b) => {
-        if (a.online !== b.online) return a.online ? -1 : 1;
+        const aOffline = classifyStatus(liveById.get(a.id)?.status ?? a.status) === 'offline';
+        const bOffline = classifyStatus(liveById.get(b.id)?.status ?? b.status) === 'offline';
+        const aOnline = a.online && !aOffline;
+        const bOnline = b.online && !bOffline;
+
+        if (aOnline !== bOnline) return aOnline ? -1 : 1;
         return a.plate.localeCompare(b.plate);
       });
   }, [vehicles, debouncedSearch, filter, liveById]);
@@ -225,104 +338,26 @@ export function EtitVehicleList({
           </div>
         ) : (
           <ul className="space-y-0.5 p-2">
-            {filtered.map((v) => {
-              const live = liveById.get(v.id);
-              const group = live ? classifyStatus(live.status) : classifyStatus(v.status);
-              const color = ETIT_STATUS_COLOR[group];
-              const speed = live?.speed ?? v.speed;
-              const lastSeen = live?.timestamp ?? v.lastLocationAt;
-              const isActive = activeId === v.id;
-              const isVisible = visibleIds.has(v.id);
-              const displayName = v.plate || v.codename;
-
-              return (
-                <li key={v.id}>
-                  <div
-                    className={cn(
-                      'group flex items-center gap-2 rounded-md border border-transparent px-2 py-2 transition-colors',
-                      isActive
-                        ? 'border-primary/40 bg-primary/5'
-                        : 'hover:bg-accent hover:text-accent-foreground',
-                    )}
-                  >
-                    {/* Visibility checkbox */}
-                    <Checkbox
-                      checked={isVisible}
-                      onCheckedChange={() => onToggleVisible(v.id)}
-                      aria-label={
-                        isVisible
-                          ? t('etit.list.hideFromMap', { name: displayName })
-                          : t('etit.list.showOnMap', { name: displayName })
-                      }
-                      onClick={(e) => e.stopPropagation()}
-                    />
-
-                    {/* Status dot */}
-                    <span
-                      className="h-2.5 w-2.5 shrink-0 rounded-full ring-2 ring-background"
-                      style={{ backgroundColor: color }}
-                      aria-hidden
-                    />
-
-                    {/* Main click target — activate */}
-                    <button
-                      type="button"
-                      onClick={() => onActivate(v.id)}
-                      className="min-w-0 flex-1 text-start"
-                    >
-                      <div className="flex items-center gap-1.5">
-                        <span className="truncate text-sm font-semibold">{displayName}</span>
-                        {v.online ? (
-                          <Wifi className="h-3 w-3 shrink-0 text-success" />
-                        ) : (
-                          <WifiOff className="h-3 w-3 shrink-0 text-muted-foreground" />
-                        )}
-                        {isVisible ? (
-                          <Eye className="h-3 w-3 shrink-0 text-primary" />
-                        ) : (
-                          <EyeOff className="h-3 w-3 shrink-0 text-muted-foreground/40" />
-                        )}
-                      </div>
-                      <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
-                        <span className="truncate">{live?.statusLabel ?? v.statusLabel}</span>
-                        {speed > 0 && (
-                          <span className="tabular-nums">
-                            · {speed} {t('etit.units.kmh')}
-                          </span>
-                        )}
-                      </div>
-                      {lastSeen && (
-                        <div className="mt-0.5 truncate text-[10px] text-muted-foreground/80">
-                          {formatCairo(lastSeen, 'datetime')}
-                        </div>
-                      )}
-                    </button>
-
-                    {/* Focus button — always visible (no opacity-0 → invisible on touch) */}
-                    <Button
-                      type="button"
-                      variant={isActive ? 'default' : 'ghost'}
-                      size="icon"
-                      className="h-7 w-7 shrink-0"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onFocus(v.id);
-                      }}
-                      title={t('etit.list.focusOnMap')}
-                      aria-label={t('etit.list.focusOnMapFor', { name: displayName })}
-                    >
-                      <Crosshair className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
-                </li>
-              );
-            })}
+            {filtered.map((v) => (
+              <VehicleRow
+                key={v.id}
+                vehicle={v}
+                live={liveById.get(v.id)}
+                activeId={activeId}
+                visibleIds={visibleIds}
+                onActivate={onActivate}
+                onToggleVisible={onToggleVisible}
+                onFocus={onFocus}
+              />
+            ))}
           </ul>
         )}
       </ScrollArea>
     </aside>
   );
 }
+
+export const EtitVehicleList = React.memo(EtitVehicleListBase);
 
 /* -------------------------------------------------------------------------- */
 /* Filter chip                                                                 */

@@ -11,6 +11,7 @@ import {
   ChevronRight,
   Maximize2,
   Minimize2,
+  X,
 } from 'lucide-react';
 import { Button } from '@/shared/ui/button';
 import { Sheet, SheetContent } from '@/shared/ui/sheet';
@@ -22,11 +23,9 @@ import {
   type PlaybackState,
 } from '@/entities/etit-vehicle/playback';
 import {
+  useEtitFleet,
   useEtitHistoryRange,
-  useEtitLive,
-  useEtitLiveStream,
   useEtitTripSummary,
-  useEtitVehicles,
   etitKeys,
 } from '@/entities/etit-vehicle/queries';
 import { useQueryClient } from '@tanstack/react-query';
@@ -78,13 +77,10 @@ export function EtitPage() {
   const [mobileListOpen, setMobileListOpen] = React.useState(false);
   const [mobileTab, setMobileTab] = React.useState<MobileTab>('controls');
 
-  /* ---- Server data ---- */
-  const vehiclesQuery = useEtitVehicles();
-  const liveStream = useEtitLiveStream();
-  const liveQuery = useEtitLive({ streamConnected: liveStream.connected });
-
-  const vehicles = React.useMemo(() => vehiclesQuery.data ?? [], [vehiclesQuery.data]);
-  const liveStatuses = React.useMemo(() => liveQuery.data ?? [], [liveQuery.data]);
+  /* ---- Server data (Consolidated) ---- */
+  const fleetQuery = useEtitFleet();
+  const vehicles = fleetQuery.fleet;
+  const liveStatuses = fleetQuery.liveStatuses;
 
   /* ---- Visibility (multi-select for the map) ---- */
   const [visibleIds, setVisibleIds] = React.useState<Set<string>>(() => loadVisibleIds());
@@ -251,23 +247,21 @@ export function EtitPage() {
 
   /* ---- Errors ---- */
   const error =
-    vehiclesQuery.error ||
+    fleetQuery.error ||
     historyQuery.error ||
     summaryQuery.error ||
-    // Snapshot only counts as an error when SSE is also down — otherwise
-    // SSE is keeping us fresh and the snapshot back-off is intentional.
-    (!liveStream.connected && liveQuery.isError ? liveQuery.error : null);
+    (!fleetQuery.liveConnected && fleetQuery.liveError ? fleetQuery.liveError : null);
 
   /* ---- Map liveness pill ---- */
-  const liveLabel = liveStream.connected
-    ? t('etit.header.liveStream')
-    : liveQuery.isError
-      ? t('etit.header.liveOffline')
-      : t('etit.header.live');
+  const liveLabel = fleetQuery.liveConnected
+    ? t('common.refreshing')
+    : fleetQuery.isError
+      ? t('etit.errors.proxyUnreachable')
+      : t('common.loading');
   const liveTone =
-    !liveStream.connected && liveQuery.isError
+    !fleetQuery.liveConnected && fleetQuery.isError
       ? 'destructive'
-      : liveStream.connected
+      : fleetQuery.liveConnected
         ? 'success'
         : 'muted';
 
@@ -281,7 +275,7 @@ export function EtitPage() {
       liveStatuses={liveStatuses}
       activeId={activeId}
       visibleIds={visibleIds}
-      loading={vehiclesQuery.isLoading}
+      loading={fleetQuery.isLoading}
       onActivate={handleActivate}
       onToggleVisible={toggleVisible}
       onSetAllVisible={setAllVisible}
@@ -466,6 +460,17 @@ export function EtitPage() {
                       title={rightCollapsed ? t('common.expand') : t('common.collapse')}
                     >
                       {rightCollapsed ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                    </Button>
+                  )}
+                  {loadedRange && !isFullScreen && (
+                    <Button
+                      variant="destructive"
+                      size="icon"
+                      className="h-8 w-8 shadow-md"
+                      onClick={() => setLoadedRange(null)}
+                      title={t('common.exit')}
+                    >
+                      <X className="h-4 w-4" />
                     </Button>
                   )}
                 </div>

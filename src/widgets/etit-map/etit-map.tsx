@@ -97,7 +97,7 @@ export interface EtitMapProps {
 /* Component                                                                   */
 /* -------------------------------------------------------------------------- */
 
-export function EtitMap({
+function EtitMapBase({
   vehicles,
   liveStatuses,
   visibleIds,
@@ -427,6 +427,7 @@ function buildPlaybackPopup(p: PlaybackState, labels: PopupLabels): string {
     </div>
   `;
 }
+export const EtitMap = React.memo(EtitMapBase);
 
 function escapeHtml(s: string): string {
   return s
