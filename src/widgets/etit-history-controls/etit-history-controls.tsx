@@ -35,7 +35,7 @@ export interface EtitHistoryControlsProps {
   range: { from: Date; to: Date };
   onRangeChange: (range: { from: Date; to: Date }) => void;
 
-  onLoad: () => void;
+  onLoad: (refresh?: boolean) => void;
   loading?: boolean;
 
   showStops: boolean;
@@ -66,6 +66,37 @@ export function EtitHistoryControls({
 }: EtitHistoryControlsProps) {
   const { t } = useTranslation();
 
+  const [longPressTimer, setLongPressTimer] = React.useState<NodeJS.Timeout | null>(null);
+  const isLongPressRef = React.useRef(false);
+
+  const handlePointerDown = React.useCallback(() => {
+    isLongPressRef.current = false;
+    const timer = setTimeout(() => {
+      isLongPressRef.current = true;
+      onLoad(true);
+      setLongPressTimer(null);
+    }, 700);
+    setLongPressTimer(timer);
+  }, [onLoad]);
+
+  const handlePointerUp = React.useCallback(() => {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      setLongPressTimer(null);
+      // If the timer was still running, it was a short click.
+      if (!isLongPressRef.current) {
+        onLoad(false);
+      }
+    }
+  }, [longPressTimer, onLoad]);
+
+  const handlePointerCancel = React.useCallback(() => {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      setLongPressTimer(null);
+    }
+  }, [longPressTimer]);
+
   return (
     <div className={cn('rounded-lg border bg-card p-3', className)}>
       {/* Header — vehicle + load button */}
@@ -80,14 +111,17 @@ export function EtitHistoryControls({
         </div>
         <Button
           size="sm"
-          onClick={onLoad}
+          onPointerDown={handlePointerDown}
+          onPointerUp={handlePointerUp}
+          onPointerCancel={handlePointerCancel}
           disabled={!vehicle || loading}
-          className="gap-1.5"
+          className="gap-1.5 transition-transform active:scale-95 select-none"
+          title={t('etit.controls.loadHistoryHint')}
         >
           {loading ? (
             <Loader2 className="h-3.5 w-3.5 animate-spin" />
           ) : (
-            <RefreshCw className="h-3.5 w-3.5" />
+            <RefreshCw className={cn('h-3.5 w-3.5', isLongPressRef.current && 'animate-spin')} />
           )}
           {t('etit.controls.loadHistory')}
         </Button>

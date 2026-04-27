@@ -1014,6 +1014,7 @@
       "noVehicle": "اختر مركبة",
       "noVehicleHint": "اختر من القائمة لتحميل السجل",
       "loadHistory": "تحميل السجل",
+      "loadHistoryHint": "انقر للتحميل، اضغط مطولاً لفرض تحديث ذاكرة التخزين المؤقت",
       "cairoTime": "توقيت القاهرة",
       "unassignedDriver": "بدون سائق",
       "ignitionOn": "تشغيل المحرك",
@@ -1076,7 +1077,10 @@
         "today": "اليوم",
         "yesterday": "أمس",
         "last7d": "آخر 7 أيام"
-      }
+      },
+      "hours": "الساعات",
+      "minutes": "الدقائق",
+      "period": "الفترة"
     },
     "mobile": {
       "controls": "التحكم",

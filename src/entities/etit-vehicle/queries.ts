@@ -5,10 +5,9 @@ import {
   type UseQueryOptions,
 } from '@tanstack/react-query';
 import { env } from '@/shared/config/env';
-import { STORAGE_KEYS } from '@/shared/config/constants';
 import {
   etitApi,
-  ETIT_LIVE_STREAM_PATH,
+  buildEtitLiveStreamUrl,
   type HistoryDayArgs,
   type HistoryRangeArgs,
 } from './api';
@@ -179,15 +178,7 @@ export function useEtitLiveStream(): UseEtitLiveStreamResult {
 
     const open = () => {
       if (cancelled) return;
-      const token = (() => {
-        try {
-          return localStorage.getItem(STORAGE_KEYS.JWT);
-        } catch {
-          return null;
-        }
-      })();
-      const url = new URL(ETIT_LIVE_STREAM_PATH, baseUrl);
-      if (token) url.searchParams.set('token', token);
+      const url = buildEtitLiveStreamUrl(baseUrl);
 
       try {
         es = new EventSource(url.toString(), { withCredentials: true });

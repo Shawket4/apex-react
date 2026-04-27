@@ -180,14 +180,18 @@ export function EtitDateTimeRange({
   };
 
   const setSideTime = (hour: number, minute: number) => {
+    // Clamp values
+    const h = Math.max(0, Math.min(23, hour));
+    const m = Math.max(0, Math.min(59, minute));
+
     if (side === 'from') {
       const next = cairoFromParts(
-        fromParts.year, fromParts.month, fromParts.day, hour, minute, 0,
+        fromParts.year, fromParts.month, fromParts.day, h, m, 0,
       );
       setDraft({ from: next, to: draft.to });
     } else {
       const next = cairoFromParts(
-        toParts.year, toParts.month, toParts.day, hour, minute, 0,
+        toParts.year, toParts.month, toParts.day, h, m, 0,
       );
       setDraft({ from: draft.from, to: next });
     }
@@ -341,40 +345,128 @@ export function EtitDateTimeRange({
               })}
             </div>
 
-            {/* Time input for the active side */}
-            <div className="mt-3 flex items-center gap-2 rounded-md bg-muted/50 p-2">
-              <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-              <span className="text-xs text-muted-foreground">
-                {side === 'from' ? t('common.from') : t('common.to')}
-              </span>
-              <Input
-                type="number"
-                min={0}
-                max={23}
-                value={pad2(side === 'from' ? fromParts.hour : toParts.hour)}
-                onChange={(e) => {
-                  const h = Math.max(0, Math.min(23, Number(e.target.value || 0)));
-                  setSideTime(h, side === 'from' ? fromParts.minute : toParts.minute);
-                }}
-                className="h-8 w-14 text-center text-sm tabular-nums"
-                aria-label="Hour"
-              />
-              <span className="text-sm text-muted-foreground">:</span>
-              <Input
-                type="number"
-                min={0}
-                max={59}
-                value={pad2(side === 'from' ? fromParts.minute : toParts.minute)}
-                onChange={(e) => {
-                  const m = Math.max(0, Math.min(59, Number(e.target.value || 0)));
-                  setSideTime(side === 'from' ? fromParts.hour : toParts.hour, m);
-                }}
-                className="h-8 w-14 text-center text-sm tabular-nums"
-                aria-label="Minute"
-              />
-              <span className="ms-auto rounded bg-background px-1.5 py-0.5 text-[10px] text-muted-foreground">
-                {t('etit.controls.cairoTime')}
-              </span>
+            {/* Time picker for the active side */}
+            <div className="mt-4 border-t pt-3">
+              <div className="mb-2 flex items-center justify-between">
+                <div className="flex items-center gap-1.5 text-xs font-semibold">
+                  <Clock className="h-3.5 w-3.5 text-primary" />
+                  {side === 'from' ? t('common.from') : t('common.to')}
+                </div>
+                <div className="flex gap-1">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 px-1.5 text-[10px]"
+                    onClick={() => setSideTime(0, 0)}
+                  >
+                    00:00
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 px-1.5 text-[10px]"
+                    onClick={() => setSideTime(23, 59)}
+                  >
+                    23:59
+                  </Button>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-4 rounded-lg border bg-muted/20 p-2.5">
+                {/* Hours selector */}
+                <div className="flex flex-1 flex-col gap-1.5">
+                  <label className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                    {t('etit.range.hours')}
+                  </label>
+                  <div className="grid grid-cols-4 gap-1">
+                    {[12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((h12) => {
+                      const isPM = sideParts.hour >= 12;
+                      const h24 = (h12 % 12) + (isPM ? 12 : 0);
+                      const active = sideParts.hour === h24;
+                      return (
+                        <button
+                          key={h12}
+                          type="button"
+                          onClick={() => setSideTime(h24, sideParts.minute)}
+                          className={cn(
+                            'h-7 rounded-md text-xs transition-colors',
+                            active
+                              ? 'bg-primary text-primary-foreground font-bold'
+                              : 'hover:bg-muted bg-background border'
+                          )}
+                        >
+                          {h12}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Vertical Divider */}
+                <div className="h-20 w-px bg-border" />
+
+                {/* Minutes & Period */}
+                <div className="flex w-24 flex-col gap-3">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                      {t('etit.range.period')}
+                    </label>
+                    <div className="flex gap-1">
+                      {['AM', 'PM'].map((p) => {
+                        const isPM = p === 'PM';
+                        const currentIsPM = sideParts.hour >= 12;
+                        const active = isPM === currentIsPM;
+                        return (
+                          <button
+                            key={p}
+                            type="button"
+                            onClick={() => {
+                              let nextH = sideParts.hour % 12;
+                              if (isPM) nextH += 12;
+                              setSideTime(nextH, sideParts.minute);
+                            }}
+                            className={cn(
+                              'flex-1 h-7 rounded-md text-[10px] font-bold transition-colors',
+                              active
+                                ? 'bg-primary text-primary-foreground'
+                                : 'hover:bg-muted bg-background border'
+                            )}
+                          >
+                            {p}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                      {t('etit.range.minutes')}
+                    </label>
+                    <div className="flex gap-1">
+                      <Input
+                        type="number"
+                        min={0}
+                        max={59}
+                        value={pad2(sideParts.minute)}
+                        onChange={(e) => {
+                          const m = Math.max(0, Math.min(59, Number(e.target.value || 0)));
+                          setSideTime(sideParts.hour, m);
+                        }}
+                        className="h-7 w-full text-center text-xs font-semibold tabular-nums"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-2 flex items-center justify-end">
+                <span className="rounded bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
+                  {t('etit.controls.cairoTime')}
+                </span>
+              </div>
             </div>
 
             {/* Footer */}

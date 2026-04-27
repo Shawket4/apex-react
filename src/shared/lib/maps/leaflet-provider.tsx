@@ -120,7 +120,6 @@ function boundsFingerprint(markers: MapMarker[], route: Array<[number, number]>)
 
 function zIndexFor(kind: MapMarker['kind']): number {
   switch (kind) {
-    case 'playback': return 1000;
     case 'vehicle':  return 800;
     case 'stop':     return 600;
     case 'ignition-on':

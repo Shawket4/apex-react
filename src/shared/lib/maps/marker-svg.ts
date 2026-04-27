@@ -31,9 +31,6 @@ export function buildMarkerSvg(
     case 'ignition-off':
       svg = ignitionSvg(color, filterId, false);
       break;
-    case 'playback':
-      svg = playbackSvg(color, filterId);
-      break;
     case 'route-start':
       svg = routeStartSvg(color, filterId);
       break;
@@ -79,32 +76,23 @@ function pinSvg(color: string, filterId: string): string {
 /* -------------------------------------------------------------------------- */
 
 function vehicleSvg(color: string, filterId: string, heading: number): string {
-  const showArrow = Number.isFinite(heading) && heading !== 0;
-  const arrow = showArrow
-    ? `
-      <g transform="rotate(${heading} 18 18)">
-        <path d="M18 4 L21 9 L18 8 L15 9 Z" fill="${color}" stroke="white" stroke-width="1.2" stroke-linejoin="round"/>
-      </g>`
-    : '';
+  const rotation = Number.isFinite(heading) ? heading : 0;
   return `
     <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
       <defs>
-        <filter id="${filterId}" x="-25%" y="-25%" width="150%" height="150%">
-          <feDropShadow dx="0" dy="2" stdDeviation="2.5" flood-color="#000000" flood-opacity="0.32"/>
+        <filter id="${filterId}-shadow" x="-30%" y="-30%" width="160%" height="160%">
+          <feDropShadow dx="0" dy="2" stdDeviation="2.5" flood-color="#000000" flood-opacity="0.35"/>
         </filter>
       </defs>
-      <circle cx="18" cy="18" r="11" fill="white" filter="url(#${filterId})"/>
-      <circle cx="18" cy="18" r="10" fill="${color}"/>
-      <circle cx="18" cy="18" r="10" fill="white" fill-opacity="0.08"/>
-      <!-- Tanker silhouette: cab + cylindrical tank -->
-      <g fill="white" fill-opacity="0.95">
-        <rect x="10.5" y="15" width="11" height="6" rx="1.6"/>
-        <rect x="20.8" y="15.7" width="3.2" height="4.6" rx="0.8"/>
-        <circle cx="13.2" cy="22" r="1.2" fill="${color}"/>
-        <circle cx="18.6" cy="22" r="1.2" fill="${color}"/>
-        <circle cx="22.6" cy="22" r="1" fill="${color}"/>
+      <!-- Base circle with shadow -->
+      <circle cx="18" cy="18" r="11.5" fill="white" filter="url(#${filterId}-shadow)"/>
+      <circle cx="18" cy="18" r="9.5" fill="${color}"/>
+      <circle cx="18" cy="18" r="9.5" fill="white" fill-opacity="0.08"/>
+      
+      <!-- Directional indicator -->
+      <g transform="rotate(${rotation} 18 18)">
+        <path d="M18 6.5 L23.5 16.5 L18 14.5 L12.5 16.5 Z" fill="white" style="filter: drop-shadow(0px 1px 1.5px rgba(0,0,0,0.2))"/>
       </g>
-      ${arrow}
     </svg>
   `;
 }
@@ -152,25 +140,6 @@ function ignitionSvg(color: string, filterId: string, on: boolean): string {
   `;
 }
 
-/* -------------------------------------------------------------------------- */
-/* Playback (concentric ring — sits above other markers; drawn small)          */
-/* -------------------------------------------------------------------------- */
-
-function playbackSvg(color: string, filterId: string): string {
-  return `
-    <svg width="26" height="26" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <filter id="${filterId}" x="-25%" y="-25%" width="150%" height="150%">
-          <feDropShadow dx="0" dy="1" stdDeviation="1.4" flood-color="#000000" flood-opacity="0.32"/>
-        </filter>
-      </defs>
-      <circle cx="13" cy="13" r="11" fill="${color}" fill-opacity="0.18"/>
-      <circle cx="13" cy="13" r="7.5" fill="white" filter="url(#${filterId})"/>
-      <circle cx="13" cy="13" r="6.5" fill="${color}"/>
-      <circle cx="13" cy="13" r="2.6" fill="white"/>
-    </svg>
-  `;
-}
 
 /* -------------------------------------------------------------------------- */
 /* Route Endpoints (start = play/green, end = stop/red)                       */
@@ -178,30 +147,30 @@ function playbackSvg(color: string, filterId: string): string {
 
 function routeStartSvg(color: string, filterId: string): string {
   return `
-    <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
       <defs>
-        <filter id="${filterId}" x="-25%" y="-25%" width="150%" height="150%">
-          <feDropShadow dx="0" dy="1.5" stdDeviation="1.6" flood-color="#000000" flood-opacity="0.28"/>
+        <filter id="${filterId}" x="-30%" y="-30%" width="160%" height="160%">
+          <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000000" flood-opacity="0.3"/>
         </filter>
       </defs>
-      <circle cx="11" cy="11" r="9.5" fill="white" filter="url(#${filterId})"/>
-      <circle cx="11" cy="11" r="8.5" fill="${color}"/>
-      <path d="M9 7.5 L15 11 L9 14.5 Z" fill="white"/>
+      <circle cx="14" cy="14" r="12" fill="white" filter="url(#${filterId})"/>
+      <circle cx="14" cy="14" r="10" fill="${color}"/>
+      <path d="M12 10 L18 14 L12 18 Z" fill="white"/>
     </svg>
   `;
 }
 
 function routeEndSvg(color: string, filterId: string): string {
   return `
-    <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
       <defs>
-        <filter id="${filterId}" x="-25%" y="-25%" width="150%" height="150%">
-          <feDropShadow dx="0" dy="1.5" stdDeviation="1.6" flood-color="#000000" flood-opacity="0.28"/>
+        <filter id="${filterId}" x="-30%" y="-30%" width="160%" height="160%">
+          <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000000" flood-opacity="0.3"/>
         </filter>
       </defs>
-      <circle cx="11" cy="11" r="9.5" fill="white" filter="url(#${filterId})"/>
-      <circle cx="11" cy="11" r="8.5" fill="${color}"/>
-      <rect x="7.5" y="7.5" width="7" height="7" rx="1" fill="white"/>
+      <circle cx="14" cy="14" r="12" fill="white" filter="url(#${filterId})"/>
+      <circle cx="14" cy="14" r="10" fill="${color}"/>
+      <rect x="10.5" y="10.5" width="7" height="7" rx="1" fill="white"/>
     </svg>
   `;
 }
@@ -223,9 +192,8 @@ const SIZES: Record<MarkerKind, MarkerSize> = {
   stop: { width: 22, height: 22, anchorX: 11, anchorY: 11 },
   'ignition-on': { width: 22, height: 22, anchorX: 11, anchorY: 11 },
   'ignition-off': { width: 22, height: 22, anchorX: 11, anchorY: 11 },
-  playback: { width: 26, height: 26, anchorX: 13, anchorY: 13 },
-  'route-start': { width: 22, height: 22, anchorX: 11, anchorY: 11 },
-  'route-end': { width: 22, height: 22, anchorX: 11, anchorY: 11 },
+  'route-start': { width: 28, height: 28, anchorX: 14, anchorY: 14 },
+  'route-end': { width: 28, height: 28, anchorX: 14, anchorY: 14 },
 };
 
 export function markerSize(kind: MarkerKind = 'pin'): MarkerSize {

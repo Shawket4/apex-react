@@ -28,7 +28,7 @@ import {
  * with `withCredentials: true`. SSE consumers rely on the same cookie/
  * Authorization combo — see `subscribeLive` in `queries.ts`.
  */
-const PREFIX = '/api/v1';
+const PREFIX = 'api/v1';
 
 /* -------------------------------------------------------------------------- */
 /* Vehicles + live                                                             */
@@ -64,12 +64,16 @@ export interface HistoryRangeArgs {
   from: Date;
   /** UTC `Date` representing the end of the range. */
   to: Date;
+  /** If true, the backend will bypass its internal cache and force a fresh fetch from the legacy provider. */
+  refresh?: boolean;
 }
 
 export interface HistoryDayArgs {
   vehicleId: string;
   /** UTC `Date` whose Cairo calendar day will be queried. */
   day: Date;
+  /** If true, the backend will bypass its internal cache. */
+  refresh?: boolean;
 }
 
 /** Range query — uses `from` + `to` (both Cairo wall-clock). */
@@ -78,6 +82,8 @@ async function historyForRange(args: HistoryRangeArgs): Promise<EtitHistoryRespo
     from: formatCairoForProxy(args.from),
     to: formatCairoForProxy(args.to),
   });
+  if (args.refresh) params.set('refresh', 'true');
+
   const res = await apiClientEtit.get(
     `${PREFIX}/vehicles/${encodeURIComponent(args.vehicleId)}/history?${params}`,
   );
@@ -87,6 +93,8 @@ async function historyForRange(args: HistoryRangeArgs): Promise<EtitHistoryRespo
 /** Day query — uses `date=YYYY-MM-DD`. The proxy resolves the bounds in its tz. */
 async function historyForDay(args: HistoryDayArgs): Promise<EtitHistoryResponse> {
   const params = new URLSearchParams({ date: formatCairoDate(args.day) });
+  if (args.refresh) params.set('refresh', 'true');
+
   const res = await apiClientEtit.get(
     `${PREFIX}/vehicles/${encodeURIComponent(args.vehicleId)}/history?${params}`,
   );
@@ -99,6 +107,8 @@ async function historySummary(args: HistoryRangeArgs): Promise<EtitTripSummary> 
     from: formatCairoForProxy(args.from),
     to: formatCairoForProxy(args.to),
   });
+  if (args.refresh) params.set('refresh', 'true');
+
   const res = await apiClientEtit.get(
     `${PREFIX}/vehicles/${encodeURIComponent(args.vehicleId)}/history/summary?${params}`,
   );
@@ -120,10 +130,12 @@ export const etitApi = {
 } as const;
 
 /**
- * Path used by the SSE subscription. Kept here so the queries layer can
- * build a full URL by concatenating with the base — `EventSource` needs
- * an absolute URL when the dashboard origin and the proxy origin differ
- * (or when `VITE_API_BASE_URL_ETIT` is itself absolute, which it is in
- * production).
+ * Helper to build the absolute SSE URL for the live stream.
  */
+export function buildEtitLiveStreamUrl(baseUrl: string): URL {
+  // We ensure the URL ends with the stable stream path. 
+  // Relative path (no leading slash) preserves the base URL's path.
+  return new URL(`${PREFIX}/stream/live`, baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`);
+}
+
 export const ETIT_LIVE_STREAM_PATH = `${PREFIX}/stream/live`;

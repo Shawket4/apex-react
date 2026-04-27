@@ -70,6 +70,8 @@ export interface EtitMapProps {
   liveStatuses: EtitLiveStatus[];
   /** Vehicles to render as markers on the map (multi-select from the list). */
   visibleIds: Set<string>;
+  /** Optional: vehicle whose route is currently being investigated. */
+  activeVehicleId?: string | null;
   /** Optional: vehicle to camera-fly to when `focusBump` increments. */
   focusedVehicleId?: string | null;
   /** Bump this to re-focus the camera on the focused vehicle. */
@@ -99,6 +101,7 @@ export function EtitMap({
   vehicles,
   liveStatuses,
   visibleIds,
+  activeVehicleId = null,
   focusedVehicleId = null,
   focusBump = 0,
   route = [],
@@ -157,6 +160,8 @@ export function EtitMap({
       color: 'transparent',
       kind: 'pin',
       title: '',
+      // When focusing, this sentinel should be the ONLY thing affecting bounds
+      // if we want a clean snap-to-vehicle. 
       affectsBounds: true,
     };
   }, [focusedVehicleId, focusBump, liveStatuses]);
@@ -169,6 +174,11 @@ export function EtitMap({
     for (const s of liveStatuses) {
       if (!visibleIds.has(s.id)) continue;
       if (!isValidCoordinate(s.lat, s.lng)) continue;
+
+      // When a route is displayed, the "live" marker for the active vehicle 
+      // (the one the route belongs to) is often confusing.
+      if (route.length > 0 && s.id === activeVehicleId) continue;
+
       const group = classifyStatus(s.status);
       const plate = plateById.get(s.id) ?? s.plate ?? s.id;
       const heading =
@@ -182,9 +192,9 @@ export function EtitMap({
         color: ETIT_STATUS_COLOR[group],
         kind: 'vehicle',
         heading,
-        // Vehicle markers contribute to bounds — when the user toggles
-        // visibility we want the camera to refit.
-        affectsBounds: true,
+        // If we are focusing, we suppress other markers' contribution to bounds
+        // so the camera snaps tightly to the sentinel.
+        affectsBounds: !focusSentinel,
         title: plate,
         popupHtml: buildLivePopup({
           plate,
@@ -195,6 +205,26 @@ export function EtitMap({
           color: ETIT_STATUS_COLOR[group],
           labels,
         }),
+      });
+    }
+
+    // Route endpoints
+    if (route.length > 0) {
+      out.push({
+        id: 'route-start',
+        lat: route[0][0],
+        lng: route[0][1],
+        color: '#16A34A',
+        kind: 'route-start',
+        affectsBounds: !focusSentinel,
+      });
+      out.push({
+        id: 'route-end',
+        lat: route[route.length - 1][0],
+        lng: route[route.length - 1][1],
+        color: '#DC2626',
+        kind: 'route-end',
+        affectsBounds: !focusSentinel,
       });
     }
 
@@ -209,7 +239,7 @@ export function EtitMap({
           lng: s.lng,
           color: STOP_COLOR,
           kind: 'stop',
-          affectsBounds: true,
+          affectsBounds: !focusSentinel,
           title: `${labels.stopHeading} · ${s.duration}`,
           popupHtml: buildStopPopup(s, labels),
         });
@@ -229,7 +259,7 @@ export function EtitMap({
           lng: s.lng,
           color: kind === 'ignition-on' ? IGNITION_ON_COLOR : IGNITION_OFF_COLOR,
           kind,
-          affectsBounds: true,
+          affectsBounds: !focusSentinel,
           title: s.typeName,
           popupHtml: buildSensorPopup(s),
         });
@@ -246,7 +276,7 @@ export function EtitMap({
         lat: playback.lat,
         lng: playback.lng,
         color: playback.speeding ? PLAYBACK_SPEEDING : PLAYBACK_NORMAL,
-        kind: 'playback',
+        kind: 'vehicle',
         heading,
         affectsBounds: false,
         title: `${Math.round(playback.speed)} ${labels.kmh} · ${formatCairo(playback.timestamp, 'time')}`,
@@ -272,8 +302,9 @@ export function EtitMap({
   ]);
 
   const centerFallback = React.useMemo<[number, number]>(() => {
-    if (markers.length > 0) return [markers[0].lat, markers[0].lng];
+    // If we have a route, the user is likely investigating it; center on start.
     if (route.length > 0) return route[0];
+    if (markers.length > 0) return [markers[0].lat, markers[0].lng];
     return DEFAULT_MAP_CENTER;
   }, [markers, route]);
 

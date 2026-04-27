@@ -1014,6 +1014,7 @@
       "noVehicle": "Select a vehicle",
       "noVehicleHint": "Pick from the list to load history",
       "loadHistory": "Load history",
+      "loadHistoryHint": "Click to load, long press to force refresh cache",
       "cairoTime": "Cairo time",
       "unassignedDriver": "Unassigned driver",
       "ignitionOn": "Ignition on",
@@ -1076,7 +1077,10 @@
         "today": "Today",
         "yesterday": "Yesterday",
         "last7d": "Last 7 days"
-      }
+      },
+      "hours": "Hours",
+      "minutes": "Minutes",
+      "period": "Period"
     },
     "mobile": {
       "controls": "Controls",

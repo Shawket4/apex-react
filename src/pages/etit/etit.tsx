@@ -7,6 +7,10 @@ import {
   MapPinned,
   Radar,
   WifiOff,
+  ChevronLeft,
+  ChevronRight,
+  Maximize2,
+  Minimize2,
 } from 'lucide-react';
 import { Button } from '@/shared/ui/button';
 import { Sheet, SheetContent } from '@/shared/ui/sheet';
@@ -23,7 +27,9 @@ import {
   useEtitLiveStream,
   useEtitTripSummary,
   useEtitVehicles,
+  etitKeys,
 } from '@/entities/etit-vehicle/queries';
+import { useQueryClient } from '@tanstack/react-query';
 import { EtitMap } from '@/widgets/etit-map/etit-map';
 import { EtitVehicleList } from '@/widgets/etit-vehicle-list/etit-vehicle-list';
 import { EtitHistoryControls } from '@/widgets/etit-history-controls/etit-history-controls';
@@ -68,6 +74,7 @@ type MobileTab = 'controls' | 'playback';
 export function EtitPage() {
   const { t } = useTranslation();
   const isDesktop = useIsDesktop();
+  const queryClient = useQueryClient();
   const [mobileListOpen, setMobileListOpen] = React.useState(false);
   const [mobileTab, setMobileTab] = React.useState<MobileTab>('controls');
 
@@ -125,6 +132,11 @@ export function EtitPage() {
   const [focusBump, setFocusBump] = React.useState(0);
   const [focusedId, setFocusedId] = React.useState<string | null>(null);
 
+  /* ---- Layout states ---- */
+  const [leftCollapsed, setLeftCollapsed] = React.useState(false);
+  const [rightCollapsed, setRightCollapsed] = React.useState(false);
+  const [isFullScreen, setIsFullScreen] = React.useState(false);
+
   const activeVehicle = React.useMemo(
     () => vehicles.find((v) => v.id === activeId) ?? null,
     [vehicles, activeId],
@@ -161,6 +173,7 @@ export function EtitPage() {
     vehicleId: string;
     from: Date;
     to: Date;
+    refresh?: boolean;
   } | null>(null);
 
   // Drop loaded history on vehicle change — the polyline belongs to a
@@ -169,17 +182,30 @@ export function EtitPage() {
     setLoadedRange(null);
   }, [activeId]);
 
-  const handleLoad = React.useCallback(() => {
+  const handleLoad = React.useCallback((refresh = false) => {
     if (!activeVehicle) return;
+
+    if (refresh) {
+      // Clear existing cache for history and summary to ensure a fresh UI state.
+      queryClient.removeQueries({ queryKey: [...etitKeys.all, 'history'] });
+      queryClient.removeQueries({ queryKey: [...etitKeys.all, 'summary'] });
+    }
+
     setLoadedRange({
       vehicleId: activeVehicle.id,
       from: range.from,
       to: range.to,
+      refresh,
     });
-  }, [activeVehicle, range]);
+  }, [activeVehicle, range, queryClient]);
 
   const historyArgs = loadedRange
-    ? { vehicleId: loadedRange.vehicleId, from: loadedRange.from, to: loadedRange.to }
+    ? {
+        vehicleId: loadedRange.vehicleId,
+        from: loadedRange.from,
+        to: loadedRange.to,
+        refresh: loadedRange.refresh,
+      }
     : null;
 
   const historyQuery = useEtitHistoryRange(historyArgs);
@@ -292,54 +318,56 @@ export function EtitPage() {
 
   return (
     <div className="flex h-full flex-col">
-      {/* Header */}
-      <div className="flex shrink-0 items-center justify-between border-b bg-card px-4 py-3">
-        <div className="flex min-w-0 items-center gap-3">
-          {!isDesktop && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-9 w-9"
-              onClick={() => setMobileListOpen(true)}
-              aria-label={t('etit.header.openVehicleList')}
-            >
-              <Menu className="h-4 w-4" />
-            </Button>
-          )}
-          <div className="hidden h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary sm:flex">
-            <Radar className="h-4 w-4" />
+      {/* Header — hide in full screen to maximize map space */}
+      {!isFullScreen && (
+        <div className="flex shrink-0 items-center justify-between border-b bg-card px-4 py-3">
+          <div className="flex min-w-0 items-center gap-3">
+            {!isDesktop && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9"
+                onClick={() => setMobileListOpen(true)}
+                aria-label={t('etit.header.openVehicleList')}
+              >
+                <Menu className="h-4 w-4" />
+              </Button>
+            )}
+            <div className="hidden h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary sm:flex">
+              <Radar className="h-4 w-4" />
+            </div>
+            <div className="min-w-0">
+              <h1 className="truncate text-base font-semibold leading-tight md:text-lg">
+                {t('etit.header.title')}
+              </h1>
+              <p className="truncate text-[11px] text-muted-foreground">
+                {t('etit.header.subtitle', {
+                  vehicleCount: vehicles.length,
+                  onMapCount,
+                })}
+              </p>
+            </div>
           </div>
-          <div className="min-w-0">
-            <h1 className="truncate text-base font-semibold leading-tight md:text-lg">
-              {t('etit.header.title')}
-            </h1>
-            <p className="truncate text-[11px] text-muted-foreground">
-              {t('etit.header.subtitle', {
-                vehicleCount: vehicles.length,
-                onMapCount,
-              })}
-            </p>
-          </div>
-        </div>
 
-        <div className="flex shrink-0 items-center gap-2">
-          <span
-            className={cn(
-              'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium',
-              liveTone === 'success' && 'bg-success/10 text-success',
-              liveTone === 'destructive' && 'bg-destructive/10 text-destructive',
-              liveTone === 'muted' && 'bg-muted text-muted-foreground',
-            )}
-          >
-            {liveTone === 'destructive' ? (
-              <WifiOff className="h-3 w-3" />
-            ) : (
-              <Activity className={cn('h-3 w-3', liveTone === 'success' && 'animate-pulse')} />
-            )}
-            {liveLabel}
-          </span>
+          <div className="flex shrink-0 items-center gap-2">
+            <span
+              className={cn(
+                'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium',
+                liveTone === 'success' && 'bg-success/10 text-success',
+                liveTone === 'destructive' && 'bg-destructive/10 text-destructive',
+                liveTone === 'muted' && 'bg-muted text-muted-foreground',
+              )}
+            >
+              {liveTone === 'destructive' ? (
+                <WifiOff className="h-3 w-3" />
+              ) : (
+                <Activity className={cn('h-3 w-3', liveTone === 'success' && 'animate-pulse')} />
+              )}
+              {liveLabel}
+            </span>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Error banner — flat, no nested card */}
       {error && (
@@ -354,8 +382,8 @@ export function EtitPage() {
       {/* Body */}
       <div className="flex min-h-0 flex-1">
         {/* Vehicle list — desktop sidebar */}
-        {isDesktop && (
-          <div className="h-full w-72 shrink-0">{vehicleListNode}</div>
+        {isDesktop && !leftCollapsed && !isFullScreen && (
+          <div className="h-full w-72 shrink-0 border-e bg-card/50">{vehicleListNode}</div>
         )}
 
         {/* Vehicle list — mobile sheet */}
@@ -389,6 +417,7 @@ export function EtitPage() {
               vehicles={vehicles}
               liveStatuses={liveStatuses}
               visibleIds={visibleIds}
+              activeVehicleId={activeId}
               focusedVehicleId={focusedId}
               focusBump={focusBump}
               route={route}
@@ -401,6 +430,75 @@ export function EtitPage() {
               height="100%"
               className="absolute inset-0"
             />
+
+            {/* Desktop Layout Controls Overlay */}
+            {isDesktop && (
+              <>
+                <div className="absolute left-3 top-3 z-20 flex flex-col gap-2">
+                  {!isFullScreen && (
+                    <Button
+                      variant="secondary"
+                      size="icon"
+                      className="h-8 w-8 shadow-md backdrop-blur-sm"
+                      onClick={() => setLeftCollapsed(!leftCollapsed)}
+                      title={leftCollapsed ? t('common.expand') : t('common.collapse')}
+                    >
+                      {leftCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+                    </Button>
+                  )}
+                </div>
+                <div className="absolute right-3 top-3 z-20 flex flex-col gap-2">
+                  <Button
+                    variant="secondary"
+                    size="icon"
+                    className="h-8 w-8 shadow-md backdrop-blur-sm"
+                    onClick={() => setIsFullScreen(!isFullScreen)}
+                    title={isFullScreen ? t('common.exitFullScreen') : t('common.fullScreen')}
+                  >
+                    {isFullScreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+                  </Button>
+                  {!isFullScreen && (
+                    <Button
+                      variant="secondary"
+                      size="icon"
+                      className="h-8 w-8 shadow-md backdrop-blur-sm"
+                      onClick={() => setRightCollapsed(!rightCollapsed)}
+                      title={rightCollapsed ? t('common.expand') : t('common.collapse')}
+                    >
+                      {rightCollapsed ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                    </Button>
+                  )}
+                </div>
+              </>
+            )}
+
+            {/* Full Screen Mode — Top Overlay Controls */}
+            {isFullScreen && (
+              <div className="absolute inset-x-0 top-0 z-30 flex items-center justify-center p-4">
+                <div className="flex items-center gap-2 rounded-xl border bg-card/90 p-2 shadow-2xl backdrop-blur-md">
+                   <div className="flex items-center gap-3 border-e pe-3 px-2">
+                     <Radar className="h-5 w-5 text-primary" />
+                     <div className="flex flex-col">
+                       <span className="text-xs font-bold leading-none">{t('etit.header.title')}</span>
+                       <span className="text-[10px] text-muted-foreground">{liveLabel}</span>
+                     </div>
+                   </div>
+                   
+                   {/* Minimal controls for full screen */}
+                   <div className="flex items-center gap-1 px-1">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="h-8 gap-2 text-xs"
+                        onClick={() => setIsFullScreen(false)}
+                      >
+                        <Minimize2 className="h-3.5 w-3.5" />
+                        {t('common.exit')}
+                      </Button>
+                   </div>
+                </div>
+              </div>
+            )}
 
             {/* Empty-state overlay — invites the user to pick something to show */}
             {visibleIds.size === 0 && !historyQuery.isFetching && (
@@ -455,7 +553,7 @@ export function EtitPage() {
         </div>
 
         {/* Right pane — desktop only */}
-        {isDesktop && (
+        {isDesktop && !rightCollapsed && !isFullScreen && (
           <aside className="flex h-full w-[360px] shrink-0 flex-col gap-3 overflow-y-auto border-s bg-background p-3">
             {controlsNode}
             {playerNode}

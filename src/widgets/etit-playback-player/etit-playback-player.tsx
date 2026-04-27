@@ -6,7 +6,6 @@ import {
   Pause,
   Play,
   RotateCcw,
-  Square,
 } from 'lucide-react';
 import { cn } from '@/shared/lib/cn';
 import { Button } from '@/shared/ui/button';
@@ -31,8 +30,7 @@ import type {
  * Five buttons cover the useful range. 1× / 4× / 16× / 64× / 256×.           *
  * -------------------------------------------------------------------------- */
 
-const SPEEDS = [1, 4, 16, 64, 256] as const;
-type Speed = (typeof SPEEDS)[number];
+const SPEEDS = [4, 16, 64, 256] as const;
 
 /** Hand-off throttle for parent state updates. ~30Hz looks smooth on map. */
 const HANDOFF_INTERVAL_MS = 33;
@@ -75,7 +73,7 @@ export function EtitPlaybackPlayer({
 
   const [currentMs, setCurrentMs] = React.useState<number>(track.startMs);
   const [playing, setPlaying] = React.useState(false);
-  const [speed, setSpeed] = React.useState<Speed>(16);
+  const [speed, setSpeed] = React.useState<number>(16);
 
   // Reset on track swap.
   React.useEffect(() => {
@@ -188,11 +186,6 @@ export function EtitPlaybackPlayer({
     setPlaying((p) => !p);
   };
 
-  const handleStop = () => {
-    setPlaying(false);
-    setCurrentMs(track.startMs);
-    currentMsRef.current = track.startMs;
-  };
 
   const handleRestart = () => {
     setCurrentMs(track.startMs);
@@ -255,12 +248,6 @@ export function EtitPlaybackPlayer({
           className="block h-2 w-full cursor-pointer appearance-none rounded-full bg-muted accent-primary"
           aria-label={t('etit.player.scrubberLabel')}
         />
-        <Ticks
-          stops={stops}
-          sensors={sensors}
-          startMs={track.startMs}
-          endMs={track.endMs}
-        />
       </div>
 
       {/* Time labels */}
@@ -288,14 +275,6 @@ export function EtitPlaybackPlayer({
           >
             {playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
           </Button>
-          <Button
-            type="button" variant="ghost" size="icon" className="h-8 w-8"
-            onClick={handleStop}
-            title={t('etit.player.stop')}
-            aria-label={t('etit.player.stop')}
-          >
-            <Square className="h-3.5 w-3.5" />
-          </Button>
         </div>
 
         <div className="flex items-center gap-1 text-xs">
@@ -305,7 +284,7 @@ export function EtitPlaybackPlayer({
               <button
                 key={s}
                 type="button"
-                onClick={() => setSpeed(s)}
+                onClick={() => setSpeed(speed === s ? 1 : s)}
                 className={cn(
                   'rounded px-2 py-0.5 text-[11px] font-semibold tabular-nums transition-colors',
                   speed === s
@@ -358,47 +337,3 @@ export function EtitPlaybackPlayer({
   );
 }
 
-/* -------------------------------------------------------------------------- */
-/* Ticks                                                                       */
-/* -------------------------------------------------------------------------- */
-
-interface TicksProps {
-  stops: EtitStop[];
-  sensors: EtitSensorEvent[];
-  startMs: number;
-  endMs: number;
-}
-
-function Ticks({ stops, sensors, startMs, endMs }: TicksProps) {
-  const span = endMs - startMs;
-  if (span <= 0) return null;
-
-  const pct = (ms: number) => {
-    const p = ((ms - startMs) / span) * 100;
-    return Math.max(0, Math.min(100, p));
-  };
-
-  return (
-    <div className="pointer-events-none absolute inset-x-0 top-1/2 h-2 -translate-y-1/2">
-      {stops.map((s, i) => {
-        const left = pct(s.from.getTime());
-        const right = pct(s.to.getTime());
-        const width = Math.max(0.5, right - left);
-        return (
-          <span
-            key={`stop-${i}`}
-            className="absolute top-0 h-2 rounded-sm bg-purple-500/40"
-            style={{ left: `${left}%`, width: `${width}%` }}
-          />
-        );
-      })}
-      {sensors.map((s, i) => (
-        <span
-          key={`sensor-${i}`}
-          className="absolute top-1/2 h-2 w-0.5 -translate-y-1/2 rounded-full bg-cyan-600"
-          style={{ left: `${pct(s.timestamp.getTime())}%` }}
-        />
-      ))}
-    </div>
-  );
-}

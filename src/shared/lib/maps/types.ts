@@ -10,7 +10,6 @@ export type MarkerKind =
   | 'stop'
   | 'ignition-on'
   | 'ignition-off'
-  | 'playback'
   | 'route-start'
   | 'route-end';
 

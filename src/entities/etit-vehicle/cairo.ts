@@ -175,7 +175,7 @@ export function formatCairo(
   if (style === 'time' || style === 'datetime') {
     opts.hour = '2-digit';
     opts.minute = '2-digit';
-    opts.hour12 = false;
+    opts.hour12 = true;
     if (style === 'time') opts.second = '2-digit';
   }
 
@@ -191,5 +191,7 @@ export function formatCairoClock(value: string | Date | number | null | undefine
   const date = value instanceof Date ? value : new Date(value);
   if (!Number.isFinite(date.getTime())) return '--:--:--';
   const p = cairoParts(date);
-  return `${pad2(p.hour)}:${pad2(p.minute)}:${pad2(p.second)}`;
+  const h12 = p.hour % 12 || 12;
+  const ampm = p.hour >= 12 ? 'PM' : 'AM';
+  return `${pad2(h12)}:${pad2(p.minute)}:${pad2(p.second)} ${ampm}`;
 }
