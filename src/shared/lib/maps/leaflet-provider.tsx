@@ -125,6 +125,8 @@ function zIndexFor(kind: MapMarker['kind']): number {
     case 'stop':     return 600;
     case 'ignition-on':
     case 'ignition-off': return 600;
+    case 'route-start':
+    case 'route-end':   return 700;
     default: return 400;
   }
 }

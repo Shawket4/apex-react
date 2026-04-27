@@ -10,7 +10,9 @@ export type MarkerKind =
   | 'stop'
   | 'ignition-on'
   | 'ignition-off'
-  | 'playback';
+  | 'playback'
+  | 'route-start'
+  | 'route-end';
 
 export interface MapMarker {
   /** Stable identity for React keys + diffing during live updates. */

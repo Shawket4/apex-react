@@ -34,6 +34,12 @@ export function buildMarkerSvg(
     case 'playback':
       svg = playbackSvg(color, filterId);
       break;
+    case 'route-start':
+      svg = routeStartSvg(color, filterId);
+      break;
+    case 'route-end':
+      svg = routeEndSvg(color, filterId);
+      break;
     case 'pin':
     default:
       svg = pinSvg(color, filterId);
@@ -167,6 +173,40 @@ function playbackSvg(color: string, filterId: string): string {
 }
 
 /* -------------------------------------------------------------------------- */
+/* Route Endpoints (start = play/green, end = stop/red)                       */
+/* -------------------------------------------------------------------------- */
+
+function routeStartSvg(color: string, filterId: string): string {
+  return `
+    <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <filter id="${filterId}" x="-25%" y="-25%" width="150%" height="150%">
+          <feDropShadow dx="0" dy="1.5" stdDeviation="1.6" flood-color="#000000" flood-opacity="0.28"/>
+        </filter>
+      </defs>
+      <circle cx="11" cy="11" r="9.5" fill="white" filter="url(#${filterId})"/>
+      <circle cx="11" cy="11" r="8.5" fill="${color}"/>
+      <path d="M9 7.5 L15 11 L9 14.5 Z" fill="white"/>
+    </svg>
+  `;
+}
+
+function routeEndSvg(color: string, filterId: string): string {
+  return `
+    <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <filter id="${filterId}" x="-25%" y="-25%" width="150%" height="150%">
+          <feDropShadow dx="0" dy="1.5" stdDeviation="1.6" flood-color="#000000" flood-opacity="0.28"/>
+        </filter>
+      </defs>
+      <circle cx="11" cy="11" r="9.5" fill="white" filter="url(#${filterId})"/>
+      <circle cx="11" cy="11" r="8.5" fill="${color}"/>
+      <rect x="7.5" y="7.5" width="7" height="7" rx="1" fill="white"/>
+    </svg>
+  `;
+}
+
+/* -------------------------------------------------------------------------- */
 /* Per-kind sizing                                                             */
 /* -------------------------------------------------------------------------- */
 
@@ -178,12 +218,14 @@ export interface MarkerSize {
 }
 
 const SIZES: Record<MarkerKind, MarkerSize> = {
-  pin:             { width: 24, height: 30, anchorX: 12, anchorY: 30 },
-  vehicle:         { width: 36, height: 36, anchorX: 18, anchorY: 18 },
-  stop:            { width: 22, height: 22, anchorX: 11, anchorY: 11 },
-  'ignition-on':   { width: 22, height: 22, anchorX: 11, anchorY: 11 },
-  'ignition-off':  { width: 22, height: 22, anchorX: 11, anchorY: 11 },
-  playback:        { width: 26, height: 26, anchorX: 13, anchorY: 13 },
+  pin: { width: 24, height: 30, anchorX: 12, anchorY: 30 },
+  vehicle: { width: 36, height: 36, anchorX: 18, anchorY: 18 },
+  stop: { width: 22, height: 22, anchorX: 11, anchorY: 11 },
+  'ignition-on': { width: 22, height: 22, anchorX: 11, anchorY: 11 },
+  'ignition-off': { width: 22, height: 22, anchorX: 11, anchorY: 11 },
+  playback: { width: 26, height: 26, anchorX: 13, anchorY: 13 },
+  'route-start': { width: 22, height: 22, anchorX: 11, anchorY: 11 },
+  'route-end': { width: 22, height: 22, anchorX: 11, anchorY: 11 },
 };
 
 export function markerSize(kind: MarkerKind = 'pin'): MarkerSize {
