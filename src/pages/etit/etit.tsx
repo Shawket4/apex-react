@@ -11,7 +11,6 @@ import {
 } from 'lucide-react';
 import { Button } from '@/shared/ui/button';
 import { Sheet, SheetContent } from '@/shared/ui/sheet';
-import { PageShell } from '@/shared/ui/page-shell';
 import { useIsDesktop } from '@/shared/hooks/use-media-query';
 import { extractErrorMessage } from '@/shared/api/errors';
 import { cn } from '@/shared/lib/cn';
@@ -298,24 +297,40 @@ export function EtitPage() {
 
   return (
     <div ref={containerRef} className="flex h-full flex-col bg-background">
-      <PageShell
-        title={t('nav.etit')}
-        icon={<Radar className="h-6 w-6" />}
-        description={
-          <div className="flex items-center gap-3 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1 font-medium">
-              {t('etit.list.shownOnMap', { shown: onMapCount, total: vehicles.length })}
-            </span>
-            <span className="flex items-center gap-1">
-              <div className={cn("h-1.5 w-1.5 rounded-full", 
-                liveTone === 'success' ? 'bg-success animate-pulse' : 
-                liveTone === 'destructive' ? 'bg-destructive' : 'bg-muted')} 
-              />
-              {liveLabel}
-            </span>
+      {/* Custom Header — matching the rest of the app's visual style but without PageShell's layout constraints */}
+      {!isFullScreen && (
+        <header className="flex h-14 shrink-0 items-center justify-between border-b bg-card/80 px-4 backdrop-blur-md">
+          <div className="flex items-center gap-3">
+            {!isDesktop && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9"
+                onClick={() => setMobileListOpen(true)}
+              >
+                <Menu className="h-5 w-5" />
+              </Button>
+            )}
+            <div className="flex flex-col">
+              <h1 className="text-base font-bold tracking-tight">
+                {t('nav.etit')}
+              </h1>
+              <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+                <span className="flex items-center gap-1 font-medium">
+                  <Radar className="h-2.5 w-2.5 text-primary" />
+                  {t('etit.list.shownOnMap', { shown: onMapCount, total: vehicles.length })}
+                </span>
+                <span className="flex items-center gap-1">
+                  <div className={cn("h-1.5 w-1.5 rounded-full", 
+                    liveTone === 'success' ? 'bg-success animate-pulse' : 
+                    liveTone === 'destructive' ? 'bg-destructive' : 'bg-muted')} 
+                  />
+                  {liveLabel}
+                </span>
+              </div>
+            </div>
           </div>
-        }
-        actions={
+
           <div className="flex items-center gap-2">
             {error && (
               <div className="flex items-center gap-2 rounded-full bg-destructive/10 px-3 py-1 text-xs font-medium text-destructive">
@@ -332,235 +347,232 @@ export function EtitPage() {
               {isFullScreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
             </Button>
           </div>
-        }
-        className={cn(
-          "flex-1 p-0 gap-0 overflow-hidden",
-          isFullScreen && "[&>header]:hidden"
+        </header>
+      )}
+
+      {/* Body */}
+      <div className="flex min-h-0 flex-1 overflow-hidden">
+        {/* Left Sidebar — desktop only */}
+        {isDesktop && !isFullScreen && (
+          <div 
+            className={cn(
+              "relative flex",
+              !isResizing && "transition-all duration-300 ease-in-out",
+              leftCollapsed ? "w-0" : ""
+            )}
+            style={{ width: leftCollapsed ? 0 : leftWidth }}
+          >
+            {vehicleList}
+            {!leftCollapsed && (
+              <div
+                className="absolute -right-1 top-0 bottom-0 z-50 w-2 cursor-col-resize hover:bg-primary/20 active:bg-primary/40"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  setIsResizing(true);
+                  const startX = e.clientX;
+                  const startWidth = leftWidth;
+                  const onMouseMove = (moveEvent: MouseEvent) => {
+                    const delta = moveEvent.clientX - startX;
+                    setLeftWidth(Math.max(260, Math.min(500, startWidth + delta)));
+                  };
+                  const onMouseUp = () => {
+                    setIsResizing(false);
+                    document.removeEventListener('mousemove', onMouseMove);
+                    document.removeEventListener('mouseup', onMouseUp);
+                  };
+                  document.addEventListener('mousemove', onMouseMove);
+                  document.addEventListener('mouseup', onMouseUp);
+                }}
+              />
+            )}
+          </div>
         )}
-      >
-        <div className="flex min-h-0 flex-1 overflow-hidden">
-          {/* Left Sidebar — desktop only */}
-          {isDesktop && !isFullScreen && (
-            <div 
-              className={cn(
-                "relative flex",
-                !isResizing && "transition-all duration-300 ease-in-out",
-                leftCollapsed ? "w-0" : ""
-              )}
-              style={{ width: leftCollapsed ? 0 : leftWidth }}
-            >
-              {vehicleList}
-              {!leftCollapsed && (
-                <div
-                  className="absolute -right-1 top-0 bottom-0 z-50 w-2 cursor-col-resize hover:bg-primary/20 active:bg-primary/40"
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    setIsResizing(true);
-                    const startX = e.clientX;
-                    const startWidth = leftWidth;
-                    const onMouseMove = (moveEvent: MouseEvent) => {
-                      const delta = moveEvent.clientX - startX;
-                      setLeftWidth(Math.max(260, Math.min(500, startWidth + delta)));
-                    };
-                    const onMouseUp = () => {
-                      setIsResizing(false);
-                      document.removeEventListener('mousemove', onMouseMove);
-                      document.removeEventListener('mouseup', onMouseUp);
-                    };
-                    document.addEventListener('mousemove', onMouseMove);
-                    document.addEventListener('mouseup', onMouseUp);
-                  }}
-                />
+
+        {/* Vehicle list — mobile sheet */}
+        {!isDesktop && (
+          <Sheet open={mobileListOpen} onOpenChange={setMobileListOpen}>
+            <SheetContent side="left" className="w-[300px] p-0">
+              <div className="flex h-full flex-col">
+                <div className="flex h-14 items-center justify-between border-b px-4">
+                  <span className="text-sm font-bold">{t('etit.list.heading', { count: vehicles.length })}</span>
+                  <Button variant="ghost" size="icon" onClick={() => setMobileListOpen(false)}>
+                    {t('common.close')}
+                  </Button>
+                </div>
+                <div className="min-h-0 flex-1">{vehicleList}</div>
+              </div>
+            </SheetContent>
+          </Sheet>
+        )}
+
+        {/* Map Area */}
+        <div className="relative min-w-0 flex-1 bg-muted/5">
+          <EtitMap
+            vehicles={vehicles}
+            liveStatuses={liveStatuses}
+            visibleIds={effectiveVisibleIds}
+            activeVehicleId={activeId}
+            focusedVehicleId={focusedId}
+            focusBump={focusBump}
+            route={historyQuery.data ? decodePolyline(historyQuery.data.geometry) : []}
+            stops={historyQuery.data?.stops}
+            sensors={historyQuery.data?.sensors}
+            showStops={showStops}
+            showIgnitions={showIgnitions}
+            playback={playbackState}
+            playbackPrev={playbackPrev}
+            height="100%"
+          />
+
+          {/* Full-Screen Overlay (Top) */}
+          {isFullScreen && (
+            <div className="absolute inset-x-0 top-0 z-30 pointer-events-none p-4 flex flex-col items-center">
+              <div className="pointer-events-auto flex flex-col gap-2 w-full max-w-4xl bg-background/80 backdrop-blur-md rounded-xl shadow-2xl border p-3">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <Radar className="h-5 w-5 text-primary" />
+                    <div className="flex flex-col">
+                      <span className="text-sm font-bold">{activeVehicle?.plate || t('nav.etit')}</span>
+                      <span className="text-[10px] text-muted-foreground">{liveLabel}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="icon"
+                      variant="secondary"
+                      className="h-8 w-8 rounded-full"
+                      onClick={toggleFullScreen}
+                    >
+                      <Minimize2 className="h-4 w-4" />
+                    </Button>
+                    {loadedRange && (
+                      <Button
+                        size="icon"
+                        variant="destructive"
+                        className="h-8 w-8 rounded-full"
+                        onClick={clearHistory}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="flex flex-col">{historyControls}</div>
+                  <div className="flex flex-col justify-end">{playbackPlayer}</div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Map Overlays (Standard) */}
+          {!isFullScreen && (
+            <div className="absolute right-3 top-3 z-20 flex flex-col gap-2">
+              <Button
+                size="icon"
+                variant={rightCollapsed ? 'secondary' : 'default'}
+                className="h-9 w-9 rounded-full shadow-lg"
+                onClick={() => setRightCollapsed(!rightCollapsed)}
+                title={rightCollapsed ? 'Show Timeline' : 'Hide Timeline'}
+              >
+                <Activity className="h-4 w-4" />
+              </Button>
+
+              {loadedRange && (
+                <Button
+                  size="icon"
+                  variant="destructive"
+                  className="h-9 w-9 rounded-full shadow-lg"
+                  onClick={clearHistory}
+                  title={t('common.exit')}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
               )}
             </div>
           )}
 
-          {/* Vehicle list — mobile sheet */}
-          {!isDesktop && (
-            <Sheet open={mobileListOpen} onOpenChange={setMobileListOpen}>
-              <SheetContent side="left" className="w-[300px] p-0">
-                <div className="flex h-full flex-col">
-                  <div className="flex h-14 items-center justify-between border-b px-4">
-                    <span className="text-sm font-bold">{t('etit.list.heading', { count: vehicles.length })}</span>
-                    <Button variant="ghost" size="icon" onClick={() => setMobileListOpen(false)}>
-                      {t('common.close')}
-                    </Button>
-                  </div>
-                  <div className="min-h-0 flex-1">{vehicleList}</div>
-                </div>
-              </SheetContent>
-            </Sheet>
-          )}
-
-          {/* Map Area */}
-          <div className="relative min-w-0 flex-1 bg-muted/5">
-            <EtitMap
-              vehicles={vehicles}
-              liveStatuses={liveStatuses}
-              visibleIds={effectiveVisibleIds}
-              activeVehicleId={activeId}
-              focusedVehicleId={focusedId}
-              focusBump={focusBump}
-              route={historyQuery.data ? decodePolyline(historyQuery.data.geometry) : []}
-              stops={historyQuery.data?.stops}
-              sensors={historyQuery.data?.sensors}
-              showStops={showStops}
-              showIgnitions={showIgnitions}
-              playback={playbackState}
-              playbackPrev={playbackPrev}
-              height="100%"
-            />
-
-            {/* Full-Screen Overlay (Top) */}
-            {isFullScreen && (
-              <div className="absolute inset-x-0 top-0 z-30 pointer-events-none p-4 flex flex-col items-center">
-                <div className="pointer-events-auto flex flex-col gap-2 w-full max-w-4xl bg-background/80 backdrop-blur-md rounded-xl shadow-2xl border p-3">
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-3">
-                      <Radar className="h-5 w-5 text-primary" />
-                      <div className="flex flex-col">
-                        <span className="text-sm font-bold">{activeVehicle?.plate || t('nav.etit')}</span>
-                        <span className="text-[10px] text-muted-foreground">{liveLabel}</span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        size="icon"
-                        variant="secondary"
-                        className="h-8 w-8 rounded-full"
-                        onClick={toggleFullScreen}
-                      >
-                        <Minimize2 className="h-4 w-4" />
-                      </Button>
-                      {loadedRange && (
-                        <Button
-                          size="icon"
-                          variant="destructive"
-                          className="h-8 w-8 rounded-full"
-                          onClick={clearHistory}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="flex flex-col">{historyControls}</div>
-                    <div className="flex flex-col justify-end">{playbackPlayer}</div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Map Overlays (Standard) */}
-            {!isFullScreen && (
-              <div className="absolute right-3 top-3 z-20 flex flex-col gap-2">
+          {!isFullScreen && (
+            <div className="absolute left-3 top-3 z-20 flex flex-col gap-2">
+              {isDesktop && (
                 <Button
                   size="icon"
-                  variant={rightCollapsed ? 'secondary' : 'default'}
+                  variant={leftCollapsed ? 'secondary' : 'default'}
                   className="h-9 w-9 rounded-full shadow-lg"
-                  onClick={() => setRightCollapsed(!rightCollapsed)}
-                  title={rightCollapsed ? 'Show Timeline' : 'Hide Timeline'}
+                  onClick={() => setLeftCollapsed(!leftCollapsed)}
+                  title={leftCollapsed ? 'Show List' : 'Hide List'}
                 >
-                  <Activity className="h-4 w-4" />
+                  <Menu className="h-4 w-4" />
                 </Button>
-
-                {loadedRange && (
-                  <Button
-                    size="icon"
-                    variant="destructive"
-                    className="h-9 w-9 rounded-full shadow-lg"
-                    onClick={clearHistory}
-                    title={t('common.exit')}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
-            )}
-
-            {!isFullScreen && (
-              <div className="absolute left-3 top-3 z-20 flex flex-col gap-2">
-                {isDesktop && (
-                  <Button
-                    size="icon"
-                    variant={leftCollapsed ? 'secondary' : 'default'}
-                    className="h-9 w-9 rounded-full shadow-lg"
-                    onClick={() => setLeftCollapsed(!leftCollapsed)}
-                    title={leftCollapsed ? 'Show List' : 'Hide List'}
-                  >
-                    <Menu className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
-            )}
-
-            {/* Mobile bottom: tab toggle */}
-            {!isDesktop && !isFullScreen && (
-              <div className="shrink-0 border-t bg-background">
-                <div className="flex items-center justify-center gap-0.5 border-b bg-muted/30 p-1">
-                  <MobileTabButton
-                    active={mobileTab === 'controls'}
-                    onClick={() => setMobileTab('controls')}
-                    label={t('etit.mobile.controls')}
-                  />
-                  <MobileTabButton
-                    active={mobileTab === 'playback'}
-                    onClick={() => setMobileTab('playback')}
-                    label={t('etit.mobile.playback')}
-                    disabled={!historyQuery.data}
-                  />
-                </div>
-                <div className="max-h-[42vh] overflow-y-auto p-2">
-                  {mobileTab === 'controls' ? historyControls : (playbackPlayer)}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Right Sidebar — desktop only */}
-          {isDesktop && !isFullScreen && (
-            <div 
-              className={cn(
-                "relative flex border-s",
-                !isResizing && "transition-all duration-300 ease-in-out",
-                rightCollapsed ? "w-0" : ""
               )}
-              style={{ width: rightCollapsed ? 0 : rightWidth }}
-            >
-              {!rightCollapsed && (
-                <div
-                  className="absolute -left-1 top-0 bottom-0 z-50 w-2 cursor-col-resize hover:bg-primary/20 active:bg-primary/40"
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    setIsResizing(true);
-                    const startX = e.clientX;
-                    const startWidth = rightWidth;
-                    const onMouseMove = (moveEvent: MouseEvent) => {
-                      const delta = startX - moveEvent.clientX;
-                      setRightWidth(Math.max(300, Math.min(600, startWidth + delta)));
-                    };
-                    const onMouseUp = () => {
-                      setIsResizing(false);
-                      document.removeEventListener('mousemove', onMouseMove);
-                      document.removeEventListener('mouseup', onMouseUp);
-                    };
-                    document.addEventListener('mousemove', onMouseMove);
-                    document.addEventListener('mouseup', onMouseUp);
-                  }}
+            </div>
+          )}
+
+          {/* Mobile bottom: tab toggle */}
+          {!isDesktop && !isFullScreen && (
+            <div className="shrink-0 border-t bg-background">
+              <div className="flex items-center justify-center gap-0.5 border-b bg-muted/30 p-1">
+                <MobileTabButton
+                  active={mobileTab === 'controls'}
+                  onClick={() => setMobileTab('controls')}
+                  label={t('etit.mobile.controls')}
                 />
-              )}
-              <div className="flex w-full flex-col overflow-hidden bg-background">
-                <aside className="flex h-full flex-col overflow-y-auto p-3">
-                  {historyControls}
-                  {playbackPlayer}
-                </aside>
+                <MobileTabButton
+                  active={mobileTab === 'playback'}
+                  onClick={() => setMobileTab('playback')}
+                  label={t('etit.mobile.playback')}
+                  disabled={!historyQuery.data}
+                />
+              </div>
+              <div className="max-h-[42vh] overflow-y-auto p-2">
+                {mobileTab === 'controls' ? historyControls : (playbackPlayer)}
               </div>
             </div>
           )}
         </div>
-      </PageShell>
+
+        {/* Right Sidebar — desktop only */}
+        {isDesktop && !isFullScreen && (
+          <div 
+            className={cn(
+              "relative flex border-s",
+              !isResizing && "transition-all duration-300 ease-in-out",
+              rightCollapsed ? "w-0" : ""
+            )}
+            style={{ width: rightCollapsed ? 0 : rightWidth }}
+          >
+            {!rightCollapsed && (
+              <div
+                className="absolute -left-1 top-0 bottom-0 z-50 w-2 cursor-col-resize hover:bg-primary/20 active:bg-primary/40"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  setIsResizing(true);
+                  const startX = e.clientX;
+                  const startWidth = rightWidth;
+                  const onMouseMove = (moveEvent: MouseEvent) => {
+                    const delta = startX - moveEvent.clientX;
+                    setRightWidth(Math.max(300, Math.min(600, startWidth + delta)));
+                  };
+                  const onMouseUp = () => {
+                    setIsResizing(false);
+                    document.removeEventListener('mousemove', onMouseMove);
+                    document.removeEventListener('mouseup', onMouseUp);
+                  };
+                  document.addEventListener('mousemove', onMouseMove);
+                  document.addEventListener('mouseup', onMouseUp);
+                }}
+              />
+            )}
+            <div className="flex w-full flex-col overflow-hidden bg-background">
+              <aside className="flex h-full flex-col overflow-y-auto p-3">
+                {historyControls}
+                {playbackPlayer}
+              </aside>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
