@@ -31,6 +31,7 @@ const BUILDERS: Record<MarkerKind, Builder> = {
   'ignition-off': (c, id) => ignitionSvg(c, id, false),
   'route-start': routeStartSvg,
   'route-end': routeEndSvg,
+  invisible: () => `<svg width="0" height="0" xmlns="http://www.w3.org/2000/svg"/>`,
 };
 
 /* -------------------------------------------------------------------------- */
@@ -237,6 +238,7 @@ const SIZES: Record<MarkerKind, MarkerSize> = {
   'ignition-off': { width: 24, height: 24, anchorX: 12, anchorY: 12 },
   'route-start': { width: 28, height: 28, anchorX: 14, anchorY: 14 },
   'route-end': { width: 28, height: 28, anchorX: 14, anchorY: 14 },
+  invisible: { width: 0, height: 0, anchorX: 0, anchorY: 0 },
 };
 
 export function markerSize(kind: MarkerKind = 'pin'): MarkerSize {

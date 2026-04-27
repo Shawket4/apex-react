@@ -11,7 +11,8 @@ export type MarkerKind =
   | 'ignition-on'
   | 'ignition-off'
   | 'route-start'
-  | 'route-end';
+  | 'route-end'
+  | 'invisible';
 
 export interface MapMarker {
   /** Stable identity for React keys + diffing during live updates. */

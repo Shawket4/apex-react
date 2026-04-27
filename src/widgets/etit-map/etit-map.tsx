@@ -158,7 +158,7 @@ function EtitMapBase({
       lat: live.lat,
       lng: live.lng,
       color: 'transparent',
-      kind: 'pin',
+      kind: 'invisible',
       title: '',
       // When focusing, this sentinel should be the ONLY thing affecting bounds
       // if we want a clean snap-to-vehicle. 
