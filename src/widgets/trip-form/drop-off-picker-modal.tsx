@@ -38,8 +38,6 @@ interface DropOffPickerModalProps {
   value: string;
   /** Callback fired with both the chosen name and its mapping details (for fee/distance) */
   onSelect: (dropOff: string, mapping?: MappingDetail) => void;
-  /** Drop-off names already chosen by sibling containers — disable them in the list */
-  excludedDropOffs?: string[];
 }
 
 /**
@@ -60,7 +58,6 @@ export function DropOffPickerModal({
   terminal,
   value,
   onSelect,
-  excludedDropOffs = [],
 }: DropOffPickerModalProps) {
   const { t } = useTranslation();
   const { data, isLoading } = useDropOffs(company, terminal, {
