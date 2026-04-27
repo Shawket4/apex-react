@@ -24,6 +24,8 @@ export function EtitVehicleHistorySelector({
   onRangeChange,
   onLoad,
   onBack,
+  onClearHistory,
+  isHistoryLoaded,
   loading,
   className,
 }: EtitVehicleHistorySelectorProps) {
