@@ -41,7 +41,6 @@ function createClient(baseURL: string): AxiosInstance {
         if (logoutHandler) {
           logoutHandler();
         } else {
-          // Defensive fallback — store is not yet wired up
           Object.values(STORAGE_KEYS).forEach((k) => {
             if (k !== STORAGE_KEYS.LANGUAGE && k !== STORAGE_KEYS.THEME) {
               localStorage.removeItem(k);
@@ -64,6 +63,10 @@ export const apiClient = createClient(env.VITE_API_BASE_URL);
 
 export const apiClientRust = env.VITE_API_BASE_URL_RUST
   ? createClient(env.VITE_API_BASE_URL_RUST)
+  : apiClient;
+
+export const apiClientEtit = env.VITE_API_BASE_URL_ETIT
+  ? createClient(env.VITE_API_BASE_URL_ETIT)
   : apiClient;
 
 /** Typed helper — axios instance returns unknown response data by default in strict TS */
