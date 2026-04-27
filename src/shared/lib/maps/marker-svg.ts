@@ -124,7 +124,7 @@ function vehicleSvg(color: string, filterId: string, _heading: number): string {
     <g filter="url(#${sId})">
       <circle cx="19.97" cy="20.27" r="15.6" fill="white"/>
       <path d="${body}" fill="${color}" fill-rule="evenodd"/>
-      <path d="${truck}" fill="white" fill-rule="evenodd"/>
+      <path d="${truck}" fill="${color}" fill-rule="evenodd"/>
     </g>
   </svg>`;
 }
