@@ -66,9 +66,9 @@ export function useEtitLive({ streamConnected, ...options }: UseEtitLiveOptions 
   return useQuery<EtitLiveStatus[]>({
     queryKey: etitKeys.live(),
     queryFn: () => etitApi.listLive(),
-    refetchInterval: streamConnected ? 5 * 60_000 : 30_000,
-    refetchOnWindowFocus: true,
-    staleTime: 30_000,
+    refetchInterval: streamConnected ? false : 30_000,
+    refetchOnWindowFocus: !streamConnected,
+    staleTime: streamConnected ? Infinity : 10_000,
     ...options,
   });
 }
@@ -178,21 +178,24 @@ export function useEtitLiveStream(): UseEtitLiveStreamResult {
       const handleMessage = (e: MessageEvent) => {
         applyDelta(e.data);
       };
-      es.addEventListener('live', handleMessage);
+
+      es.addEventListener('snapshot', handleMessage);
+      es.addEventListener('update', handleMessage);
       es.addEventListener('message', handleMessage);
     };
 
     const applyDelta = (raw: string) => {
-      let parsed: unknown;
+      let parsed: any;
       try {
         parsed = JSON.parse(raw);
       } catch {
         return;
       }
 
-      const updates = etitLiveStatusSchema.array().safeParse(
-        Array.isArray(parsed) ? parsed : [parsed],
-      );
+      // Handle the envelope: {"count": 20, "vehicles": [...]}
+      const list = parsed.vehicles || (Array.isArray(parsed) ? parsed : [parsed]);
+
+      const updates = etitLiveStatusSchema.partial().array().safeParse(list);
       if (!updates.success || updates.data.length === 0) return;
 
       queryClient.setQueryData<EtitLiveStatus[]>(etitKeys.live(), (prev) => {
