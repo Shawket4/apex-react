@@ -231,7 +231,7 @@ export interface MarkerSize {
 
 const SIZES: Record<MarkerKind, MarkerSize> = {
   pin: { width: 26, height: 34, anchorX: 13, anchorY: 34 },
-  vehicle: { width: 40, height: 53, anchorX: 20, anchorY: 53 },
+  vehicle: { width: 30, height: 40, anchorX: 15, anchorY: 40 },
   stop: { width: 24, height: 24, anchorX: 12, anchorY: 12 },
   'ignition-on': { width: 24, height: 24, anchorX: 12, anchorY: 12 },
   'ignition-off': { width: 24, height: 24, anchorX: 12, anchorY: 12 },

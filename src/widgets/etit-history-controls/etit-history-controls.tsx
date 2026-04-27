@@ -4,7 +4,6 @@ import {
   Clock,
   Eye,
   EyeOff,
-  Fuel,
   Gauge,
   Loader2,
   MapPin,
@@ -43,6 +42,7 @@ export interface EtitHistoryControlsProps {
   showIgnitions: boolean;
   onShowIgnitionsChange: (next: boolean) => void;
 
+  isFullScreen?: boolean;
   className?: string;
 }
 
@@ -152,9 +152,9 @@ function EtitHistoryControlsBase({
       </div>
 
       {/* Stats — slot height is fixed across loading / data / placeholder */}
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
         {loading ? (
-          Array.from({ length: 4 }).map((_, i) => (
+          Array.from({ length: 3 }).map((_, i) => (
             <Skeleton key={i} className="h-[58px] rounded-md" />
           ))
         ) : history && summary ? (
@@ -174,18 +174,12 @@ function EtitHistoryControlsBase({
               label={t('etit.controls.stats.stops')}
               value={summary.numberOfStops || '0'}
             />
-            <Stat
-              icon={<Fuel className="h-3.5 w-3.5" />}
-              label={t('etit.controls.stats.fuel')}
-              value={summary.totalFuelConsumption || '—'}
-            />
           </>
         ) : (
           <>
             <PlaceholderStat label={t('etit.controls.stats.mileage')} />
             <PlaceholderStat label={t('etit.controls.stats.activeTime')} />
             <PlaceholderStat label={t('etit.controls.stats.stops')} />
-            <PlaceholderStat label={t('etit.controls.stats.fuel')} />
           </>
         )}
       </div>

@@ -1,11 +1,12 @@
 import * as React from 'react';
 import { Locate, Layers } from 'lucide-react';
-import { setOptions, importLibrary } from '@googlemaps/js-api-loader';
+import { setOptions } from '@googlemaps/js-api-loader';
 import { Button } from '@/shared/ui/button';
 import { cn } from '@/shared/lib/cn';
 import { DEFAULT_MAP_CENTER } from '@/shared/lib/coords';
 import { buildMarkerSvg, markerSize } from './marker-svg';
 import type { MapMarker, MapViewProps } from './types';
+import { getSharedMap, releaseSharedMap } from './map-pool';
 
 /* -------------------------------------------------------------------------- */
 /* Map styles                                                                  */
@@ -232,14 +233,8 @@ export function GoogleMapView({
 
     const initMap = async () => {
       try {
-        const [mapsLib] = await Promise.all([
-          importLibrary('maps') as Promise<google.maps.MapsLibrary>,
-          importLibrary('marker'),
-        ]);
-        if (cancelled || !containerRef.current) return;
-
         const isDark = document.documentElement.classList.contains('dark');
-        const map = new mapsLib.Map(containerRef.current, {
+        const { map, infoWindow } = await getSharedMap(containerRef.current!, {
           center: { lat: centerFallback[0], lng: centerFallback[1] },
           zoom: 11,
           mapTypeId: google.maps.MapTypeId.ROADMAP,
@@ -248,12 +243,17 @@ export function GoogleMapView({
           streetViewControl: false,
           fullscreenControl: false,
           zoomControlOptions: { position: google.maps.ControlPosition.RIGHT_CENTER },
-          gestureHandling: 'cooperative',
+          gestureHandling: 'greedy',
           keyboardShortcuts: false,
         });
 
+        if (cancelled || !containerRef.current) {
+          releaseSharedMap(map);
+          return;
+        }
+
         mapRef.current = map;
-        infoWindowRef.current = new mapsLib.InfoWindow({ disableAutoPan: false });
+        infoWindowRef.current = infoWindow;
 
         const clickListener = map.addListener('click', (e: google.maps.MapMouseEvent) => {
           if (!e.latLng) return;
@@ -305,7 +305,20 @@ export function GoogleMapView({
         infoWindowRef.current.close();
         infoWindowRef.current = null;
       }
-      mapRef.current = null;
+      if (mapRef.current) {
+        // CLEANUP: markers and polylines MUST be removed from the shared map
+        // instance before releasing it, otherwise they will haunt the next user.
+        markerEntriesRef.current.forEach((e) => {
+          e.marker.setMap(null);
+          e.listeners.forEach((l) => google.maps.event.removeListener(l));
+        });
+        markerEntriesRef.current.clear();
+        polylinesRef.current.forEach((p) => p.setMap(null));
+        polylinesRef.current = [];
+
+        releaseSharedMap(mapRef.current);
+        mapRef.current = null;
+      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

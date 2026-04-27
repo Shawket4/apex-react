@@ -13,6 +13,7 @@ import { matches } from '@/shared/lib/normalize';
 import { formatCairo } from '@/entities/etit-vehicle/cairo';
 import {
   classifyStatus,
+  isEtitOnline,
   ETIT_STATUS_COLOR,
   type EtitLiveStatus,
   type EtitVehicle,
@@ -62,14 +63,15 @@ const VehicleRow = React.memo(({
   onFocus,
 }: VehicleRowProps) => {
   const { t } = useTranslation();
-  const group = live ? classifyStatus(live.status) : classifyStatus(vehicle.status);
+  const status = live?.status ?? vehicle.status;
+  const isOnline = isEtitOnline(status);
+  const group = classifyStatus(status);
   const color = ETIT_STATUS_COLOR[group];
   const speed = live?.speed ?? vehicle.speed;
   const lastSeen = live?.timestamp ?? vehicle.lastLocationAt;
   const isActive = activeId === vehicle.id;
   const isVisible = visibleIds.has(vehicle.id);
   const displayName = vehicle.plate || vehicle.codename;
-  const isOnline = vehicle.online && group !== 'offline';
 
   return (
     <li>
@@ -189,18 +191,16 @@ function EtitVehicleListBase({
         }
         if (filter === 'all') return true;
         const live = liveById.get(v.id);
-        if (filter === 'online') return v.online;
-        if (filter === 'offline') return !v.online;
+        if (filter === 'online') return isEtitOnline(live?.status ?? v.status);
+        if (filter === 'offline') return !isEtitOnline(live?.status ?? v.status);
         const group = live ? classifyStatus(live.status) : classifyStatus(v.status);
         if (filter === 'moving') return group === 'moving';
         if (filter === 'idling') return group === 'idling';
         return true;
       })
       .sort((a, b) => {
-        const aOffline = classifyStatus(liveById.get(a.id)?.status ?? a.status) === 'offline';
-        const bOffline = classifyStatus(liveById.get(b.id)?.status ?? b.status) === 'offline';
-        const aOnline = a.online && !aOffline;
-        const bOnline = b.online && !bOffline;
+        const aOnline = isEtitOnline(liveById.get(a.id)?.status ?? a.status);
+        const bOnline = isEtitOnline(liveById.get(b.id)?.status ?? b.status);
 
         if (aOnline !== bOnline) return aOnline ? -1 : 1;
         return a.plate.localeCompare(b.plate);
@@ -217,8 +217,9 @@ function EtitVehicleListBase({
     let offline = 0;
     for (const v of visible) {
       const live = liveById.get(v.id);
-      const group = live ? classifyStatus(live.status) : classifyStatus(v.status);
-      const isOnline = v.online && group !== 'offline';
+      const status = live?.status ?? v.status;
+      const group = classifyStatus(status);
+      const isOnline = isEtitOnline(status);
 
       if (isOnline) online++;
       else offline++;

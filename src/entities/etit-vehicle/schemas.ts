@@ -29,6 +29,10 @@ export function classifyStatus(code: number): EtitStatusGroup | 'unknown' {
   return 'unknown';
 }
 
+export function isEtitOnline(status: number): boolean {
+  return classifyStatus(status) !== 'offline';
+}
+
 /**
  * A single colour per status group, used by the map markers, the vehicle
  * list rows, and the playback player. Keep these in sync with the Tailwind
