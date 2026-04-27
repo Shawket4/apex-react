@@ -28,7 +28,8 @@ import {
 import { useQueryClient } from '@tanstack/react-query';
 import { EtitMap } from '@/widgets/etit-map/etit-map';
 import { EtitVehicleList } from '@/widgets/etit-vehicle-list/etit-vehicle-list';
-import { EtitHistoryControls } from '@/widgets/etit-history-controls/etit-history-controls';
+import { EtitVehicleHistorySelector } from '@/widgets/etit-vehicle-history-selector/etit-vehicle-history-selector';
+import { EtitFloatingStats } from '@/widgets/etit-history-controls/etit-floating-stats';
 import { EtitPlaybackPlayer } from '@/widgets/etit-playback-player/etit-playback-player';
 import { defaultCairoTodayRange } from '@/widgets/etit-datetime-range/etit-datetime-range';
 
@@ -93,34 +94,19 @@ export function EtitPage() {
   const [mobileListOpen, setMobileListOpen] = React.useState(false);
   const [mobileTab, setMobileTab] = React.useState<MobileTab>('controls');
 
-  /* ---- Server data (Consolidated) ---- */
+  /* ---- Server data ---- */
   const fleetQuery = useEtitFleet();
   const vehicles = fleetQuery.fleet;
   const liveStatuses = fleetQuery.liveStatuses;
 
-  /* ---- Visibility (multi-select for the map) ---- */
+  /* ---- Visibility ---- */
   const [visibleIds, setVisibleIds] = React.useState<Set<string>>(() => loadVisibleIds());
 
-  // Persist
   React.useEffect(() => {
     try {
-      window.localStorage.setItem(
-        STORAGE_VISIBLE_IDS,
-        JSON.stringify([...visibleIds]),
-      );
-    } catch {
-      // storage full / disabled — no-op
-    }
+      window.localStorage.setItem(STORAGE_VISIBLE_IDS, JSON.stringify([...visibleIds]));
+    } catch { /* ignore */ }
   }, [visibleIds]);
-
-  // First-load default: if storage was empty AND we have vehicles, show top 5
-  React.useEffect(() => {
-    if (visibleIds.size === 0 && vehicles.length > 0) {
-      const top5 = vehicles.slice(0, 5).map((v) => v.id);
-      setVisibleIds(new Set(top5));
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [vehicles.length === 0]);
 
   const toggleVisible = React.useCallback((id: string) => {
     setVisibleIds((prev) => {
@@ -143,25 +129,19 @@ export function EtitPage() {
     setVisibleIds(new Set());
   }, []);
 
-  /* ---- Active vehicle (drives the right pane) ---- */
+  /* ---- Selection & Layout ---- */
   const [activeId, setActiveId] = React.useState<string | null>(null);
   const [focusBump, setFocusBump] = React.useState(0);
   const [focusedId, setFocusedId] = React.useState<string | null>(null);
 
-  /* ---- Layout states ---- */
   const [isFullScreen, setIsFullScreen] = React.useState(false);
   const [isResizing, setIsResizing] = React.useState(false);
   const [leftCollapsed, setLeftCollapsed] = React.useState(false);
-  const [rightCollapsed, setRightCollapsed] = React.useState(false);
   const [leftWidth, setLeftWidth] = React.useState(320);
-  const [rightWidth, setRightWidth] = React.useState(380);
 
-  // Auto-collapse on small screens (iPad landscape / small laptops)
   React.useLayoutEffect(() => {
-    if (typeof window === 'undefined') return;
-    if (window.innerWidth < 1280) {
+    if (typeof window !== 'undefined' && window.innerWidth < 1280) {
       setLeftCollapsed(true);
-      setRightCollapsed(true);
     }
   }, []);
 
@@ -178,7 +158,7 @@ export function EtitPage() {
       next.add(id);
       return next;
     });
-    if (!isDesktop) setMobileListOpen(false);
+    if (!isDesktop) setMobileListOpen(true);
   }, [isDesktop]);
 
   const handleFocus = React.useCallback((id: string) => {
@@ -193,33 +173,22 @@ export function EtitPage() {
     if (!isDesktop) setMobileListOpen(false);
   }, [isDesktop]);
 
-  /* ---- Fullscreen Handling ---- */
+  /* ---- Fullscreen ---- */
   const toggleFullScreen = React.useCallback(async () => {
     if (!containerRef.current) return;
-
     if (!document.fullscreenElement) {
-      try {
-        await containerRef.current.requestFullscreen();
-        setIsFullScreen(true);
-      } catch (err) {
-        console.error('Failed to enter fullscreen', err);
-      }
+      try { await containerRef.current.requestFullscreen(); setIsFullScreen(true); } 
+      catch (err) { console.error(err); }
     } else {
-      try {
-        await document.exitFullscreen();
-        setIsFullScreen(false);
-      } catch (err) {
-        console.error('Failed to exit fullscreen', err);
-      }
+      try { await document.exitFullscreen(); setIsFullScreen(false); } 
+      catch (err) { console.error(err); }
     }
   }, []);
 
   React.useEffect(() => {
-    const handler = () => {
-      setIsFullScreen(!!document.fullscreenElement);
-    };
-    document.addEventListener('fullscreenchange', handler);
-    return () => document.removeEventListener('fullscreenchange', handler);
+    const h = () => setIsFullScreen(!!document.fullscreenElement);
+    document.addEventListener('fullscreenchange', h);
+    return () => document.removeEventListener('fullscreenchange', h);
   }, []);
 
   /* ---- History range ---- */
@@ -245,7 +214,7 @@ export function EtitPage() {
     }
   }, [activeId, queryClient]);
 
-  /* ---- Playback state (synced with the map) ---- */
+  /* ---- Playback ---- */
   const [showStops, setShowStops] = React.useState(true);
   const [showIgnitions, setShowIgnitions] = React.useState(true);
   const [playbackState, setPlaybackState] = React.useState<PlaybackState | null>(null);
@@ -259,27 +228,11 @@ export function EtitPage() {
     [],
   );
 
-  /* ---- Errors ---- */
-  const error =
-    fleetQuery.error ||
-    historyQuery.error ||
-    summaryQuery.error ||
-    (!fleetQuery.liveConnected && fleetQuery.liveError ? fleetQuery.liveError : null);
+  /* ---- Errors & Status ---- */
+  const error = fleetQuery.error || historyQuery.error || summaryQuery.error;
+  const liveLabel = fleetQuery.liveConnected ? t('common.refreshing') : t('common.loading');
+  const liveTone = fleetQuery.liveConnected ? 'success' : 'muted';
 
-  /* ---- Map liveness pill ---- */
-  const liveLabel = fleetQuery.liveConnected
-    ? t('common.refreshing')
-    : fleetQuery.isError
-      ? t('etit.errors.proxyUnreachable')
-      : t('common.loading');
-  const liveTone =
-    !fleetQuery.liveConnected && fleetQuery.isError
-      ? 'destructive'
-      : fleetQuery.liveConnected
-        ? 'success'
-        : 'muted';
-
-  // When a route is loaded, hide all other vehicles on the map
   const effectiveVisibleIds = React.useMemo(() => {
     if (loadedRange) return new Set<string>();
     return visibleIds;
@@ -289,7 +242,7 @@ export function EtitPage() {
     return liveStatuses.filter(s => visibleIds.has(s.id)).length;
   }, [liveStatuses, visibleIds]);
 
-  /* ---- Shared nodes ---- */
+  /* ---- Nodes ---- */
 
   const vehicleList = (
     <EtitVehicleList
@@ -307,20 +260,25 @@ export function EtitPage() {
     />
   );
 
-  const historyControlsNode = (
-    <EtitHistoryControls
+  const vehicleSelector = activeVehicle && (
+    <EtitVehicleHistorySelector
       vehicle={activeVehicle}
-      history={historyQuery.data ?? null}
-      summary={summaryQuery.data ?? null}
       range={range}
       onRangeChange={setRange}
       onLoad={handleLoadHistory}
+      onBack={() => setActiveId(null)}
       loading={historyQuery.isLoading || summaryQuery.isLoading}
+      className="h-full w-full"
+    />
+  );
+
+  const floatingStatsNode = (
+    <EtitFloatingStats
+      summary={summaryQuery.data ?? null}
       showStops={showStops}
       onShowStopsChange={setShowStops}
       showIgnitions={showIgnitions}
       onShowIgnitionsChange={setShowIgnitions}
-      isFullScreen={isFullScreen}
     />
   );
 
@@ -330,7 +288,7 @@ export function EtitPage() {
       stops={historyQuery.data?.stops ?? []}
       sensors={historyQuery.data?.sensors ?? []}
       onStateChange={handlePlaybackChange}
-      className={cn("mt-auto border-t", isFullScreen && "border-t-0")}
+      className="border-none bg-transparent"
     />
   );
 
@@ -338,7 +296,7 @@ export function EtitPage() {
     <div ref={containerRef} className="flex h-full flex-col bg-background">
       {/* Header */}
       {!isFullScreen && (
-        <header className="flex h-14 shrink-0 items-center justify-between border-b bg-card/80 px-4 backdrop-blur-md">
+        <header className="flex h-14 shrink-0 items-center justify-between border-b bg-card/80 px-4 backdrop-blur-md z-[50]">
           <div className="flex items-center gap-3">
             {!isDesktop && (
               <Button
@@ -351,19 +309,14 @@ export function EtitPage() {
               </Button>
             )}
             <div className="flex flex-col">
-              <h1 className="text-base font-bold tracking-tight">
-                {t('nav.etit')}
-              </h1>
-              <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-                <span className="flex items-center gap-1 font-medium">
+              <h1 className="text-base font-bold tracking-tight">{t('nav.etit')}</h1>
+              <div className="flex items-center gap-2 text-[10px] text-muted-foreground font-medium">
+                <span className="flex items-center gap-1">
                   <Radar className="h-2.5 w-2.5 text-primary" />
                   {t('etit.list.shownOnMap', { shown: onMapCount, total: vehicles.length })}
                 </span>
                 <span className="flex items-center gap-1">
-                  <div className={cn("h-1.5 w-1.5 rounded-full", 
-                    liveTone === 'success' ? 'bg-success animate-pulse' : 
-                    liveTone === 'destructive' ? 'bg-destructive' : 'bg-muted')} 
-                  />
+                  <div className={cn("h-1.5 w-1.5 rounded-full", liveTone === 'success' ? 'bg-success animate-pulse' : 'bg-muted')} />
                   {liveLabel}
                 </span>
               </div>
@@ -389,41 +342,25 @@ export function EtitPage() {
         </header>
       )}
 
-      {/* Body */}
       <div className="flex min-h-0 flex-1 overflow-hidden">
-        {/* Left Sidebar — desktop only */}
         {isDesktop && !isFullScreen && (
           <div 
-            className={cn(
-              "relative flex",
-              !isResizing && "transition-all duration-300 ease-in-out",
-              leftCollapsed ? "w-0" : ""
-            )}
+            className={cn("relative flex bg-card border-e", !isResizing && "transition-all duration-300 ease-in-out", leftCollapsed ? "w-0" : "")}
             style={{ width: leftCollapsed ? 0 : leftWidth }}
           >
-            {vehicleList}
+            {activeId ? vehicleSelector : vehicleList}
             {!leftCollapsed && (
               <div
-                className={cn(
-                  "absolute -right-1 top-0 bottom-0 z-50 w-2 cursor-col-resize transition-colors group/resizer",
-                  isResizing && "bg-primary/40"
-                )}
+                className={cn("absolute -right-1 top-0 bottom-0 z-50 w-2 cursor-col-resize group/resizer", isResizing && "bg-primary/40")}
                 onMouseDown={(e) => {
                   e.preventDefault();
                   setIsResizing(true);
                   const startX = e.clientX;
                   const startWidth = leftWidth;
-                  const onMouseMove = (moveEvent: MouseEvent) => {
-                    const delta = moveEvent.clientX - startX;
-                    setLeftWidth(Math.max(260, Math.min(500, startWidth + delta)));
-                  };
-                  const onMouseUp = () => {
-                    setIsResizing(false);
-                    document.removeEventListener('mousemove', onMouseMove);
-                    document.removeEventListener('mouseup', onMouseUp);
-                  };
-                  document.addEventListener('mousemove', onMouseMove);
-                  document.addEventListener('mouseup', onMouseUp);
+                  const move = (me: MouseEvent) => setLeftWidth(Math.max(260, Math.min(500, startWidth + (me.clientX - startX))));
+                  const up = () => { setIsResizing(false); document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up); };
+                  document.addEventListener('mousemove', move);
+                  document.addEventListener('mouseup', up);
                 }}
               >
                 <div className="absolute inset-y-0 left-1/2 w-0.5 -translate-x-1/2 bg-border group-hover/resizer:bg-primary/50 transition-colors" />
@@ -432,25 +369,23 @@ export function EtitPage() {
           </div>
         )}
 
-        {/* Vehicle list — mobile sheet */}
         {!isDesktop && (
           <Sheet open={mobileListOpen} onOpenChange={setMobileListOpen}>
-            <SheetContent side="left" className="w-[300px] p-0">
-              <div className="flex h-full flex-col">
-                <div className="flex h-14 items-center justify-between border-b px-4">
-                  <span className="text-sm font-bold">{t('etit.list.heading', { count: vehicles.length })}</span>
-                  <Button variant="ghost" size="icon" onClick={() => setMobileListOpen(false)}>
-                    {t('common.close')}
-                  </Button>
+            <SheetContent side="left" className="w-[320px] p-0">
+              {activeId ? vehicleSelector : (
+                <div className="flex h-full flex-col">
+                  <div className="flex h-14 items-center justify-between border-b px-4">
+                    <span className="text-sm font-bold uppercase tracking-widest">{t('etit.list.heading', { count: vehicles.length })}</span>
+                    <Button variant="ghost" size="icon" onClick={() => setMobileListOpen(false)}><X className="h-4 w-4" /></Button>
+                  </div>
+                  <div className="min-h-0 flex-1">{vehicleList}</div>
                 </div>
-                <div className="min-h-0 flex-1">{vehicleList}</div>
-              </div>
+              )}
             </SheetContent>
           </Sheet>
         )}
 
-        {/* Map Area */}
-        <div className="relative min-w-0 flex-1 bg-muted/5">
+        <div className="relative min-w-0 flex-1">
           <EtitMap
             vehicles={vehicles}
             liveStatuses={liveStatuses}
@@ -468,174 +403,66 @@ export function EtitPage() {
             height="100%"
           />
 
-          {/* Map Loading Overlay */}
-          {(historyQuery.isLoading || summaryQuery.isLoading) && (
-            <div className="absolute inset-0 z-[30] flex items-center justify-center bg-background/20 backdrop-blur-[2px]">
-              <div className="flex flex-col items-center gap-3 rounded-2xl bg-background/80 p-6 shadow-2xl border border-white/10">
-                <Radar className="h-8 w-8 text-primary animate-ping" />
-                <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground animate-pulse">
-                  {t('etit.loadingHistory')}
-                </span>
-              </div>
-            </div>
-          )}
-
-          {/* Full-Screen Overlay (Top) */}
-          {isFullScreen && (
-            <div className="absolute inset-x-0 top-0 z-[1000] pointer-events-none p-4 flex flex-col items-center">
-              <div className="pointer-events-auto flex flex-col gap-3 w-full max-w-4xl bg-background/40 backdrop-blur-xl rounded-2xl shadow-[0_32px_64px_-12px_rgba(0,0,0,0.5)] border border-white/10 p-4 transition-all hover:bg-background/60">
-                <div className="flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-4">
-                    <div className="relative">
-                      <div className="absolute -inset-1 rounded-full bg-primary/20 blur animate-pulse" />
-                      <Radar className="relative h-6 w-6 text-primary" />
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-sm font-bold tracking-tight">{activeVehicle?.plate || t('nav.etit')}</span>
-                      <div className="flex items-center gap-1.5">
-                        <div className={cn("h-1.5 w-1.5 rounded-full", liveTone === 'success' ? 'bg-success animate-pulse' : 'bg-muted')} />
-                        <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{liveLabel}</span>
-                      </div>
-                    </div>
-                  </div>
+          {loadedRange && (
+            <div className="absolute inset-x-0 top-6 z-[1000] pointer-events-none flex justify-center px-4">
+              <div className="pointer-events-auto flex flex-col gap-2 w-full max-w-2xl bg-background/40 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/10 p-2 transition-all hover:bg-background/60">
+                <div className="flex items-center justify-between px-3 pt-1">
                   <div className="flex items-center gap-3">
-                    <Button
-                      size="icon"
-                      variant="secondary"
-                      className="h-9 w-9 rounded-xl bg-white/5 border-white/10 hover:bg-white/10 transition-colors"
-                      onClick={toggleFullScreen}
-                    >
-                      <Minimize2 className="h-4 w-4" />
-                    </Button>
-                    {loadedRange && (
-                      <Button
-                        size="icon"
-                        variant="destructive"
-                        className="h-9 w-9 rounded-xl shadow-lg shadow-destructive/20 transition-all hover:scale-105 active:scale-95"
-                        onClick={clearHistory}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    )}
+                    <Radar className="h-4 w-4 text-primary animate-pulse" />
+                    <span className="text-xs font-black uppercase tracking-widest">{activeVehicle?.plate}</span>
                   </div>
+                  <Button size="icon" variant="ghost" className="h-6 w-6 rounded-lg hover:bg-destructive/10 hover:text-destructive" onClick={clearHistory}>
+                    <X className="h-3 w-3" />
+                  </Button>
                 </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
-                  <div className="flex flex-col">{historyControlsNode}</div>
-                  <div className="flex flex-col justify-end">{playbackPlayerNode}</div>
-                </div>
+                {playbackPlayerNode}
               </div>
             </div>
           )}
 
-          {/* Map Overlays (Standard) */}
-          {!isFullScreen && (
-            <div className="absolute right-3 top-3 z-20 flex flex-col gap-2">
-              <Button
-                size="icon"
-                variant={rightCollapsed ? 'secondary' : 'default'}
-                className="h-9 w-9 rounded-full shadow-lg"
-                onClick={() => setRightCollapsed(!rightCollapsed)}
-                title={rightCollapsed ? 'Show Timeline' : 'Hide Timeline'}
-              >
-                <Activity className="h-4 w-4" />
+          {loadedRange && isDesktop && (
+            <div className="absolute right-6 top-6 z-[1000] pointer-events-none">
+              <div className="w-72">{floatingStatsNode}</div>
+            </div>
+          )}
+
+          {(historyQuery.isLoading || summaryQuery.isLoading) && (
+            <div className="absolute inset-0 z-[1100] flex items-center justify-center bg-background/20 backdrop-blur-sm">
+              <div className="flex flex-col items-center gap-3 rounded-2xl bg-background/80 p-8 shadow-2xl border border-white/10">
+                <Radar className="h-10 w-10 text-primary animate-ping" />
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground animate-pulse">{t('etit.loadingHistory')}</span>
+              </div>
+            </div>
+          )}
+
+          <div className="absolute right-3 top-3 z-20 flex flex-col gap-2">
+            {!loadedRange && (
+              <Button size="icon" variant="outline" className="h-9 w-9 rounded-full shadow-lg bg-background/80 backdrop-blur-sm" onClick={toggleFullScreen}>
+                {isFullScreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
               </Button>
+            )}
+          </div>
 
-              {loadedRange && (
-                <Button
-                  size="icon"
-                  variant="destructive"
-                  className="h-9 w-9 rounded-full shadow-lg"
-                  onClick={clearHistory}
-                  title={t('common.exit')}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              )}
-            </div>
-          )}
+          <div className="absolute left-3 top-3 z-20 flex flex-col gap-2">
+            {isDesktop && !isFullScreen && (
+              <Button size="icon" variant={leftCollapsed ? 'secondary' : 'default'} className="h-9 w-9 rounded-full shadow-lg" onClick={() => setLeftCollapsed(!leftCollapsed)}>
+                <Menu className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
 
-          {!isFullScreen && (
-            <div className="absolute left-3 top-3 z-20 flex flex-col gap-2">
-              {isDesktop && (
-                <Button
-                  size="icon"
-                  variant={leftCollapsed ? 'secondary' : 'default'}
-                  className="h-9 w-9 rounded-full shadow-lg"
-                  onClick={() => setLeftCollapsed(!leftCollapsed)}
-                  title={leftCollapsed ? 'Show List' : 'Hide List'}
-                >
-                  <Menu className="h-4 w-4" />
-                </Button>
-              )}
-            </div>
-          )}
-
-          {/* Mobile bottom: tab toggle */}
-          {!isDesktop && !isFullScreen && (
-            <div className="shrink-0 border-t bg-background/80 backdrop-blur-md shadow-[0_-4px_12px_rgba(0,0,0,0.05)]">
+          {!isDesktop && !isFullScreen && loadedRange && (
+            <div className="absolute inset-x-0 bottom-0 z-[1000] border-t bg-background/80 backdrop-blur-md shadow-[0_-4px_12px_rgba(0,0,0,0.05)]">
               <div className="flex items-center justify-around">
-                <MobileTabButton
-                  active={mobileTab === 'controls'}
-                  onClick={() => setMobileTab('controls')}
-                  label={t('etit.mobile.controls')}
-                  icon={Activity}
-                />
-                <MobileTabButton
-                  active={mobileTab === 'playback'}
-                  onClick={() => setMobileTab('playback')}
-                  label={t('etit.mobile.playback')}
-                  icon={Clock}
-                  disabled={!historyQuery.data}
-                />
+                <MobileTabButton active={mobileTab === 'controls'} onClick={() => setMobileTab('controls')} label={t('etit.mobile.controls')} icon={Activity} />
+                <MobileTabButton active={mobileTab === 'playback'} onClick={() => setMobileTab('playback')} label={t('etit.mobile.playback')} icon={Clock} />
               </div>
               <div className="max-h-[45vh] overflow-y-auto p-4 bg-muted/5">
-                {mobileTab === 'controls' ? historyControlsNode : (playbackPlayerNode)}
+                {mobileTab === 'controls' ? floatingStatsNode : playbackPlayerNode}
               </div>
             </div>
           )}
         </div>
-
-        {/* Right Sidebar — desktop only */}
-        {isDesktop && !isFullScreen && (
-          <div 
-            className={cn(
-              "relative flex border-s",
-              !isResizing && "transition-all duration-300 ease-in-out",
-              rightCollapsed ? "w-0" : ""
-            )}
-            style={{ width: rightCollapsed ? 0 : rightWidth }}
-          >
-            {!rightCollapsed && (
-              <div
-                className="absolute -left-1 top-0 bottom-0 z-50 w-2 cursor-col-resize hover:bg-primary/20 active:bg-primary/40"
-                onMouseDown={(e) => {
-                  e.preventDefault();
-                  setIsResizing(true);
-                  const startX = e.clientX;
-                  const startWidth = rightWidth;
-                  const onMouseMove = (moveEvent: MouseEvent) => {
-                    const delta = startX - moveEvent.clientX;
-                    setRightWidth(Math.max(300, Math.min(600, startWidth + delta)));
-                  };
-                  const onMouseUp = () => {
-                    setIsResizing(false);
-                    document.removeEventListener('mousemove', onMouseMove);
-                    document.removeEventListener('mouseup', onMouseUp);
-                  };
-                  document.addEventListener('mousemove', onMouseMove);
-                  document.addEventListener('mouseup', onMouseUp);
-                }}
-              />
-            )}
-            <div className="flex w-full flex-col overflow-hidden bg-background">
-              <aside className="flex h-full flex-col overflow-y-auto p-3">
-                {historyControlsNode}
-                {playbackPlayerNode}
-              </aside>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
