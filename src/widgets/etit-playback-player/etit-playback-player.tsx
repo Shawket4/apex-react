@@ -25,11 +25,11 @@ import type {
 
 /* -------------------------------------------------------------------------- */
 /* Speeds                                                                      */
-/*                                                                             *
- * Five buttons cover the useful range. 1× / 4× / 16× / 64× / 256×.           *
+/* */
+/* Five buttons cover the useful range. 1× / 4× / 16× / 64× / 256×.           *
  * -------------------------------------------------------------------------- */
 
-const SPEEDS = [4, 16, 64, 256] as const;
+const SPEEDS = [1, 4, 16, 64, 256] as const;
 
 /** Hand-off throttle for parent state updates. ~30Hz looks smooth on map. */
 const HANDOFF_INTERVAL_MS = 33;
@@ -91,7 +91,8 @@ export function EtitPlaybackPlayer({
   React.useEffect(() => { currentMsRef.current = currentMs; }, [currentMs]);
 
   React.useEffect(() => {
-    if (!playable) return;
+    if (!playable || !playingRef.current) return;
+    
     let rafId = 0;
     let lastFrame = performance.now();
 
@@ -115,7 +116,7 @@ export function EtitPlaybackPlayer({
 
     rafId = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(rafId);
-  }, [playable, track.endMs]);
+  }, [playable, track.endMs, playing]);
 
   /* -------- Derived state -------------------------------------------- */
 
@@ -125,12 +126,13 @@ export function EtitPlaybackPlayer({
   );
 
   /* -------- Throttled hand-off to parent ----------------------------- */
-  /*                                                                          *
+  /* *
    * The parent uses the state to render the playback marker. We don't need  *
    * to push every frame — pushing at ~30Hz is plenty for a smooth marker    *
    * and avoids a render cascade on the rest of the page. The parent is also *
    * given the previous lat/lng so it can compute heading without re-doing   *
-   * the work itself.                                                        *
+   * the work itself.
+   *
    * -------------------------------------------------------------------------- */
 
   const onStateChangeRef = React.useRef(onStateChange);
@@ -162,6 +164,7 @@ export function EtitPlaybackPlayer({
     () => (state ? activeStop(stops, currentMs) : null),
     [stops, currentMs, state],
   );
+
   const currentSensor = React.useMemo(
     () => (state ? recentSensor(sensors, currentMs) : null),
     [sensors, currentMs, state],
@@ -184,7 +187,6 @@ export function EtitPlaybackPlayer({
     }
     setPlaying((p) => !p);
   };
-
 
   const handleRestart = () => {
     setCurrentMs(track.startMs);
@@ -210,7 +212,7 @@ export function EtitPlaybackPlayer({
     <div className={cn('bg-transparent p-1 px-2', className)}>
       {/* Top row */}
       <div className="mb-1 flex items-center justify-between gap-2">
-        <div className="font-mono text-sm font-black tabular-nums text-white">
+        <div className="font-mono text-sm font-black tabular-nums text-foreground">
           {state ? formatCairoClock(state.timestamp) : '--:--:--'}
         </div>
         <div className="flex items-center gap-1.5 text-[10px]">
@@ -218,13 +220,13 @@ export function EtitPlaybackPlayer({
           <span
             className={cn(
               'font-black tabular-nums',
-              state?.speeding ? 'text-destructive' : 'text-white',
+              state?.speeding ? 'text-destructive' : 'text-foreground',
             )}
           >
             {state ? Math.round(state.speed) : 0} {t('etit.units.kmh')}
           </span>
           {state && state.speedLimit > 0 && (
-            <span className="text-white/40 font-bold">/ {state.speedLimit}</span>
+            <span className="text-muted-foreground font-bold">/ {state.speedLimit}</span>
           )}
         </div>
       </div>
@@ -238,15 +240,15 @@ export function EtitPlaybackPlayer({
           step={1000}
           value={currentMs}
           onChange={handleScrub}
-          className="block h-1.5 w-full cursor-pointer appearance-none rounded-full bg-white/10 accent-primary"
+          className="block h-1.5 w-full cursor-pointer appearance-none rounded-full bg-border accent-primary"
           aria-label={t('etit.player.scrubberLabel')}
         />
       </div>
 
       {/* Time labels */}
-      <div className="mb-2 flex justify-between text-[9px] font-bold tabular-nums text-white/30 uppercase tracking-tighter">
+      <div className="mb-2 flex justify-between text-[9px] font-bold tabular-nums text-muted-foreground uppercase tracking-tighter">
         <span>{formatCairoClock(track.startMs)}</span>
-        <span className="text-white/60">{formatCairo(currentMs, 'datetime')}</span>
+        <span className="text-foreground/60">{formatCairo(currentMs, 'datetime')}</span>
         <span>{formatCairoClock(track.endMs)}</span>
       </div>
 
@@ -254,7 +256,7 @@ export function EtitPlaybackPlayer({
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-1">
           <Button
-            type="button" variant="ghost" size="icon" className="h-7 w-7 text-white/40 hover:text-white hover:bg-white/10"
+            type="button" variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground hover:bg-muted"
             onClick={handleRestart}
             title={t('etit.player.restart')}
           >
@@ -269,18 +271,22 @@ export function EtitPlaybackPlayer({
         </div>
 
         <div className="flex items-center gap-1 text-[10px]">
-          <span className="text-white/40 font-bold uppercase tracking-tighter">{t('etit.player.speed')}</span>
-          <div className="flex rounded-lg border border-white/10 bg-black/40 p-0.5">
+          <span className="text-muted-foreground font-bold uppercase tracking-tighter">{t('etit.player.speed')}</span>
+          <div className="flex rounded-lg border border-border bg-muted/50 p-0.5">
             {SPEEDS.map((s) => (
               <button
                 key={s}
                 type="button"
-                onClick={() => setSpeed(speed === s ? 1 : s)}
+                onClick={() => {
+                  const currentIndex = SPEEDS.indexOf(speed as any);
+                  const nextIndex = (currentIndex + 1) % SPEEDS.length;
+                  setSpeed(SPEEDS[nextIndex]);
+                }}
                 className={cn(
                   'rounded px-1.5 py-0.5 text-[10px] font-black tabular-nums transition-colors',
                   speed === s
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-white/40 hover:bg-white/5 hover:text-white',
+                    ? 'bg-primary text-primary-foreground shadow-sm'
+                    : 'text-muted-foreground hover:bg-background hover:text-foreground',
                 )}
               >
                 {s}×
@@ -291,14 +297,14 @@ export function EtitPlaybackPlayer({
       </div>
 
       {/* Active context */}
-      <div className="mt-2 min-h-[30px] border-t border-white/10 pt-1.5">
+      <div className="mt-2 min-h-[30px] border-t border-border pt-1.5">
         {currentStop && (
           <div className="flex items-center gap-2 text-[10px]">
             <span className="inline-block h-1.5 w-1.5 rounded-full bg-purple-500 shadow-[0_0_8px_rgba(168,85,247,0.5)]" aria-hidden />
-            <span className="font-bold text-white/90">
+            <span className="font-bold text-foreground">
               {t('etit.player.stoppedFor', { duration: currentStop.duration })}
             </span>
-            <span className="truncate text-white/40">
+            <span className="truncate text-muted-foreground">
               {currentStop.address || t('etit.map.popup.unknownLocation')}
             </span>
           </div>
@@ -306,8 +312,8 @@ export function EtitPlaybackPlayer({
         {currentSensor && (
           <div className={cn('flex items-center gap-2 text-[10px]', currentStop && 'mt-1')}>
             <span className="inline-block h-1.5 w-1.5 rounded-full bg-cyan-500 shadow-[0_0_8px_rgba(6,182,212,0.5)]" aria-hidden />
-            <span className="font-bold text-white/90">{currentSensor.typeName}</span>
-            <span className="text-white/40">
+            <span className="font-bold text-foreground">{currentSensor.typeName}</span>
+            <span className="text-muted-foreground">
               {t('etit.player.atTime', {
                 time: formatCairo(currentSensor.timestamp, 'time'),
               })}
@@ -315,7 +321,7 @@ export function EtitPlaybackPlayer({
           </div>
         )}
         {!currentStop && !currentSensor && (
-          <div className="text-[10px] text-white/20 font-medium uppercase tracking-widest italic">
+          <div className="text-[10px] text-muted-foreground/50 font-medium uppercase tracking-widest italic">
             {t('etit.player.idleSlot')}
           </div>
         )}
@@ -323,4 +329,3 @@ export function EtitPlaybackPlayer({
     </div>
   );
 }
-

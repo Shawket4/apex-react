@@ -12,6 +12,7 @@ import {
   type HistoryRangeArgs,
 } from './api';
 import {
+  etitLiveListSchema,
   etitLiveStatusSchema,
   type EtitHistoryResponse,
   type EtitLiveStatus,
@@ -164,10 +165,22 @@ export function useEtitLiveStream(): UseEtitLiveStreamResult {
         return;
       }
 
+      let heartbeatTimer: number;
+
+      const resetHeartbeat = () => {
+        window.clearTimeout(heartbeatTimer);
+        heartbeatTimer = window.setTimeout(() => {
+          console.warn('SSE heartbeat lost, reconnecting...');
+          if (es) es.close();
+          scheduleRetry(new Error('Heartbeat timeout'));
+        }, 60_000);
+      };
+
       es.onopen = () => {
         attempt = 0;
         setConnected(true);
         setError(null);
+        resetHeartbeat();
       };
 
       es.onerror = () => {
@@ -175,46 +188,88 @@ export function useEtitLiveStream(): UseEtitLiveStreamResult {
         scheduleRetry(new Error('SSE connection lost'));
       };
 
-      const handleMessage = (e: MessageEvent) => {
-        applyDelta(e.data);
-      };
-
-      es.addEventListener('snapshot', handleMessage);
-      es.addEventListener('update', handleMessage);
-      es.addEventListener('message', handleMessage);
-    };
-
-    const applyDelta = (raw: string) => {
-      let parsed: any;
-      try {
-        parsed = JSON.parse(raw);
-      } catch {
-        return;
-      }
-
-      // Handle the envelope: {"count": 20, "vehicles": [...]}
-      const list = parsed.vehicles || (Array.isArray(parsed) ? parsed : [parsed]);
-
-      const updates = etitLiveStatusSchema.partial().array().safeParse(list);
-      if (!updates.success || updates.data.length === 0) return;
-
-      queryClient.setQueryData<EtitLiveStatus[]>(etitKeys.live(), (prev) => {
-        const next = prev ? [...prev] : [];
-        const indexById = new Map<string, number>();
-        next.forEach((s, i) => indexById.set(s.id, i));
-
-        for (const u of updates.data) {
-          const existing = indexById.get(u.id);
-          if (existing === undefined) {
-            indexById.set(u.id, next.length);
-            next.push(u);
-          } else {
-            next[existing] = { ...next[existing], ...u };
+      es.addEventListener('snapshot', (e: MessageEvent) => {
+        resetHeartbeat();
+        try {
+          const raw = JSON.parse(e.data);
+          const list = raw.vehicles || (Array.isArray(raw) ? raw : [raw]);
+          const parsed = etitLiveListSchema.safeParse(list);
+          if (parsed.success) {
+            queryClient.setQueryData<EtitLiveStatus[]>(etitKeys.live(), parsed.data);
           }
-        }
-        return next;
+        } catch { }
       });
+
+      es.addEventListener('update', (e: MessageEvent) => {
+        resetHeartbeat();
+        try {
+          const raw = JSON.parse(e.data);
+          const list = raw.vehicles || (Array.isArray(raw) ? raw : [raw]);
+          const updates = etitLiveStatusSchema.partial().array().safeParse(list);
+
+          if (!updates.success || updates.data.length === 0) return;
+
+          queryClient.setQueryData<EtitLiveStatus[]>(etitKeys.live(), (prev) => {
+            const next = prev ? [...prev] : [];
+            const indexById = new Map<string, number>();
+            next.forEach((s, i) => indexById.set(s.id, i));
+
+            for (const u of updates.data) {
+              if (!u.id) continue; // Prevent silent state corruption
+
+              const existing = indexById.get(u.id);
+              if (existing === undefined) {
+                indexById.set(u.id, next.length);
+                next.push(u as EtitLiveStatus); // Cast assumes required fields are populated if it's new
+              } else {
+                next[existing] = { ...next[existing], ...u };
+              }
+            }
+            return next;
+          });
+        } catch { }
+      });
+
+      // Fallback message handler in case the upstream doesn't set event types correctly
+      es.addEventListener('message', (e: MessageEvent) => {
+        resetHeartbeat();
+        // We can't safely guess if a generic message is a snapshot or delta,
+        // so we treat it as a delta to be safe.
+        try {
+          const raw = JSON.parse(e.data);
+          const list = raw.vehicles || (Array.isArray(raw) ? raw : [raw]);
+          const updates = etitLiveStatusSchema.partial().array().safeParse(list);
+
+          if (!updates.success || updates.data.length === 0) return;
+
+          queryClient.setQueryData<EtitLiveStatus[]>(etitKeys.live(), (prev) => {
+            const next = prev ? [...prev] : [];
+            const indexById = new Map<string, number>();
+            next.forEach((s, i) => indexById.set(s.id, i));
+
+            for (const u of updates.data) {
+              if (!u.id) continue;
+
+              const existing = indexById.get(u.id);
+              if (existing === undefined) {
+                indexById.set(u.id, next.length);
+                next.push(u as EtitLiveStatus);
+              } else {
+                next[existing] = { ...next[existing], ...u };
+              }
+            }
+            return next;
+          });
+        } catch { }
+      })
     };
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        queryClient.invalidateQueries({ queryKey: etitKeys.live() });
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
 
     const scheduleRetry = (err: unknown) => {
       setError(err instanceof Error ? err : new Error(String(err)));
@@ -226,9 +281,9 @@ export function useEtitLiveStream(): UseEtitLiveStreamResult {
     };
 
     open();
-
     return () => {
       cancelled = true;
+      document.removeEventListener('visibilitychange', handleVisibility);
       if (retryTimer !== null) window.clearTimeout(retryTimer);
       if (es) es.close();
       setConnected(false);

@@ -7,9 +7,8 @@ import { buildMarkerSvg, markerSize } from './marker-svg';
 import type { MapMarker, MapViewProps } from './types';
 
 /* -------------------------------------------------------------------------- */
-/* Map styles                                                                  */
+/* Map styles                                                                 */
 /* -------------------------------------------------------------------------- */
-
 const darkMapStyle: google.maps.MapTypeStyle[] = [
   { elementType: 'geometry', stylers: [{ color: '#1c2333' }] },
   { elementType: 'labels.text.stroke', stylers: [{ color: '#1c2333' }] },
@@ -36,28 +35,14 @@ const lightMapStyle: google.maps.MapTypeStyle[] = [
   { featureType: 'landscape', elementType: 'geometry', stylers: [{ color: '#f8f8f8' }] },
 ];
 
-/* -------------------------------------------------------------------------- */
-/* Info-window styles (idempotent injection)                                   */
-/* -------------------------------------------------------------------------- */
-
 function injectInfoWindowStyles() {
   const styleId = 'gmaps-info-window-styles-v1';
   if (typeof document === 'undefined' || document.getElementById(styleId)) return;
   const style = document.createElement('style');
   style.id = styleId;
   style.textContent = `
-    .gm-style-iw-c {
-      padding: 0 !important;
-      border-radius: 12px !important;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.15), 0 1px 4px rgba(0,0,0,0.08) !important;
-      border: 1px solid rgba(0,0,0,0.07) !important;
-      overflow: hidden !important;
-    }
-    .dark .gm-style-iw-c {
-      background-color: #1e2535 !important;
-      border-color: rgba(255,255,255,0.07) !important;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.5) !important;
-    }
+    .gm-style-iw-c { padding: 0 !important; border-radius: 12px !important; box-shadow: 0 4px 24px rgba(0,0,0,0.15), 0 1px 4px rgba(0,0,0,0.08) !important; border: 1px solid rgba(0,0,0,0.07) !important; overflow: hidden !important; }
+    .dark .gm-style-iw-c { background-color: #1e2535 !important; border-color: rgba(255,255,255,0.07) !important; box-shadow: 0 4px 24px rgba(0,0,0,0.5) !important; }
     .dark .gm-style-iw-tc::after { background: #1e2535 !important; }
     .gm-style-iw-d { overflow: hidden !important; padding: 0 !important; }
     .gm-ui-hover-effect { top: 6px !important; right: 6px !important; opacity: 0.5 !important; }
@@ -66,10 +51,6 @@ function injectInfoWindowStyles() {
   `;
   document.head.appendChild(style);
 }
-
-/* -------------------------------------------------------------------------- */
-/* Loader                                                                      */
-/* -------------------------------------------------------------------------- */
 
 let loaderConfigured = false;
 function configureLoader() {
@@ -83,22 +64,12 @@ export function isGoogleMapsConfigured(): boolean {
   return !!(import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string | undefined);
 }
 
-/* -------------------------------------------------------------------------- */
-/* Smooth fly-to                                                               */
-/* -------------------------------------------------------------------------- */
-
 interface FlyToken { cancelled: boolean; rafId: number | null }
-
 function easeInOutCubic(t: number): number {
   return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 }
 
-function smoothFlyTo(
-  map: google.maps.Map,
-  target: { lat: number; lng: number },
-  targetZoom: number,
-  durationMs = 800,
-): FlyToken {
+function smoothFlyTo(map: google.maps.Map, target: { lat: number; lng: number }, targetZoom: number, durationMs = 800): FlyToken {
   const token: FlyToken = { cancelled: false, rafId: null };
   const startCenter = map.getCenter();
   const startZoom = map.getZoom() ?? 11;
@@ -110,8 +81,7 @@ function smoothFlyTo(
   const startLat = startCenter.lat();
   const startLng = startCenter.lng();
   const startTime = performance.now();
-  const hasMoveCamera =
-    typeof (map as unknown as { moveCamera?: unknown }).moveCamera === 'function';
+  const hasMoveCamera = typeof (map as unknown as { moveCamera?: unknown }).moveCamera === 'function';
 
   const frame = (now: number) => {
     if (token.cancelled) return;
@@ -121,70 +91,58 @@ function smoothFlyTo(
     const lng = startLng + (target.lng - startLng) * eased;
     const zoom = startZoom + (targetZoom - startZoom) * eased;
     if (hasMoveCamera) {
-      (map as unknown as {
-        moveCamera: (opts: { center: { lat: number; lng: number }; zoom: number }) => void;
-      }).moveCamera({ center: { lat, lng }, zoom });
+      (map as unknown as { moveCamera: (opts: { center: { lat: number; lng: number }; zoom: number }) => void; }).moveCamera({ center: { lat, lng }, zoom });
     } else {
       map.setCenter({ lat, lng });
       map.setZoom(zoom);
     }
     if (t < 1) token.rafId = requestAnimationFrame(frame);
   };
-
   token.rafId = requestAnimationFrame(frame);
   return token;
 }
-
-/* -------------------------------------------------------------------------- */
-/* Helpers                                                                     */
-/* -------------------------------------------------------------------------- */
 
 function buildMarkerContent(m: MapMarker): string {
   const rotation = m.kind === 'vehicle' ? m.heading ?? 0 : 0;
   return buildMarkerSvg(m.color, `m-${m.id}`, m.kind || 'pin', rotation);
 }
 
-/* -------------------------------------------------------------------------- */
-/* Component                                                                   */
-/* -------------------------------------------------------------------------- */
-
 interface MarkerEntry {
   id: string;
   marker: google.maps.Marker;
   listeners: google.maps.MapsEventListener[];
+  iconUrl: string; // Used to prevent setIcon thrashing
 }
 
-export function GoogleMapView({
-  markers = [],
-  route = [],
-  centerFallback = [30.0444, 31.2357], // Cairo fallback
-  onMapClick,
-  onMarkerDragEnd,
-  className,
-}: MapViewProps) {
+export function GoogleMapView({ markers = [], route = [], centerFallback = [30.0444, 31.2357], onMapClick, onMarkerDragEnd, className }: MapViewProps) {
   const containerRef = React.useRef<HTMLDivElement>(null);
   const mapRef = React.useRef<google.maps.Map | null>(null);
   const infoWindowRef = React.useRef<google.maps.InfoWindow | null>(null);
 
   const markerEntriesRef = React.useRef<Map<string, MarkerEntry>>(new Map());
+  const currentMarkersDataRef = React.useRef<Map<string, MapMarker>>(new Map());
   const polylinesRef = React.useRef<google.maps.Polyline[]>([]);
   const mapListenersRef = React.useRef<google.maps.MapsEventListener[]>([]);
   const flyTokenRef = React.useRef<FlyToken | null>(null);
 
   const [isSatellite, setIsSatellite] = React.useState(false);
-
-  // Refs for callbacks to avoid re-running effects
   const onMapClickRef = React.useRef(onMapClick);
   const onMarkerDragEndRef = React.useRef(onMarkerDragEnd);
+
   React.useEffect(() => { onMapClickRef.current = onMapClick; }, [onMapClick]);
   React.useEffect(() => { onMarkerDragEndRef.current = onMarkerDragEnd; }, [onMarkerDragEnd]);
 
-  /* -------- Init once --------------------------------------------------- */
+  // Update latest marker data ref for closures
+  React.useEffect(() => {
+    const dataMap = new Map<string, MapMarker>();
+    markers.forEach(m => dataMap.set(m.id, m));
+    currentMarkersDataRef.current = dataMap;
+  }, [markers]);
 
   React.useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
-
     let cancelled = false;
+    let observer: MutationObserver | null = null;
     injectInfoWindowStyles();
     configureLoader();
 
@@ -220,7 +178,7 @@ export function GoogleMapView({
         });
         mapListenersRef.current.push(clickListener);
 
-        const observer = new MutationObserver(() => {
+        observer = new MutationObserver(() => {
           if (!mapRef.current) return;
           if (mapRef.current.getMapTypeId() !== google.maps.MapTypeId.ROADMAP) return;
           const dark = document.documentElement.classList.contains('dark');
@@ -238,6 +196,7 @@ export function GoogleMapView({
 
     return () => {
       cancelled = true;
+      if (observer) observer.disconnect(); // Fix Observer leak
       mapListenersRef.current.forEach((l) => google.maps.event.removeListener(l));
       mapListenersRef.current = [];
       if (flyTokenRef.current) {
@@ -252,8 +211,6 @@ export function GoogleMapView({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  /* -------- Sync Markers + Polylines ------------------------------------ */
 
   const syncMarkers = React.useCallback(() => {
     const map = mapRef.current;
@@ -274,6 +231,7 @@ export function GoogleMapView({
     for (const m of markers) {
       let entry = markerEntriesRef.current.get(m.id);
       const position = { lat: m.lat, lng: m.lng };
+      const newIconUrl = buildMarkerContent(m);
 
       if (!entry) {
         const marker = new google.maps.Marker({
@@ -282,22 +240,25 @@ export function GoogleMapView({
           title: m.title,
           draggable: !!m.draggable,
           icon: {
-            url: buildMarkerContent(m),
+            url: newIconUrl,
             anchor: new google.maps.Point(markerSize(m.kind || 'pin').anchorX, markerSize(m.kind || 'pin').anchorY),
           },
         });
 
         const listeners: google.maps.MapsEventListener[] = [];
-        if (m.popupHtml) {
-          listeners.push(
-            marker.addListener('click', () => {
-              if (infoWindowRef.current) {
-                infoWindowRef.current.setContent(m.popupHtml!);
+        // Stale popup fix: Read dynamically from ref
+        listeners.push(
+          marker.addListener('click', () => {
+            if (infoWindowRef.current) {
+              const latestM = currentMarkersDataRef.current.get(m.id);
+              if (latestM?.popupHtml) {
+                infoWindowRef.current.setContent(latestM.popupHtml);
                 infoWindowRef.current.open(map, marker);
               }
-            }),
-          );
-        }
+            }
+          })
+        );
+
         if (m.draggable) {
           listeners.push(
             marker.addListener('dragend', (e: google.maps.MapMouseEvent) => {
@@ -306,15 +267,20 @@ export function GoogleMapView({
           );
         }
 
-        entry = { id: m.id, marker, listeners };
+        entry = { id: m.id, marker, listeners, iconUrl: newIconUrl };
         markerEntriesRef.current.set(m.id, entry);
       } else {
-        // Update existing
+        // Update existing position
         entry.marker.setPosition(position);
-        entry.marker.setIcon({
-          url: buildMarkerContent(m),
-          anchor: new google.maps.Point(markerSize(m.kind || 'pin').anchorX, markerSize(m.kind || 'pin').anchorY),
-        });
+        
+        // Prevent Icon Thrash
+        if (entry.iconUrl !== newIconUrl) {
+          entry.marker.setIcon({
+            url: newIconUrl,
+            anchor: new google.maps.Point(markerSize(m.kind || 'pin').anchorX, markerSize(m.kind || 'pin').anchorY),
+          });
+          entry.iconUrl = newIconUrl;
+        }
       }
     }
 
@@ -323,28 +289,17 @@ export function GoogleMapView({
     polylinesRef.current = [];
     if (route.length > 1) {
       const path = route.map(([lat, lng]) => ({ lat, lng }));
-      const poly = new google.maps.Polyline({
-        path,
-        map,
-        strokeColor: '#3b82f6',
-        strokeOpacity: 0.8,
-        strokeWeight: 4,
-      });
+      const poly = new google.maps.Polyline({ path, map, strokeColor: '#3b82f6', strokeOpacity: 0.8, strokeWeight: 4 });
       polylinesRef.current.push(poly);
     }
   }, [markers, route]);
 
-  React.useEffect(() => {
-    syncMarkers();
-  }, [syncMarkers]);
-
-  /* -------- Fly-to logic ------------------------------------------------ */
+  React.useEffect(() => { syncMarkers(); }, [syncMarkers]);
 
   React.useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
 
-    // A: Sentinel Focus (Priority)
     const sentinel = markers.find((m) => m.id.startsWith('focus-sentinel-'));
     if (sentinel) {
       if (flyTokenRef.current) {
@@ -355,7 +310,6 @@ export function GoogleMapView({
       return;
     }
 
-    // B: Route Fit
     if (route.length > 1) {
       const bounds = new google.maps.LatLngBounds();
       route.forEach(([lat, lng]) => bounds.extend({ lat, lng }));
@@ -363,14 +317,10 @@ export function GoogleMapView({
     }
   }, [markers, route]);
 
-  /* -------- Render ------------------------------------------------------ */
-
   const toggleSatellite = () => {
     const next = !isSatellite;
     setIsSatellite(next);
-    mapRef.current?.setMapTypeId(
-      next ? google.maps.MapTypeId.HYBRID : google.maps.MapTypeId.ROADMAP,
-    );
+    mapRef.current?.setMapTypeId(next ? google.maps.MapTypeId.HYBRID : google.maps.MapTypeId.ROADMAP);
   };
 
   const centerOnMarkers = () => {
@@ -386,25 +336,11 @@ export function GoogleMapView({
   return (
     <div className={cn('relative h-full w-full', className)}>
       <div ref={containerRef} className="h-full w-full" />
-      
-      {/* Controls */}
       <div className="absolute bottom-32 right-3 z-10 flex flex-col gap-2">
-        <Button
-          variant="secondary"
-          size="icon"
-          className="h-9 w-9 rounded-full shadow-lg"
-          onClick={centerOnMarkers}
-          title="Center on markers"
-        >
+        <Button variant="secondary" size="icon" className="h-9 w-9 rounded-full shadow-lg" onClick={centerOnMarkers} title="Center on markers">
           <Locate className="h-4 w-4" />
         </Button>
-        <Button
-          variant={isSatellite ? 'default' : 'secondary'}
-          size="icon"
-          className="h-9 w-9 rounded-full shadow-lg"
-          onClick={toggleSatellite}
-          title="Toggle Hybrid"
-        >
+        <Button variant={isSatellite ? 'default' : 'secondary'} size="icon" className="h-9 w-9 rounded-full shadow-lg" onClick={toggleSatellite} title="Toggle Hybrid">
           <Layers className="h-4 w-4" />
         </Button>
       </div>

@@ -45,9 +45,12 @@ type StatusFilter = 'all' | 'online' | 'moving' | 'idling' | 'offline';
 
 interface VehicleRowProps {
   vehicle: EtitVehicle;
-  live: EtitLiveStatus | undefined;
-  activeId: string | null;
-  visibleIds: Set<string>;
+  isLive: boolean;
+  statusLabel: string | undefined;
+  speed: number | undefined;
+  lastSeen: Date | null | undefined;
+  isActive: boolean;
+  isVisible: boolean;
   onActivate: (id: string) => void;
   onToggleVisible: (id: string) => void;
   onFocus: (id: string) => void;
@@ -55,22 +58,21 @@ interface VehicleRowProps {
 
 const VehicleRow = React.memo(({
   vehicle,
-  live,
-  activeId,
-  visibleIds,
+  isLive,
+  statusLabel,
+  speed,
+  lastSeen,
+  isActive,
+  isVisible,
   onActivate,
   onToggleVisible,
   onFocus,
 }: VehicleRowProps) => {
   const { t } = useTranslation();
-  const status = live?.status ?? vehicle.status;
-  const isOnline = isEtitOnline(status);
-  const group = classifyStatus(status);
+  const statusToUse = isLive ? vehicle.status : vehicle.status; 
+  const isOnline = isEtitOnline(statusToUse);
+  const group = classifyStatus(statusToUse);
   const color = ETIT_STATUS_COLOR[group];
-  const speed = live?.speed ?? vehicle.speed;
-  const lastSeen = live?.timestamp ?? vehicle.lastLocationAt;
-  const isActive = activeId === vehicle.id;
-  const isVisible = visibleIds.has(vehicle.id);
   const displayName = vehicle.plate || vehicle.codename;
 
   return (
@@ -119,16 +121,16 @@ const VehicleRow = React.memo(({
             )}
           </div>
           <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
-            <span className="truncate">{live?.statusLabel ?? vehicle.statusLabel}</span>
-            {speed > 0 && (
+            <span className="truncate">{statusLabel ?? vehicle.statusLabel}</span>
+            {(speed ?? vehicle.speed) > 0 && (
               <span className="tabular-nums">
-                · {speed} {t('etit.units.kmh')}
+                · {speed ?? vehicle.speed} {t('etit.units.kmh')}
               </span>
             )}
           </div>
-          {lastSeen && (
+          {(lastSeen ?? vehicle.lastLocationAt) && (
             <div className="mt-0.5 truncate text-[10px] text-muted-foreground/80">
-              {formatCairo(lastSeen, 'datetime')}
+              {formatCairo(lastSeen ?? vehicle.lastLocationAt, 'datetime')}
             </div>
           )}
         </button>
@@ -152,6 +154,15 @@ const VehicleRow = React.memo(({
         </Button>
       </div>
     </li>
+  );
+}, (prev, next) => {
+  return (
+    prev.vehicle.id === next.vehicle.id &&
+    prev.isLive === next.isLive &&
+    prev.isActive === next.isActive &&
+    prev.isVisible === next.isVisible &&
+    prev.speed === next.speed &&
+    prev.statusLabel === next.statusLabel
   );
 });
 
@@ -237,6 +248,7 @@ function EtitVehicleListBase({
     () => filtered.filter((v) => visibleIds.has(v.id)).length,
     [filtered, visibleIds],
   );
+
   const allFilteredVisible = filtered.length > 0 && visibleCountInFilter === filtered.length;
   const someFilteredVisible = visibleCountInFilter > 0 && !allFilteredVisible;
 
@@ -349,18 +361,24 @@ function EtitVehicleListBase({
           </div>
         ) : (
           <ul className="space-y-0.5 p-2">
-            {filtered.map((v) => (
-              <VehicleRow
-                key={v.id}
-                vehicle={v}
-                live={liveById.get(v.id)}
-                activeId={activeId}
-                visibleIds={visibleIds}
-                onActivate={onActivate}
-                onToggleVisible={onToggleVisible}
-                onFocus={onFocus}
-              />
-            ))}
+            {filtered.map((v) => {
+              const live = liveById.get(v.id);
+              return (
+                <VehicleRow
+                  key={v.id}
+                  vehicle={v}
+                  isLive={!!live}
+                  statusLabel={live?.statusLabel}
+                  speed={live?.speed}
+                  lastSeen={live?.timestamp}
+                  isActive={activeId === v.id}
+                  isVisible={visibleIds.has(v.id)}
+                  onActivate={onActivate}
+                  onToggleVisible={onToggleVisible}
+                  onFocus={onFocus}
+                />
+              );
+            })}
           </ul>
         )}
       </ScrollArea>

@@ -542,6 +542,7 @@ const BUILDERS: Record<MarkerKind, Builder> = {
   'ignition-off': (c, id) => ignitionSvg(c, id, false),
   'route-start': routeStartSvg,
   'route-end': routeEndSvg,
+  invisible: () => `<svg width="0" height="0" xmlns="http://www.w3.org/2000/svg"/>`,
 };
 
 /* -------------------------------------------------------------------------- */
@@ -748,6 +749,7 @@ const SIZES: Record<MarkerKind, MarkerSize> = {
   'ignition-off': { width: 24, height: 24, anchorX: 12, anchorY: 12 },
   'route-start': { width: 28, height: 28, anchorX: 14, anchorY: 14 },
   'route-end': { width: 28, height: 28, anchorX: 14, anchorY: 14 },
+  invisible: { width: 0, height: 0, anchorX: 0, anchorY: 0 },
 };
 
 export function markerSize(kind: MarkerKind = 'pin'): MarkerSize {
@@ -1483,7 +1485,7 @@ function EtitMapBase({
       lat: live.lat,
       lng: live.lng,
       color: 'transparent',
-      kind: 'pin',
+      kind: 'invisible',
       title: '',
       // When focusing, this sentinel should be the ONLY thing affecting bounds
       // if we want a clean snap-to-vehicle. 
@@ -3695,9 +3697,9 @@ export function useEtitLive({ streamConnected, ...options }: UseEtitLiveOptions 
   return useQuery<EtitLiveStatus[]>({
     queryKey: etitKeys.live(),
     queryFn: () => etitApi.listLive(),
-    refetchInterval: streamConnected ? 5 * 60_000 : 30_000,
-    refetchOnWindowFocus: true,
-    staleTime: 30_000,
+    refetchInterval: streamConnected ? false : 30_000,
+    refetchOnWindowFocus: !streamConnected,
+    staleTime: streamConnected ? Infinity : 10_000,
     ...options,
   });
 }
@@ -3807,21 +3809,24 @@ export function useEtitLiveStream(): UseEtitLiveStreamResult {
       const handleMessage = (e: MessageEvent) => {
         applyDelta(e.data);
       };
-      es.addEventListener('live', handleMessage);
+
+      es.addEventListener('snapshot', handleMessage);
+      es.addEventListener('update', handleMessage);
       es.addEventListener('message', handleMessage);
     };
 
     const applyDelta = (raw: string) => {
-      let parsed: unknown;
+      let parsed: any;
       try {
         parsed = JSON.parse(raw);
       } catch {
         return;
       }
 
-      const updates = etitLiveStatusSchema.array().safeParse(
-        Array.isArray(parsed) ? parsed : [parsed],
-      );
+      // Handle the envelope: {"count": 20, "vehicles": [...]}
+      const list = parsed.vehicles || (Array.isArray(parsed) ? parsed : [parsed]);
+
+      const updates = etitLiveStatusSchema.partial().array().safeParse(list);
       if (!updates.success || updates.data.length === 0) return;
 
       queryClient.setQueryData<EtitLiveStatus[]>(etitKeys.live(), (prev) => {
@@ -4657,3 +4662,6 @@ export function recentSensor(
   }
   return latest;
 }
+
+
+
