@@ -135,9 +135,12 @@ const VehicleRow = React.memo(({
 
         <Button
           type="button"
-          variant={isActive ? 'default' : 'ghost'}
+          variant="ghost"
           size="icon"
-          className="h-7 w-7 shrink-0"
+          className={cn(
+            "h-8 w-8 shrink-0 rounded-full transition-all",
+            isActive ? "bg-primary text-primary-foreground shadow-md" : "hover:bg-primary/10 hover:text-primary"
+          )}
           onClick={(e) => {
             e.stopPropagation();
             onFocus(vehicle.id);
@@ -145,7 +148,7 @@ const VehicleRow = React.memo(({
           title={t('etit.list.focusOnMap')}
           aria-label={t('etit.list.focusOnMapFor', { name: displayName })}
         >
-          <Crosshair className="h-3.5 w-3.5" />
+          <Crosshair className={cn("h-4 w-4", isActive && "animate-pulse")} />
         </Button>
       </div>
     </li>
@@ -282,7 +285,7 @@ function EtitVehicleListBase({
         </div>
 
         {/* Filter chips */}
-        <div className="flex flex-wrap gap-1 p-3 pt-2">
+        <div className="flex flex-wrap gap-2 p-3 pt-2">
           <FilterChip active={filter === 'all'} onClick={() => setFilter('all')} count={counts.all}>
             {t('etit.list.filter.all')}
           </FilterChip>
@@ -290,6 +293,7 @@ function EtitVehicleListBase({
             active={filter === 'online'}
             onClick={() => setFilter('online')}
             count={counts.online}
+            icon={<div className="h-1.5 w-1.5 rounded-full bg-success animate-pulse" />}
           >
             {t('etit.list.filter.online')}
           </FilterChip>
@@ -297,6 +301,7 @@ function EtitVehicleListBase({
             active={filter === 'moving'}
             onClick={() => setFilter('moving')}
             count={counts.moving}
+            icon={<div className="h-1.5 w-1.5 rounded-full bg-blue-500" />}
           >
             {t('etit.list.filter.moving')}
           </FilterChip>
@@ -304,6 +309,7 @@ function EtitVehicleListBase({
             active={filter === 'idling'}
             onClick={() => setFilter('idling')}
             count={counts.idling}
+            icon={<div className="h-1.5 w-1.5 rounded-full bg-yellow-500" />}
           >
             {t('etit.list.filter.idling')}
           </FilterChip>
@@ -311,6 +317,7 @@ function EtitVehicleListBase({
             active={filter === 'offline'}
             onClick={() => setFilter('offline')}
             count={counts.offline}
+            icon={<div className="h-1.5 w-1.5 rounded-full bg-muted-foreground" />}
           >
             {t('etit.list.filter.offline')}
           </FilterChip>
@@ -372,25 +379,27 @@ interface FilterChipProps {
   onClick: () => void;
   count: number;
   children: React.ReactNode;
+  icon?: React.ReactNode;
 }
 
-function FilterChip({ active, onClick, count, children }: FilterChipProps) {
+function FilterChip({ active, onClick, count, children, icon }: FilterChipProps) {
   return (
     <button
       type="button"
       onClick={onClick}
       className={cn(
-        'inline-flex h-7 items-center gap-1.5 rounded-full px-2.5 text-xs font-medium transition-colors',
+        'inline-flex h-8 items-center gap-2 rounded-lg px-3 text-xs font-medium transition-all',
         active
-          ? 'bg-primary text-primary-foreground'
-          : 'bg-muted text-muted-foreground hover:bg-muted/70',
+          ? 'bg-primary text-primary-foreground shadow-sm'
+          : 'bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground',
       )}
     >
+      {icon}
       {children}
       <span
         className={cn(
-          'inline-block min-w-[1.25rem] rounded-full px-1 text-center text-[10px] font-semibold tabular-nums',
-          active ? 'bg-primary-foreground/20' : 'bg-background',
+          'inline-block min-w-[1.5rem] rounded-md px-1 py-0.5 text-center text-[10px] font-bold tabular-nums',
+          active ? 'bg-primary-foreground/20' : 'bg-background shadow-inner',
         )}
       >
         {count}

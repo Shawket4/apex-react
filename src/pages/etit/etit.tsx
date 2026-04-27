@@ -8,6 +8,7 @@ import {
   Maximize2,
   Minimize2,
   X,
+  Clock,
 } from 'lucide-react';
 import { Button } from '@/shared/ui/button';
 import { Sheet, SheetContent } from '@/shared/ui/sheet';
@@ -54,15 +55,31 @@ function loadVisibleIds(): Set<string> {
 
 type MobileTab = 'controls' | 'playback';
 
-function MobileTabButton({ active, onClick, label, disabled }: { active: boolean; onClick: () => void; label: string; disabled?: boolean }) {
+function MobileTabButton({ 
+  active, 
+  onClick, 
+  label, 
+  icon: Icon,
+  disabled 
+}: { 
+  active: boolean; 
+  onClick: () => void; 
+  label: string; 
+  icon: React.ElementType;
+  disabled?: boolean 
+}) {
   return (
     <Button
-      variant={active ? 'secondary' : 'ghost'}
-      className={cn("flex-1 text-xs", active && "bg-background shadow-sm")}
+      variant="ghost"
+      className={cn(
+        "flex-1 flex-col gap-1 h-14 rounded-none transition-all", 
+        active ? "text-primary border-t-2 border-primary bg-primary/5" : "text-muted-foreground opacity-60"
+      )}
       onClick={onClick}
       disabled={disabled}
     >
-      {label}
+      <Icon className={cn("h-5 w-5", active && "scale-110 transition-transform")} />
+      <span className="text-[10px] font-bold uppercase tracking-widest">{label}</span>
     </Button>
   );
 }
@@ -138,6 +155,15 @@ export function EtitPage() {
   const [rightCollapsed, setRightCollapsed] = React.useState(false);
   const [leftWidth, setLeftWidth] = React.useState(320);
   const [rightWidth, setRightWidth] = React.useState(380);
+
+  // Auto-collapse on small screens (iPad landscape / small laptops)
+  React.useLayoutEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (window.innerWidth < 1280) {
+      setLeftCollapsed(true);
+      setRightCollapsed(true);
+    }
+  }, []);
 
   const activeVehicle = React.useMemo(
     () => vehicles.find((v) => v.id === activeId) ?? null,
@@ -378,7 +404,10 @@ export function EtitPage() {
             {vehicleList}
             {!leftCollapsed && (
               <div
-                className="absolute -right-1 top-0 bottom-0 z-50 w-2 cursor-col-resize hover:bg-primary/20 active:bg-primary/40"
+                className={cn(
+                  "absolute -right-1 top-0 bottom-0 z-50 w-2 cursor-col-resize transition-colors group/resizer",
+                  isResizing && "bg-primary/40"
+                )}
                 onMouseDown={(e) => {
                   e.preventDefault();
                   setIsResizing(true);
@@ -396,7 +425,9 @@ export function EtitPage() {
                   document.addEventListener('mousemove', onMouseMove);
                   document.addEventListener('mouseup', onMouseUp);
                 }}
-              />
+              >
+                <div className="absolute inset-y-0 left-1/2 w-0.5 -translate-x-1/2 bg-border group-hover/resizer:bg-primary/50 transition-colors" />
+              </div>
             )}
           </div>
         )}
@@ -437,23 +468,41 @@ export function EtitPage() {
             height="100%"
           />
 
+          {/* Map Loading Overlay */}
+          {(historyQuery.isLoading || summaryQuery.isLoading) && (
+            <div className="absolute inset-0 z-[30] flex items-center justify-center bg-background/20 backdrop-blur-[2px]">
+              <div className="flex flex-col items-center gap-3 rounded-2xl bg-background/80 p-6 shadow-2xl border border-white/10">
+                <Radar className="h-8 w-8 text-primary animate-ping" />
+                <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground animate-pulse">
+                  {t('etit.loadingHistory')}
+                </span>
+              </div>
+            </div>
+          )}
+
           {/* Full-Screen Overlay (Top) */}
           {isFullScreen && (
             <div className="absolute inset-x-0 top-0 z-[1000] pointer-events-none p-4 flex flex-col items-center">
-              <div className="pointer-events-auto flex flex-col gap-2 w-full max-w-4xl bg-background/80 backdrop-blur-md rounded-xl shadow-2xl border p-3">
+              <div className="pointer-events-auto flex flex-col gap-3 w-full max-w-4xl bg-background/40 backdrop-blur-xl rounded-2xl shadow-[0_32px_64px_-12px_rgba(0,0,0,0.5)] border border-white/10 p-4 transition-all hover:bg-background/60">
                 <div className="flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-3">
-                    <Radar className="h-5 w-5 text-primary" />
+                  <div className="flex items-center gap-4">
+                    <div className="relative">
+                      <div className="absolute -inset-1 rounded-full bg-primary/20 blur animate-pulse" />
+                      <Radar className="relative h-6 w-6 text-primary" />
+                    </div>
                     <div className="flex flex-col">
-                      <span className="text-sm font-bold">{activeVehicle?.plate || t('nav.etit')}</span>
-                      <span className="text-[10px] text-muted-foreground">{liveLabel}</span>
+                      <span className="text-sm font-bold tracking-tight">{activeVehicle?.plate || t('nav.etit')}</span>
+                      <div className="flex items-center gap-1.5">
+                        <div className={cn("h-1.5 w-1.5 rounded-full", liveTone === 'success' ? 'bg-success animate-pulse' : 'bg-muted')} />
+                        <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{liveLabel}</span>
+                      </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-3">
                     <Button
                       size="icon"
                       variant="secondary"
-                      className="h-8 w-8 rounded-full"
+                      className="h-9 w-9 rounded-xl bg-white/5 border-white/10 hover:bg-white/10 transition-colors"
                       onClick={toggleFullScreen}
                     >
                       <Minimize2 className="h-4 w-4" />
@@ -462,7 +511,7 @@ export function EtitPage() {
                       <Button
                         size="icon"
                         variant="destructive"
-                        className="h-8 w-8 rounded-full"
+                        className="h-9 w-9 rounded-xl shadow-lg shadow-destructive/20 transition-all hover:scale-105 active:scale-95"
                         onClick={clearHistory}
                       >
                         <X className="h-4 w-4" />
@@ -471,7 +520,7 @@ export function EtitPage() {
                   </div>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
                   <div className="flex flex-col">{historyControlsNode}</div>
                   <div className="flex flex-col justify-end">{playbackPlayerNode}</div>
                 </div>
@@ -524,21 +573,23 @@ export function EtitPage() {
 
           {/* Mobile bottom: tab toggle */}
           {!isDesktop && !isFullScreen && (
-            <div className="shrink-0 border-t bg-background">
-              <div className="flex items-center justify-center gap-0.5 border-b bg-muted/30 p-1">
+            <div className="shrink-0 border-t bg-background/80 backdrop-blur-md shadow-[0_-4px_12px_rgba(0,0,0,0.05)]">
+              <div className="flex items-center justify-around">
                 <MobileTabButton
                   active={mobileTab === 'controls'}
                   onClick={() => setMobileTab('controls')}
                   label={t('etit.mobile.controls')}
+                  icon={Activity}
                 />
                 <MobileTabButton
                   active={mobileTab === 'playback'}
                   onClick={() => setMobileTab('playback')}
                   label={t('etit.mobile.playback')}
+                  icon={Clock}
                   disabled={!historyQuery.data}
                 />
               </div>
-              <div className="max-h-[42vh] overflow-y-auto p-2">
+              <div className="max-h-[45vh] overflow-y-auto p-4 bg-muted/5">
                 {mobileTab === 'controls' ? historyControlsNode : (playbackPlayerNode)}
               </div>
             </div>

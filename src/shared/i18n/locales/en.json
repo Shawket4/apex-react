@@ -1084,8 +1084,27 @@
       "period": "Period"
     },
     "mobile": {
-      "controls": "Controls",
+      "controls": "History",
       "playback": "Playback"
-    }
+    },
+    "loadingHistory": "Loading history data..."
+  },
+  "common": {
+    "close": "Close",
+    "exit": "Exit",
+    "loading": "Loading...",
+    "refreshing": "Refreshing...",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "search": "Search",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "thisWeek": "This week",
+    "lastWeek": "Last week",
+    "thisMonth": "This month",
+    "lastMonth": "Last month",
+    "custom": "Custom range"
   }
 }

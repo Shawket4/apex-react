@@ -184,30 +184,28 @@ function EtitHistoryControlsBase({
 
       {/* Driver / counts */}
       {summary && (
-        <div className="mt-3 flex flex-wrap items-center gap-3 border-t pt-2 text-[11px] text-muted-foreground">
-          <span className="inline-flex items-center gap-1">
-            <User className="h-3 w-3" />
-            {summary.driverName || t('etit.controls.unassignedDriver')}
-          </span>
+        <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 border-t pt-3 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+          <div className="flex items-center gap-1.5 px-2 py-1 bg-muted/30 rounded-md">
+            <User className="h-3 w-3 text-primary/70" />
+            <span className="text-foreground">{summary.driverName || t('etit.controls.unassignedDriver')}</span>
+          </div>
           {summary.ignitionOnCount && (
-            <span>
-              {t('etit.controls.ignitionOn')}: {summary.ignitionOnCount}
-            </span>
+            <div className="flex items-center gap-1.5">
+              <Zap className="h-3 w-3 text-success/70" />
+              <span>{t('etit.controls.ignitionOn')}: <span className="text-foreground font-bold">{summary.ignitionOnCount}</span></span>
+            </div>
           )}
           {summary.ignitionOffCount && (
-            <span>
-              {t('etit.controls.ignitionOff')}: {summary.ignitionOffCount}
-            </span>
+            <div className="flex items-center gap-1.5">
+              <Zap className="h-3 w-3 text-destructive/70" />
+              <span>{t('etit.controls.ignitionOff')}: <span className="text-foreground font-bold">{summary.ignitionOffCount}</span></span>
+            </div>
           )}
           {summary.totalIdleTime && summary.totalIdleTime !== '00:00:00' && (
-            <span>
-              {t('etit.controls.idle')}: {summary.totalIdleTime}
-            </span>
-          )}
-          {summary.totalDisconnectedTime && summary.totalDisconnectedTime !== '00:00:00' && (
-            <span>
-              {t('etit.controls.disconnected')}: {summary.totalDisconnectedTime}
-            </span>
+            <div className="flex items-center gap-1.5">
+              <Clock className="h-3 w-3 text-yellow-500/70" />
+              <span>{t('etit.controls.idle')}: <span className="text-foreground font-bold">{summary.totalIdleTime}</span></span>
+            </div>
           )}
         </div>
       )}
@@ -256,21 +254,23 @@ function OverlayToggle({
 
 function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
-    <div className="flex flex-col rounded-md border bg-muted/20 p-2">
-      <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-        {icon}
+    <div className="group flex flex-col rounded-xl border bg-gradient-to-br from-card to-muted/20 p-3 transition-all hover:shadow-md hover:border-primary/20">
+      <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground uppercase tracking-tight">
+        <div className="rounded-md bg-primary/10 p-1 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+          {icon}
+        </div>
         <span className="truncate">{label}</span>
       </div>
-      <div className="mt-0.5 truncate text-sm font-bold tracking-tight">{value}</div>
+      <div className="mt-2 truncate text-base font-black tracking-tight text-foreground">{value}</div>
     </div>
   );
 }
 
 function PlaceholderStat({ label }: { label: string }) {
   return (
-    <div className="flex flex-col rounded-md border border-dashed bg-muted/5 p-2 opacity-50">
-      <span className="truncate text-[10px] text-muted-foreground">{label}</span>
-      <span className="mt-0.5 text-sm font-bold tracking-tight">—</span>
+    <div className="flex flex-col rounded-xl border border-dashed bg-muted/5 p-3 opacity-40">
+      <span className="truncate text-[10px] font-bold text-muted-foreground uppercase tracking-tight">{label}</span>
+      <span className="mt-2 text-base font-black tracking-tight text-muted-foreground/50">—</span>
     </div>
   );
 }
