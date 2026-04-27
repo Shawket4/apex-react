@@ -1,16 +1,22 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Calendar, Clock, Fuel, Gauge, Loader2, MapPin, RefreshCw, User } from 'lucide-react';
+import {
+  Clock,
+  Eye,
+  EyeOff,
+  Fuel,
+  Gauge,
+  Loader2,
+  MapPin,
+  Pause,
+  RefreshCw,
+  User,
+  Zap,
+} from 'lucide-react';
 import { Button } from '@/shared/ui/button';
-import { DateRangePicker } from '@/shared/ui/date-range-picker';
 import { Skeleton } from '@/shared/ui/skeleton';
 import { cn } from '@/shared/lib/cn';
-import {
-  cairoEndOfDay,
-  cairoFromParts,
-  cairoStartOfDay,
-  formatCairo,
-} from '@/entities/etit-vehicle/cairo';
+import { EtitDateTimeRange } from '@/widgets/etit-datetime-range/etit-datetime-range';
 import type {
   EtitHistoryResponse,
   EtitTripSummary,
@@ -23,81 +29,21 @@ import type {
 
 export interface EtitHistoryControlsProps {
   vehicle: EtitVehicle | null;
-  /** Loaded history response — used for the inline stats strip. */
   history: EtitHistoryResponse | null;
-  /** Trip summary (driver name, totals etc.). */
   summary: EtitTripSummary | null;
 
-  /** Range currently chosen in the picker (UTC `Date`s pinned to Cairo days). */
   range: { from: Date; to: Date };
   onRangeChange: (range: { from: Date; to: Date }) => void;
 
-  /** Fired when the user clicks "Load" to actually fetch the history. */
   onLoad: () => void;
-
   loading?: boolean;
+
+  showStops: boolean;
+  onShowStopsChange: (next: boolean) => void;
+  showIgnitions: boolean;
+  onShowIgnitionsChange: (next: boolean) => void;
+
   className?: string;
-}
-
-/* -------------------------------------------------------------------------- */
-/* Date-range picker bridge                                                    */
-/*                                                                             */
-/* The shared DateRangePicker speaks ISO strings of the *browser's* local    */
-/* day boundaries. We translate to/from Cairo: when the user picks "today"  */
-/* we want the Cairo day, not the browser-local day. Sender + receiver are  */
-/* both pure functions over `cairoStartOfDay` / `cairoEndOfDay`.            */
-/* -------------------------------------------------------------------------- */
-
-function rangeToPickerStrings(range: { from: Date; to: Date }): {
-  from: string;
-  to: string;
-} {
-  return { from: range.from.toISOString(), to: range.to.toISOString() };
-}
-
-/**
- * The picker emits an ISO string whose local-time is the boundary of the
- * picked day. We re-anchor to Cairo: parse the calendar day from the
- * incoming ISO and reconstruct the matching Cairo midnight / 23:59:59.
- */
-function pickerStringsToRange(
-  from: string | null,
-  to: string | null,
-  fallback: { from: Date; to: Date },
-): { from: Date; to: Date } {
-  if (!from || !to) return fallback;
-  const f = new Date(from);
-  const t = new Date(to);
-  if (!Number.isFinite(f.getTime()) || !Number.isFinite(t.getTime())) return fallback;
-
-  // Pull the calendar parts the picker meant (browser-local day) and
-  // realign to Cairo. We use UTC parts because the picker generates
-  // boundary-of-local-day ISO; the calendar day matches in UTC up to
-  // a 12h shift, which is fine for "yesterday/today/last 7 days".
-  const cairoStart = cairoFromParts(
-    f.getFullYear(),
-    f.getMonth() + 1,
-    f.getDate(),
-    0,
-    0,
-    0,
-  );
-  const cairoEnd = cairoFromParts(
-    t.getFullYear(),
-    t.getMonth() + 1,
-    t.getDate(),
-    23,
-    59,
-    59,
-    999,
-  );
-  return { from: cairoStart, to: cairoEnd };
-}
-
-/** Default range = today in Cairo. */
-export function defaultCairoTodayRange(): { from: Date; to: Date } {
-  const now = new Date();
-  return { from: cairoStartOfDay(now), to: cairoEndOfDay(now) };
 }
 
 /* -------------------------------------------------------------------------- */
@@ -112,21 +58,17 @@ export function EtitHistoryControls({
   onRangeChange,
   onLoad,
   loading,
+  showStops,
+  onShowStopsChange,
+  showIgnitions,
+  onShowIgnitionsChange,
   className,
 }: EtitHistoryControlsProps) {
   const { t } = useTranslation();
-  const pickerStrings = React.useMemo(() => rangeToPickerStrings(range), [range]);
-
-  const handlePickerChange = (from: string | null, to: string | null) => {
-    const next = pickerStringsToRange(from, to, range);
-    onRangeChange(next);
-  };
-
-  const fromLabel = formatCairo(range.from, 'datetime');
-  const toLabel = formatCairo(range.to, 'datetime');
 
   return (
     <div className={cn('rounded-lg border bg-card p-3', className)}>
+      {/* Header — vehicle + load button */}
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <div className="min-w-0">
           <h2 className="truncate text-sm font-semibold">
@@ -151,28 +93,36 @@ export function EtitHistoryControls({
         </Button>
       </div>
 
-      {/* Date range — picker emits local-day boundaries which we re-anchor to Cairo */}
-      <div className="mb-2">
-        <DateRangePicker
-          from={pickerStrings.from}
-          to={pickerStrings.to}
-          onChange={handlePickerChange}
+      {/* Datetime range */}
+      <EtitDateTimeRange value={range} onChange={onRangeChange} className="mb-3" />
+
+      {/* Overlay toggles */}
+      <div className="mb-3 flex flex-wrap items-center gap-1.5 border-t pt-3">
+        <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+          {t('etit.controls.overlays')}
+        </span>
+        <OverlayToggle
+          active={showStops}
+          onClick={() => onShowStopsChange(!showStops)}
+          icon={<Pause className="h-3 w-3" />}
+          label={t('etit.controls.toggleStops')}
+          color="purple"
+        />
+        <OverlayToggle
+          active={showIgnitions}
+          onClick={() => onShowIgnitionsChange(!showIgnitions)}
+          icon={<Zap className="h-3 w-3" />}
+          label={t('etit.controls.toggleIgnitions')}
+          color="cyan"
         />
       </div>
-      <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
-        <Calendar className="h-3 w-3" />
-        <span>
-          <span className="font-medium text-foreground">{fromLabel}</span>
-          <span className="mx-1.5">→</span>
-          <span className="font-medium text-foreground">{toLabel}</span>
-        </span>
-        <span className="rounded bg-muted px-1.5 py-0.5 text-[10px]">{t('etit.controls.cairoTime')}</span>
-      </div>
 
-      {/* Stats strip */}
-      <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+      {/* Stats — slot height is fixed across loading / data / placeholder */}
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         {loading ? (
-          Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-14 rounded-md" />)
+          Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-[58px] rounded-md" />
+          ))
         ) : history && summary ? (
           <>
             <Stat
@@ -240,8 +190,48 @@ export function EtitHistoryControls({
 }
 
 /* -------------------------------------------------------------------------- */
-/* Stat boxes                                                                  */
+/* Bits                                                                        */
 /* -------------------------------------------------------------------------- */
+
+function OverlayToggle({
+  active,
+  onClick,
+  icon,
+  label,
+  color,
+}: {
+  active: boolean;
+  onClick: () => void;
+  icon: React.ReactNode;
+  label: string;
+  color: 'purple' | 'cyan';
+}) {
+  const colorRing =
+    color === 'purple'
+      ? 'data-[active=true]:border-purple-500/50 data-[active=true]:bg-purple-500/10 data-[active=true]:text-purple-700 dark:data-[active=true]:text-purple-300'
+      : 'data-[active=true]:border-cyan-500/50 data-[active=true]:bg-cyan-500/10 data-[active=true]:text-cyan-700 dark:data-[active=true]:text-cyan-300';
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      data-active={active ? 'true' : 'false'}
+      className={cn(
+        'inline-flex h-7 items-center gap-1 rounded-full border bg-background px-2.5 text-[11px] font-medium transition-colors',
+        'hover:bg-accent',
+        colorRing,
+      )}
+    >
+      {icon}
+      <span>{label}</span>
+      {active ? (
+        <Eye className="h-3 w-3 opacity-70" />
+      ) : (
+        <EyeOff className="h-3 w-3 opacity-30" />
+      )}
+    </button>
+  );
+}
 
 function Stat({
   icon,

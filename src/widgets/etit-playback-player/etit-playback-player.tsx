@@ -27,13 +27,15 @@ import type {
 
 /* -------------------------------------------------------------------------- */
 /* Speeds                                                                      */
-/*                                                                             */
-/* "Real time" would be unwatchable for a typical 8-hour driving day, so the */
-/* lowest speed is 1× (real time) up through 256× (a full day in ~2 minutes). */
-/* -------------------------------------------------------------------------- */
+/*                                                                             *
+ * Five buttons cover the useful range. 1× / 4× / 16× / 64× / 256×.           *
+ * -------------------------------------------------------------------------- */
 
-const SPEEDS = [1, 2, 4, 8, 16, 32, 64, 128, 256] as const;
+const SPEEDS = [1, 4, 16, 64, 256] as const;
 type Speed = (typeof SPEEDS)[number];
+
+/** Hand-off throttle for parent state updates. ~30Hz looks smooth on map. */
+const HANDOFF_INTERVAL_MS = 33;
 
 /* -------------------------------------------------------------------------- */
 /* Props                                                                       */
@@ -44,11 +46,14 @@ export interface EtitPlaybackPlayerProps {
   stops: EtitStop[];
   sensors: EtitSensorEvent[];
   /**
-   * Called every frame with the current interpolated state, or `null` when
-   * the track has no playable points. The map widget reads this and moves
-   * its playback marker accordingly.
+   * Pushed to the parent on each significant state change. Throttled to
+   * ~30Hz to keep map updates cheap. The marker still animates smoothly
+   * because the providers tween between positions.
    */
-  onStateChange: (state: PlaybackState | null) => void;
+  onStateChange: (
+    state: PlaybackState | null,
+    prev: { lat: number; lng: number } | null,
+  ) => void;
   className?: string;
 }
 
@@ -65,50 +70,28 @@ export function EtitPlaybackPlayer({
 }: EtitPlaybackPlayerProps) {
   const { t } = useTranslation();
 
-  /* -------- Track ----------------------------------------------------- */
-
   const track = React.useMemo<PlaybackTrack>(() => buildPlaybackTrack(points), [points]);
   const playable = track.points.length >= 2;
 
-  /* -------- Playback state -------------------------------------------- */
-
   const [currentMs, setCurrentMs] = React.useState<number>(track.startMs);
   const [playing, setPlaying] = React.useState(false);
-  const [speed, setSpeed] = React.useState<Speed>(8);
+  const [speed, setSpeed] = React.useState<Speed>(16);
 
-  // Reset whenever the track changes (vehicle / range swap).
-  // We deliberately don't preserve the old position — its index is
-  // meaningless against a different track.
+  // Reset on track swap.
   React.useEffect(() => {
     setCurrentMs(track.startMs);
     setPlaying(false);
   }, [track]);
 
-  /* -------- rAF loop --------------------------------------------------- */
-  /*
-   * We advance `currentMs` by `(deltaWall * speed)` each frame. Wall-clock
-   * delta from `performance.now()` ensures playback speed is independent
-   * of frame rate — a 60Hz monitor and a 120Hz monitor produce identical
-   * playback speed.
-   *
-   * Refs (`playingRef`, `speedRef`) are used inside the rAF loop so the
-   * loop body doesn't capture stale values and we don't have to tear down
-   * + restart the loop on every speed change.
-   */
+  /* -------- rAF loop -------------------------------------------------- */
 
   const playingRef = React.useRef(playing);
   const speedRef = React.useRef<number>(speed);
   const currentMsRef = React.useRef(currentMs);
 
-  React.useEffect(() => {
-    playingRef.current = playing;
-  }, [playing]);
-  React.useEffect(() => {
-    speedRef.current = speed;
-  }, [speed]);
-  React.useEffect(() => {
-    currentMsRef.current = currentMs;
-  }, [currentMs]);
+  React.useEffect(() => { playingRef.current = playing; }, [playing]);
+  React.useEffect(() => { speedRef.current = speed; }, [speed]);
+  React.useEffect(() => { currentMsRef.current = currentMs; }, [currentMs]);
 
   React.useEffect(() => {
     if (!playable) return;
@@ -122,8 +105,6 @@ export function EtitPlaybackPlayer({
       if (playingRef.current) {
         const next = currentMsRef.current + dt * speedRef.current;
         if (next >= track.endMs) {
-          // Reached the end — pause; setPlaying triggers a re-render
-          // and the next frame won't advance any further.
           currentMsRef.current = track.endMs;
           setCurrentMs(track.endMs);
           setPlaying(false);
@@ -139,25 +120,46 @@ export function EtitPlaybackPlayer({
     return () => cancelAnimationFrame(rafId);
   }, [playable, track.endMs]);
 
-  /* -------- Derived state to push out --------------------------------- */
+  /* -------- Derived state -------------------------------------------- */
 
   const state = React.useMemo<PlaybackState | null>(
     () => (playable ? stateAtTime(track, currentMs) : null),
     [playable, track, currentMs],
   );
 
-  // Notify the parent on every state change. `onStateChange` is called
-  // in an effect (not during render) so the parent's setState can't
-  // cause a render cascade.
+  /* -------- Throttled hand-off to parent ----------------------------- */
+  /*                                                                          *
+   * The parent uses the state to render the playback marker. We don't need  *
+   * to push every frame — pushing at ~30Hz is plenty for a smooth marker    *
+   * and avoids a render cascade on the rest of the page. The parent is also *
+   * given the previous lat/lng so it can compute heading without re-doing   *
+   * the work itself.                                                        *
+   * -------------------------------------------------------------------------- */
+
   const onStateChangeRef = React.useRef(onStateChange);
+  React.useEffect(() => { onStateChangeRef.current = onStateChange; }, [onStateChange]);
+
+  const prevPositionRef = React.useRef<{ lat: number; lng: number } | null>(null);
+  const lastHandoffRef = React.useRef(0);
+
   React.useEffect(() => {
-    onStateChangeRef.current = onStateChange;
-  }, [onStateChange]);
-  React.useEffect(() => {
-    onStateChangeRef.current(state);
+    const now = performance.now();
+    const elapsed = now - lastHandoffRef.current;
+    if (state === null) {
+      onStateChangeRef.current(null, prevPositionRef.current);
+      prevPositionRef.current = null;
+      lastHandoffRef.current = now;
+      return;
+    }
+    // Always push when paused / first frame; otherwise gate on the interval.
+    if (!playingRef.current || elapsed >= HANDOFF_INTERVAL_MS) {
+      onStateChangeRef.current(state, prevPositionRef.current);
+      prevPositionRef.current = { lat: state.lat, lng: state.lng };
+      lastHandoffRef.current = now;
+    }
   }, [state]);
 
-  /* -------- Active context -------------------------------------------- */
+  /* -------- Active context ------------------------------------------- */
 
   const currentStop = React.useMemo(
     () => (state ? activeStop(stops, currentMs) : null),
@@ -168,7 +170,7 @@ export function EtitPlaybackPlayer({
     [sensors, currentMs, state],
   );
 
-  /* -------- Handlers --------------------------------------------------- */
+  /* -------- Handlers ------------------------------------------------- */
 
   const handleScrub = (e: React.ChangeEvent<HTMLInputElement>) => {
     const ts = Number(e.target.value);
@@ -179,7 +181,6 @@ export function EtitPlaybackPlayer({
 
   const handleTogglePlay = () => {
     if (!playable) return;
-    // If we're at the end, start over from the beginning.
     if (currentMs >= track.endMs && !playing) {
       setCurrentMs(track.startMs);
       currentMsRef.current = track.startMs;
@@ -198,7 +199,7 @@ export function EtitPlaybackPlayer({
     currentMsRef.current = track.startMs;
   };
 
-  /* -------- Render ----------------------------------------------------- */
+  /* -------- Render --------------------------------------------------- */
 
   if (!playable) {
     return (
@@ -215,7 +216,7 @@ export function EtitPlaybackPlayer({
 
   return (
     <div className={cn('rounded-lg border bg-card p-3', className)}>
-      {/* Top row — clock + speed indicator + speeding flag */}
+      {/* Top row */}
       <div className="mb-2 flex items-center justify-between gap-2">
         <div className="font-mono text-lg tabular-nums">
           {state ? formatCairoClock(state.timestamp) : '--:--:--'}
@@ -242,7 +243,7 @@ export function EtitPlaybackPlayer({
         </div>
       </div>
 
-      {/* Scrubber + event ticks */}
+      {/* Scrubber */}
       <div className="relative mb-2">
         <input
           type="range"
@@ -273,10 +274,7 @@ export function EtitPlaybackPlayer({
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-1">
           <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
+            type="button" variant="ghost" size="icon" className="h-8 w-8"
             onClick={handleRestart}
             title={t('etit.player.restart')}
             aria-label={t('etit.player.restart')}
@@ -284,19 +282,14 @@ export function EtitPlaybackPlayer({
             <RotateCcw className="h-3.5 w-3.5" />
           </Button>
           <Button
-            type="button"
-            size="icon"
-            className="h-9 w-9 rounded-full"
+            type="button" size="icon" className="h-9 w-9 rounded-full"
             onClick={handleTogglePlay}
             aria-label={playing ? t('etit.player.pause') : t('etit.player.play')}
           >
             {playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
           </Button>
           <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
+            type="button" variant="ghost" size="icon" className="h-8 w-8"
             onClick={handleStop}
             title={t('etit.player.stop')}
             aria-label={t('etit.player.stop')}
@@ -305,7 +298,6 @@ export function EtitPlaybackPlayer({
           </Button>
         </div>
 
-        {/* Speed selector */}
         <div className="flex items-center gap-1 text-xs">
           <span className="text-muted-foreground">{t('etit.player.speed')}</span>
           <div className="flex rounded-md border bg-background p-0.5">
@@ -315,7 +307,7 @@ export function EtitPlaybackPlayer({
                 type="button"
                 onClick={() => setSpeed(s)}
                 className={cn(
-                  'rounded px-1.5 py-0.5 text-[10px] font-semibold tabular-nums transition-colors',
+                  'rounded px-2 py-0.5 text-[11px] font-semibold tabular-nums transition-colors',
                   speed === s
                     ? 'bg-primary text-primary-foreground'
                     : 'text-muted-foreground hover:bg-muted',
@@ -328,43 +320,46 @@ export function EtitPlaybackPlayer({
         </div>
       </div>
 
-      {/* Active context — shown only when relevant */}
-      {(currentStop || currentSensor) && (
-        <div className="mt-3 space-y-1.5 border-t pt-2">
-          {currentStop && (
-            <div className="flex items-center gap-2 text-xs">
-              <span className="inline-block h-2 w-2 rounded-full bg-purple-600" aria-hidden />
-              <span className="font-medium">
-                {t('etit.player.stoppedFor', { duration: currentStop.duration })}
-              </span>
-              <span className="truncate text-muted-foreground">
-                {currentStop.address || t('etit.map.popup.unknownLocation')}
-              </span>
-            </div>
-          )}
-          {currentSensor && (
-            <div className="flex items-center gap-2 text-xs">
-              <span className="inline-block h-2 w-2 rounded-full bg-cyan-600" aria-hidden />
-              <span className="font-medium">{currentSensor.typeName}</span>
-              <span className="text-muted-foreground">
-                {t('etit.player.atTime', {
-                  time: formatCairo(currentSensor.timestamp, 'time'),
-                })}
-              </span>
-            </div>
-          )}
-        </div>
-      )}
+      {/*
+        Active context — fixed-height slot, content fades in.
+        Reserving the slot prevents layout jumps as stops/sensors come into
+        view during scrubbing.
+      */}
+      <div className="mt-3 min-h-[36px] border-t pt-2">
+        {currentStop && (
+          <div className="flex items-center gap-2 text-xs">
+            <span className="inline-block h-2 w-2 rounded-full bg-purple-600" aria-hidden />
+            <span className="font-medium">
+              {t('etit.player.stoppedFor', { duration: currentStop.duration })}
+            </span>
+            <span className="truncate text-muted-foreground">
+              {currentStop.address || t('etit.map.popup.unknownLocation')}
+            </span>
+          </div>
+        )}
+        {currentSensor && (
+          <div className={cn('flex items-center gap-2 text-xs', currentStop && 'mt-1.5')}>
+            <span className="inline-block h-2 w-2 rounded-full bg-cyan-600" aria-hidden />
+            <span className="font-medium">{currentSensor.typeName}</span>
+            <span className="text-muted-foreground">
+              {t('etit.player.atTime', {
+                time: formatCairo(currentSensor.timestamp, 'time'),
+              })}
+            </span>
+          </div>
+        )}
+        {!currentStop && !currentSensor && (
+          <div className="text-[11px] text-muted-foreground/60">
+            {t('etit.player.idleSlot')}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
 
 /* -------------------------------------------------------------------------- */
-/* Ticks — overlay marks on the scrubber for stops and sensor events           */
-/*                                                                             */
-/* The native `<input type="range">` doesn't let us paint per-position         */
-/* indicators, so we layer an absolutely-positioned div above it. Pointer-     */
-/* events are disabled so clicks still hit the underlying range input.         */
+/* Ticks                                                                       */
 /* -------------------------------------------------------------------------- */
 
 interface TicksProps {

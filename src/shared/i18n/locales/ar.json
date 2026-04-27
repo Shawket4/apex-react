@@ -983,13 +983,14 @@
       "title": "التتبع المباشر — ETIT",
       "subtitle": "{{vehicleCount}} مركبات · {{onMapCount}} على الخريطة",
       "live": "مباشر",
-      "liveOffline": "غير متصل",
-      "openVehicleList": "فتح قائمة المركبات"
+      "liveOffline": "البث متوقف",
+      "openVehicleList": "فتح قائمة المركبات",
+      "liveStream": "مباشر (بث)"
     },
     "list": {
       "searchPlaceholder": "ابحث برقم اللوحة أو الاسم الكودي",
-      "focusOnMap": "التركيز على الخريطة",
-      "focusOnMapFor": "تركيز {{name}} على الخريطة",
+      "focusOnMap": "تركيز على الخريطة",
+      "focusOnMapFor": "تركيز الخريطة على {{name}}",
       "filter": {
         "all": "الكل",
         "online": "متصل",
@@ -1001,7 +1002,13 @@
         "title": "لا توجد مركبات مطابقة",
         "description": "لا توجد مركبات ضمن هذا التصفية.",
         "descriptionSearch": "جرّب مصطلحًا آخر للبحث."
-      }
+      },
+      "heading": "المركبات ({{count}})",
+      "toggleAllVisible": "تبديل عرض كل المركبات المعروضة",
+      "shownOnMap": "على الخريطة: {{shown}}/{{total}}",
+      "hideAll": "إخفاء الكل",
+      "showOnMap": "عرض {{name}} على الخريطة",
+      "hideFromMap": "إخفاء {{name}} من الخريطة"
     },
     "controls": {
       "noVehicle": "اختر مركبة",
@@ -1018,7 +1025,10 @@
         "activeTime": "زمن الحركة",
         "stops": "التوقفات",
         "fuel": "الوقود"
-      }
+      },
+      "overlays": "الطبقات",
+      "toggleStops": "التوقفات",
+      "toggleIgnitions": "تشغيل المحرك"
     },
     "player": {
       "empty": "حمّل نطاقًا زمنيًا يحتوي على نقطتين موقّتتين على الأقل لتفعيل التشغيل.",
@@ -1030,7 +1040,8 @@
       "over": "متجاوز",
       "scrubberLabel": "موضع التشغيل",
       "stoppedFor": "متوقف · {{duration}}",
-      "atTime": "عند {{time}}"
+      "atTime": "عند {{time}}",
+      "idleSlot": "لا يوجد توقف أو حدث حالي"
     },
     "map": {
       "popup": {
@@ -1042,7 +1053,12 @@
         "limit": "الحد",
         "stopHeading": "توقف",
         "unknownLocation": "موقع غير معروف",
-        "playback": "تشغيل المسار"
+        "playback": "التشغيل"
+      },
+      "empty": {
+        "title": "اختر مركبة لعرضها",
+        "descDesktop": "حدّد المربع بجانب مركبة في القائمة، أو اضغط على الهدف لتركيز الكاميرا.",
+        "descMobile": "افتح قائمة المركبات وحدّد ما تريد عرضه على الخريطة."
       }
     },
     "units": {
@@ -1051,6 +1067,20 @@
     },
     "errors": {
       "proxyUnreachable": "تعذّر الوصول إلى خدمة ETIT."
+    },
+    "range": {
+      "custom": "مخصص",
+      "preset": {
+        "lastHour": "آخر ساعة",
+        "last3h": "آخر 3 ساعات",
+        "today": "اليوم",
+        "yesterday": "أمس",
+        "last7d": "آخر 7 أيام"
+      }
+    },
+    "mobile": {
+      "controls": "التحكم",
+      "playback": "التشغيل"
     }
   }
 }

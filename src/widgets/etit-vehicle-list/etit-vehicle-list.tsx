@@ -1,12 +1,13 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Crosshair, Truck, Wifi, WifiOff } from 'lucide-react';
+import { Crosshair, Eye, EyeOff, Truck, Wifi, WifiOff } from 'lucide-react';
 import { cn } from '@/shared/lib/cn';
 import { Button } from '@/shared/ui/button';
 import { ScrollArea } from '@/shared/ui/scroll-area';
 import { SearchInput } from '@/shared/ui/search-input';
 import { EmptyState } from '@/shared/ui/empty-state';
 import { Skeleton } from '@/shared/ui/skeleton';
+import { Checkbox } from '@/shared/ui/checkbox';
 import { useDebounce } from '@/shared/hooks/use-debounce';
 import { matches } from '@/shared/lib/normalize';
 import { formatCairo } from '@/entities/etit-vehicle/cairo';
@@ -24,9 +25,19 @@ import {
 export interface EtitVehicleListProps {
   vehicles: EtitVehicle[];
   liveStatuses: EtitLiveStatus[];
-  selectedId: string | null;
+  /** Vehicle currently driving the right-hand pane (history + player). */
+  activeId: string | null;
+  /** Set of vehicles whose markers should be shown on the map. */
+  visibleIds: Set<string>;
   loading?: boolean;
-  onSelect: (id: string) => void;
+  /** Click on a row → make this the active vehicle. Does not toggle visibility. */
+  onActivate: (id: string) => void;
+  /** Toggle the visibility checkbox for a single vehicle. */
+  onToggleVisible: (id: string) => void;
+  /** Bulk visibility helpers. */
+  onSetAllVisible: (ids: string[]) => void;
+  onClearVisible: () => void;
+  /** Crosshair → fly camera to this vehicle (also marks it visible). */
   onFocus: (id: string) => void;
   className?: string;
 }
@@ -40,9 +51,13 @@ type StatusFilter = 'all' | 'online' | 'moving' | 'idling' | 'offline';
 export function EtitVehicleList({
   vehicles,
   liveStatuses,
-  selectedId,
+  activeId,
+  visibleIds,
   loading,
-  onSelect,
+  onActivate,
+  onToggleVisible,
+  onSetAllVisible,
+  onClearVisible,
   onFocus,
   className,
 }: EtitVehicleListProps) {
@@ -74,15 +89,11 @@ export function EtitVehicleList({
         return true;
       })
       .sort((a, b) => {
-        // Online first, then alphabetic by plate
         if (a.online !== b.online) return a.online ? -1 : 1;
         return a.plate.localeCompare(b.plate);
       });
   }, [vehicles, debouncedSearch, filter, liveById]);
 
-  // Quick stats for the filter buttons — counts visible to the current
-  // search but not the current status filter (so "5 moving / 12 online"
-  // stays informative as you flip filters).
   const counts = React.useMemo(() => {
     const visible = vehicles.filter((v) =>
       debouncedSearch.trim() ? matches(`${v.plate} ${v.codename}`, debouncedSearch) : true,
@@ -102,23 +113,59 @@ export function EtitVehicleList({
     return { all: visible.length, online, moving, idling, offline };
   }, [vehicles, debouncedSearch, liveById]);
 
+  const visibleCountInFilter = React.useMemo(
+    () => filtered.filter((v) => visibleIds.has(v.id)).length,
+    [filtered, visibleIds],
+  );
+  const allFilteredVisible = filtered.length > 0 && visibleCountInFilter === filtered.length;
+  const someFilteredVisible = visibleCountInFilter > 0 && !allFilteredVisible;
+
   return (
     <aside
       className={cn(
         'flex flex-col border-e bg-card',
-        // Caller controls width — we only constrain the inner layout.
         className,
       )}
     >
       {/* Header */}
-      <div className="shrink-0 border-b p-3">
-        <SearchInput
-          value={search}
-          onChange={setSearch}
-          placeholder={t('etit.list.searchPlaceholder')}
-          className="mb-2"
-        />
-        <div className="flex flex-wrap gap-1">
+      <div className="shrink-0 border-b">
+        <div className="p-3 pb-2">
+          <SearchInput
+            value={search}
+            onChange={setSearch}
+            placeholder={t('etit.list.searchPlaceholder')}
+          />
+        </div>
+
+        {/* Show / hide bar */}
+        <div className="flex items-center gap-2 border-y bg-muted/30 px-3 py-1.5 text-[11px]">
+          <Checkbox
+            checked={allFilteredVisible ? true : someFilteredVisible ? 'indeterminate' : false}
+            onCheckedChange={(checked) => {
+              if (checked) onSetAllVisible(filtered.map((v) => v.id));
+              else onClearVisible();
+            }}
+            aria-label={t('etit.list.toggleAllVisible')}
+          />
+          <span className="font-medium">
+            {t('etit.list.shownOnMap', {
+              shown: visibleCountInFilter,
+              total: filtered.length,
+            })}
+          </span>
+          {visibleCountInFilter > 0 && (
+            <button
+              type="button"
+              className="ms-auto text-muted-foreground hover:text-foreground"
+              onClick={onClearVisible}
+            >
+              {t('etit.list.hideAll')}
+            </button>
+          )}
+        </div>
+
+        {/* Filter chips */}
+        <div className="flex flex-wrap gap-1 p-3 pt-2">
           <FilterChip active={filter === 'all'} onClick={() => setFilter('all')} count={counts.all}>
             {t('etit.list.filter.all')}
           </FilterChip>
@@ -184,7 +231,8 @@ export function EtitVehicleList({
               const color = ETIT_STATUS_COLOR[group];
               const speed = live?.speed ?? v.speed;
               const lastSeen = live?.timestamp ?? v.lastLocationAt;
-              const isSelected = selectedId === v.id;
+              const isActive = activeId === v.id;
+              const isVisible = visibleIds.has(v.id);
               const displayName = v.plate || v.codename;
 
               return (
@@ -192,11 +240,23 @@ export function EtitVehicleList({
                   <div
                     className={cn(
                       'group flex items-center gap-2 rounded-md border border-transparent px-2 py-2 transition-colors',
-                      isSelected
-                        ? 'border-primary/30 bg-primary/5'
+                      isActive
+                        ? 'border-primary/40 bg-primary/5'
                         : 'hover:bg-accent hover:text-accent-foreground',
                     )}
                   >
+                    {/* Visibility checkbox */}
+                    <Checkbox
+                      checked={isVisible}
+                      onCheckedChange={() => onToggleVisible(v.id)}
+                      aria-label={
+                        isVisible
+                          ? t('etit.list.hideFromMap', { name: displayName })
+                          : t('etit.list.showOnMap', { name: displayName })
+                      }
+                      onClick={(e) => e.stopPropagation()}
+                    />
+
                     {/* Status dot */}
                     <span
                       className="h-2.5 w-2.5 shrink-0 rounded-full ring-2 ring-background"
@@ -204,18 +264,23 @@ export function EtitVehicleList({
                       aria-hidden
                     />
 
-                    {/* Main click target */}
+                    {/* Main click target — activate */}
                     <button
                       type="button"
-                      onClick={() => onSelect(v.id)}
+                      onClick={() => onActivate(v.id)}
                       className="min-w-0 flex-1 text-start"
                     >
                       <div className="flex items-center gap-1.5">
-                        <span className="truncate text-sm font-medium">{displayName}</span>
+                        <span className="truncate text-sm font-semibold">{displayName}</span>
                         {v.online ? (
                           <Wifi className="h-3 w-3 shrink-0 text-success" />
                         ) : (
                           <WifiOff className="h-3 w-3 shrink-0 text-muted-foreground" />
+                        )}
+                        {isVisible ? (
+                          <Eye className="h-3 w-3 shrink-0 text-primary" />
+                        ) : (
+                          <EyeOff className="h-3 w-3 shrink-0 text-muted-foreground/40" />
                         )}
                       </div>
                       <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
@@ -227,19 +292,18 @@ export function EtitVehicleList({
                         )}
                       </div>
                       {lastSeen && (
-                        <div className="mt-0.5 truncate text-[10px] text-muted-foreground">
+                        <div className="mt-0.5 truncate text-[10px] text-muted-foreground/80">
                           {formatCairo(lastSeen, 'datetime')}
                         </div>
                       )}
                     </button>
 
-                    {/* Focus button */}
+                    {/* Focus button — always visible (no opacity-0 → invisible on touch) */}
                     <Button
                       type="button"
-                      variant="ghost"
+                      variant={isActive ? 'default' : 'ghost'}
                       size="icon"
-                      className="h-7 w-7 shrink-0 opacity-0 transition-opacity group-hover:opacity-100 data-[active=true]:opacity-100"
-                      data-active={isSelected ? 'true' : 'false'}
+                      className="h-7 w-7 shrink-0"
                       onClick={(e) => {
                         e.stopPropagation();
                         onFocus(v.id);
@@ -261,7 +325,7 @@ export function EtitVehicleList({
 }
 
 /* -------------------------------------------------------------------------- */
-/* Bits                                                                        */
+/* Filter chip                                                                 */
 /* -------------------------------------------------------------------------- */
 
 interface FilterChipProps {

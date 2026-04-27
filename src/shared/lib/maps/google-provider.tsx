@@ -4,18 +4,11 @@ import { setOptions, importLibrary } from '@googlemaps/js-api-loader';
 import { Button } from '@/shared/ui/button';
 import { cn } from '@/shared/lib/cn';
 import { DEFAULT_MAP_CENTER } from '@/shared/lib/coords';
-import { buildMarkerSvg, MARKER_SIZE } from './marker-svg';
-import type { MapViewProps } from './types';
+import { buildMarkerSvg, markerSize } from './marker-svg';
+import type { MapMarker, MapViewProps } from './types';
 
 /* -------------------------------------------------------------------------- */
-/* Map styles — applied via the inline `styles` array on Map options          */
-/*                                                                             */
-/* We deliberately do NOT use a cloud-based mapId. mapId-based maps ignore    */
-/* inline `styles`, forcing all theming to live in Google Cloud Console;     */
-/* keeping styles in code means dark/light just works and is version-        */
-/* controlled. The trade-off is we use classic Marker (not                  */
-/* AdvancedMarkerElement) — fine for our use case, classic markers are not   */
-/* actually being removed despite some doc rephrasings.                      */
+/* Map styles                                                                  */
 /* -------------------------------------------------------------------------- */
 
 const darkMapStyle: google.maps.MapTypeStyle[] = [
@@ -45,7 +38,7 @@ const lightMapStyle: google.maps.MapTypeStyle[] = [
 ];
 
 /* -------------------------------------------------------------------------- */
-/* Info-window styles — injected once, idempotent across mounts               */
+/* Info-window styles (idempotent injection)                                   */
 /* -------------------------------------------------------------------------- */
 
 function injectInfoWindowStyles() {
@@ -68,11 +61,7 @@ function injectInfoWindowStyles() {
     }
     .dark .gm-style-iw-tc::after { background: #1e2535 !important; }
     .gm-style-iw-d { overflow: hidden !important; padding: 0 !important; }
-    .gm-ui-hover-effect {
-      top: 6px !important;
-      right: 6px !important;
-      opacity: 0.5 !important;
-    }
+    .gm-ui-hover-effect { top: 6px !important; right: 6px !important; opacity: 0.5 !important; }
     .gm-ui-hover-effect:hover { opacity: 1 !important; }
     .dark .gm-ui-hover-effect > span { background-color: #94a3b8 !important; }
   `;
@@ -80,7 +69,7 @@ function injectInfoWindowStyles() {
 }
 
 /* -------------------------------------------------------------------------- */
-/* Loader — single setOptions call, key gated on env                          */
+/* Loader                                                                      */
 /* -------------------------------------------------------------------------- */
 
 let loaderConfigured = false;
@@ -91,22 +80,12 @@ function configureLoader() {
   loaderConfigured = true;
 }
 
-/**
- * Returns true if the Google Maps API key is configured. Called by the
- * unified `MapView` shell to decide whether to even attempt loading
- * Google before falling through to Leaflet.
- */
 export function isGoogleMapsConfigured(): boolean {
   return !!(import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string | undefined);
 }
 
 /* -------------------------------------------------------------------------- */
-/* Smooth fly-to animation                                                    */
-/*                                                                             */
-/* Google Maps lacks a built-in `flyTo`. We synthesise one with rAF + cubic   */
-/* easing, updating center+zoom together via `moveCamera` (vector maps) or   */
-/* falling back to setCenter+setZoom on raster maps. Cancellable via the     */
-/* returned token so a second dblclick mid-fly aborts the first.             */
+/* Smooth fly-to                                                               */
 /* -------------------------------------------------------------------------- */
 
 interface FlyToken { cancelled: boolean; rafId: number | null }
@@ -132,10 +111,8 @@ function smoothFlyTo(
   const startLat = startCenter.lat();
   const startLng = startCenter.lng();
   const startTime = performance.now();
-
-  // moveCamera is undocumented but real on vector maps; on raster maps it's
-  // missing, so fall back to setCenter + setZoom each frame
-  const hasMoveCamera = typeof (map as unknown as { moveCamera?: unknown }).moveCamera === 'function';
+  const hasMoveCamera =
+    typeof (map as unknown as { moveCamera?: unknown }).moveCamera === 'function';
 
   const frame = (now: number) => {
     if (token.cancelled) return;
@@ -144,7 +121,6 @@ function smoothFlyTo(
     const lat = startLat + (target.lat - startLat) * eased;
     const lng = startLng + (target.lng - startLng) * eased;
     const zoom = startZoom + (targetZoom - startZoom) * eased;
-
     if (hasMoveCamera) {
       (map as unknown as {
         moveCamera: (opts: { center: { lat: number; lng: number }; zoom: number }) => void;
@@ -153,10 +129,7 @@ function smoothFlyTo(
       map.setCenter({ lat, lng });
       map.setZoom(zoom);
     }
-
-    if (t < 1) {
-      token.rafId = requestAnimationFrame(frame);
-    }
+    if (t < 1) token.rafId = requestAnimationFrame(frame);
   };
 
   token.rafId = requestAnimationFrame(frame);
@@ -164,8 +137,58 @@ function smoothFlyTo(
 }
 
 /* -------------------------------------------------------------------------- */
+/* Helpers                                                                     */
+/* -------------------------------------------------------------------------- */
+
+function buildIcon(info: MapMarker, filterId: string): google.maps.Icon {
+  const kind = info.kind ?? 'pin';
+  const size = markerSize(kind);
+  return {
+    url: buildMarkerSvg(info.color, filterId, kind, info.heading ?? 0),
+    scaledSize: new google.maps.Size(size.width, size.height),
+    anchor: new google.maps.Point(size.anchorX, size.anchorY),
+  };
+}
+
+/**
+ * Fingerprint of bounds-affecting markers + route. When this changes the
+ * map should refit; when it doesn't, marker positions can update silently.
+ */
+function boundsFingerprint(markers: MapMarker[], route: Array<[number, number]>): string {
+  const ids: string[] = [];
+  for (const m of markers) if (m.affectsBounds !== false) ids.push(m.id);
+  ids.sort();
+  return `${ids.join(',')}|${route.length}`;
+}
+
+/* Z-index hierarchy — playback above vehicles above stops/sensors above pins. */
+function zIndexFor(kind: MapMarker['kind']): number {
+  switch (kind) {
+    case 'playback': return 1000;
+    case 'vehicle':  return 800;
+    case 'stop':     return 600;
+    case 'ignition-on':
+    case 'ignition-off': return 600;
+    default: return 400;
+  }
+}
+
+/* -------------------------------------------------------------------------- */
 /* Component                                                                   */
 /* -------------------------------------------------------------------------- */
+
+interface MarkerEntry {
+  marker: google.maps.Marker;
+  // Cached visual signature so we only call setIcon when the visual
+  // actually changed (cheap shallow check vs. an Icon round-trip).
+  signature: string;
+  listeners: google.maps.MapsEventListener[];
+  popupHtml?: string;
+}
+
+function markerSignature(m: MapMarker): string {
+  return `${m.kind ?? 'pin'}|${m.color}|${Math.round(m.heading ?? 0)}|${m.draggable ? 1 : 0}`;
+}
 
 export function GoogleMapView({
   markers = [],
@@ -176,18 +199,18 @@ export function GoogleMapView({
   className,
   onMapClick,
   onMarkerDragEnd,
+  liveUpdates = false,
 }: MapViewProps) {
   const containerRef = React.useRef<HTMLDivElement>(null);
   const mapRef = React.useRef<google.maps.Map | null>(null);
   const infoWindowRef = React.useRef<google.maps.InfoWindow | null>(null);
-  const entitiesRef = React.useRef<{
-    markers: google.maps.Marker[];
-    polylines: google.maps.Polyline[];
-    listeners: google.maps.MapsEventListener[];
-  }>({ markers: [], polylines: [], listeners: [] });
+  const markerEntriesRef = React.useRef<Map<string, MarkerEntry>>(new Map());
+  const polylinesRef = React.useRef<google.maps.Polyline[]>([]);
+  const mapListenersRef = React.useRef<google.maps.MapsEventListener[]>([]);
   const themeObserverRef = React.useRef<MutationObserver | null>(null);
   const flyTokenRef = React.useRef<FlyToken | null>(null);
   const boundsRef = React.useRef<google.maps.LatLngBounds | null>(null);
+  const lastFingerprintRef = React.useRef<string>('');
 
   const [mapReady, setMapReady] = React.useState(false);
   const [isSatellite, setIsSatellite] = React.useState(false);
@@ -197,7 +220,7 @@ export function GoogleMapView({
   React.useEffect(() => { onMapClickRef.current = onMapClick; }, [onMapClick]);
   React.useEffect(() => { onMarkerDragEndRef.current = onMarkerDragEnd; }, [onMarkerDragEnd]);
 
-  /* -------- Initialise map once ----------------------------------------- */
+  /* -------- Init once --------------------------------------------------- */
 
   React.useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
@@ -219,9 +242,6 @@ export function GoogleMapView({
           center: { lat: centerFallback[0], lng: centerFallback[1] },
           zoom: 11,
           mapTypeId: google.maps.MapTypeId.ROADMAP,
-          // No mapId — we want inline `styles` to apply, which requires
-          // classic Marker (which we use). mapId + AdvancedMarkerElement
-          // would force all styling into Cloud Console.
           styles: isDark ? darkMapStyle : lightMapStyle,
           mapTypeControl: false,
           streetViewControl: false,
@@ -234,16 +254,12 @@ export function GoogleMapView({
         mapRef.current = map;
         infoWindowRef.current = new mapsLib.InfoWindow({ disableAutoPan: false });
 
-        // Map click → forward to consumer (used by location-picker dialogs)
         const clickListener = map.addListener('click', (e: google.maps.MapMouseEvent) => {
           if (!e.latLng) return;
           onMapClickRef.current?.(e.latLng.lat(), e.latLng.lng());
         });
-        entitiesRef.current.listeners.push(clickListener);
+        mapListenersRef.current.push(clickListener);
 
-        // Theme observer — swaps styles when the user toggles dark mode at
-        // runtime. Skipped while satellite is active (satellite ignores
-        // styles anyway and our style array would clobber labels).
         const observer = new MutationObserver(() => {
           if (!mapRef.current) return;
           if (mapRef.current.getMapTypeId() !== google.maps.MapTypeId.ROADMAP) return;
@@ -258,9 +274,6 @@ export function GoogleMapView({
 
         if (!cancelled) setMapReady(true);
       } catch (err) {
-        // Surface to console — the parent MapView shell handles fallback to
-        // Leaflet via its own load-timeout mechanism, so we don't double-
-        // toast here.
         console.error('[GoogleMapView] init failed', err);
       }
     };
@@ -269,19 +282,20 @@ export function GoogleMapView({
 
     return () => {
       cancelled = true;
-      // Tear down listeners, observer, and the map itself — failing to do
-      // this leaks the MutationObserver across every dialog open/close.
       if (flyTokenRef.current) {
         flyTokenRef.current.cancelled = true;
-        if (flyTokenRef.current.rafId !== null) {
-          cancelAnimationFrame(flyTokenRef.current.rafId);
-        }
+        if (flyTokenRef.current.rafId !== null) cancelAnimationFrame(flyTokenRef.current.rafId);
         flyTokenRef.current = null;
       }
-      entitiesRef.current.listeners.forEach((l) => l.remove());
-      entitiesRef.current.markers.forEach((m) => m.setMap(null));
-      entitiesRef.current.polylines.forEach((p) => p.setMap(null));
-      entitiesRef.current = { markers: [], polylines: [], listeners: [] };
+      mapListenersRef.current.forEach((l) => l.remove());
+      mapListenersRef.current = [];
+      markerEntriesRef.current.forEach((entry) => {
+        entry.listeners.forEach((l) => l.remove());
+        entry.marker.setMap(null);
+      });
+      markerEntriesRef.current.clear();
+      polylinesRef.current.forEach((p) => p.setMap(null));
+      polylinesRef.current = [];
       if (themeObserverRef.current) {
         themeObserverRef.current.disconnect();
         themeObserverRef.current = null;
@@ -295,25 +309,17 @@ export function GoogleMapView({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  /* -------- Sync entities (markers + route) ----------------------------- */
+  /* -------- Sync polylines (always teardown + recreate; route changes are rare) -- */
 
   React.useEffect(() => {
     if (!mapReady || !mapRef.current) return;
     const map = mapRef.current;
-    const infoWindow = infoWindowRef.current;
 
-    // Clear previous entities
-    entitiesRef.current.markers.forEach((m) => m.setMap(null));
-    entitiesRef.current.polylines.forEach((p) => p.setMap(null));
-    entitiesRef.current.markers = [];
-    entitiesRef.current.polylines = [];
+    polylinesRef.current.forEach((p) => p.setMap(null));
+    polylinesRef.current = [];
 
-    const bounds = new google.maps.LatLngBounds();
-    let hasBounds = false;
-    const isDark = document.documentElement.classList.contains('dark');
-
-    // Route — drawn first so markers sit above
     if (route.length > 0 && !suppressRoute) {
+      const isDark = document.documentElement.classList.contains('dark');
       const path = route.map(([lat, lng]) => ({ lat, lng }));
       const halo = new google.maps.Polyline({
         path, geodesic: true, strokeColor: '#3b82f6',
@@ -328,76 +334,153 @@ export function GoogleMapView({
         path, geodesic: true, strokeColor: '#3b82f6',
         strokeOpacity: 0.95, strokeWeight: 4, map,
       });
-      entitiesRef.current.polylines.push(halo, casing, core);
-      path.forEach((pt) => { bounds.extend(pt); hasBounds = true; });
+      polylinesRef.current.push(halo, casing, core);
+    }
+  }, [mapReady, route, suppressRoute]);
+
+  /* -------- Sync markers ------------------------------------------------ */
+  /*                                                                            *
+   * In `liveUpdates` mode we diff by id: existing markers update position     *
+   * (and icon if visual changed) in place, new markers are added, missing     *
+   * ones are removed. Auto-fit only fires on fingerprint change.              *
+   *                                                                            *
+   * In legacy (non-live) mode we keep the original teardown + recreate +      *
+   * always-refit behavior so existing call sites are unaffected.              *
+   * -------------------------------------------------------------------------- */
+
+  React.useEffect(() => {
+    if (!mapReady || !mapRef.current) return;
+    const map = mapRef.current;
+    const infoWindow = infoWindowRef.current;
+    const entries = markerEntriesRef.current;
+
+    if (!liveUpdates) {
+      // Legacy path — teardown + recreate every change.
+      entries.forEach((entry) => {
+        entry.listeners.forEach((l) => l.remove());
+        entry.marker.setMap(null);
+      });
+      entries.clear();
     }
 
-    // Markers
-    markers.forEach((info, idx) => {
-      const position = { lat: info.lat, lng: info.lng };
-      const filterId = `mf-${info.id}-${idx}`;
+    const incomingIds = new Set<string>();
+    const bounds = new google.maps.LatLngBounds();
+    let hasBounds = false;
 
+    markers.forEach((info, idx) => {
+      incomingIds.add(info.id);
+      const position = { lat: info.lat, lng: info.lng };
+      if (info.affectsBounds !== false) {
+        bounds.extend(position);
+        hasBounds = true;
+      }
+
+      const filterId = `mf-${info.id}-${idx}`;
+      const sig = markerSignature(info);
+      const existing = entries.get(info.id);
+
+      if (existing && liveUpdates) {
+        // Update in place
+        const cur = existing.marker.getPosition();
+        if (!cur || cur.lat() !== info.lat || cur.lng() !== info.lng) {
+          existing.marker.setPosition(position);
+        }
+        if (existing.signature !== sig) {
+          existing.marker.setIcon(buildIcon(info, filterId));
+          existing.marker.setDraggable(!!info.draggable);
+          existing.marker.setOptions({ zIndex: zIndexFor(info.kind) });
+          existing.signature = sig;
+        }
+        if (existing.marker.getTitle() !== info.title) {
+          existing.marker.setTitle(info.title ?? '');
+        }
+        existing.popupHtml = info.popupHtml;
+        return;
+      }
+
+      // Create
       const marker = new google.maps.Marker({
         position,
         map,
         title: info.title,
         draggable: !!info.draggable,
-        icon: {
-          url: buildMarkerSvg(info.color, filterId),
-          scaledSize: new google.maps.Size(MARKER_SIZE.width, MARKER_SIZE.height),
-          anchor: new google.maps.Point(MARKER_SIZE.anchorX, MARKER_SIZE.anchorY),
-        },
+        icon: buildIcon(info, filterId),
+        zIndex: zIndexFor(info.kind),
         optimized: false,
       });
 
-      entitiesRef.current.markers.push(marker);
-      bounds.extend(position);
-      hasBounds = true;
+      const listeners: google.maps.MapsEventListener[] = [];
 
-      if (info.popupHtml && infoWindow) {
-        const l = marker.addListener('click', () => {
-          infoWindow.setContent(info.popupHtml!);
+      const clickL = marker.addListener('click', () => {
+        const html = entries.get(info.id)?.popupHtml;
+        if (html && infoWindow) {
+          infoWindow.setContent(html);
           infoWindow.open({ map, anchor: marker });
-        });
-        entitiesRef.current.listeners.push(l);
-      }
+        }
+      });
+      listeners.push(clickL);
 
-      // Smooth flyTo on dblclick — cancels any prior fly so rapid double-
-      // dblclicks don't end up in undefined-zoom territory
       const dblL = marker.addListener('dblclick', () => {
         if (infoWindow) infoWindow.close();
         if (flyTokenRef.current) {
           flyTokenRef.current.cancelled = true;
-          if (flyTokenRef.current.rafId !== null) {
-            cancelAnimationFrame(flyTokenRef.current.rafId);
-          }
+          if (flyTokenRef.current.rafId !== null) cancelAnimationFrame(flyTokenRef.current.rafId);
         }
-        flyTokenRef.current = smoothFlyTo(map, position, 17, 750);
+        const cur = marker.getPosition();
+        if (cur) flyTokenRef.current = smoothFlyTo(map, { lat: cur.lat(), lng: cur.lng() }, 17, 750);
       });
-      entitiesRef.current.listeners.push(dblL);
+      listeners.push(dblL);
 
-      // Drag → forward to consumer
       if (info.draggable) {
         const dragL = marker.addListener('dragend', () => {
           const pos = marker.getPosition();
           if (!pos) return;
           onMarkerDragEndRef.current?.(info.id, pos.lat(), pos.lng());
         });
-        entitiesRef.current.listeners.push(dragL);
+        listeners.push(dragL);
       }
+
+      entries.set(info.id, { marker, signature: sig, listeners, popupHtml: info.popupHtml });
     });
+
+    // Remove gone markers (live mode only — legacy path already cleared)
+    if (liveUpdates) {
+      for (const [id, entry] of entries) {
+        if (!incomingIds.has(id)) {
+          entry.listeners.forEach((l) => l.remove());
+          entry.marker.setMap(null);
+          entries.delete(id);
+        }
+      }
+    }
+
+    // Bounds for the route (always, since route fits matter regardless)
+    if (route.length > 0 && !suppressRoute) {
+      route.forEach(([lat, lng]) => {
+        bounds.extend({ lat, lng });
+        hasBounds = true;
+      });
+    }
 
     boundsRef.current = hasBounds ? bounds : null;
 
-    if (hasBounds) {
-      if (markers.length === 1 && (route.length === 0 || suppressRoute)) {
+    // Auto-fit policy
+    const fp = boundsFingerprint(markers, suppressRoute ? [] : route);
+    const fingerprintChanged = fp !== lastFingerprintRef.current;
+    lastFingerprintRef.current = fp;
+
+    const shouldAutoFit = liveUpdates ? fingerprintChanged && hasBounds : hasBounds;
+
+    if (shouldAutoFit) {
+      const boundsAffectingCount = markers.filter((m) => m.affectsBounds !== false).length;
+      if (boundsAffectingCount === 1 && (route.length === 0 || suppressRoute)) {
         map.setCenter(bounds.getCenter());
         map.setZoom(14);
       } else {
         map.fitBounds(bounds, { top: 64, right: 64, bottom: 64, left: 64 });
       }
     }
-  }, [mapReady, markers, route, suppressRoute]);
+  }, [mapReady, markers, route, suppressRoute, liveUpdates]);
 
   /* -------- Controls --------------------------------------------------- */
 
@@ -414,9 +497,6 @@ export function GoogleMapView({
     setIsSatellite((prev) => {
       const next = !prev;
       if (next) {
-        // HYBRID gives satellite + labels. Custom styles must be cleared
-        // since hybrid ignores them and they'd otherwise interfere with
-        // label rendering.
         map.setMapTypeId(google.maps.MapTypeId.HYBRID);
         map.setOptions({ styles: null });
       } else {
@@ -433,7 +513,7 @@ export function GoogleMapView({
       <div ref={containerRef} className="h-full w-full rounded-lg" />
 
       {mapReady && (
-        <div className="absolute right-3 top-3 z-10 flex flex-col gap-1.5">
+        <div className="absolute end-3 top-3 z-10 flex flex-col gap-1.5">
           <Button
             size="icon"
             variant={isSatellite ? 'default' : 'secondary'}

@@ -984,12 +984,13 @@
       "subtitle": "{{vehicleCount}} vehicles · {{onMapCount}} on map",
       "live": "Live",
       "liveOffline": "Live offline",
-      "openVehicleList": "Open vehicle list"
+      "openVehicleList": "Open vehicle list",
+      "liveStream": "Live (stream)"
     },
     "list": {
       "searchPlaceholder": "Search by plate or codename",
       "focusOnMap": "Focus on map",
-      "focusOnMapFor": "Focus {{name}} on map",
+      "focusOnMapFor": "Focus map on {{name}}",
       "filter": {
         "all": "All",
         "online": "Online",
@@ -1001,7 +1002,13 @@
         "title": "No vehicles match",
         "description": "No vehicles in this filter.",
         "descriptionSearch": "Try a different search term."
-      }
+      },
+      "heading": "Vehicles ({{count}})",
+      "toggleAllVisible": "Toggle visibility for all listed vehicles",
+      "shownOnMap": "On map: {{shown}}/{{total}}",
+      "hideAll": "Hide all",
+      "showOnMap": "Show {{name}} on map",
+      "hideFromMap": "Hide {{name}} from map"
     },
     "controls": {
       "noVehicle": "Select a vehicle",
@@ -1018,7 +1025,10 @@
         "activeTime": "Active time",
         "stops": "Stops",
         "fuel": "Fuel"
-      }
+      },
+      "overlays": "Overlays",
+      "toggleStops": "Stops",
+      "toggleIgnitions": "Ignitions"
     },
     "player": {
       "empty": "Load a history range with at least two timestamped points to enable playback.",
@@ -1030,7 +1040,8 @@
       "over": "over",
       "scrubberLabel": "Playback position",
       "stoppedFor": "Stopped · {{duration}}",
-      "atTime": "at {{time}}"
+      "atTime": "at {{time}}",
+      "idleSlot": "No active stop or event"
     },
     "map": {
       "popup": {
@@ -1043,6 +1054,11 @@
         "stopHeading": "Stop",
         "unknownLocation": "Unknown location",
         "playback": "Playback"
+      },
+      "empty": {
+        "title": "Pick a vehicle to show",
+        "descDesktop": "Tick the checkbox next to a vehicle in the list, or click the crosshair to focus the camera.",
+        "descMobile": "Open the vehicle list and tick the ones you want on the map."
       }
     },
     "units": {
@@ -1051,6 +1067,20 @@
     },
     "errors": {
       "proxyUnreachable": "Could not reach the ETIT proxy."
+    },
+    "range": {
+      "custom": "Custom",
+      "preset": {
+        "lastHour": "Last hour",
+        "last3h": "Last 3 hours",
+        "today": "Today",
+        "yesterday": "Yesterday",
+        "last7d": "Last 7 days"
+      }
+    },
+    "mobile": {
+      "controls": "Controls",
+      "playback": "Playback"
     }
   }
 }

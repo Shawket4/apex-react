@@ -1,10 +1,23 @@
-import { useQuery, type UseQueryOptions } from '@tanstack/react-query';
-import { etitApi, type HistoryDayArgs, type HistoryRangeArgs } from './api';
-import type {
-  EtitHistoryResponse,
-  EtitLiveStatus,
-  EtitTripSummary,
-  EtitVehicle,
+import * as React from 'react';
+import {
+  useQuery,
+  useQueryClient,
+  type UseQueryOptions,
+} from '@tanstack/react-query';
+import { env } from '@/shared/config/env';
+import { STORAGE_KEYS } from '@/shared/config/constants';
+import {
+  etitApi,
+  ETIT_LIVE_STREAM_PATH,
+  type HistoryDayArgs,
+  type HistoryRangeArgs,
+} from './api';
+import {
+  etitLiveStatusSchema,
+  type EtitHistoryResponse,
+  type EtitLiveStatus,
+  type EtitTripSummary,
+  type EtitVehicle,
 } from './schemas';
 
 /* -------------------------------------------------------------------------- */
@@ -26,11 +39,7 @@ export const etitKeys = {
 } as const;
 
 /* -------------------------------------------------------------------------- */
-/* Vehicles list                                                               */
-/*                                                                             */
-/* The proxy's Tier A poller refreshes this once a day. We give the cache a   */
-/* matching staleTime so a navigating user doesn't trigger refetches when     */
-/* hopping between dashboard pages.                                            */
+/* Vehicles                                                                    */
 /* -------------------------------------------------------------------------- */
 
 export function useEtitVehicles(
@@ -46,28 +55,27 @@ export function useEtitVehicles(
 }
 
 /* -------------------------------------------------------------------------- */
-/* Live status                                                                 */
-/*                                                                             */
-/* Two ways to get live data:                                                 */
-/*                                                                             */
-/*   1. The SSE stream at `/api/v1/stream/live` — real-time deltas. Wired in */
-/*      the page via `useEtitLiveStream` below.                               */
-/*   2. The snapshot endpoint at `/api/v1/vehicles/live` — a one-shot fetch  */
-/*      we use to seed the cache on mount, and as a fallback when SSE fails. */
-/*                                                                             */
-/* The query below is the snapshot fallback. We poll at 60s — this matches   */
-/* the proxy's Tier B refresh, so the freshness floor is identical to SSE   */
-/* in the worst case. When SSE is healthy, the page disables this query     */
-/* via `enabled: false` to avoid duplicate requests.                          */
-/* -------------------------------------------------------------------------- */
+/* Live snapshot                                                               */
+/*                                                                             *
+ * The page combines two sources for live data:                              *
+ *   1. SSE stream (`useEtitLiveStream`) — preferred, deltas in real time     *
+ *   2. Snapshot poll (`useEtitLive`)    — seed + safety net                  *
+ *                                                                             *
+ * When the stream is healthy we let the snapshot back off to a long          *
+ * interval (5 min) so we don't pay for duplicate work; when the stream       *
+ * disconnects we tighten back to 30s.                                        *
+ * -------------------------------------------------------------------------- */
 
-export function useEtitLive(
-  options?: Omit<UseQueryOptions<EtitLiveStatus[]>, 'queryKey' | 'queryFn'>,
-) {
+export interface UseEtitLiveOptions
+  extends Omit<UseQueryOptions<EtitLiveStatus[]>, 'queryKey' | 'queryFn'> {
+  streamConnected?: boolean;
+}
+
+export function useEtitLive({ streamConnected, ...options }: UseEtitLiveOptions = {}) {
   return useQuery<EtitLiveStatus[]>({
     queryKey: etitKeys.live(),
     queryFn: () => etitApi.listLive(),
-    refetchInterval: 60_000,
+    refetchInterval: streamConnected ? 5 * 60_000 : 30_000,
     refetchOnWindowFocus: true,
     staleTime: 30_000,
     ...options,
@@ -76,12 +84,6 @@ export function useEtitLive(
 
 /* -------------------------------------------------------------------------- */
 /* History                                                                     */
-/*                                                                             */
-/* History is large (hundreds to thousands of points). We DO NOT auto-       */
-/* refetch — the user has explicitly chosen a time window and we don't       */
-/* want a surprise reload mid-playback. The proxy's Tier C poller keeps     */
-/* today/yesterday fresh on the server side anyway, so a manual reload     */
-/* gets the latest.                                                          */
 /* -------------------------------------------------------------------------- */
 
 export function useEtitHistoryRange(
@@ -133,4 +135,147 @@ export function useEtitTripSummary(
     staleTime: 5 * 60_000,
     ...options,
   });
+}
+
+/* -------------------------------------------------------------------------- */
+/* Live stream (SSE)                                                           */
+/*                                                                             *
+ * Wires the proxy's SSE endpoint into the same `etitKeys.live()` cache the   *
+ * snapshot poll uses, so consumers (vehicle list, map) read one source.      *
+ *                                                                             *
+ * Reconnect strategy: on any error we close the EventSource and schedule a   *
+ * reopen with exponential backoff (1s → 30s capped). EventSource has its    *
+ * own auto-reconnect, but it does not fire on permanent close states and    *
+ * skips the close/open `onerror` cycle, so we manage it manually for        *
+ * deterministic behaviour.                                                   *
+ *                                                                             *
+ * Auth: the proxy sits on the same origin and accepts the same JWT cookie   *
+ * as the REST endpoints. We append `?token=...` as a fallback because       *
+ * EventSource cannot set a custom `Authorization` header.                   *
+ * -------------------------------------------------------------------------- */
+
+export interface UseEtitLiveStreamResult {
+  /** Whether the stream is currently open and receiving events. */
+  connected: boolean;
+  /** Last error encountered (best-effort; cleared on next successful open). */
+  error: Error | null;
+}
+
+export function useEtitLiveStream(): UseEtitLiveStreamResult {
+  const queryClient = useQueryClient();
+  const [connected, setConnected] = React.useState(false);
+  const [error, setError] = React.useState<Error | null>(null);
+
+  React.useEffect(() => {
+    if (typeof window === 'undefined' || typeof EventSource === 'undefined') return;
+
+    const baseUrl = env.VITE_API_BASE_URL_ETIT ?? env.VITE_API_BASE_URL;
+    if (!baseUrl) return;
+
+    let es: EventSource | null = null;
+    let retryTimer: number | null = null;
+    let attempt = 0;
+    let cancelled = false;
+
+    const open = () => {
+      if (cancelled) return;
+      const token = (() => {
+        try {
+          return localStorage.getItem(STORAGE_KEYS.JWT);
+        } catch {
+          return null;
+        }
+      })();
+      const url = new URL(ETIT_LIVE_STREAM_PATH, baseUrl);
+      if (token) url.searchParams.set('token', token);
+
+      try {
+        es = new EventSource(url.toString(), { withCredentials: true });
+      } catch (err) {
+        scheduleRetry(err);
+        return;
+      }
+
+      es.onopen = () => {
+        attempt = 0;
+        setConnected(true);
+        setError(null);
+      };
+
+      es.onerror = () => {
+        // EventSource's onerror does not include details — synthesise.
+        setConnected(false);
+        scheduleRetry(new Error('SSE connection lost'));
+      };
+
+      // The proxy emits one named "live" event per delta. We also tolerate
+      // the default unnamed `message` event for back-compat.
+      const handleMessage = (e: MessageEvent) => {
+        applyDelta(e.data);
+      };
+      es.addEventListener('live', handleMessage);
+      es.addEventListener('message', handleMessage);
+    };
+
+    const applyDelta = (raw: string) => {
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(raw);
+      } catch {
+        return;
+      }
+
+      const updates = etitLiveStatusSchema.array().safeParse(
+        Array.isArray(parsed) ? parsed : [parsed],
+      );
+      if (!updates.success || updates.data.length === 0) return;
+
+      queryClient.setQueryData<EtitLiveStatus[]>(etitKeys.live(), (prev) => {
+        const next = prev ? [...prev] : [];
+        const indexById = new Map<string, number>();
+        next.forEach((s, i) => indexById.set(s.id, i));
+
+        for (const u of updates.data) {
+          const existing = indexById.get(u.id);
+          if (existing === undefined) {
+            indexById.set(u.id, next.length);
+            next.push(u);
+          } else {
+            // Merge so we don't drop fields the delta omitted.
+            next[existing] = { ...next[existing], ...u };
+          }
+        }
+        return next;
+      });
+    };
+
+    const scheduleRetry = (err: unknown) => {
+      setError(err instanceof Error ? err : new Error(String(err)));
+      if (es) {
+        es.close();
+        es = null;
+      }
+      if (cancelled) return;
+      const delay = Math.min(30_000, 1000 * 2 ** attempt);
+      attempt += 1;
+      retryTimer = window.setTimeout(open, delay);
+    };
+
+    open();
+
+    return () => {
+      cancelled = true;
+      if (retryTimer !== null) {
+        window.clearTimeout(retryTimer);
+        retryTimer = null;
+      }
+      if (es) {
+        es.close();
+        es = null;
+      }
+      setConnected(false);
+    };
+  }, [queryClient]);
+
+  return { connected, error };
 }

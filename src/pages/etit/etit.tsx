@@ -1,110 +1,185 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Activity, AlertCircle, Menu } from 'lucide-react';
+import {
+  Activity,
+  AlertCircle,
+  Menu,
+  MapPinned,
+  Radar,
+  WifiOff,
+} from 'lucide-react';
 import { Button } from '@/shared/ui/button';
 import { Sheet, SheetContent } from '@/shared/ui/sheet';
-import { Card, CardContent } from '@/shared/ui/card';
 import { useIsDesktop } from '@/shared/hooks/use-media-query';
 import { extractErrorMessage } from '@/shared/api/errors';
-import { decodePolyline, type PlaybackState } from '@/entities/etit-vehicle/playback';
+import { cn } from '@/shared/lib/cn';
+import {
+  decodePolyline,
+  type PlaybackState,
+} from '@/entities/etit-vehicle/playback';
 import {
   useEtitHistoryRange,
   useEtitLive,
+  useEtitLiveStream,
   useEtitTripSummary,
   useEtitVehicles,
 } from '@/entities/etit-vehicle/queries';
 import { EtitMap } from '@/widgets/etit-map/etit-map';
 import { EtitVehicleList } from '@/widgets/etit-vehicle-list/etit-vehicle-list';
-import {
-  defaultCairoTodayRange,
-  EtitHistoryControls,
-} from '@/widgets/etit-history-controls/etit-history-controls';
+import { EtitHistoryControls } from '@/widgets/etit-history-controls/etit-history-controls';
 import { EtitPlaybackPlayer } from '@/widgets/etit-playback-player/etit-playback-player';
+import { defaultCairoTodayRange } from '@/widgets/etit-datetime-range/etit-datetime-range';
 
-/**
- * ETIT live + history page.
- *
- * Layout:
- *   - Desktop: 3-pane fixed layout. Left = vehicle list (sticky, scrolls
- *     internally). Center = map (fills remaining space). Right = controls
- *     + player (also scrolls internally if needed).
- *   - Mobile: map full-bleed, vehicle list in a left Sheet, controls + player
- *     in a bottom strip.
- *
- * State ownership:
- *   - selectedId (vehicle clicked in the list)
- *   - focusedId / focusBump (vehicle clicked via the crosshair button — the
- *     bump key forces the map to re-fit even on the same id)
- *   - range (from/to in Cairo time) + loadedRange (only set when the user
- *     clicks "Load history"; lets us avoid auto-firing the request on
- *     every range tweak)
- *   - playbackState (pushed up from the player so the map can render the
- *     interpolated marker)
- */
+/* -------------------------------------------------------------------------- */
+/* Storage                                                                     */
+/* -------------------------------------------------------------------------- */
+
+const STORAGE_VISIBLE_IDS = 'apex:etit:visibleIds';
+const STORAGE_SHOW_STOPS = 'apex:etit:showStops';
+const STORAGE_SHOW_IGNITIONS = 'apex:etit:showIgnitions';
+
+function loadVisibleIds(): Set<string> {
+  if (typeof window === 'undefined') return new Set();
+  try {
+    const raw = window.localStorage.getItem(STORAGE_VISIBLE_IDS);
+    if (!raw) return new Set();
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return new Set();
+    return new Set(parsed.filter((x): x is string => typeof x === 'string'));
+  } catch {
+    return new Set();
+  }
+}
+
+function loadBool(key: string, fallback: boolean): boolean {
+  if (typeof window === 'undefined') return fallback;
+  const raw = window.localStorage.getItem(key);
+  if (raw === '1') return true;
+  if (raw === '0') return false;
+  return fallback;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Page                                                                        */
+/* -------------------------------------------------------------------------- */
+
+type MobileTab = 'controls' | 'playback';
+
 export function EtitPage() {
   const { t } = useTranslation();
   const isDesktop = useIsDesktop();
   const [mobileListOpen, setMobileListOpen] = React.useState(false);
+  const [mobileTab, setMobileTab] = React.useState<MobileTab>('controls');
 
-  /* -------- Server data ------------------------------------------------ */
+  /* ---- Server data ---- */
   const vehiclesQuery = useEtitVehicles();
-  const liveQuery = useEtitLive();
+  const liveStream = useEtitLiveStream();
+  const liveQuery = useEtitLive({ streamConnected: liveStream.connected });
 
   const vehicles = React.useMemo(() => vehiclesQuery.data ?? [], [vehiclesQuery.data]);
   const liveStatuses = React.useMemo(() => liveQuery.data ?? [], [liveQuery.data]);
 
-  /* -------- Selection / focus ------------------------------------------ */
-  const [selectedId, setSelectedId] = React.useState<string | null>(null);
-  const [focusedId, setFocusedId] = React.useState<string | null>(null);
-  const [focusBump, setFocusBump] = React.useState(0);
+  /* ---- Visibility (multi-select for the map) ---- */
+  const [visibleIds, setVisibleIds] = React.useState<Set<string>>(() => loadVisibleIds());
 
-  const selectedVehicle = React.useMemo(
-    () => vehicles.find((v) => v.id === selectedId) ?? null,
-    [vehicles, selectedId],
+  // Persist
+  React.useEffect(() => {
+    try {
+      window.localStorage.setItem(
+        STORAGE_VISIBLE_IDS,
+        JSON.stringify([...visibleIds]),
+      );
+    } catch {
+      // storage full / disabled — no-op
+    }
+  }, [visibleIds]);
+
+  // First-load default: if storage was empty AND we have vehicles, show
+  // none — let the user opt in. (Showing 20+ markers by default at fleet
+  // scale is noisy; the empty-state overlay nudges them to pick.)
+  // Existing storage values are preserved.
+
+  const toggleVisible = React.useCallback((id: string) => {
+    setVisibleIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const setAllVisible = React.useCallback((ids: string[]) => {
+    setVisibleIds((prev) => {
+      const next = new Set(prev);
+      for (const id of ids) next.add(id);
+      return next;
+    });
+  }, []);
+
+  const clearVisible = React.useCallback(() => {
+    setVisibleIds(new Set());
+  }, []);
+
+  /* ---- Active vehicle (drives the right pane) ---- */
+  const [activeId, setActiveId] = React.useState<string | null>(null);
+  const [focusBump, setFocusBump] = React.useState(0);
+  const [focusedId, setFocusedId] = React.useState<string | null>(null);
+
+  const activeVehicle = React.useMemo(
+    () => vehicles.find((v) => v.id === activeId) ?? null,
+    [vehicles, activeId],
   );
 
-  const handleSelect = (id: string) => {
-    setSelectedId(id);
+  const handleActivate = React.useCallback((id: string) => {
+    setActiveId(id);
+    // Auto-show the active vehicle on the map — selecting in the list
+    // implies the user wants to see it.
+    setVisibleIds((prev) => {
+      if (prev.has(id)) return prev;
+      const next = new Set(prev);
+      next.add(id);
+      return next;
+    });
     if (!isDesktop) setMobileListOpen(false);
-  };
+  }, [isDesktop]);
 
-  const handleFocus = (id: string) => {
-    setSelectedId(id);
+  const handleFocus = React.useCallback((id: string) => {
+    setVisibleIds((prev) => {
+      if (prev.has(id)) return prev;
+      const next = new Set(prev);
+      next.add(id);
+      return next;
+    });
     setFocusedId(id);
     setFocusBump((b) => b + 1);
     if (!isDesktop) setMobileListOpen(false);
-  };
+  }, [isDesktop]);
 
-  /* -------- History range + load -------------------------------------- */
-  const [range, setRange] = React.useState(defaultCairoTodayRange);
+  /* ---- History ---- */
+  const [range, setRange] = React.useState(() => defaultCairoTodayRange());
   const [loadedRange, setLoadedRange] = React.useState<{
     vehicleId: string;
     from: Date;
     to: Date;
   } | null>(null);
 
-  // Reset the loaded history when the user picks a different vehicle —
-  // the range is per-vehicle, so a stale polyline from another vehicle
-  // would be misleading.
+  // Drop loaded history on vehicle change — the polyline belongs to a
+  // specific vehicle and another vehicle's range is irrelevant.
   React.useEffect(() => {
     setLoadedRange(null);
-  }, [selectedId]);
+  }, [activeId]);
 
-  const handleLoad = () => {
-    if (!selectedVehicle) return;
+  const handleLoad = React.useCallback(() => {
+    if (!activeVehicle) return;
     setLoadedRange({
-      vehicleId: selectedVehicle.id,
+      vehicleId: activeVehicle.id,
       from: range.from,
       to: range.to,
     });
-  };
+  }, [activeVehicle, range]);
 
   const historyArgs = loadedRange
-    ? {
-        vehicleId: loadedRange.vehicleId,
-        from: loadedRange.from,
-        to: loadedRange.to,
-      }
+    ? { vehicleId: loadedRange.vehicleId, from: loadedRange.from, to: loadedRange.to }
     : null;
 
   const historyQuery = useEtitHistoryRange(historyArgs);
@@ -113,7 +188,6 @@ export function EtitPage() {
   const history = historyQuery.data ?? null;
   const summary = summaryQuery.data ?? null;
 
-  /* -------- Decoded polyline ------------------------------------------ */
   const route = React.useMemo<Array<[number, number]>>(() => {
     if (!history?.geometry) return [];
     try {
@@ -123,55 +197,123 @@ export function EtitPage() {
     }
   }, [history?.geometry]);
 
-  /* -------- Playback state from the player ---------------------------- */
+  /* ---- Overlays ---- */
+  const [showStops, setShowStops] = React.useState(() =>
+    loadBool(STORAGE_SHOW_STOPS, true),
+  );
+  const [showIgnitions, setShowIgnitions] = React.useState(() =>
+    loadBool(STORAGE_SHOW_IGNITIONS, false),
+  );
+  React.useEffect(() => {
+    window.localStorage.setItem(STORAGE_SHOW_STOPS, showStops ? '1' : '0');
+  }, [showStops]);
+  React.useEffect(() => {
+    window.localStorage.setItem(STORAGE_SHOW_IGNITIONS, showIgnitions ? '1' : '0');
+  }, [showIgnitions]);
+
+  /* ---- Playback ---- */
   const [playbackState, setPlaybackState] = React.useState<PlaybackState | null>(null);
+  const [playbackPrev, setPlaybackPrev] = React.useState<{ lat: number; lng: number } | null>(null);
 
-  const handlePlaybackChange = React.useCallback((state: PlaybackState | null) => {
-    setPlaybackState(state);
-  }, []);
+  const handlePlaybackChange = React.useCallback(
+    (state: PlaybackState | null, prev: { lat: number; lng: number } | null) => {
+      setPlaybackState(state);
+      setPlaybackPrev(prev);
+    },
+    [],
+  );
 
-  /* -------- Errors ----------------------------------------------------- */
+  /* ---- Errors ---- */
   const error =
     vehiclesQuery.error ||
-    liveQuery.error ||
     historyQuery.error ||
-    summaryQuery.error;
+    summaryQuery.error ||
+    // Snapshot only counts as an error when SSE is also down — otherwise
+    // SSE is keeping us fresh and the snapshot back-off is intentional.
+    (!liveStream.connected && liveQuery.isError ? liveQuery.error : null);
 
-  /* -------- Render ----------------------------------------------------- */
+  /* ---- Map liveness pill ---- */
+  const liveLabel = liveStream.connected
+    ? t('etit.header.liveStream')
+    : liveQuery.isError
+      ? t('etit.header.liveOffline')
+      : t('etit.header.live');
+  const liveTone =
+    !liveStream.connected && liveQuery.isError
+      ? 'destructive'
+      : liveStream.connected
+        ? 'success'
+        : 'muted';
 
-  const vehicleList = (
+  const onMapCount = liveStatuses.filter((s) => visibleIds.has(s.id)).length;
+
+  /* ---- Renderable bits ---- */
+
+  const vehicleListNode = (
     <EtitVehicleList
       vehicles={vehicles}
       liveStatuses={liveStatuses}
-      selectedId={selectedId}
+      activeId={activeId}
+      visibleIds={visibleIds}
       loading={vehiclesQuery.isLoading}
-      onSelect={handleSelect}
+      onActivate={handleActivate}
+      onToggleVisible={toggleVisible}
+      onSetAllVisible={setAllVisible}
+      onClearVisible={clearVisible}
       onFocus={handleFocus}
       className="h-full w-full"
     />
   );
 
-  const onMapCount = liveStatuses.filter((s) => s.lat || s.lng).length;
+  const controlsNode = (
+    <EtitHistoryControls
+      vehicle={activeVehicle}
+      history={history}
+      summary={summary}
+      range={range}
+      onRangeChange={setRange}
+      onLoad={handleLoad}
+      loading={historyQuery.isFetching || summaryQuery.isFetching}
+      showStops={showStops}
+      onShowStopsChange={setShowStops}
+      showIgnitions={showIgnitions}
+      onShowIgnitionsChange={setShowIgnitions}
+    />
+  );
+
+  const playerNode = history && (
+    <EtitPlaybackPlayer
+      points={history.points}
+      stops={history.stops}
+      sensors={history.sensors}
+      onStateChange={handlePlaybackChange}
+    />
+  );
 
   return (
     <div className="flex h-full flex-col">
-      {/* Header strip — title + live status pill + mobile menu */}
-      <div className="flex shrink-0 items-center justify-between border-b bg-card px-4 py-2.5">
-        <div className="flex items-center gap-3">
+      {/* Header */}
+      <div className="flex shrink-0 items-center justify-between border-b bg-card px-4 py-3">
+        <div className="flex min-w-0 items-center gap-3">
           {!isDesktop && (
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8"
+              className="h-9 w-9"
               onClick={() => setMobileListOpen(true)}
               aria-label={t('etit.header.openVehicleList')}
             >
               <Menu className="h-4 w-4" />
             </Button>
           )}
-          <div>
-            <h1 className="text-base font-semibold leading-tight">{t('etit.header.title')}</h1>
-            <p className="text-[11px] text-muted-foreground">
+          <div className="hidden h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary sm:flex">
+            <Radar className="h-4 w-4" />
+          </div>
+          <div className="min-w-0">
+            <h1 className="truncate text-base font-semibold leading-tight md:text-lg">
+              {t('etit.header.title')}
+            </h1>
+            <p className="truncate text-[11px] text-muted-foreground">
               {t('etit.header.subtitle', {
                 vehicleCount: vehicles.length,
                 onMapCount,
@@ -179,32 +321,33 @@ export function EtitPage() {
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+
+        <div className="flex shrink-0 items-center gap-2">
           <span
-            className={
-              'inline-flex items-center gap-1 rounded-full px-2 py-0.5 ' +
-              (liveQuery.isError
-                ? 'bg-destructive/10 text-destructive'
-                : 'bg-success/10 text-success')
-            }
+            className={cn(
+              'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium',
+              liveTone === 'success' && 'bg-success/10 text-success',
+              liveTone === 'destructive' && 'bg-destructive/10 text-destructive',
+              liveTone === 'muted' && 'bg-muted text-muted-foreground',
+            )}
           >
-            <Activity className="h-3 w-3" />
-            {liveQuery.isError ? t('etit.header.liveOffline') : t('etit.header.live')}
+            {liveTone === 'destructive' ? (
+              <WifiOff className="h-3 w-3" />
+            ) : (
+              <Activity className={cn('h-3 w-3', liveTone === 'success' && 'animate-pulse')} />
+            )}
+            {liveLabel}
           </span>
         </div>
       </div>
 
-      {/* Error banner */}
+      {/* Error banner — flat, no nested card */}
       {error && (
-        <div className="shrink-0 border-b bg-destructive/5 px-4 py-2">
-          <Card className="border-destructive/30 bg-transparent shadow-none">
-            <CardContent className="flex items-start gap-2 p-2">
-              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
-              <p className="text-xs">
-                {extractErrorMessage(error, t('etit.errors.proxyUnreachable'))}
-              </p>
-            </CardContent>
-          </Card>
+        <div className="shrink-0 border-b border-destructive/20 bg-destructive/5 px-4 py-2">
+          <div className="flex items-start gap-2 text-xs text-destructive">
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+            <p>{extractErrorMessage(error, t('etit.errors.proxyUnreachable'))}</p>
+          </div>
         </div>
       )}
 
@@ -212,83 +355,147 @@ export function EtitPage() {
       <div className="flex min-h-0 flex-1">
         {/* Vehicle list — desktop sidebar */}
         {isDesktop && (
-          <div className="hidden h-full w-72 shrink-0 lg:block">{vehicleList}</div>
+          <div className="h-full w-72 shrink-0">{vehicleListNode}</div>
         )}
 
         {/* Vehicle list — mobile sheet */}
         {!isDesktop && (
           <Sheet open={mobileListOpen} onOpenChange={setMobileListOpen}>
             <SheetContent side="left" className="w-80 max-w-[85vw] p-0" hideCloseButton>
-              <div className="h-dvh">{vehicleList}</div>
+              <div className="flex h-dvh flex-col">
+                <div className="flex shrink-0 items-center justify-between border-b px-3 py-2.5">
+                  <span className="text-sm font-semibold">
+                    {t('etit.list.heading', { count: vehicles.length })}
+                  </span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setMobileListOpen(false)}
+                  >
+                    {t('common.close')}
+                  </Button>
+                </div>
+                <div className="min-h-0 flex-1">{vehicleListNode}</div>
+              </div>
             </SheetContent>
           </Sheet>
         )}
 
-        {/* Center — map */}
+        {/* Center column */}
         <div className="flex min-w-0 flex-1 flex-col">
+          {/* Map */}
           <div className="relative min-h-0 flex-1">
             <EtitMap
               vehicles={vehicles}
               liveStatuses={liveStatuses}
+              visibleIds={visibleIds}
               focusedVehicleId={focusedId}
+              focusBump={focusBump}
               route={route}
               stops={history?.stops ?? []}
               sensors={history?.sensors ?? []}
+              showStops={showStops}
+              showIgnitions={showIgnitions}
               playback={playbackState}
-              focusBump={focusBump}
+              playbackPrev={playbackPrev}
               height="100%"
               className="absolute inset-0"
             />
+
+            {/* Empty-state overlay — invites the user to pick something to show */}
+            {visibleIds.size === 0 && !historyQuery.isFetching && (
+              <div className="pointer-events-none absolute inset-0 flex items-center justify-center p-4">
+                <div className="pointer-events-auto rounded-xl border bg-card/95 px-4 py-3 text-center shadow-xl backdrop-blur-sm">
+                  <MapPinned className="mx-auto mb-2 h-6 w-6 text-muted-foreground" />
+                  <p className="text-sm font-medium">{t('etit.map.empty.title')}</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    {isDesktop
+                      ? t('etit.map.empty.descDesktop')
+                      : t('etit.map.empty.descMobile')}
+                  </p>
+                  {!isDesktop && (
+                    <Button
+                      size="sm"
+                      className="mt-3"
+                      onClick={() => setMobileListOpen(true)}
+                    >
+                      {t('etit.header.openVehicleList')}
+                    </Button>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
-          {/* Mobile-only: bottom controls strip. Desktop has the right pane. */}
+          {/* Mobile bottom: tab toggle */}
           {!isDesktop && (
-            <div className="shrink-0 space-y-2 border-t bg-background p-2">
-              <EtitHistoryControls
-                vehicle={selectedVehicle}
-                history={history}
-                summary={summary}
-                range={range}
-                onRangeChange={setRange}
-                onLoad={handleLoad}
-                loading={historyQuery.isFetching || summaryQuery.isFetching}
-              />
-              {history && (
-                <EtitPlaybackPlayer
-                  points={history.points}
-                  stops={history.stops}
-                  sensors={history.sensors}
-                  onStateChange={handlePlaybackChange}
+            <div className="shrink-0 border-t bg-background">
+              <div className="flex items-center justify-center gap-0.5 border-b bg-muted/30 p-1">
+                <MobileTabButton
+                  active={mobileTab === 'controls'}
+                  onClick={() => setMobileTab('controls')}
+                  label={t('etit.mobile.controls')}
                 />
-              )}
+                <MobileTabButton
+                  active={mobileTab === 'playback'}
+                  onClick={() => setMobileTab('playback')}
+                  label={t('etit.mobile.playback')}
+                  disabled={!history}
+                />
+              </div>
+              <div className="max-h-[42vh] overflow-y-auto p-2">
+                {mobileTab === 'controls' ? controlsNode : (playerNode ?? (
+                  <div className="rounded-lg border border-dashed bg-muted/20 p-4 text-center text-xs text-muted-foreground">
+                    {t('etit.player.empty')}
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>
 
         {/* Right pane — desktop only */}
         {isDesktop && (
-          <aside className="hidden h-full w-[360px] shrink-0 flex-col gap-3 overflow-y-auto border-s bg-background p-3 xl:flex">
-            <EtitHistoryControls
-              vehicle={selectedVehicle}
-              history={history}
-              summary={summary}
-              range={range}
-              onRangeChange={setRange}
-              onLoad={handleLoad}
-              loading={historyQuery.isFetching || summaryQuery.isFetching}
-            />
-            {history && (
-              <EtitPlaybackPlayer
-                points={history.points}
-                stops={history.stops}
-                sensors={history.sensors}
-                onStateChange={handlePlaybackChange}
-              />
-            )}
+          <aside className="flex h-full w-[360px] shrink-0 flex-col gap-3 overflow-y-auto border-s bg-background p-3">
+            {controlsNode}
+            {playerNode}
           </aside>
         )}
       </div>
     </div>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/* Mobile tab button                                                           */
+/* -------------------------------------------------------------------------- */
+
+function MobileTabButton({
+  active,
+  onClick,
+  label,
+  disabled,
+}: {
+  active: boolean;
+  onClick: () => void;
+  label: string;
+  disabled?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className={cn(
+        'inline-flex h-8 flex-1 items-center justify-center rounded text-xs font-medium transition-colors',
+        active
+          ? 'bg-background text-foreground shadow-sm'
+          : 'text-muted-foreground hover:text-foreground',
+        disabled && 'opacity-40',
+      )}
+    >
+      {label}
+    </button>
   );
 }
 
