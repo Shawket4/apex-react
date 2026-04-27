@@ -1,0 +1,4659 @@
+========================================
+FILE: src/shared/ui/draggable.tsx
+========================================
+import * as React from 'react';
+import { cn } from '@/shared/lib/cn';
+import { GripHorizontal } from 'lucide-react';
+
+interface DraggableProps {
+  children: React.ReactNode;
+  className?: string;
+  initialPos?: { x: number; y: number };
+}
+
+export function Draggable({ children, className, initialPos = { x: 0, y: 0 } }: DraggableProps) {
+  const [pos, setPos] = React.useState(initialPos);
+  const [dragging, setDragging] = React.useState(false);
+  const offsetRef = React.useRef({ x: 0, y: 0 });
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    // Only allow dragging via the handle (optional, but better UX)
+    // For now we allow dragging via anything except buttons/inputs
+    const target = e.target as HTMLElement;
+    if (target.closest('button') || target.closest('input')) return;
+
+    setDragging(true);
+    offsetRef.current = {
+      x: e.clientX - pos.x,
+      y: e.clientY - pos.y,
+    };
+  };
+
+  React.useEffect(() => {
+    if (!dragging) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      setPos({
+        x: e.clientX - offsetRef.current.x,
+        y: e.clientY - offsetRef.current.y,
+      });
+    };
+
+    const handleMouseUp = () => setDragging(false);
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [dragging]);
+
+  return (
+    <div
+      style={{
+        transform: `translate(${pos.x}px, ${pos.y}px)`,
+        cursor: dragging ? 'grabbing' : 'default',
+      }}
+      onMouseDown={handleMouseDown}
+      className={cn('pointer-events-auto transition-transform duration-75', className)}
+    >
+      <div className="absolute top-1 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-40 transition-opacity cursor-grab active:cursor-grabbing">
+        <GripHorizontal className="h-3 w-3" />
+      </div>
+      {children}
+    </div>
+  );
+}
+
+
+
+========================================
+FILE: src/shared/hooks/use-layout-store.ts
+========================================
+import { create } from 'zustand';
+
+interface LayoutState {
+  sidebarCollapsed: boolean;
+  setSidebarCollapsed: (collapsed: boolean) => void;
+  toggleSidebar: () => void;
+}
+
+export const useLayoutStore = create<LayoutState>((set) => ({
+  sidebarCollapsed: false,
+  setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
+  toggleSidebar: () => set((state) => ({ sidebarCollapsed: !state.sidebarCollapsed })),
+}));
+
+
+
+========================================
+FILE: src/shared/lib/maps/google-provider.tsx
+========================================
+import * as React from 'react';
+import { Locate, Layers } from 'lucide-react';
+import { setOptions } from '@googlemaps/js-api-loader';
+import { Button } from '@/shared/ui/button';
+import { cn } from '@/shared/lib/cn';
+import { buildMarkerSvg, markerSize } from './marker-svg';
+import type { MapMarker, MapViewProps } from './types';
+
+/* -------------------------------------------------------------------------- */
+/* Map styles                                                                  */
+/* -------------------------------------------------------------------------- */
+
+const darkMapStyle: google.maps.MapTypeStyle[] = [
+  { elementType: 'geometry', stylers: [{ color: '#1c2333' }] },
+  { elementType: 'labels.text.stroke', stylers: [{ color: '#1c2333' }] },
+  { elementType: 'labels.text.fill', stylers: [{ color: '#8892a4' }] },
+  { featureType: 'administrative.locality', elementType: 'labels.text.fill', stylers: [{ color: '#c9d1db' }] },
+  { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#283044' }] },
+  { featureType: 'road', elementType: 'geometry.stroke', stylers: [{ color: '#1a2030' }] },
+  { featureType: 'road', elementType: 'labels.text.fill', stylers: [{ color: '#6b7a90' }] },
+  { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#3d4f6e' }] },
+  { featureType: 'road.highway', elementType: 'geometry.stroke', stylers: [{ color: '#1a2030' }] },
+  { featureType: 'road.highway', elementType: 'labels.text.fill', stylers: [{ color: '#a0aec0' }] },
+  { featureType: 'transit', elementType: 'geometry', stylers: [{ color: '#222d40' }] },
+  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#0f1724' }] },
+  { featureType: 'water', elementType: 'labels.text.fill', stylers: [{ color: '#3d5166' }] },
+  { featureType: 'landscape.natural', elementType: 'geometry', stylers: [{ color: '#1a2638' }] },
+];
+
+const lightMapStyle: google.maps.MapTypeStyle[] = [
+  { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#f5f5f5' }] },
+  { featureType: 'road', elementType: 'geometry.stroke', stylers: [{ color: '#e0e0e0' }] },
+  { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#ffffff' }] },
+  { featureType: 'road.highway', elementType: 'geometry.stroke', stylers: [{ color: '#d6d6d6' }] },
+  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#d4e4f0' }] },
+  { featureType: 'landscape', elementType: 'geometry', stylers: [{ color: '#f8f8f8' }] },
+];
+
+/* -------------------------------------------------------------------------- */
+/* Info-window styles (idempotent injection)                                   */
+/* -------------------------------------------------------------------------- */
+
+function injectInfoWindowStyles() {
+  const styleId = 'gmaps-info-window-styles-v1';
+  if (typeof document === 'undefined' || document.getElementById(styleId)) return;
+  const style = document.createElement('style');
+  style.id = styleId;
+  style.textContent = `
+    .gm-style-iw-c {
+      padding: 0 !important;
+      border-radius: 12px !important;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.15), 0 1px 4px rgba(0,0,0,0.08) !important;
+      border: 1px solid rgba(0,0,0,0.07) !important;
+      overflow: hidden !important;
+    }
+    .dark .gm-style-iw-c {
+      background-color: #1e2535 !important;
+      border-color: rgba(255,255,255,0.07) !important;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.5) !important;
+    }
+    .dark .gm-style-iw-tc::after { background: #1e2535 !important; }
+    .gm-style-iw-d { overflow: hidden !important; padding: 0 !important; }
+    .gm-ui-hover-effect { top: 6px !important; right: 6px !important; opacity: 0.5 !important; }
+    .gm-ui-hover-effect:hover { opacity: 1 !important; }
+    .dark .gm-ui-hover-effect > span { background-color: #94a3b8 !important; }
+  `;
+  document.head.appendChild(style);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Loader                                                                      */
+/* -------------------------------------------------------------------------- */
+
+let loaderConfigured = false;
+function configureLoader() {
+  if (loaderConfigured) return;
+  const key = (import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string | undefined) ?? '';
+  setOptions({ key, v: 'weekly' });
+  loaderConfigured = true;
+}
+
+export function isGoogleMapsConfigured(): boolean {
+  return !!(import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string | undefined);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Smooth fly-to                                                               */
+/* -------------------------------------------------------------------------- */
+
+interface FlyToken { cancelled: boolean; rafId: number | null }
+
+function easeInOutCubic(t: number): number {
+  return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+}
+
+function smoothFlyTo(
+  map: google.maps.Map,
+  target: { lat: number; lng: number },
+  targetZoom: number,
+  durationMs = 800,
+): FlyToken {
+  const token: FlyToken = { cancelled: false, rafId: null };
+  const startCenter = map.getCenter();
+  const startZoom = map.getZoom() ?? 11;
+  if (!startCenter) {
+    map.setCenter(target);
+    map.setZoom(targetZoom);
+    return token;
+  }
+  const startLat = startCenter.lat();
+  const startLng = startCenter.lng();
+  const startTime = performance.now();
+  const hasMoveCamera =
+    typeof (map as unknown as { moveCamera?: unknown }).moveCamera === 'function';
+
+  const frame = (now: number) => {
+    if (token.cancelled) return;
+    const t = Math.min(1, (now - startTime) / durationMs);
+    const eased = easeInOutCubic(t);
+    const lat = startLat + (target.lat - startLat) * eased;
+    const lng = startLng + (target.lng - startLng) * eased;
+    const zoom = startZoom + (targetZoom - startZoom) * eased;
+    if (hasMoveCamera) {
+      (map as unknown as {
+        moveCamera: (opts: { center: { lat: number; lng: number }; zoom: number }) => void;
+      }).moveCamera({ center: { lat, lng }, zoom });
+    } else {
+      map.setCenter({ lat, lng });
+      map.setZoom(zoom);
+    }
+    if (t < 1) token.rafId = requestAnimationFrame(frame);
+  };
+
+  token.rafId = requestAnimationFrame(frame);
+  return token;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Helpers                                                                     */
+/* -------------------------------------------------------------------------- */
+
+function buildMarkerContent(m: MapMarker): string {
+  const rotation = m.kind === 'vehicle' ? m.heading ?? 0 : 0;
+  return buildMarkerSvg(m.color, `m-${m.id}`, m.kind || 'pin', rotation);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Component                                                                   */
+/* -------------------------------------------------------------------------- */
+
+interface MarkerEntry {
+  id: string;
+  marker: google.maps.Marker;
+  listeners: google.maps.MapsEventListener[];
+}
+
+export function GoogleMapView({
+  markers = [],
+  route = [],
+  centerFallback = [30.0444, 31.2357], // Cairo fallback
+  onMapClick,
+  onMarkerDragEnd,
+  className,
+}: MapViewProps) {
+  const containerRef = React.useRef<HTMLDivElement>(null);
+  const mapRef = React.useRef<google.maps.Map | null>(null);
+  const infoWindowRef = React.useRef<google.maps.InfoWindow | null>(null);
+
+  const markerEntriesRef = React.useRef<Map<string, MarkerEntry>>(new Map());
+  const polylinesRef = React.useRef<google.maps.Polyline[]>([]);
+  const mapListenersRef = React.useRef<google.maps.MapsEventListener[]>([]);
+  const flyTokenRef = React.useRef<FlyToken | null>(null);
+
+  const [isSatellite, setIsSatellite] = React.useState(false);
+
+  // Refs for callbacks to avoid re-running effects
+  const onMapClickRef = React.useRef(onMapClick);
+  const onMarkerDragEndRef = React.useRef(onMarkerDragEnd);
+  React.useEffect(() => { onMapClickRef.current = onMapClick; }, [onMapClick]);
+  React.useEffect(() => { onMarkerDragEndRef.current = onMarkerDragEnd; }, [onMarkerDragEnd]);
+
+  /* -------- Init once --------------------------------------------------- */
+
+  React.useEffect(() => {
+    if (!containerRef.current || mapRef.current) return;
+
+    let cancelled = false;
+    injectInfoWindowStyles();
+    configureLoader();
+
+    const initMap = async () => {
+      try {
+        const { importLibrary } = await import('@googlemaps/js-api-loader');
+        const [mapsLib] = await Promise.all([
+          importLibrary('maps') as Promise<google.maps.MapsLibrary>,
+          importLibrary('marker'),
+        ]);
+        if (cancelled || !containerRef.current) return;
+
+        const isDark = document.documentElement.classList.contains('dark');
+        const map = new mapsLib.Map(containerRef.current, {
+          center: { lat: centerFallback[0], lng: centerFallback[1] },
+          zoom: 11,
+          mapTypeId: google.maps.MapTypeId.ROADMAP,
+          styles: isDark ? darkMapStyle : lightMapStyle,
+          mapTypeControl: false,
+          streetViewControl: false,
+          fullscreenControl: false,
+          zoomControlOptions: { position: google.maps.ControlPosition.RIGHT_CENTER },
+          gestureHandling: 'greedy',
+          keyboardShortcuts: false,
+        });
+
+        mapRef.current = map;
+        infoWindowRef.current = new mapsLib.InfoWindow({ disableAutoPan: false });
+
+        const clickListener = map.addListener('click', (e: google.maps.MapMouseEvent) => {
+          if (!e.latLng) return;
+          onMapClickRef.current?.(e.latLng.lat(), e.latLng.lng());
+        });
+        mapListenersRef.current.push(clickListener);
+
+        const observer = new MutationObserver(() => {
+          if (!mapRef.current) return;
+          if (mapRef.current.getMapTypeId() !== google.maps.MapTypeId.ROADMAP) return;
+          const dark = document.documentElement.classList.contains('dark');
+          mapRef.current.setOptions({ styles: dark ? darkMapStyle : lightMapStyle });
+        });
+        observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+
+        syncMarkers();
+      } catch (err) {
+        console.error('[GoogleMapView] Failed to init map', err);
+      }
+    };
+
+    initMap();
+
+    return () => {
+      cancelled = true;
+      mapListenersRef.current.forEach((l) => google.maps.event.removeListener(l));
+      mapListenersRef.current = [];
+      if (flyTokenRef.current) {
+        flyTokenRef.current.cancelled = true;
+        if (flyTokenRef.current.rafId) cancelAnimationFrame(flyTokenRef.current.rafId);
+      }
+      if (infoWindowRef.current) {
+        infoWindowRef.current.close();
+        infoWindowRef.current = null;
+      }
+      mapRef.current = null;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  /* -------- Sync Markers + Polylines ------------------------------------ */
+
+  const syncMarkers = React.useCallback(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    const currentIds = new Set(markers.map((m) => m.id));
+
+    // 1. Remove deleted
+    for (const [id, entry] of markerEntriesRef.current.entries()) {
+      if (!currentIds.has(id)) {
+        entry.marker.setMap(null);
+        entry.listeners.forEach((l) => google.maps.event.removeListener(l));
+        markerEntriesRef.current.delete(id);
+      }
+    }
+
+    // 2. Add or update
+    for (const m of markers) {
+      let entry = markerEntriesRef.current.get(m.id);
+      const position = { lat: m.lat, lng: m.lng };
+
+      if (!entry) {
+        const marker = new google.maps.Marker({
+          position,
+          map,
+          title: m.title,
+          draggable: !!m.draggable,
+          icon: {
+            url: buildMarkerContent(m),
+            anchor: new google.maps.Point(markerSize(m.kind || 'pin').anchorX, markerSize(m.kind || 'pin').anchorY),
+          },
+        });
+
+        const listeners: google.maps.MapsEventListener[] = [];
+        if (m.popupHtml) {
+          listeners.push(
+            marker.addListener('click', () => {
+              if (infoWindowRef.current) {
+                infoWindowRef.current.setContent(m.popupHtml!);
+                infoWindowRef.current.open(map, marker);
+              }
+            }),
+          );
+        }
+        if (m.draggable) {
+          listeners.push(
+            marker.addListener('dragend', (e: google.maps.MapMouseEvent) => {
+              if (e.latLng) onMarkerDragEndRef.current?.(m.id, e.latLng.lat(), e.latLng.lng());
+            }),
+          );
+        }
+
+        entry = { id: m.id, marker, listeners };
+        markerEntriesRef.current.set(m.id, entry);
+      } else {
+        // Update existing
+        entry.marker.setPosition(position);
+        entry.marker.setIcon({
+          url: buildMarkerContent(m),
+          anchor: new google.maps.Point(markerSize(m.kind || 'pin').anchorX, markerSize(m.kind || 'pin').anchorY),
+        });
+      }
+    }
+
+    // 3. Sync Route Polylines
+    polylinesRef.current.forEach((p) => p.setMap(null));
+    polylinesRef.current = [];
+    if (route.length > 1) {
+      const path = route.map(([lat, lng]) => ({ lat, lng }));
+      const poly = new google.maps.Polyline({
+        path,
+        map,
+        strokeColor: '#3b82f6',
+        strokeOpacity: 0.8,
+        strokeWeight: 4,
+      });
+      polylinesRef.current.push(poly);
+    }
+  }, [markers, route]);
+
+  React.useEffect(() => {
+    syncMarkers();
+  }, [syncMarkers]);
+
+  /* -------- Fly-to logic ------------------------------------------------ */
+
+  React.useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    // A: Sentinel Focus (Priority)
+    const sentinel = markers.find((m) => m.id.startsWith('focus-sentinel-'));
+    if (sentinel) {
+      if (flyTokenRef.current) {
+        flyTokenRef.current.cancelled = true;
+        if (flyTokenRef.current.rafId) cancelAnimationFrame(flyTokenRef.current.rafId);
+      }
+      flyTokenRef.current = smoothFlyTo(map, { lat: sentinel.lat, lng: sentinel.lng }, 16);
+      return;
+    }
+
+    // B: Route Fit
+    if (route.length > 1) {
+      const bounds = new google.maps.LatLngBounds();
+      route.forEach(([lat, lng]) => bounds.extend({ lat, lng }));
+      map.fitBounds(bounds, { top: 100, bottom: 100, left: 100, right: 100 });
+    }
+  }, [markers, route]);
+
+  /* -------- Render ------------------------------------------------------ */
+
+  const toggleSatellite = () => {
+    const next = !isSatellite;
+    setIsSatellite(next);
+    mapRef.current?.setMapTypeId(
+      next ? google.maps.MapTypeId.HYBRID : google.maps.MapTypeId.ROADMAP,
+    );
+  };
+
+  const centerOnMarkers = () => {
+    const map = mapRef.current;
+    if (!map || markers.length === 0) return;
+    const bounds = new google.maps.LatLngBounds();
+    markers.forEach((m) => {
+      if (m.affectsBounds) bounds.extend({ lat: m.lat, lng: m.lng });
+    });
+    if (!bounds.isEmpty()) map.fitBounds(bounds, 40);
+  };
+
+  return (
+    <div className={cn('relative h-full w-full', className)}>
+      <div ref={containerRef} className="h-full w-full" />
+      
+      {/* Controls */}
+      <div className="absolute bottom-32 right-3 z-10 flex flex-col gap-2">
+        <Button
+          variant="secondary"
+          size="icon"
+          className="h-9 w-9 rounded-full shadow-lg"
+          onClick={centerOnMarkers}
+          title="Center on markers"
+        >
+          <Locate className="h-4 w-4" />
+        </Button>
+        <Button
+          variant={isSatellite ? 'default' : 'secondary'}
+          size="icon"
+          className="h-9 w-9 rounded-full shadow-lg"
+          onClick={toggleSatellite}
+          title="Toggle Hybrid"
+        >
+          <Layers className="h-4 w-4" />
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+
+
+========================================
+FILE: src/shared/lib/maps/marker-svg.ts
+========================================
+import type { MarkerKind } from './types';
+
+/**
+ * Build a marker SVG as a data URL.
+ *
+ * One factory, one visual language. Both Google and Leaflet render the
+ * same SVG, so a fallback transition between providers is invisible.
+ *
+ * Every <defs> id is suffixed from the caller-supplied `filterId` —
+ * multiple inline SVGs in one document with duplicate ids cause SVG to
+ * apply each def only to the first match (silent rendering bug).
+ */
+export function buildMarkerSvg(
+  color: string,
+  filterId: string,
+  kind: MarkerKind = 'pin',
+  heading = 0,
+): string {
+  const builder = BUILDERS[kind] ?? BUILDERS.pin;
+  const svg = builder(color, filterId, heading);
+  return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+}
+
+type Builder = (color: string, id: string, heading: number) => string;
+
+const BUILDERS: Record<MarkerKind, Builder> = {
+  pin: pinSvg,
+  vehicle: vehicleSvg,
+  stop: stopSvg,
+  'ignition-on': (c, id) => ignitionSvg(c, id, true),
+  'ignition-off': (c, id) => ignitionSvg(c, id, false),
+  'route-start': routeStartSvg,
+  'route-end': routeEndSvg,
+};
+
+/* -------------------------------------------------------------------------- */
+/* Shared visual ingredients                                                   */
+/*                                                                             */
+/* Centralising these is what gives the markers a coherent feel — every kind  */
+/* gets the same shadow recipe and the same top-light sheen.                  */
+/* -------------------------------------------------------------------------- */
+
+function shadowDef(id: string): string {
+  return `<filter id="${id}" x="-50%" y="-50%" width="200%" height="200%">
+    <feDropShadow dx="0" dy="1.4" stdDeviation="1.6" flood-color="#0b1620" flood-opacity="0.32"/>
+  </filter>`;
+}
+
+/** Top-light gradient. Layered over a flat fill it gives a "molded" feel. */
+function sheenDef(id: string): string {
+  return `<linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="white" stop-opacity="0.32"/>
+    <stop offset="55%" stop-color="white" stop-opacity="0"/>
+    <stop offset="100%" stop-color="black" stop-opacity="0.18"/>
+  </linearGradient>`;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Pin (teardrop, anchored at the tip)                                         */
+/* -------------------------------------------------------------------------- */
+
+function pinSvg(color: string, filterId: string): string {
+  const sId = `${filterId}-s`;
+  const gId = `${filterId}-g`;
+  const body =
+    'M13 1.5C6.65 1.5 1.5 6.65 1.5 13C1.5 21.5 13 32.5 13 32.5' +
+    'C13 32.5 24.5 21.5 24.5 13C24.5 6.65 19.35 1.5 13 1.5Z';
+  return `<svg width="26" height="34" viewBox="0 0 26 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>${shadowDef(sId)}${sheenDef(gId)}</defs>
+    <g filter="url(#${sId})">
+      <path d="${body}" fill="${color}"/>
+    </g>
+    <path d="${body}" fill="url(#${gId})"/>
+    <circle cx="13" cy="13" r="4.4" fill="white"/>
+  </svg>`;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Vehicle (teardrop pin with a truck diagram in the head)                     */
+/*                                                                             */
+/* Custom artwork from Illustrator. Anchor is the tip of the teardrop.        */
+/* The `heading` parameter is intentionally unused — the truck glyph is       */
+/* drawn upright regardless of vehicle direction.                             */
+/* -------------------------------------------------------------------------- */
+
+function vehicleSvg(color: string, filterId: string, _heading: number): string {
+  const sId = `${filterId}-s`;
+  // Teardrop pin body — has a circular hole cut out (evenodd) so the white
+  // circle behind shows through as the badge for the truck glyph.
+  const body =
+    'M21.29,53.05c-.39.28-.92.32-1.35.04-4.68-2.98-8.62-6.56-11.71-10.44' +
+    'C3.97,37.3,1.28,31.36.36,25.65c-.94-5.79-.06-11.37,2.82-15.9,' +
+    '1.14-1.79,2.59-3.42,4.36-4.83C11.61,1.68,16.26-.03,20.88,0' +
+    'c4.46.03,8.86,1.7,12.66,5.17,1.34,1.21,2.46,2.61,3.38,4.11,' +
+    '3.1,5.1,3.77,11.62,2.41,18.22-2.13,10.34-8.96,20.04-18.04,25.55h0Z' +
+    'M20,4.65c8.62,0,15.6,6.99,15.6,15.6s-6.99,15.6-15.6,15.6' +
+    '-15.6-6.99-15.6-15.6,6.99-15.6,15.6-15.6Z';
+  // Truck glyph that sits inside the white badge.
+  const truck =
+    'M28.27,22.39c-1.33,0-2.41,1.08-2.41,2.41,0,1.33,1.08,2.41,2.41,2.41,' +
+    '1.33,0,2.41-1.08,2.41-2.41,0,0,0,0,0,0,0-1.33-1.08-2.4-2.41-2.41Z' +
+    'M14.47,19.48v.71s0,.01,0,.02c.01.37.27.51.61.39.02,0,.04-.02.05-.03' +
+    '.86-.67,1.36-1.21,2.21-1.88h.01c.12-.1.18-.26.15-.42-.04-.12-.12-.23-.22-.3' +
+    'l-2.01-1.72c-.41-.32-.83-.26-.83.33v.65h-1.94c-.11,0-.2.09-.2.2' +
+    'v1.82c0,.11.09.2.2.2h1.97Z' +
+    'M12.03,23.04c.97-.97,2.54-.97,3.5,0,.97.97.97,2.54,0,3.5-.97.97-2.54.97-3.5,0' +
+    '-.47-.47-.73-1.1-.73-1.75,0-.66.26-1.29.73-1.75Z' +
+    'M26.74,16.04l-4.14-.02v-1.5c0-.35-.14-.69-.38-.94l-.02-.02' +
+    'c-.26-.26-.6-.4-.97-.41h-12.31c-.75,0-1.36.61-1.37,1.37v9.56' +
+    'c0,.37.15.72.41.98.25.27.6.42.96.42h1.26c.23,0,.41-.18.41-.41' +
+    's-.18-.41-.41-.41h-1.27c-.14,0-.27-.06-.37-.16-.11-.11-.17-.25-.17-.41' +
+    'v-9.58c0-.3.24-.54.54-.54h12.31c.14,0,.28.06.39.16l.02.02' +
+    'c.09.1.14.23.14.37v10.13h-4.27c-.23,0-.41.18-.41.41s.18.41.41.41' +
+    'h4.68c.22,0,.41-.18.41-.41v-.41h2.69c.16-3.7,5.47-4.21,6.01,0h1.17' +
+    'l-.15-1.56c-.24-2.66.25-2.17-2.21-3.06l-1.82-.7-1.53-3.3Z' +
+    'M25.81,17.05l-2.39-.02v2.31h3.6l-1.22-2.29h0Z' +
+    'M13.79,23.87c-.51,0-.93.41-.93.92,0,.51.41.93.92.93.51,0,.93-.41.93-.92' +
+    ',0,0,0,0,0,0,0-.51-.41-.92-.92-.92h0Z' +
+    'M28.27,23.87c-.51,0-.93.41-.93.92,0,.51.41.93.92.93.51,0,.93-.41.93-.92' +
+    ',0,0,0,0,0,0,0-.51-.41-.92-.92-.92Z';
+
+  return `<svg width="30" height="40" viewBox="0 0 40 53.28" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>${shadowDef(sId)}</defs>
+    <g filter="url(#${sId})">
+      <circle cx="19.97" cy="20.27" r="15.6" fill="white"/>
+      <path d="${body}" fill="${color}" fill-rule="evenodd"/>
+      <path d="${truck}" fill="#0f172a" fill-rule="evenodd"/>
+    </g>
+  </svg>`;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Stop (rounded square with pause glyph)                                      */
+/*                                                                             */
+/* Square instead of round so it reads differently from the vehicle marker    */
+/* at a glance — important when both kinds appear on the same map.            */
+/* -------------------------------------------------------------------------- */
+
+function stopSvg(color: string, filterId: string): string {
+  const sId = `${filterId}-s`;
+  const gId = `${filterId}-g`;
+  return `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>${shadowDef(sId)}${sheenDef(gId)}</defs>
+    <g filter="url(#${sId})">
+      <rect x="2" y="2" width="20" height="20" rx="6" fill="white"/>
+    </g>
+    <rect x="3.2" y="3.2" width="17.6" height="17.6" rx="4.8" fill="${color}"/>
+    <rect x="3.2" y="3.2" width="17.6" height="17.6" rx="4.8" fill="url(#${gId})"/>
+    <rect x="8" y="7.2" width="2.6" height="9.6" rx="0.9" fill="white"/>
+    <rect x="13.4" y="7.2" width="2.6" height="9.6" rx="0.9" fill="white"/>
+  </svg>`;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Ignition (universal power glyph; "off" gets a haloed slash)                 */
+/*                                                                             */
+/* The slash is drawn as a dark wide stroke beneath a thinner white stroke    */
+/* — gives it a visible "knocked-out" edge against the power symbol so it     */
+/* doesn't mush together with the glyph when colours don't contrast enough.   */
+/* -------------------------------------------------------------------------- */
+
+function ignitionSvg(color: string, filterId: string, on: boolean): string {
+  const sId = `${filterId}-s`;
+  const gId = `${filterId}-g`;
+  const slash = on
+    ? ''
+    : `<line x1="6" y1="6" x2="18" y2="18" stroke="#0b1620" stroke-opacity="0.55" stroke-width="3.6" stroke-linecap="round"/>
+       <line x1="6" y1="6" x2="18" y2="18" stroke="white" stroke-width="2" stroke-linecap="round"/>`;
+  return `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>${shadowDef(sId)}${sheenDef(gId)}</defs>
+    <g filter="url(#${sId})">
+      <circle cx="12" cy="12" r="10" fill="white"/>
+    </g>
+    <circle cx="12" cy="12" r="8.6" fill="${color}"/>
+    <circle cx="12" cy="12" r="8.6" fill="url(#${gId})"/>
+    <path d="M8.4 8.6 A 5 5 0 1 0 15.6 8.6"
+          stroke="white" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <line x1="12" y1="6.6" x2="12" y2="12.4"
+          stroke="white" stroke-width="2" stroke-linecap="round"/>
+    ${slash}
+  </svg>`;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Route endpoints                                                             */
+/*                                                                             */
+/* Pair design: start = play triangle, end = solid square. They mirror the    */
+/* media-player metaphor everyone already knows, and stay legible when both   */
+/* are dropped at zoomed-out map levels.                                      */
+/* -------------------------------------------------------------------------- */
+
+function routeStartSvg(color: string, filterId: string): string {
+  const sId = `${filterId}-s`;
+  const gId = `${filterId}-g`;
+  return `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>${shadowDef(sId)}${sheenDef(gId)}</defs>
+    <g filter="url(#${sId})">
+      <circle cx="14" cy="14" r="12" fill="white"/>
+    </g>
+    <circle cx="14" cy="14" r="10.6" fill="${color}"/>
+    <circle cx="14" cy="14" r="10.6" fill="url(#${gId})"/>
+    <path d="M11.5 9.5 L19 14 L11.5 18.5 Z"
+          fill="white" stroke="white" stroke-width="1.2" stroke-linejoin="round"/>
+  </svg>`;
+}
+
+function routeEndSvg(color: string, filterId: string): string {
+  const sId = `${filterId}-s`;
+  const gId = `${filterId}-g`;
+  return `<svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>${shadowDef(sId)}${sheenDef(gId)}</defs>
+    <g filter="url(#${sId})">
+      <circle cx="14" cy="14" r="12" fill="white"/>
+    </g>
+    <circle cx="14" cy="14" r="10.6" fill="${color}"/>
+    <circle cx="14" cy="14" r="10.6" fill="url(#${gId})"/>
+    <rect x="9.5" y="9.5" width="9" height="9" rx="1.4" fill="white"/>
+  </svg>`;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Per-kind sizing                                                             */
+/* -------------------------------------------------------------------------- */
+
+export interface MarkerSize {
+  width: number;
+  height: number;
+  anchorX: number;
+  anchorY: number;
+}
+
+const SIZES: Record<MarkerKind, MarkerSize> = {
+  pin: { width: 26, height: 34, anchorX: 13, anchorY: 34 },
+  vehicle: { width: 30, height: 40, anchorX: 15, anchorY: 40 },
+  stop: { width: 24, height: 24, anchorX: 12, anchorY: 12 },
+  'ignition-on': { width: 24, height: 24, anchorX: 12, anchorY: 12 },
+  'ignition-off': { width: 24, height: 24, anchorX: 12, anchorY: 12 },
+  'route-start': { width: 28, height: 28, anchorX: 14, anchorY: 14 },
+  'route-end': { width: 28, height: 28, anchorX: 14, anchorY: 14 },
+};
+
+export function markerSize(kind: MarkerKind = 'pin'): MarkerSize {
+  return SIZES[kind] ?? SIZES.pin;
+}
+
+/** @deprecated use `markerSize(kind)` instead. Retained for back-compat. */
+export const MARKER_SIZE = SIZES.pin;
+
+
+========================================
+FILE: src/shared/lib/maps/map-pool.ts
+========================================
+import { importLibrary } from '@googlemaps/js-api-loader';
+
+/**
+ * Singleton Map Pool
+ * 
+ * Google Maps charges per "Map Load" (new google.maps.Map). By reusing a 
+ * single instance and moving its container element between parent nodes, 
+ * we can reduce billing to a single load per session.
+ */
+
+let sharedMap: google.maps.Map | null = null;
+let sharedInfoWindow: google.maps.InfoWindow | null = null;
+let sharedContainer: HTMLDivElement | null = null;
+let isInitializing = false;
+const pendingRequests: Array<(res: { map: google.maps.Map; infoWindow: google.maps.InfoWindow }) => void> = [];
+
+export async function getSharedMap(parent: HTMLElement, options: google.maps.MapOptions): Promise<{ map: google.maps.Map; infoWindow: google.maps.InfoWindow }> {
+  if (sharedMap && sharedInfoWindow && sharedContainer) {
+    sharedMap.setOptions(options);
+    parent.appendChild(sharedContainer);
+    return { map: sharedMap, infoWindow: sharedInfoWindow };
+  }
+
+  if (isInitializing) {
+    return new Promise((resolve) => pendingRequests.push(resolve));
+  }
+
+  isInitializing = true;
+  try {
+    await Promise.all([
+      importLibrary('maps') as Promise<google.maps.MapsLibrary>,
+      importLibrary('marker'),
+    ]);
+
+    sharedContainer = document.createElement('div');
+    sharedContainer.style.width = '100%';
+    sharedContainer.style.height = '100%';
+    
+    sharedMap = new google.maps.Map(sharedContainer, options);
+    sharedInfoWindow = new google.maps.InfoWindow();
+
+    parent.appendChild(sharedContainer);
+
+    const result = { map: sharedMap, infoWindow: sharedInfoWindow };
+    while (pendingRequests.length > 0) {
+      pendingRequests.shift()!(result);
+    }
+    return result;
+  } finally {
+    isInitializing = false;
+  }
+}
+
+/**
+ * Detach the shared map container from its current parent.
+ */
+export function releaseSharedMap(map: google.maps.Map) {
+  if (map === sharedMap && sharedContainer && sharedContainer.parentElement) {
+    sharedContainer.parentElement.removeChild(sharedContainer);
+  }
+}
+
+
+
+========================================
+FILE: src/pages/etit/etit.tsx
+========================================
+import * as React from 'react';
+import { useTranslation } from 'react-i18next';
+import {
+  Activity,
+  AlertCircle,
+  Menu,
+  Radar,
+  Maximize2,
+  Minimize2,
+  X,
+  Clock,
+} from 'lucide-react';
+import { Button } from '@/shared/ui/button';
+import { Sheet, SheetContent } from '@/shared/ui/sheet';
+import { useIsDesktop } from '@/shared/hooks/use-media-query';
+import { extractErrorMessage } from '@/shared/api/errors';
+import { cn } from '@/shared/lib/cn';
+import {
+  decodePolyline,
+  type PlaybackState,
+} from '@/entities/etit-vehicle/playback';
+import {
+  useEtitFleet,
+  useEtitHistoryRange,
+  useEtitTripSummary,
+  etitKeys,
+} from '@/entities/etit-vehicle/queries';
+import { useQueryClient } from '@tanstack/react-query';
+import { EtitMap } from '@/widgets/etit-map/etit-map';
+import { EtitVehicleList } from '@/widgets/etit-vehicle-list/etit-vehicle-list';
+import { EtitVehicleHistorySelector } from '@/widgets/etit-vehicle-history-selector/etit-vehicle-history-selector';
+import { EtitFloatingStats } from '@/widgets/etit-history-controls/etit-floating-stats';
+import { EtitPlaybackPlayer } from '@/widgets/etit-playback-player/etit-playback-player';
+import { defaultCairoTodayRange } from '@/widgets/etit-datetime-range/etit-datetime-range';
+import { useLayoutStore } from '@/shared/hooks/use-layout-store';
+import { Draggable } from '@/shared/ui/draggable';
+
+/* -------------------------------------------------------------------------- */
+/* Persistence                                                                 */
+/* -------------------------------------------------------------------------- */
+
+const STORAGE_VISIBLE_IDS = 'etit_visible_ids';
+
+function loadVisibleIds(): Set<string> {
+  try {
+    const raw = window.localStorage.getItem(STORAGE_VISIBLE_IDS);
+    if (!raw) return new Set();
+    const arr = JSON.parse(raw);
+    return new Set(Array.isArray(arr) ? arr : []);
+  } catch {
+    return new Set();
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/* Component                                                                   */
+/* -------------------------------------------------------------------------- */
+
+type MobileTab = 'controls' | 'playback';
+
+function MobileTabButton({ 
+  active, 
+  onClick, 
+  label, 
+  icon: Icon,
+  disabled 
+}: { 
+  active: boolean; 
+  onClick: () => void; 
+  label: string; 
+  icon: React.ElementType;
+  disabled?: boolean 
+}) {
+  return (
+    <Button
+      variant="ghost"
+      className={cn(
+        "flex-1 flex-col gap-1 h-14 rounded-none transition-all", 
+        active ? "text-primary border-t-2 border-primary bg-primary/5" : "text-muted-foreground opacity-60"
+      )}
+      onClick={onClick}
+      disabled={disabled}
+    >
+      <Icon className={cn("h-5 w-5", active && "scale-110 transition-transform")} />
+      <span className="text-[10px] font-bold uppercase tracking-widest">{label}</span>
+    </Button>
+  );
+}
+
+export function EtitPage() {
+  const { t } = useTranslation();
+  const isDesktop = useIsDesktop();
+  const queryClient = useQueryClient();
+  const containerRef = React.useRef<HTMLDivElement>(null);
+  
+  const { setSidebarCollapsed } = useLayoutStore();
+  
+  const [mobileListOpen, setMobileListOpen] = React.useState(false);
+  const [mobileTab, setMobileTab] = React.useState<MobileTab>('controls');
+
+  /* ---- Server data ---- */
+  const fleetQuery = useEtitFleet();
+  const vehicles = fleetQuery.fleet;
+  const liveStatuses = fleetQuery.liveStatuses;
+
+  /* ---- Visibility ---- */
+  const [visibleIds, setVisibleIds] = React.useState<Set<string>>(() => loadVisibleIds());
+
+  React.useEffect(() => {
+    try {
+      window.localStorage.setItem(STORAGE_VISIBLE_IDS, JSON.stringify([...visibleIds]));
+    } catch { /* ignore */ }
+  }, [visibleIds]);
+
+  const toggleVisible = React.useCallback((id: string) => {
+    setVisibleIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const setAllVisible = React.useCallback((ids: string[]) => {
+    setVisibleIds((prev) => {
+      const next = new Set(prev);
+      for (const id of ids) next.add(id);
+      return next;
+    });
+  }, []);
+
+  const clearVisible = React.useCallback(() => {
+    setVisibleIds(new Set());
+  }, []);
+
+  /* ---- Selection & Layout ---- */
+  const [activeId, setActiveId] = React.useState<string | null>(null);
+  const [focusBump, setFocusBump] = React.useState(0);
+  const [focusedId, setFocusedId] = React.useState<string | null>(null);
+
+  const [isFullScreen, setIsFullScreen] = React.useState(false);
+  const [isResizing, setIsResizing] = React.useState(false);
+  const [leftCollapsed, setLeftCollapsed] = React.useState(false);
+  const [leftWidth, setLeftWidth] = React.useState(320);
+
+  React.useLayoutEffect(() => {
+    if (typeof window !== 'undefined' && window.innerWidth < 1280) {
+      setLeftCollapsed(true);
+    }
+  }, []);
+
+  const activeVehicle = React.useMemo(
+    () => vehicles.find((v) => v.id === activeId) ?? null,
+    [vehicles, activeId],
+  );
+
+  const handleActivate = React.useCallback((id: string) => {
+    setActiveId(id);
+    setVisibleIds((prev) => {
+      if (prev.has(id)) return prev;
+      const next = new Set(prev);
+      next.add(id);
+      return next;
+    });
+    if (!isDesktop) setMobileListOpen(true);
+  }, [isDesktop]);
+
+  const handleFocus = React.useCallback((id: string) => {
+    setVisibleIds((prev) => {
+      if (prev.has(id)) return prev;
+      const next = new Set(prev);
+      next.add(id);
+      return next;
+    });
+    setFocusedId(id);
+    setFocusBump((b) => b + 1);
+    if (!isDesktop) setMobileListOpen(false);
+  }, [isDesktop]);
+
+  /* ---- Fullscreen ---- */
+  const toggleFullScreen = React.useCallback(async () => {
+    if (!containerRef.current) return;
+    if (!document.fullscreenElement) {
+      try { await containerRef.current.requestFullscreen(); setIsFullScreen(true); } 
+      catch (err) { console.error(err); }
+    } else {
+      try { await document.exitFullscreen(); setIsFullScreen(false); } 
+      catch (err) { console.error(err); }
+    }
+  }, []);
+
+  React.useEffect(() => {
+    const h = () => setIsFullScreen(!!document.fullscreenElement);
+    document.addEventListener('fullscreenchange', h);
+    return () => document.removeEventListener('fullscreenchange', h);
+  }, []);
+
+  /* ---- History range ---- */
+  const [range, setRange] = React.useState(defaultCairoTodayRange());
+  const [loadedRange, setLoadedRange] = React.useState<{ from: Date; to: Date; refresh?: boolean } | null>(null);
+
+  const historyQuery = useEtitHistoryRange(
+    activeId && loadedRange ? { vehicleId: activeId, ...loadedRange } : null,
+  );
+  const summaryQuery = useEtitTripSummary(
+    activeId && loadedRange ? { vehicleId: activeId, ...loadedRange } : null,
+  );
+
+  const handleLoadHistory = React.useCallback((refresh?: boolean) => {
+    setLoadedRange({ ...range, refresh });
+  }, [range]);
+
+  const clearHistory = React.useCallback(() => {
+    setLoadedRange(null);
+    if (activeId) {
+      queryClient.removeQueries({ queryKey: etitKeys.historyRange(activeId, '', '') });
+      queryClient.removeQueries({ queryKey: etitKeys.summary(activeId, '', '') });
+    }
+  }, [activeId, queryClient]);
+
+  /* ---- Auto-collapse ---- */
+  React.useEffect(() => {
+    if (loadedRange && isDesktop) {
+      setLeftCollapsed(true);
+      setSidebarCollapsed(true);
+    }
+  }, [loadedRange, isDesktop, setSidebarCollapsed]);
+
+  /* ---- Playback ---- */
+  const [showStops, setShowStops] = React.useState(true);
+  const [showIgnitions, setShowIgnitions] = React.useState(true);
+  const [playbackState, setPlaybackState] = React.useState<PlaybackState | null>(null);
+  const [playbackPrev, setPlaybackPrev] = React.useState<{ lat: number; lng: number } | null>(null);
+
+  const handlePlaybackChange = React.useCallback(
+    (state: PlaybackState | null, prev: { lat: number; lng: number } | null) => {
+      setPlaybackState(state);
+      setPlaybackPrev(prev);
+    },
+    [],
+  );
+
+  /* ---- Errors & Status ---- */
+  const error = fleetQuery.error || historyQuery.error || summaryQuery.error;
+  const liveLabel = fleetQuery.liveConnected ? t('common.refreshing') : t('common.loading');
+  const liveTone = fleetQuery.liveConnected ? 'success' : 'muted';
+
+  const effectiveVisibleIds = React.useMemo(() => {
+    if (loadedRange) return new Set<string>();
+    return visibleIds;
+  }, [loadedRange, visibleIds]);
+
+  const onMapCount = React.useMemo(() => {
+    return liveStatuses.filter(s => visibleIds.has(s.id)).length;
+  }, [liveStatuses, visibleIds]);
+
+  /* ---- Nodes ---- */
+
+  const vehicleList = (
+    <EtitVehicleList
+      vehicles={vehicles}
+      liveStatuses={liveStatuses}
+      activeId={activeId}
+      visibleIds={visibleIds}
+      loading={fleetQuery.isLoading}
+      onActivate={handleActivate}
+      onToggleVisible={toggleVisible}
+      onSetAllVisible={setAllVisible}
+      onClearVisible={clearVisible}
+      onFocus={handleFocus}
+      className="h-full w-full"
+    />
+  );
+
+  const vehicleSelector = activeVehicle && (
+    <EtitVehicleHistorySelector
+      vehicle={activeVehicle}
+      range={range}
+      onRangeChange={setRange}
+      onLoad={handleLoadHistory}
+      onBack={() => setActiveId(null)}
+      onClearHistory={clearHistory}
+      isHistoryLoaded={!!loadedRange}
+      loading={historyQuery.isLoading || summaryQuery.isLoading}
+      className="h-full w-full"
+    />
+  );
+
+  const floatingStatsNode = (
+    <EtitFloatingStats
+      summary={summaryQuery.data ?? null}
+      showStops={showStops}
+      onShowStopsChange={setShowStops}
+      showIgnitions={showIgnitions}
+      onShowIgnitionsChange={setShowIgnitions}
+    />
+  );
+
+  const playbackPlayerNode = (
+    <EtitPlaybackPlayer
+      points={historyQuery.data?.points ?? []}
+      stops={historyQuery.data?.stops ?? []}
+      sensors={historyQuery.data?.sensors ?? []}
+      onStateChange={handlePlaybackChange}
+      className="border-none bg-transparent"
+    />
+  );
+
+  return (
+    <div ref={containerRef} className="flex h-full flex-col bg-background">
+      {/* Header */}
+      {!isFullScreen && (
+        <header className="flex h-14 shrink-0 items-center justify-between border-b bg-card/80 px-4 backdrop-blur-md z-[50]">
+          <div className="flex items-center gap-3">
+            {!isDesktop && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-9 w-9"
+                onClick={() => setMobileListOpen(true)}
+              >
+                <Menu className="h-5 w-5" />
+              </Button>
+            )}
+            <div className="flex flex-col">
+              <h1 className="text-base font-bold tracking-tight">{t('nav.etit')}</h1>
+              <div className="flex items-center gap-2 text-[10px] text-muted-foreground font-medium">
+                <span className="flex items-center gap-1">
+                  <Radar className="h-2.5 w-2.5 text-primary" />
+                  {t('etit.list.shownOnMap', { shown: onMapCount, total: vehicles.length })}
+                </span>
+                <span className="flex items-center gap-1">
+                  <div className={cn("h-1.5 w-1.5 rounded-full", liveTone === 'success' ? 'bg-success animate-pulse' : 'bg-muted')} />
+                  {liveLabel}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {error && (
+              <div className="flex items-center gap-2 rounded-full bg-destructive/10 px-3 py-1 text-xs font-medium text-destructive">
+                <AlertCircle className="h-3 w-3" />
+                <span className="max-w-[140px] truncate">{extractErrorMessage(error)}</span>
+              </div>
+            )}
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-9 w-9 rounded-full"
+              onClick={toggleFullScreen}
+            >
+              {isFullScreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+            </Button>
+          </div>
+        </header>
+      )}
+
+      <div className="flex min-h-0 flex-1 overflow-hidden">
+        {isDesktop && !isFullScreen && (
+          <div 
+            className={cn("relative flex bg-card border-e", !isResizing && "transition-all duration-300 ease-in-out", leftCollapsed ? "w-0" : "")}
+            style={{ width: leftCollapsed ? 0 : leftWidth }}
+          >
+            {activeId ? vehicleSelector : vehicleList}
+            {!leftCollapsed && (
+              <div
+                className={cn("absolute -right-1 top-0 bottom-0 z-50 w-2 cursor-col-resize group/resizer", isResizing && "bg-primary/40")}
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  setIsResizing(true);
+                  const startX = e.clientX;
+                  const startWidth = leftWidth;
+                  const move = (me: MouseEvent) => setLeftWidth(Math.max(260, Math.min(500, startWidth + (me.clientX - startX))));
+                  const up = () => { setIsResizing(false); document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up); };
+                  document.addEventListener('mousemove', move);
+                  document.addEventListener('mouseup', up);
+                }}
+              >
+                <div className="absolute inset-y-0 left-1/2 w-0.5 -translate-x-1/2 bg-border group-hover/resizer:bg-primary/50 transition-colors" />
+              </div>
+            )}
+          </div>
+        )}
+
+        {!isDesktop && (
+          <Sheet open={mobileListOpen} onOpenChange={setMobileListOpen}>
+            <SheetContent side="left" className="w-[320px] p-0">
+              {activeId ? vehicleSelector : (
+                <div className="flex h-full flex-col">
+                  <div className="flex h-14 items-center justify-between border-b px-4">
+                    <span className="text-sm font-bold uppercase tracking-widest">{t('etit.list.heading', { count: vehicles.length })}</span>
+                    <Button variant="ghost" size="icon" onClick={() => setMobileListOpen(false)}><X className="h-4 w-4" /></Button>
+                  </div>
+                  <div className="min-h-0 flex-1">{vehicleList}</div>
+                </div>
+              )}
+            </SheetContent>
+          </Sheet>
+        )}
+
+        <div className="relative min-w-0 flex-1">
+          <EtitMap
+            vehicles={vehicles}
+            liveStatuses={liveStatuses}
+            visibleIds={effectiveVisibleIds}
+            activeVehicleId={activeId}
+            focusedVehicleId={focusedId}
+            focusBump={focusBump}
+            route={historyQuery.data ? decodePolyline(historyQuery.data.geometry) : []}
+            stops={historyQuery.data?.stops}
+            sensors={historyQuery.data?.sensors}
+            showStops={showStops}
+            showIgnitions={showIgnitions}
+            playback={playbackState}
+            playbackPrev={playbackPrev}
+            height="100%"
+          />
+
+          {loadedRange && (
+            <div className="absolute inset-x-0 top-6 z-[1000] pointer-events-none flex justify-center px-4">
+              <Draggable className="group relative">
+                <div className="pointer-events-auto flex flex-col gap-1 w-full max-w-2xl bg-slate-950/90 backdrop-blur-xl rounded-xl shadow-2xl border border-white/20 p-1.5 transition-all hover:border-white/40">
+                  <div className="flex items-center justify-between px-2 pt-0.5">
+                    <div className="flex items-center gap-2">
+                      <Radar className="h-3.5 w-3.5 text-primary animate-pulse" />
+                      <span className="text-[10px] font-black uppercase tracking-widest text-white/90">{activeVehicle?.plate}</span>
+                    </div>
+                    <Button size="icon" variant="ghost" className="h-5 w-5 rounded-md hover:bg-destructive/20 hover:text-destructive text-white/40" onClick={clearHistory}>
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                  {playbackPlayerNode}
+                </div>
+              </Draggable>
+            </div>
+          )}
+
+          {loadedRange && isDesktop && (
+            <div className="absolute right-6 top-24 z-[1000] pointer-events-none">
+              <Draggable className="group relative">
+                {floatingStatsNode}
+              </Draggable>
+            </div>
+          )}
+
+          {(historyQuery.isLoading || summaryQuery.isLoading) && (
+            <div className="absolute inset-0 z-[1100] flex items-center justify-center bg-background/20 backdrop-blur-sm">
+              <div className="flex flex-col items-center gap-3 rounded-2xl bg-background/80 p-8 shadow-2xl border border-white/10">
+                <Radar className="h-10 w-10 text-primary animate-ping" />
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground animate-pulse">{t('etit.loadingHistory')}</span>
+              </div>
+            </div>
+          )}
+
+          <div className="absolute right-3 top-3 z-20 flex flex-col gap-2">
+            {!loadedRange && (
+              <Button size="icon" variant="outline" className="h-9 w-9 rounded-full shadow-lg bg-background/80 backdrop-blur-sm" onClick={toggleFullScreen}>
+                {isFullScreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+              </Button>
+            )}
+          </div>
+
+          <div className="absolute left-3 top-3 z-20 flex flex-col gap-2">
+            {isDesktop && !isFullScreen && (
+              <Button size="icon" variant={leftCollapsed ? 'secondary' : 'default'} className="h-9 w-9 rounded-full shadow-lg" onClick={() => setLeftCollapsed(!leftCollapsed)}>
+                <Menu className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+
+          {!isDesktop && !isFullScreen && loadedRange && (
+            <div className="absolute inset-x-0 bottom-0 z-[1000] border-t bg-background/80 backdrop-blur-md shadow-[0_-4px_12px_rgba(0,0,0,0.05)]">
+              <div className="flex items-center justify-around">
+                <MobileTabButton active={mobileTab === 'controls'} onClick={() => setMobileTab('controls')} label={t('etit.mobile.controls')} icon={Activity} />
+                <MobileTabButton active={mobileTab === 'playback'} onClick={() => setMobileTab('playback')} label={t('etit.mobile.playback')} icon={Clock} />
+              </div>
+              <div className="max-h-[45vh] overflow-y-auto p-4 bg-muted/5">
+                {mobileTab === 'controls' ? floatingStatsNode : playbackPlayerNode}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default EtitPage;
+
+
+
+========================================
+FILE: src/widgets/etit-map/etit-map.tsx
+========================================
+import * as React from 'react';
+import { useTranslation } from 'react-i18next';
+import { MapView } from '@/shared/ui/map-view';
+import { DEFAULT_MAP_CENTER, isValidCoordinate } from '@/shared/lib/coords';
+import type { MapMarker } from '@/shared/lib/maps/types';
+import { formatCairo } from '@/entities/etit-vehicle/cairo';
+import {
+  classifyStatus,
+  ETIT_STATUS_COLOR,
+  type EtitLiveStatus,
+  type EtitSensorEvent,
+  type EtitStop,
+  type EtitVehicle,
+} from '@/entities/etit-vehicle/schemas';
+import type { PlaybackState } from '@/entities/etit-vehicle/playback';
+
+/* -------------------------------------------------------------------------- */
+/* Marker palette                                                              */
+/* -------------------------------------------------------------------------- */
+
+const PLAYBACK_NORMAL = '#2563EB';
+const PLAYBACK_SPEEDING = '#DC2626';
+const STOP_COLOR = '#9333EA';
+const IGNITION_ON_COLOR = '#16A34A';
+const IGNITION_OFF_COLOR = '#64748B';
+
+/* -------------------------------------------------------------------------- */
+/* Sensor classification                                                       */
+/*                                                                             *
+ * The proxy relays the upstream's sensor event names verbatim. We classify   *
+ * by substring match on the localized + raw type name; anything that's      *
+ * neither ignition-on nor ignition-off is treated as a generic event and    *
+ * skipped (we don't want to render door/temperature/odometer sensors with  *
+ * an ignition icon).                                                        *
+ * -------------------------------------------------------------------------- */
+
+type IgnitionKind = 'ignition-on' | 'ignition-off' | null;
+
+function classifySensor(name: string): IgnitionKind {
+  const s = name.toLowerCase();
+  if (s.includes('ignition off') || s.includes('engine off') || s.includes('تشغيل المحرك')) {
+    // Some Arabic feeds label the off event ambiguously — fall through.
+  }
+  if (s.includes('off') || s.includes('إيقاف')) return 'ignition-off';
+  if (s.includes('on') || s.includes('تشغيل')) return 'ignition-on';
+  return null;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Heading interpolation for the playback marker                               */
+/* -------------------------------------------------------------------------- */
+
+function bearing(a: { lat: number; lng: number }, b: { lat: number; lng: number }): number {
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const toDeg = (r: number) => (r * 180) / Math.PI;
+  const dLng = toRad(b.lng - a.lng);
+  const lat1 = toRad(a.lat);
+  const lat2 = toRad(b.lat);
+  const y = Math.sin(dLng) * Math.cos(lat2);
+  const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng);
+  return (toDeg(Math.atan2(y, x)) + 360) % 360;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Props                                                                       */
+/* -------------------------------------------------------------------------- */
+
+export interface EtitMapProps {
+  vehicles: EtitVehicle[];
+  liveStatuses: EtitLiveStatus[];
+  /** Vehicles to render as markers on the map (multi-select from the list). */
+  visibleIds: Set<string>;
+  /** Optional: vehicle whose route is currently being investigated. */
+  activeVehicleId?: string | null;
+  /** Optional: vehicle to camera-fly to when `focusBump` increments. */
+  focusedVehicleId?: string | null;
+  /** Bump this to re-focus the camera on the focused vehicle. */
+  focusBump?: number;
+  /** Decoded polyline for the loaded history range. */
+  route?: Array<[number, number]>;
+  /** Stops — rendered as purple stop badges when `showStops` is true. */
+  stops?: EtitStop[];
+  /** Sensor events — rendered as ignition badges when `showIgnitions` is true. */
+  sensors?: EtitSensorEvent[];
+  /** Conditional overlays. */
+  showStops?: boolean;
+  showIgnitions?: boolean;
+  /** Playback marker — rendered above all others when supplied. */
+  playback?: PlaybackState | null;
+  /** Optional previous playback state for heading interpolation. */
+  playbackPrev?: { lat: number; lng: number } | null;
+  className?: string;
+  height?: number | string;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Component                                                                   */
+/* -------------------------------------------------------------------------- */
+
+function EtitMapBase({
+  vehicles,
+  liveStatuses,
+  visibleIds,
+  activeVehicleId = null,
+  focusedVehicleId = null,
+  focusBump = 0,
+  route = [],
+  stops = [],
+  sensors = [],
+  showStops = true,
+  showIgnitions = false,
+  playback = null,
+  playbackPrev = null,
+  className,
+  height = 600,
+}: EtitMapProps) {
+  const { t } = useTranslation();
+
+  const plateById = React.useMemo(() => {
+    const m = new Map<string, string>();
+    for (const v of vehicles) {
+      if (v.plate) m.set(v.id, v.plate);
+      else if (v.codename) m.set(v.id, v.codename);
+    }
+    return m;
+  }, [vehicles]);
+
+  const labels = React.useMemo(
+    () => ({
+      speed: t('etit.map.popup.speed'),
+      lastSeen: t('etit.map.popup.lastSeen'),
+      from: t('etit.map.popup.from'),
+      to: t('etit.map.popup.to'),
+      time: t('etit.map.popup.time'),
+      limit: t('etit.map.popup.limit'),
+      stopHeading: t('etit.map.popup.stopHeading'),
+      unknownLocation: t('etit.map.popup.unknownLocation'),
+      playbackHeading: t('etit.map.popup.playback'),
+      kmh: t('etit.units.kmh'),
+    }),
+    [t],
+  );
+
+  /* -------- Camera focus via fingerprint sentinel ----------------------- */
+  /*
+   * The map only refits when its bounds fingerprint changes. To force a
+   * re-focus when the user clicks a crosshair (even on the same vehicle),
+   * we mix the `focusBump` into a sentinel marker id that has zero size
+   * and `affectsBounds: true`. The fingerprint changes → fitBounds runs.
+   */
+  const focusSentinel = React.useMemo<MapMarker | null>(() => {
+    if (!focusedVehicleId) return null;
+    const live = liveStatuses.find((s) => s.id === focusedVehicleId);
+    if (!live) return null;
+    if (!isValidCoordinate(live.lat, live.lng)) return null;
+    return {
+      id: `focus-sentinel-${focusBump}`,
+      lat: live.lat,
+      lng: live.lng,
+      color: 'transparent',
+      kind: 'pin',
+      title: '',
+      // When focusing, this sentinel should be the ONLY thing affecting bounds
+      // if we want a clean snap-to-vehicle. 
+      affectsBounds: true,
+    };
+  }, [focusedVehicleId, focusBump, liveStatuses]);
+
+  /* -------- Vehicle markers (only the ones the user toggled on) -------- */
+
+  const markers = React.useMemo<MapMarker[]>(() => {
+    const out: MapMarker[] = [];
+
+    for (const s of liveStatuses) {
+      if (!visibleIds.has(s.id)) continue;
+      if (!isValidCoordinate(s.lat, s.lng)) continue;
+
+      // When a route is displayed, the "live" marker for the active vehicle 
+      // (the one the route belongs to) is often confusing.
+      if (route.length > 0 && s.id === activeVehicleId) continue;
+
+      const group = classifyStatus(s.status);
+      const plate = plateById.get(s.id) ?? s.plate ?? s.id;
+      const heading =
+        typeof (s as { heading?: number }).heading === 'number'
+          ? ((s as { heading?: number }).heading ?? 0)
+          : 0;
+      out.push({
+        id: `live-${s.id}`,
+        lat: s.lat,
+        lng: s.lng,
+        color: ETIT_STATUS_COLOR[group],
+        kind: 'vehicle',
+        heading,
+        // If we are focusing, we suppress other markers' contribution to bounds
+        // so the camera snaps tightly to the sentinel.
+        affectsBounds: !focusSentinel,
+        title: plate,
+        popupHtml: buildLivePopup({
+          plate,
+          statusLabel: s.statusLabel,
+          speed: s.speed,
+          timestamp: s.timestamp,
+          event: s.event ?? null,
+          color: ETIT_STATUS_COLOR[group],
+          labels,
+        }),
+      });
+    }
+
+    // Route endpoints
+    if (route.length > 0) {
+      out.push({
+        id: 'route-start',
+        lat: route[0][0],
+        lng: route[0][1],
+        color: '#16A34A',
+        kind: 'route-start',
+        affectsBounds: !focusSentinel,
+      });
+      out.push({
+        id: 'route-end',
+        lat: route[route.length - 1][0],
+        lng: route[route.length - 1][1],
+        color: '#DC2626',
+        kind: 'route-end',
+        affectsBounds: !focusSentinel,
+      });
+    }
+
+    // Stops
+    if (showStops) {
+      for (let i = 0; i < stops.length; i++) {
+        const s = stops[i];
+        if (!isValidCoordinate(s.lat, s.lng)) continue;
+        out.push({
+          id: `stop-${i}`,
+          lat: s.lat,
+          lng: s.lng,
+          color: STOP_COLOR,
+          kind: 'stop',
+          affectsBounds: !focusSentinel,
+          title: `${labels.stopHeading} · ${s.duration}`,
+          popupHtml: buildStopPopup(s, labels),
+        });
+      }
+    }
+
+    // Sensor events (ignition only)
+    if (showIgnitions) {
+      for (let i = 0; i < sensors.length; i++) {
+        const s = sensors[i];
+        if (!isValidCoordinate(s.lat, s.lng)) continue;
+        const kind = classifySensor(s.typeName);
+        if (!kind) continue;
+        out.push({
+          id: `sensor-${i}`,
+          lat: s.lat,
+          lng: s.lng,
+          color: kind === 'ignition-on' ? IGNITION_ON_COLOR : IGNITION_OFF_COLOR,
+          kind,
+          affectsBounds: !focusSentinel,
+          title: s.typeName,
+          popupHtml: buildSensorPopup(s),
+        });
+      }
+    }
+
+    // Playback marker — never affects bounds, never sorts into auto-fit.
+    if (playback) {
+      const heading = playbackPrev
+        ? bearing(playbackPrev, { lat: playback.lat, lng: playback.lng })
+        : 0;
+      out.push({
+        id: 'playback-current',
+        lat: playback.lat,
+        lng: playback.lng,
+        color: playback.speeding ? PLAYBACK_SPEEDING : PLAYBACK_NORMAL,
+        kind: 'vehicle',
+        heading,
+        affectsBounds: false,
+        title: `${Math.round(playback.speed)} ${labels.kmh} · ${formatCairo(playback.timestamp, 'time')}`,
+        popupHtml: buildPlaybackPopup(playback, labels),
+      });
+    }
+
+    if (focusSentinel) out.push(focusSentinel);
+
+    return out;
+  }, [
+    liveStatuses,
+    visibleIds,
+    plateById,
+    showStops,
+    stops,
+    showIgnitions,
+    sensors,
+    playback,
+    playbackPrev,
+    focusSentinel,
+    labels,
+  ]);
+
+  const centerFallback = React.useMemo<[number, number]>(() => {
+    // If we have a route, the user is likely investigating it; center on start.
+    if (route.length > 0) return route[0];
+    if (markers.length > 0) return [markers[0].lat, markers[0].lng];
+    return DEFAULT_MAP_CENTER;
+  }, [markers, route]);
+
+  return (
+    <MapView
+      markers={markers}
+      route={route}
+      suppressRoute={route.length === 0}
+      centerFallback={centerFallback}
+      className={className}
+      height={height}
+      liveUpdates
+    />
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/* Popup builders                                                              */
+/* -------------------------------------------------------------------------- */
+
+interface PopupLabels {
+  speed: string;
+  lastSeen: string;
+  from: string;
+  to: string;
+  time: string;
+  limit: string;
+  stopHeading: string;
+  unknownLocation: string;
+  playbackHeading: string;
+  kmh: string;
+}
+
+interface LivePopupArgs {
+  plate: string;
+  statusLabel: string;
+  speed: number;
+  timestamp: Date | null;
+  event: string | null;
+  color: string;
+  labels: PopupLabels;
+}
+
+function buildLivePopup({
+  plate,
+  statusLabel,
+  speed,
+  timestamp,
+  event,
+  color,
+  labels,
+}: LivePopupArgs): string {
+  const time = timestamp ? formatCairo(timestamp, 'datetime') : '—';
+  return `
+    <div style="padding:14px 14px 12px;min-width:200px;font-family:inherit">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+        <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${color}"></span>
+        <span style="font-size:13px;font-weight:600">${escapeHtml(plate)}</span>
+      </div>
+      <div style="font-size:11px;color:#71717a;margin-bottom:8px">${escapeHtml(statusLabel)}</div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:#52525b">
+        <span>${escapeHtml(labels.speed)}</span>
+        <span style="font-weight:600;color:#27272a">${speed} ${escapeHtml(labels.kmh)}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:#52525b;margin-top:2px">
+        <span>${escapeHtml(labels.lastSeen)}</span><span>${escapeHtml(time)}</span>
+      </div>
+      ${
+        event
+          ? `<div style="margin-top:8px;padding:4px 6px;background:#f4f4f5;border-radius:4px;font-size:10px;color:#3f3f46">${escapeHtml(event)}</div>`
+          : ''
+      }
+    </div>
+  `;
+}
+
+function buildStopPopup(stop: EtitStop, labels: PopupLabels): string {
+  return `
+    <div style="padding:14px 14px 12px;min-width:200px;font-family:inherit">
+      <div style="font-size:13px;font-weight:600;margin-bottom:6px">${escapeHtml(labels.stopHeading)} · ${escapeHtml(stop.duration)}</div>
+      <div style="font-size:11px;color:#52525b;margin-bottom:6px">${escapeHtml(stop.address || labels.unknownLocation)}</div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:#71717a">
+        <span>${escapeHtml(labels.from)}</span><span>${escapeHtml(formatCairo(stop.from, 'time'))}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:#71717a">
+        <span>${escapeHtml(labels.to)}</span><span>${escapeHtml(formatCairo(stop.to, 'time'))}</span>
+      </div>
+    </div>
+  `;
+}
+
+function buildSensorPopup(s: EtitSensorEvent): string {
+  return `
+    <div style="padding:14px 14px 12px;min-width:160px;font-family:inherit">
+      <div style="font-size:13px;font-weight:600;margin-bottom:4px">${escapeHtml(s.typeName)}</div>
+      <div style="font-size:11px;color:#71717a">${escapeHtml(formatCairo(s.timestamp, 'datetime'))}</div>
+    </div>
+  `;
+}
+
+function buildPlaybackPopup(p: PlaybackState, labels: PopupLabels): string {
+  const speedColor = p.speeding ? '#dc2626' : '#27272a';
+  return `
+    <div style="padding:14px 14px 12px;min-width:160px;font-family:inherit">
+      <div style="font-size:13px;font-weight:600;margin-bottom:6px">${escapeHtml(labels.playbackHeading)}</div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:#52525b">
+        <span>${escapeHtml(labels.speed)}</span>
+        <span style="font-weight:600;color:${speedColor}">${Math.round(p.speed)} ${escapeHtml(labels.kmh)}</span>
+      </div>
+      ${
+        p.speedLimit > 0
+          ? `<div style="display:flex;justify-content:space-between;font-size:11px;color:#52525b;margin-top:2px">
+              <span>${escapeHtml(labels.limit)}</span><span>${p.speedLimit} ${escapeHtml(labels.kmh)}</span>
+            </div>`
+          : ''
+      }
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:#71717a;margin-top:2px">
+        <span>${escapeHtml(labels.time)}</span><span>${escapeHtml(formatCairo(p.timestamp, 'time'))}</span>
+      </div>
+    </div>
+  `;
+}
+export const EtitMap = React.memo(EtitMapBase);
+
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+
+
+========================================
+FILE: src/widgets/etit-datetime-range/etit-datetime-range.tsx
+========================================
+import * as React from 'react';
+import { useTranslation } from 'react-i18next';
+import { Calendar as CalendarIcon, Clock } from 'lucide-react';
+import { cn } from '@/shared/lib/cn';
+import { Button } from '@/shared/ui/button';
+import { Input } from '@/shared/ui/input';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/shared/ui/popover';
+import { MonthYearSelector } from '@/shared/ui/month-year-selector';
+import {
+  cairoEndOfDay,
+  cairoFromParts,
+  cairoStartOfDay,
+  formatCairo,
+} from '@/entities/etit-vehicle/cairo';
+
+/* -------------------------------------------------------------------------- */
+/* Cairo parts helpers                                                         */
+/* -------------------------------------------------------------------------- */
+
+interface CairoParts {
+  year: number;
+  month: number; // 1-indexed
+  day: number;
+  hour: number;
+  minute: number;
+}
+
+function cairoPartsOf(d: Date): CairoParts {
+  const fmt = new Intl.DateTimeFormat('en-GB', {
+    timeZone: 'Africa/Cairo',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  });
+  const parts = fmt.formatToParts(d);
+  const get = (type: Intl.DateTimeFormatPartTypes) =>
+    Number(parts.find((p) => p.type === type)?.value ?? 0);
+  const rawHour = get('hour');
+  return {
+    year: get('year'),
+    month: get('month'),
+    day: get('day'),
+    hour: rawHour === 24 ? 0 : rawHour,
+    minute: get('minute'),
+  };
+}
+
+function pad2(n: number) {
+  return String(n).padStart(2, '0');
+}
+
+/* -------------------------------------------------------------------------- */
+/* Presets                                                                     */
+/* -------------------------------------------------------------------------- */
+
+interface Preset {
+  key: string;
+  build: () => { from: Date; to: Date };
+}
+
+function todayCairo(): { from: Date; to: Date } {
+  const now = new Date();
+  return { from: cairoStartOfDay(now), to: cairoEndOfDay(now) };
+}
+
+function yesterdayCairo(): { from: Date; to: Date } {
+  const now = new Date();
+  const cairo = cairoPartsOf(now);
+  // Construct a Cairo "today" anchor, then subtract 24h — this is robust to DST
+  // because we only use the Date as a lookup, not as a calendar offset.
+  const todayStart = cairoFromParts(cairo.year, cairo.month, cairo.day, 0, 0, 0);
+  const yesterday = new Date(todayStart.getTime() - 24 * 60 * 60_000);
+  return { from: cairoStartOfDay(yesterday), to: cairoEndOfDay(yesterday) };
+}
+
+function lastNHours(n: number): { from: Date; to: Date } {
+  const to = new Date();
+  const from = new Date(to.getTime() - n * 60 * 60_000);
+  return { from, to };
+}
+
+function lastNDays(n: number): { from: Date; to: Date } {
+  const now = new Date();
+  const to = cairoEndOfDay(now);
+  const from = cairoStartOfDay(new Date(now.getTime() - (n - 1) * 24 * 60 * 60_000));
+  return { from, to };
+}
+
+const PRESETS: Preset[] = [
+  { key: 'lastHour', build: () => lastNHours(1) },
+  { key: 'last3h',   build: () => lastNHours(3) },
+  { key: 'today',    build: todayCairo },
+  { key: 'yesterday', build: yesterdayCairo },
+  { key: 'last7d',   build: () => lastNDays(7) },
+];
+
+function rangesEqual(a: { from: Date; to: Date }, b: { from: Date; to: Date }): boolean {
+  // Equal within a minute — preset comparisons should ignore sub-minute jitter
+  // from the relative builders ("last hour" anchored to the second changes
+  // every render).
+  const fromOk = Math.abs(a.from.getTime() - b.from.getTime()) < 60_000;
+  const toOk = Math.abs(a.to.getTime() - b.to.getTime()) < 60_000;
+  return fromOk && toOk;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Props                                                                       */
+/* -------------------------------------------------------------------------- */
+
+export interface EtitDateTimeRangeProps {
+  value: { from: Date; to: Date };
+  onChange: (range: { from: Date; to: Date }) => void;
+  className?: string;
+  /** Optional max date in Cairo-time — defaults to "now". */
+  maxDate?: Date;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Component                                                                   */
+/* -------------------------------------------------------------------------- */
+
+export function EtitDateTimeRange({
+  value,
+  onChange,
+  className,
+  maxDate,
+}: EtitDateTimeRangeProps) {
+  const { t, i18n } = useTranslation();
+  const locale = i18n.language.startsWith('ar') ? 'ar-EG' : 'en-GB';
+  const [open, setOpen] = React.useState(false);
+
+  // Working copy — applied only on click of "Apply".
+  const [draft, setDraft] = React.useState(value);
+  React.useEffect(() => {
+    if (open) setDraft(value);
+  }, [open, value]);
+
+  const fromParts = cairoPartsOf(draft.from);
+  const toParts = cairoPartsOf(draft.to);
+  const max = maxDate ?? new Date();
+  const maxPartsRef = React.useMemo(() => cairoPartsOf(max), [max]);
+
+  // Active calendar viewport (which side is being edited)
+  type Side = 'from' | 'to';
+  const [side, setSide] = React.useState<Side>('from');
+
+  const sideParts = side === 'from' ? fromParts : toParts;
+  const [viewMonth, setViewMonth] = React.useState(sideParts.month - 1);
+  const [viewYear, setViewYear] = React.useState(sideParts.year);
+  React.useEffect(() => {
+    setViewMonth(sideParts.month - 1);
+    setViewYear(sideParts.year);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [side]);
+
+  const setSideDate = (y: number, mZeroIndexed: number, d: number) => {
+    if (side === 'from') {
+      const next = cairoFromParts(y, mZeroIndexed + 1, d, fromParts.hour, fromParts.minute, 0);
+      const newRange = { from: next, to: draft.to };
+      // Auto-fix: if from > to, snap to to top of from
+      if (next.getTime() > draft.to.getTime()) {
+        newRange.to = cairoFromParts(y, mZeroIndexed + 1, d, 23, 59, 0);
+      }
+      setDraft(newRange);
+    } else {
+      const next = cairoFromParts(y, mZeroIndexed + 1, d, toParts.hour, toParts.minute, 0);
+      const newRange = { from: draft.from, to: next };
+      if (next.getTime() < draft.from.getTime()) {
+        newRange.from = cairoFromParts(y, mZeroIndexed + 1, d, 0, 0, 0);
+      }
+      setDraft(newRange);
+    }
+  };
+
+  const setSideTime = (hour: number, minute: number) => {
+    // Clamp values
+    const h = Math.max(0, Math.min(23, hour));
+    const m = Math.max(0, Math.min(59, minute));
+
+    if (side === 'from') {
+      const next = cairoFromParts(
+        fromParts.year, fromParts.month, fromParts.day, h, m, 0,
+      );
+      setDraft({ from: next, to: draft.to });
+    } else {
+      const next = cairoFromParts(
+        toParts.year, toParts.month, toParts.day, h, m, 0,
+      );
+      setDraft({ from: draft.from, to: next });
+    }
+  };
+
+  const handlePreset = (p: Preset) => {
+    const r = p.build();
+    setDraft(r);
+    onChange(r);
+    setOpen(false);
+  };
+
+  const isPresetActive = (p: Preset) => rangesEqual(value, p.build());
+
+  const apply = () => {
+    if (draft.from.getTime() > draft.to.getTime()) return;
+    onChange(draft);
+    setOpen(false);
+  };
+
+  /* -- Calendar grid math -- */
+  const todayParts = React.useMemo(() => cairoPartsOf(new Date()), []);
+  const todayNum = todayParts.year * 10000 + todayParts.month * 100 + todayParts.day;
+  const maxNum =
+    maxPartsRef.year * 10000 + maxPartsRef.month * 100 + maxPartsRef.day;
+  const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+  const firstDay = new Date(viewYear, viewMonth, 1).getDay();
+  const cells: (number | null)[] = [
+    ...Array(firstDay).fill(null),
+    ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
+  ];
+
+  const weekdayNames = React.useMemo(() => {
+    const fmt = new Intl.DateTimeFormat(locale, { weekday: 'short' });
+    return Array.from({ length: 7 }, (_, i) => fmt.format(new Date(2024, 0, 7 + i)));
+  }, [locale]);
+
+  const fromNum = fromParts.year * 10000 + fromParts.month * 100 + fromParts.day;
+  const toNum = toParts.year * 10000 + toParts.month * 100 + toParts.day;
+  const lo = Math.min(fromNum, toNum);
+  const hi = Math.max(fromNum, toNum);
+
+  const triggerLabel = `${formatCairo(value.from, 'datetime')} → ${formatCairo(value.to, 'datetime')}`;
+
+  return (
+    <div className={cn('flex flex-col gap-2', className)}>
+      {/* Preset chips */}
+      <div className="flex flex-wrap gap-1.5">
+        {PRESETS.map((p) => (
+          <Button
+            key={p.key}
+            variant={isPresetActive(p) ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => handlePreset(p)}
+            className="h-8 text-xs"
+          >
+            {t(`etit.range.preset.${p.key}`)}
+          </Button>
+        ))}
+
+        <Popover open={open} onOpenChange={setOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant={PRESETS.some(isPresetActive) ? 'outline' : 'default'}
+              size="sm"
+              className="h-8 gap-1.5 text-xs"
+            >
+              <CalendarIcon className="h-3 w-3" />
+              {t('etit.range.custom')}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-[320px] p-3" align="start">
+            {/* Side toggle */}
+            <div className="mb-3 grid grid-cols-2 gap-2">
+              <SideButton
+                active={side === 'from'}
+                onClick={() => setSide('from')}
+                label={t('common.from')}
+                value={formatCairo(draft.from, 'datetime')}
+              />
+              <SideButton
+                active={side === 'to'}
+                onClick={() => setSide('to')}
+                label={t('common.to')}
+                value={formatCairo(draft.to, 'datetime')}
+              />
+            </div>
+
+            {/* Month nav */}
+            <MonthYearSelector
+              month={viewMonth}
+              year={viewYear}
+              onChange={(m, y) => {
+                setViewMonth(m);
+                setViewYear(y);
+              }}
+              maxYear={maxPartsRef.year}
+            />
+
+            {/* Calendar */}
+            <div className="mb-1 grid grid-cols-7">
+              {weekdayNames.map((d) => (
+                <div
+                  key={d}
+                  className="py-1 text-center text-[10px] font-semibold text-muted-foreground"
+                >
+                  {d}
+                </div>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-7 gap-y-0.5">
+              {cells.map((d, i) => {
+                if (!d) return <div key={i} />;
+                const dn = viewYear * 10000 + (viewMonth + 1) * 100 + d;
+                const disabled = dn > maxNum;
+                const isToday = dn === todayNum;
+                const isFrom = dn === fromNum;
+                const isTo = dn === toNum && fromNum !== toNum;
+                const inRange = dn > lo && dn < hi;
+                const isSelected =
+                  (side === 'from' && isFrom) || (side === 'to' && (isTo || (fromNum === toNum && isFrom)));
+
+                return (
+                  <div
+                    key={i}
+                    className={cn(
+                      'relative flex h-8 items-center justify-center',
+                      inRange && 'bg-primary/10',
+                      isFrom && 'rounded-s-full bg-primary/10',
+                      isTo && 'rounded-e-full bg-primary/10',
+                    )}
+                  >
+                    <button
+                      type="button"
+                      disabled={disabled}
+                      onClick={() => !disabled && setSideDate(viewYear, viewMonth, d)}
+                      className={cn(
+                        'flex h-8 w-8 items-center justify-center rounded-full text-xs font-medium transition-colors',
+                        disabled && 'cursor-not-allowed text-muted-foreground/30',
+                        !disabled && !isSelected && 'hover:bg-muted',
+                        isToday && !isSelected && 'border border-primary text-primary',
+                        isSelected &&
+                          'bg-primary font-semibold text-primary-foreground shadow-sm',
+                      )}
+                    >
+                      {d}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Time picker for the active side */}
+            <div className="mt-4 border-t pt-3">
+              <div className="mb-2 flex items-center justify-between">
+                <div className="flex items-center gap-1.5 text-xs font-semibold">
+                  <Clock className="h-3.5 w-3.5 text-primary" />
+                  {side === 'from' ? t('common.from') : t('common.to')}
+                </div>
+                <div className="flex gap-1">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 px-1.5 text-[10px]"
+                    onClick={() => setSideTime(0, 0)}
+                  >
+                    00:00
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 px-1.5 text-[10px]"
+                    onClick={() => setSideTime(23, 59)}
+                  >
+                    23:59
+                  </Button>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-4 rounded-lg border bg-muted/20 p-2.5">
+                {/* Hours selector */}
+                <div className="flex flex-1 flex-col gap-1.5">
+                  <label className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                    {t('etit.range.hours')}
+                  </label>
+                  <div className="grid grid-cols-4 gap-1">
+                    {[12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((h12) => {
+                      const isPM = sideParts.hour >= 12;
+                      const h24 = (h12 % 12) + (isPM ? 12 : 0);
+                      const active = sideParts.hour === h24;
+                      return (
+                        <button
+                          key={h12}
+                          type="button"
+                          onClick={() => setSideTime(h24, sideParts.minute)}
+                          className={cn(
+                            'h-7 rounded-md text-xs transition-colors',
+                            active
+                              ? 'bg-primary text-primary-foreground font-bold'
+                              : 'hover:bg-muted bg-background border'
+                          )}
+                        >
+                          {h12}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Vertical Divider */}
+                <div className="h-20 w-px bg-border" />
+
+                {/* Minutes & Period */}
+                <div className="flex w-24 flex-col gap-3">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                      {t('etit.range.period')}
+                    </label>
+                    <div className="flex gap-1">
+                      {['AM', 'PM'].map((p) => {
+                        const isPM = p === 'PM';
+                        const currentIsPM = sideParts.hour >= 12;
+                        const active = isPM === currentIsPM;
+                        return (
+                          <button
+                            key={p}
+                            type="button"
+                            onClick={() => {
+                              let nextH = sideParts.hour % 12;
+                              if (isPM) nextH += 12;
+                              setSideTime(nextH, sideParts.minute);
+                            }}
+                            className={cn(
+                              'flex-1 h-7 rounded-md text-[10px] font-bold transition-colors',
+                              active
+                                ? 'bg-primary text-primary-foreground'
+                                : 'hover:bg-muted bg-background border'
+                            )}
+                          >
+                            {p}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                      {t('etit.range.minutes')}
+                    </label>
+                    <div className="flex gap-1">
+                      <Input
+                        type="number"
+                        min={0}
+                        max={59}
+                        value={pad2(sideParts.minute)}
+                        onChange={(e) => {
+                          const m = Math.max(0, Math.min(59, Number(e.target.value || 0)));
+                          setSideTime(sideParts.hour, m);
+                        }}
+                        className="h-7 w-full text-center text-xs font-semibold tabular-nums"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            {/* Footer */}
+            <div className="mt-3 flex items-center justify-between border-t pt-2">
+              <p className="truncate text-[10px] text-muted-foreground">
+                {triggerLabel}
+              </p>
+              <div className="flex gap-2">
+                <Button variant="ghost" size="sm" onClick={() => setOpen(false)}>
+                  {t('common.cancel')}
+                </Button>
+                <Button
+                  size="sm"
+                  onClick={apply}
+                  disabled={draft.from.getTime() > draft.to.getTime()}
+                >
+                  {t('datePicker.apply')}
+                </Button>
+              </div>
+            </div>
+          </PopoverContent>
+        </Popover>
+      </div>
+
+      {/* Active range readout */}
+      <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+        <span className="truncate font-medium text-foreground">
+          {formatCairo(value.from, 'datetime')}
+        </span>
+        <span className="text-muted-foreground">→</span>
+        <span className="truncate font-medium text-foreground">
+          {formatCairo(value.to, 'datetime')}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/* Side button                                                                 */
+/* -------------------------------------------------------------------------- */
+
+function SideButton({
+  active,
+  onClick,
+  label,
+  value,
+}: {
+  active: boolean;
+  onClick: () => void;
+  label: string;
+  value: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        'rounded-md border p-2 text-start transition-colors',
+        active ? 'border-primary bg-primary/5' : 'border-input hover:bg-accent',
+      )}
+    >
+      <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+        {label}
+      </div>
+      <div className="truncate text-xs font-semibold tabular-nums">{value}</div>
+    </button>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/* Default range producer (today in Cairo)                                     */
+/* -------------------------------------------------------------------------- */
+
+export function defaultCairoTodayRange(): { from: Date; to: Date } {
+  const now = new Date();
+  return { from: cairoStartOfDay(now), to: cairoEndOfDay(now) };
+}
+
+
+
+========================================
+FILE: src/widgets/etit-vehicle-history-selector/etit-vehicle-history-selector.tsx
+========================================
+import * as React from 'react';
+import { useTranslation } from 'react-i18next';
+import { ChevronLeft, Loader2, RefreshCw } from 'lucide-react';
+import { Button } from '@/shared/ui/button';
+import { cn } from '@/shared/lib/cn';
+import { EtitDateTimeRange } from '@/widgets/etit-datetime-range/etit-datetime-range';
+import type { EtitVehicle } from '@/entities/etit-vehicle/schemas';
+
+interface EtitVehicleHistorySelectorProps {
+  vehicle: EtitVehicle;
+  range: { from: Date; to: Date };
+  onRangeChange: (range: { from: Date; to: Date }) => void;
+  onLoad: (refresh?: boolean) => void;
+  onBack: () => void;
+  onClearHistory?: () => void;
+  isHistoryLoaded?: boolean;
+  loading?: boolean;
+  className?: string;
+}
+
+export function EtitVehicleHistorySelector({
+  vehicle,
+  range,
+  onRangeChange,
+  onLoad,
+  onBack,
+  onClearHistory,
+  isHistoryLoaded,
+  loading,
+  className,
+}: EtitVehicleHistorySelectorProps) {
+  const { t } = useTranslation();
+
+  const [isRefreshing, setIsRefreshing] = React.useState(false);
+  const [longPressTimer, setLongPressTimer] = React.useState<NodeJS.Timeout | null>(null);
+
+  const handlePointerDown = React.useCallback(() => {
+    setIsRefreshing(false);
+    const timer = setTimeout(() => {
+      setIsRefreshing(true);
+      onLoad(true);
+      setLongPressTimer(null);
+    }, 700);
+    setLongPressTimer(timer);
+  }, [onLoad]);
+
+  const handlePointerUp = React.useCallback(() => {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      setLongPressTimer(null);
+      if (!isRefreshing) {
+        onLoad(false);
+      }
+    }
+  }, [longPressTimer, onLoad, isRefreshing]);
+
+  // Reset local refreshing state when parent loading starts/ends
+  React.useEffect(() => {
+    if (loading) setIsRefreshing(false);
+  }, [loading]);
+
+  return (
+    <div className={cn('flex h-full flex-col bg-card', className)}>
+      <div className="flex h-14 items-center gap-2 border-b px-4 shrink-0">
+        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onBack}>
+          <ChevronLeft className="h-4 w-4" />
+        </Button>
+        <div className="min-w-0">
+          <h2 className="truncate text-sm font-bold tracking-tight">
+            {vehicle.plate || vehicle.codename}
+          </h2>
+          <p className="truncate text-[10px] text-muted-foreground uppercase tracking-widest font-medium">
+            {vehicle.statusLabel}
+          </p>
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-4 space-y-6">
+        <div className="space-y-2">
+          <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-1">
+            {t('etit.range.period')}
+          </label>
+          <EtitDateTimeRange value={range} onChange={onRangeChange} />
+        </div>
+
+        <Button
+          size="lg"
+          className="w-full gap-2 shadow-lg shadow-primary/20 transition-all active:scale-[0.98]"
+          onPointerDown={handlePointerDown}
+          onPointerUp={handlePointerUp}
+          onPointerCancel={() => longPressTimer && clearTimeout(longPressTimer)}
+          disabled={loading}
+        >
+          {loading ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <RefreshCw className={cn('h-4 w-4', isRefreshing && 'animate-spin')} />
+          )}
+          {t('etit.controls.loadHistory')}
+        </Button>
+
+        {isHistoryLoaded && (
+          <Button
+            variant="outline"
+            className="w-full gap-2 border-destructive/20 text-destructive hover:bg-destructive/10 hover:border-destructive/40 transition-all"
+            onClick={onClearHistory}
+            disabled={loading}
+          >
+            {t('common.exit')}
+          </Button>
+        )}
+
+        <div className="rounded-lg bg-muted/30 p-3 border border-dashed border-border/50">
+          <p className="text-[10px] leading-relaxed text-muted-foreground italic">
+            {t('etit.controls.loadHistoryHint')}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+
+========================================
+FILE: src/widgets/etit-playback-player/etit-playback-player.tsx
+========================================
+import * as React from 'react';
+import { useTranslation } from 'react-i18next';
+import {
+  Gauge,
+  Pause,
+  Play,
+  RotateCcw,
+} from 'lucide-react';
+import { cn } from '@/shared/lib/cn';
+import { Button } from '@/shared/ui/button';
+import { formatCairo, formatCairoClock } from '@/entities/etit-vehicle/cairo';
+import {
+  activeStop,
+  buildPlaybackTrack,
+  recentSensor,
+  stateAtTime,
+  type PlaybackState,
+  type PlaybackTrack,
+} from '@/entities/etit-vehicle/playback';
+import type {
+  EtitHistoryPoint,
+  EtitSensorEvent,
+  EtitStop,
+} from '@/entities/etit-vehicle/schemas';
+
+/* -------------------------------------------------------------------------- */
+/* Speeds                                                                      */
+/*                                                                             *
+ * Five buttons cover the useful range. 1× / 4× / 16× / 64× / 256×.           *
+ * -------------------------------------------------------------------------- */
+
+const SPEEDS = [4, 16, 64, 256] as const;
+
+/** Hand-off throttle for parent state updates. ~30Hz looks smooth on map. */
+const HANDOFF_INTERVAL_MS = 33;
+
+/* -------------------------------------------------------------------------- */
+/* Props                                                                       */
+/* -------------------------------------------------------------------------- */
+
+export interface EtitPlaybackPlayerProps {
+  points: EtitHistoryPoint[];
+  stops: EtitStop[];
+  sensors: EtitSensorEvent[];
+  /**
+   * Pushed to the parent on each significant state change. Throttled to
+   * ~30Hz to keep map updates cheap. The marker still animates smoothly
+   * because the providers tween between positions.
+   */
+  onStateChange: (
+    state: PlaybackState | null,
+    prev: { lat: number; lng: number } | null,
+  ) => void;
+  className?: string;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Component                                                                   */
+/* -------------------------------------------------------------------------- */
+
+export function EtitPlaybackPlayer({
+  points,
+  stops,
+  sensors,
+  onStateChange,
+  className,
+}: EtitPlaybackPlayerProps) {
+  const { t } = useTranslation();
+
+  const track = React.useMemo<PlaybackTrack>(() => buildPlaybackTrack(points), [points]);
+  const playable = track.points.length >= 2;
+
+  const [currentMs, setCurrentMs] = React.useState<number>(track.startMs);
+  const [playing, setPlaying] = React.useState(false);
+  const [speed, setSpeed] = React.useState<number>(16);
+
+  // Reset on track swap.
+  React.useEffect(() => {
+    setCurrentMs(track.startMs);
+    setPlaying(false);
+  }, [track]);
+
+  /* -------- rAF loop -------------------------------------------------- */
+
+  const playingRef = React.useRef(playing);
+  const speedRef = React.useRef<number>(speed);
+  const currentMsRef = React.useRef(currentMs);
+
+  React.useEffect(() => { playingRef.current = playing; }, [playing]);
+  React.useEffect(() => { speedRef.current = speed; }, [speed]);
+  React.useEffect(() => { currentMsRef.current = currentMs; }, [currentMs]);
+
+  React.useEffect(() => {
+    if (!playable) return;
+    let rafId = 0;
+    let lastFrame = performance.now();
+
+    const tick = (now: number) => {
+      const dt = now - lastFrame;
+      lastFrame = now;
+
+      if (playingRef.current) {
+        const next = currentMsRef.current + dt * speedRef.current;
+        if (next >= track.endMs) {
+          currentMsRef.current = track.endMs;
+          setCurrentMs(track.endMs);
+          setPlaying(false);
+        } else {
+          currentMsRef.current = next;
+          setCurrentMs(next);
+        }
+      }
+      rafId = requestAnimationFrame(tick);
+    };
+
+    rafId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafId);
+  }, [playable, track.endMs]);
+
+  /* -------- Derived state -------------------------------------------- */
+
+  const state = React.useMemo<PlaybackState | null>(
+    () => (playable ? stateAtTime(track, currentMs) : null),
+    [playable, track, currentMs],
+  );
+
+  /* -------- Throttled hand-off to parent ----------------------------- */
+  /*                                                                          *
+   * The parent uses the state to render the playback marker. We don't need  *
+   * to push every frame — pushing at ~30Hz is plenty for a smooth marker    *
+   * and avoids a render cascade on the rest of the page. The parent is also *
+   * given the previous lat/lng so it can compute heading without re-doing   *
+   * the work itself.                                                        *
+   * -------------------------------------------------------------------------- */
+
+  const onStateChangeRef = React.useRef(onStateChange);
+  React.useEffect(() => { onStateChangeRef.current = onStateChange; }, [onStateChange]);
+
+  const prevPositionRef = React.useRef<{ lat: number; lng: number } | null>(null);
+  const lastHandoffRef = React.useRef(0);
+
+  React.useEffect(() => {
+    const now = performance.now();
+    const elapsed = now - lastHandoffRef.current;
+    if (state === null) {
+      onStateChangeRef.current(null, prevPositionRef.current);
+      prevPositionRef.current = null;
+      lastHandoffRef.current = now;
+      return;
+    }
+    // Always push when paused / first frame; otherwise gate on the interval.
+    if (!playingRef.current || elapsed >= HANDOFF_INTERVAL_MS) {
+      onStateChangeRef.current(state, prevPositionRef.current);
+      prevPositionRef.current = { lat: state.lat, lng: state.lng };
+      lastHandoffRef.current = now;
+    }
+  }, [state]);
+
+  /* -------- Active context ------------------------------------------- */
+
+  const currentStop = React.useMemo(
+    () => (state ? activeStop(stops, currentMs) : null),
+    [stops, currentMs, state],
+  );
+  const currentSensor = React.useMemo(
+    () => (state ? recentSensor(sensors, currentMs) : null),
+    [sensors, currentMs, state],
+  );
+
+  /* -------- Handlers ------------------------------------------------- */
+
+  const handleScrub = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const ts = Number(e.target.value);
+    if (!Number.isFinite(ts)) return;
+    setCurrentMs(ts);
+    currentMsRef.current = ts;
+  };
+
+  const handleTogglePlay = () => {
+    if (!playable) return;
+    if (currentMs >= track.endMs && !playing) {
+      setCurrentMs(track.startMs);
+      currentMsRef.current = track.startMs;
+    }
+    setPlaying((p) => !p);
+  };
+
+
+  const handleRestart = () => {
+    setCurrentMs(track.startMs);
+    currentMsRef.current = track.startMs;
+  };
+
+  /* -------- Render --------------------------------------------------- */
+
+  if (!playable) {
+    return (
+      <div
+        className={cn(
+          'rounded-lg border border-dashed bg-muted/20 p-4 text-center text-xs text-muted-foreground',
+          className,
+        )}
+      >
+        {t('etit.player.empty')}
+      </div>
+    );
+  }
+
+  return (
+    <div className={cn('bg-transparent p-1 px-2', className)}>
+      {/* Top row */}
+      <div className="mb-1 flex items-center justify-between gap-2">
+        <div className="font-mono text-sm font-black tabular-nums text-white">
+          {state ? formatCairoClock(state.timestamp) : '--:--:--'}
+        </div>
+        <div className="flex items-center gap-1.5 text-[10px]">
+          <Gauge className={cn('h-3 w-3', state?.speeding ? 'text-destructive' : 'text-primary')} />
+          <span
+            className={cn(
+              'font-black tabular-nums',
+              state?.speeding ? 'text-destructive' : 'text-white',
+            )}
+          >
+            {state ? Math.round(state.speed) : 0} {t('etit.units.kmh')}
+          </span>
+          {state && state.speedLimit > 0 && (
+            <span className="text-white/40 font-bold">/ {state.speedLimit}</span>
+          )}
+        </div>
+      </div>
+
+      {/* Scrubber */}
+      <div className="relative mb-0.5">
+        <input
+          type="range"
+          min={track.startMs}
+          max={track.endMs}
+          step={1000}
+          value={currentMs}
+          onChange={handleScrub}
+          className="block h-1.5 w-full cursor-pointer appearance-none rounded-full bg-white/10 accent-primary"
+          aria-label={t('etit.player.scrubberLabel')}
+        />
+      </div>
+
+      {/* Time labels */}
+      <div className="mb-2 flex justify-between text-[9px] font-bold tabular-nums text-white/30 uppercase tracking-tighter">
+        <span>{formatCairoClock(track.startMs)}</span>
+        <span className="text-white/60">{formatCairo(currentMs, 'datetime')}</span>
+        <span>{formatCairoClock(track.endMs)}</span>
+      </div>
+
+      {/* Controls */}
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-1">
+          <Button
+            type="button" variant="ghost" size="icon" className="h-7 w-7 text-white/40 hover:text-white hover:bg-white/10"
+            onClick={handleRestart}
+            title={t('etit.player.restart')}
+          >
+            <RotateCcw className="h-3 w-3" />
+          </Button>
+          <Button
+            type="button" size="icon" className="h-8 w-8 rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/20"
+            onClick={handleTogglePlay}
+          >
+            {playing ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
+          </Button>
+        </div>
+
+        <div className="flex items-center gap-1 text-[10px]">
+          <span className="text-white/40 font-bold uppercase tracking-tighter">{t('etit.player.speed')}</span>
+          <div className="flex rounded-lg border border-white/10 bg-black/40 p-0.5">
+            {SPEEDS.map((s) => (
+              <button
+                key={s}
+                type="button"
+                onClick={() => setSpeed(speed === s ? 1 : s)}
+                className={cn(
+                  'rounded px-1.5 py-0.5 text-[10px] font-black tabular-nums transition-colors',
+                  speed === s
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-white/40 hover:bg-white/5 hover:text-white',
+                )}
+              >
+                {s}×
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Active context */}
+      <div className="mt-2 min-h-[30px] border-t border-white/10 pt-1.5">
+        {currentStop && (
+          <div className="flex items-center gap-2 text-[10px]">
+            <span className="inline-block h-1.5 w-1.5 rounded-full bg-purple-500 shadow-[0_0_8px_rgba(168,85,247,0.5)]" aria-hidden />
+            <span className="font-bold text-white/90">
+              {t('etit.player.stoppedFor', { duration: currentStop.duration })}
+            </span>
+            <span className="truncate text-white/40">
+              {currentStop.address || t('etit.map.popup.unknownLocation')}
+            </span>
+          </div>
+        )}
+        {currentSensor && (
+          <div className={cn('flex items-center gap-2 text-[10px]', currentStop && 'mt-1')}>
+            <span className="inline-block h-1.5 w-1.5 rounded-full bg-cyan-500 shadow-[0_0_8px_rgba(6,182,212,0.5)]" aria-hidden />
+            <span className="font-bold text-white/90">{currentSensor.typeName}</span>
+            <span className="text-white/40">
+              {t('etit.player.atTime', {
+                time: formatCairo(currentSensor.timestamp, 'time'),
+              })}
+            </span>
+          </div>
+        )}
+        {!currentStop && !currentSensor && (
+          <div className="text-[10px] text-white/20 font-medium uppercase tracking-widest italic">
+            {t('etit.player.idleSlot')}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+
+
+
+========================================
+FILE: src/widgets/etit-vehicle-list/etit-vehicle-list.tsx
+========================================
+import * as React from 'react';
+import { useTranslation } from 'react-i18next';
+import { Crosshair, Eye, EyeOff, Truck, Wifi, WifiOff } from 'lucide-react';
+import { cn } from '@/shared/lib/cn';
+import { Button } from '@/shared/ui/button';
+import { ScrollArea } from '@/shared/ui/scroll-area';
+import { SearchInput } from '@/shared/ui/search-input';
+import { EmptyState } from '@/shared/ui/empty-state';
+import { Skeleton } from '@/shared/ui/skeleton';
+import { Checkbox } from '@/shared/ui/checkbox';
+import { useDebounce } from '@/shared/hooks/use-debounce';
+import { matches } from '@/shared/lib/normalize';
+import { formatCairo } from '@/entities/etit-vehicle/cairo';
+import {
+  classifyStatus,
+  isEtitOnline,
+  ETIT_STATUS_COLOR,
+  type EtitLiveStatus,
+  type EtitVehicle,
+} from '@/entities/etit-vehicle/schemas';
+
+/* -------------------------------------------------------------------------- */
+/* Props                                                                       */
+/* -------------------------------------------------------------------------- */
+
+export interface EtitVehicleListProps {
+  vehicles: EtitVehicle[];
+  liveStatuses: EtitLiveStatus[];
+  activeId: string | null;
+  visibleIds: Set<string>;
+  loading?: boolean;
+  onActivate: (id: string) => void;
+  onToggleVisible: (id: string) => void;
+  onSetAllVisible: (ids: string[]) => void;
+  onClearVisible: () => void;
+  onFocus: (id: string) => void;
+  className?: string;
+}
+
+type StatusFilter = 'all' | 'online' | 'moving' | 'idling' | 'offline';
+
+/* -------------------------------------------------------------------------- */
+/* Vehicle Row                                                                 */
+/* -------------------------------------------------------------------------- */
+
+interface VehicleRowProps {
+  vehicle: EtitVehicle;
+  live: EtitLiveStatus | undefined;
+  activeId: string | null;
+  visibleIds: Set<string>;
+  onActivate: (id: string) => void;
+  onToggleVisible: (id: string) => void;
+  onFocus: (id: string) => void;
+}
+
+const VehicleRow = React.memo(({
+  vehicle,
+  live,
+  activeId,
+  visibleIds,
+  onActivate,
+  onToggleVisible,
+  onFocus,
+}: VehicleRowProps) => {
+  const { t } = useTranslation();
+  const status = live?.status ?? vehicle.status;
+  const isOnline = isEtitOnline(status);
+  const group = classifyStatus(status);
+  const color = ETIT_STATUS_COLOR[group];
+  const speed = live?.speed ?? vehicle.speed;
+  const lastSeen = live?.timestamp ?? vehicle.lastLocationAt;
+  const isActive = activeId === vehicle.id;
+  const isVisible = visibleIds.has(vehicle.id);
+  const displayName = vehicle.plate || vehicle.codename;
+
+  return (
+    <li>
+      <div
+        className={cn(
+          'group flex items-center gap-2 rounded-md border border-transparent px-2 py-2 transition-colors',
+          isActive
+            ? 'border-primary/40 bg-primary/5'
+            : 'hover:bg-accent hover:text-accent-foreground',
+        )}
+      >
+        <Checkbox
+          checked={isVisible}
+          onCheckedChange={() => onToggleVisible(vehicle.id)}
+          aria-label={
+            isVisible
+              ? t('etit.list.hideFromMap', { name: displayName })
+              : t('etit.list.showOnMap', { name: displayName })
+          }
+          onClick={(e) => e.stopPropagation()}
+        />
+
+        <span
+          className="h-2.5 w-2.5 shrink-0 rounded-full ring-2 ring-background"
+          style={{ backgroundColor: color }}
+          aria-hidden
+        />
+
+        <button
+          type="button"
+          onClick={() => onActivate(vehicle.id)}
+          className="min-w-0 flex-1 text-start"
+        >
+          <div className="flex items-center gap-1.5">
+            <span className="truncate text-sm font-semibold">{displayName}</span>
+            {isOnline ? (
+              <Wifi className="h-3 w-3 shrink-0 text-success" />
+            ) : (
+              <WifiOff className="h-3 w-3 shrink-0 text-muted-foreground" />
+            )}
+            {isVisible ? (
+              <Eye className="h-3 w-3 shrink-0 text-primary" />
+            ) : (
+              <EyeOff className="h-3 w-3 shrink-0 text-muted-foreground/40" />
+            )}
+          </div>
+          <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
+            <span className="truncate">{live?.statusLabel ?? vehicle.statusLabel}</span>
+            {speed > 0 && (
+              <span className="tabular-nums">
+                · {speed} {t('etit.units.kmh')}
+              </span>
+            )}
+          </div>
+          {lastSeen && (
+            <div className="mt-0.5 truncate text-[10px] text-muted-foreground/80">
+              {formatCairo(lastSeen, 'datetime')}
+            </div>
+          )}
+        </button>
+
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className={cn(
+            "h-8 w-8 shrink-0 rounded-full transition-all",
+            isActive ? "bg-primary text-primary-foreground shadow-md" : "hover:bg-primary/10 hover:text-primary"
+          )}
+          onClick={(e) => {
+            e.stopPropagation();
+            onFocus(vehicle.id);
+          }}
+          title={t('etit.list.focusOnMap')}
+          aria-label={t('etit.list.focusOnMapFor', { name: displayName })}
+        >
+          <Crosshair className={cn("h-4 w-4", isActive && "animate-pulse")} />
+        </Button>
+      </div>
+    </li>
+  );
+});
+
+VehicleRow.displayName = 'VehicleRow';
+
+/* -------------------------------------------------------------------------- */
+/* Main Component                                                              */
+/* -------------------------------------------------------------------------- */
+
+function EtitVehicleListBase({
+  vehicles,
+  liveStatuses,
+  activeId,
+  visibleIds,
+  loading,
+  onActivate,
+  onToggleVisible,
+  onSetAllVisible,
+  onClearVisible,
+  onFocus,
+  className,
+}: EtitVehicleListProps) {
+  const { t } = useTranslation();
+  const [search, setSearch] = React.useState('');
+  const debouncedSearch = useDebounce(search, 200);
+  const [filter, setFilter] = React.useState<StatusFilter>('all');
+
+  const liveById = React.useMemo(() => {
+    const m = new Map<string, EtitLiveStatus>();
+    for (const s of liveStatuses) m.set(s.id, s);
+    return m;
+  }, [liveStatuses]);
+
+  const filtered = React.useMemo(() => {
+    return vehicles
+      .filter((v) => {
+        if (debouncedSearch.trim()) {
+          const haystack = `${v.plate} ${v.codename}`;
+          if (!matches(haystack, debouncedSearch)) return false;
+        }
+        if (filter === 'all') return true;
+        const live = liveById.get(v.id);
+        if (filter === 'online') return isEtitOnline(live?.status ?? v.status);
+        if (filter === 'offline') return !isEtitOnline(live?.status ?? v.status);
+        const group = live ? classifyStatus(live.status) : classifyStatus(v.status);
+        if (filter === 'moving') return group === 'moving';
+        if (filter === 'idling') return group === 'idling';
+        return true;
+      })
+      .sort((a, b) => {
+        const aOnline = isEtitOnline(liveById.get(a.id)?.status ?? a.status);
+        const bOnline = isEtitOnline(liveById.get(b.id)?.status ?? b.status);
+
+        if (aOnline !== bOnline) return aOnline ? -1 : 1;
+        return a.plate.localeCompare(b.plate);
+      });
+  }, [vehicles, debouncedSearch, filter, liveById]);
+
+  const counts = React.useMemo(() => {
+    const visible = vehicles.filter((v) =>
+      debouncedSearch.trim() ? matches(`${v.plate} ${v.codename}`, debouncedSearch) : true,
+    );
+    let online = 0;
+    let moving = 0;
+    let idling = 0;
+    let offline = 0;
+    for (const v of visible) {
+      const live = liveById.get(v.id);
+      const status = live?.status ?? v.status;
+      const group = classifyStatus(status);
+      const isOnline = isEtitOnline(status);
+
+      if (isOnline) online++;
+      else offline++;
+
+      if (group === 'moving') moving++;
+      if (group === 'idling') idling++;
+    }
+    return { all: visible.length, online, moving, idling, offline };
+  }, [vehicles, debouncedSearch, liveById]);
+
+  const visibleCountInFilter = React.useMemo(
+    () => filtered.filter((v) => visibleIds.has(v.id)).length,
+    [filtered, visibleIds],
+  );
+  const allFilteredVisible = filtered.length > 0 && visibleCountInFilter === filtered.length;
+  const someFilteredVisible = visibleCountInFilter > 0 && !allFilteredVisible;
+
+  return (
+    <aside
+      className={cn(
+        'flex flex-col border-e bg-card',
+        className,
+      )}
+    >
+      {/* Header */}
+      <div className="shrink-0 border-b">
+        <div className="p-3 pb-2">
+          <SearchInput
+            value={search}
+            onChange={setSearch}
+            placeholder={t('etit.list.searchPlaceholder')}
+          />
+        </div>
+
+        {/* Show / hide bar */}
+        <div className="flex items-center gap-2 border-y bg-muted/30 px-3 py-1.5 text-[11px]">
+          <Checkbox
+            checked={allFilteredVisible ? true : someFilteredVisible ? 'indeterminate' : false}
+            onCheckedChange={(checked) => {
+              if (checked) onSetAllVisible(filtered.map((v) => v.id));
+              else onClearVisible();
+            }}
+            aria-label={t('etit.list.toggleAllVisible')}
+          />
+          <span className="font-medium">
+            {t('etit.list.shownOnMap', {
+              shown: visibleCountInFilter,
+              total: filtered.length,
+            })}
+          </span>
+          {visibleCountInFilter > 0 && (
+            <button
+              type="button"
+              className="ms-auto text-muted-foreground hover:text-foreground"
+              onClick={onClearVisible}
+            >
+              {t('etit.list.hideAll')}
+            </button>
+          )}
+        </div>
+
+        {/* Filter chips */}
+        <div className="flex flex-wrap gap-2 p-3 pt-2">
+          <FilterChip active={filter === 'all'} onClick={() => setFilter('all')} count={counts.all}>
+            {t('etit.list.filter.all')}
+          </FilterChip>
+          <FilterChip
+            active={filter === 'online'}
+            onClick={() => setFilter('online')}
+            count={counts.online}
+            icon={<div className="h-1.5 w-1.5 rounded-full bg-success animate-pulse" />}
+          >
+            {t('etit.list.filter.online')}
+          </FilterChip>
+          <FilterChip
+            active={filter === 'moving'}
+            onClick={() => setFilter('moving')}
+            count={counts.moving}
+            icon={<div className="h-1.5 w-1.5 rounded-full bg-blue-500" />}
+          >
+            {t('etit.list.filter.moving')}
+          </FilterChip>
+          <FilterChip
+            active={filter === 'idling'}
+            onClick={() => setFilter('idling')}
+            count={counts.idling}
+            icon={<div className="h-1.5 w-1.5 rounded-full bg-yellow-500" />}
+          >
+            {t('etit.list.filter.idling')}
+          </FilterChip>
+          <FilterChip
+            active={filter === 'offline'}
+            onClick={() => setFilter('offline')}
+            count={counts.offline}
+            icon={<div className="h-1.5 w-1.5 rounded-full bg-muted-foreground" />}
+          >
+            {t('etit.list.filter.offline')}
+          </FilterChip>
+        </div>
+      </div>
+
+      {/* List */}
+      <ScrollArea className="flex-1">
+        {loading ? (
+          <ul className="space-y-1 p-2">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <li key={i}>
+                <Skeleton className="h-14 rounded-md" />
+              </li>
+            ))}
+          </ul>
+        ) : filtered.length === 0 ? (
+          <div className="p-4">
+            <EmptyState
+              icon={<Truck className="h-5 w-5" />}
+              title={t('etit.list.empty.title')}
+              description={
+                debouncedSearch
+                  ? t('etit.list.empty.descriptionSearch')
+                  : t('etit.list.empty.description')
+              }
+              className="border-0 bg-transparent px-0 py-8"
+            />
+          </div>
+        ) : (
+          <ul className="space-y-0.5 p-2">
+            {filtered.map((v) => (
+              <VehicleRow
+                key={v.id}
+                vehicle={v}
+                live={liveById.get(v.id)}
+                activeId={activeId}
+                visibleIds={visibleIds}
+                onActivate={onActivate}
+                onToggleVisible={onToggleVisible}
+                onFocus={onFocus}
+              />
+            ))}
+          </ul>
+        )}
+      </ScrollArea>
+    </aside>
+  );
+}
+
+export const EtitVehicleList = React.memo(EtitVehicleListBase);
+
+/* -------------------------------------------------------------------------- */
+/* Filter chip                                                                 */
+/* -------------------------------------------------------------------------- */
+
+interface FilterChipProps {
+  active: boolean;
+  onClick: () => void;
+  count: number;
+  children: React.ReactNode;
+  icon?: React.ReactNode;
+}
+
+function FilterChip({ active, onClick, count, children, icon }: FilterChipProps) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        'inline-flex h-8 items-center gap-2 rounded-lg px-3 text-xs font-medium transition-all',
+        active
+          ? 'bg-primary text-primary-foreground shadow-sm'
+          : 'bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground',
+      )}
+    >
+      {icon}
+      {children}
+      <span
+        className={cn(
+          'inline-block min-w-[1.5rem] rounded-md px-1 py-0.5 text-center text-[10px] font-bold tabular-nums',
+          active ? 'bg-primary-foreground/20' : 'bg-background shadow-inner',
+        )}
+      >
+        {count}
+      </span>
+    </button>
+  );
+}
+
+
+
+========================================
+FILE: src/widgets/etit-history-controls/etit-history-controls.tsx
+========================================
+import * as React from 'react';
+import { useTranslation } from 'react-i18next';
+import {
+  Clock,
+  Gauge,
+  Loader2,
+  MapPin,
+  Pause,
+  RefreshCw,
+  User,
+  Zap,
+} from 'lucide-react';
+import { Button } from '@/shared/ui/button';
+import { Skeleton } from '@/shared/ui/skeleton';
+import { cn } from '@/shared/lib/cn';
+import { EtitDateTimeRange } from '@/widgets/etit-datetime-range/etit-datetime-range';
+import type {
+  EtitHistoryResponse,
+  EtitTripSummary,
+  EtitVehicle,
+} from '@/entities/etit-vehicle/schemas';
+
+/* -------------------------------------------------------------------------- */
+/* Props                                                                       */
+/* -------------------------------------------------------------------------- */
+
+export interface EtitHistoryControlsProps {
+  vehicle: EtitVehicle | null;
+  history: EtitHistoryResponse | null;
+  summary: EtitTripSummary | null;
+
+  range: { from: Date; to: Date };
+  onRangeChange: (range: { from: Date; to: Date }) => void;
+
+  onLoad: (refresh?: boolean) => void;
+  loading?: boolean;
+
+  showStops: boolean;
+  onShowStopsChange: (next: boolean) => void;
+  showIgnitions: boolean;
+  onShowIgnitionsChange: (next: boolean) => void;
+
+  isFullScreen?: boolean;
+  className?: string;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Component                                                                   */
+/* -------------------------------------------------------------------------- */
+
+function EtitHistoryControlsBase({
+  vehicle,
+  history,
+  summary,
+  range,
+  onRangeChange,
+  onLoad,
+  loading,
+  showStops,
+  onShowStopsChange,
+  showIgnitions,
+  onShowIgnitionsChange,
+  className,
+}: EtitHistoryControlsProps) {
+  const { t } = useTranslation();
+
+  const [longPressTimer, setLongPressTimer] = React.useState<NodeJS.Timeout | null>(null);
+  const isLongPressRef = React.useRef(false);
+
+  const handlePointerDown = React.useCallback(() => {
+    isLongPressRef.current = false;
+    const timer = setTimeout(() => {
+      isLongPressRef.current = true;
+      onLoad(true);
+      setLongPressTimer(null);
+    }, 700);
+    setLongPressTimer(timer);
+  }, [onLoad]);
+
+  const handlePointerUp = React.useCallback(() => {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      setLongPressTimer(null);
+      // If the timer was still running, it was a short click.
+      if (!isLongPressRef.current) {
+        onLoad(false);
+      }
+    }
+  }, [longPressTimer, onLoad]);
+
+  const handlePointerCancel = React.useCallback(() => {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      setLongPressTimer(null);
+    }
+  }, [longPressTimer]);
+
+  return (
+    <div className={cn('rounded-lg border bg-card p-3', className)}>
+      {/* Header — vehicle + load button */}
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <div className="min-w-0">
+          <h2 className="truncate text-sm font-semibold">
+            {vehicle ? `${vehicle.plate || vehicle.codename}` : t('etit.controls.noVehicle')}
+          </h2>
+          <p className="truncate text-xs text-muted-foreground">
+            {vehicle ? vehicle.statusLabel : t('etit.controls.noVehicleHint')}
+          </p>
+        </div>
+        <Button
+          size="sm"
+          onPointerDown={handlePointerDown}
+          onPointerUp={handlePointerUp}
+          onPointerCancel={handlePointerCancel}
+          disabled={!vehicle || loading}
+          className="gap-1.5 transition-transform active:scale-95 select-none"
+          title={t('etit.controls.loadHistoryHint')}
+        >
+          {loading ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <RefreshCw className={cn('h-3.5 w-3.5', isLongPressRef.current && 'animate-spin')} />
+          )}
+          {t('etit.controls.loadHistory')}
+        </Button>
+      </div>
+
+      {/* Datetime range */}
+      <EtitDateTimeRange value={range} onChange={onRangeChange} className="mb-3" />
+
+      {/* Overlay toggles */}
+      <div className="mb-3 flex flex-wrap items-center gap-1.5 border-t pt-3">
+        <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+          {t('etit.controls.overlays')}
+        </span>
+        <OverlayToggle
+          active={showStops}
+          onClick={() => onShowStopsChange(!showStops)}
+          icon={<Pause className="h-3 w-3" />}
+          label={t('etit.controls.toggleStops')}
+          color="purple"
+        />
+        <OverlayToggle
+          active={showIgnitions}
+          onClick={() => onShowIgnitionsChange(!showIgnitions)}
+          icon={<Zap className="h-3 w-3" />}
+          label={t('etit.controls.toggleIgnitions')}
+          color="cyan"
+        />
+      </div>
+
+      {/* Stats — slot height is fixed across loading / data / placeholder */}
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+        {loading ? (
+          Array.from({ length: 3 }).map((_, i) => (
+            <Skeleton key={i} className="h-[58px] rounded-md" />
+          ))
+        ) : history && summary ? (
+          <>
+            <Stat
+              icon={<MapPin className="h-3.5 w-3.5" />}
+              label={t('etit.controls.stats.mileage')}
+              value={`${summary.totalMileage} ${t('etit.units.km')}`}
+            />
+            <Stat
+              icon={<Clock className="h-3.5 w-3.5" />}
+              label={t('etit.controls.stats.activeTime')}
+              value={summary.totalActiveTime || '—'}
+            />
+            <Stat
+              icon={<Gauge className="h-3.5 w-3.5" />}
+              label={t('etit.controls.stats.stops')}
+              value={summary.numberOfStops || '0'}
+            />
+          </>
+        ) : (
+          <>
+            <PlaceholderStat label={t('etit.controls.stats.mileage')} />
+            <PlaceholderStat label={t('etit.controls.stats.activeTime')} />
+            <PlaceholderStat label={t('etit.controls.stats.stops')} />
+          </>
+        )}
+      </div>
+
+      {/* Driver / counts */}
+      {summary && (
+        <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 border-t pt-3 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
+          <div className="flex items-center gap-1.5 px-2 py-1 bg-muted/30 rounded-md">
+            <User className="h-3 w-3 text-primary/70" />
+            <span className="text-foreground">{summary.driverName || t('etit.controls.unassignedDriver')}</span>
+          </div>
+          {summary.ignitionOnCount && (
+            <div className="flex items-center gap-1.5">
+              <Zap className="h-3 w-3 text-success/70" />
+              <span>{t('etit.controls.ignitionOn')}: <span className="text-foreground font-bold">{summary.ignitionOnCount}</span></span>
+            </div>
+          )}
+          {summary.ignitionOffCount && (
+            <div className="flex items-center gap-1.5">
+              <Zap className="h-3 w-3 text-destructive/70" />
+              <span>{t('etit.controls.ignitionOff')}: <span className="text-foreground font-bold">{summary.ignitionOffCount}</span></span>
+            </div>
+          )}
+          {summary.totalIdleTime && summary.totalIdleTime !== '00:00:00' && (
+            <div className="flex items-center gap-1.5">
+              <Clock className="h-3 w-3 text-yellow-500/70" />
+              <span>{t('etit.controls.idle')}: <span className="text-foreground font-bold">{summary.totalIdleTime}</span></span>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/* Bits                                                                        */
+/* -------------------------------------------------------------------------- */
+
+function OverlayToggle({
+  active,
+  onClick,
+  icon,
+  label,
+  color,
+}: {
+  active: boolean;
+  onClick: () => void;
+  icon: React.ReactNode;
+  label: string;
+  color: 'purple' | 'cyan';
+}) {
+  const colorRing =
+    color === 'purple'
+      ? 'data-[active=true]:border-purple-500/50 data-[active=true]:bg-purple-500/10 data-[active=true]:text-purple-700 dark:data-[active=true]:text-purple-300'
+      : 'data-[active=true]:border-cyan-500/50 data-[active=true]:bg-cyan-500/10 data-[active=true]:text-cyan-700 dark:data-[active=true]:text-cyan-300';
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      data-active={active}
+      className={cn(
+        'inline-flex h-7 items-center gap-1.5 rounded-full border px-2.5 text-[10px] font-medium transition-all',
+        'border-transparent bg-muted/50 text-muted-foreground hover:bg-muted',
+        colorRing,
+      )}
+    >
+      {icon}
+      {label}
+    </button>
+  );
+}
+
+function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+  return (
+    <div className="group flex flex-col rounded-xl border bg-gradient-to-br from-card to-muted/20 p-3 transition-all hover:shadow-md hover:border-primary/20">
+      <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground uppercase tracking-tight">
+        <div className="rounded-md bg-primary/10 p-1 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+          {icon}
+        </div>
+        <span className="truncate">{label}</span>
+      </div>
+      <div className="mt-2 truncate text-base font-black tracking-tight text-foreground">{value}</div>
+    </div>
+  );
+}
+
+function PlaceholderStat({ label }: { label: string }) {
+  return (
+    <div className="flex flex-col rounded-xl border border-dashed bg-muted/5 p-3 opacity-40">
+      <span className="truncate text-[10px] font-bold text-muted-foreground uppercase tracking-tight">{label}</span>
+      <span className="mt-2 text-base font-black tracking-tight text-muted-foreground/50">—</span>
+    </div>
+  );
+}
+
+export const EtitHistoryControls = React.memo(EtitHistoryControlsBase);
+
+
+
+========================================
+FILE: src/widgets/etit-history-controls/etit-floating-stats.tsx
+========================================
+import * as React from 'react';
+import { useTranslation } from 'react-i18next';
+import { Clock, Gauge, MapPin, Pause, Zap, User } from 'lucide-react';
+import { cn } from '@/shared/lib/cn';
+import type { EtitTripSummary } from '@/entities/etit-vehicle/schemas';
+
+interface EtitFloatingStatsProps {
+  summary: EtitTripSummary | null;
+  showStops: boolean;
+  onShowStopsChange: (next: boolean) => void;
+  showIgnitions: boolean;
+  onShowIgnitionsChange: (next: boolean) => void;
+  className?: string;
+}
+
+export function EtitFloatingStats({
+  summary,
+  showStops,
+  onShowStopsChange,
+  showIgnitions,
+  onShowIgnitionsChange,
+  className,
+}: EtitFloatingStatsProps) {
+  const { t } = useTranslation();
+
+  return (
+    <div className={cn(
+      "pointer-events-auto flex flex-col gap-2.5 bg-slate-950/90 backdrop-blur-xl rounded-xl shadow-2xl border border-white/20 p-3 transition-all hover:border-white/40",
+      className
+    )}>
+      {/* Metrics Grid */}
+      <div className="grid grid-cols-1 gap-2">
+        {summary ? (
+          <>
+            <Stat
+              icon={<MapPin className="h-3.5 w-3.5" />}
+              label={t('etit.controls.stats.mileage')}
+              value={`${summary.totalMileage} ${t('etit.units.km')}`}
+            />
+            <Stat
+              icon={<Clock className="h-3.5 w-3.5" />}
+              label={t('etit.controls.stats.activeTime')}
+              value={summary.totalActiveTime || '—'}
+            />
+            <Stat
+              icon={<Gauge className="h-3.5 w-3.5" />}
+              label={t('etit.controls.stats.stops')}
+              value={summary.numberOfStops || '0'}
+            />
+          </>
+        ) : (
+          <div className="flex items-center justify-center h-20 text-[10px] text-muted-foreground uppercase tracking-widest font-bold">
+            {t('common.loading')}
+          </div>
+        )}
+      </div>
+
+      {/* Driver Info */}
+      {summary?.driverName && (
+        <div className="flex items-center gap-2 px-3 py-2 bg-primary/5 rounded-xl border border-primary/10">
+          <User className="h-3 w-3 text-primary" />
+          <span className="text-[10px] font-bold text-foreground truncate uppercase">{summary.driverName}</span>
+        </div>
+      )}
+
+      {/* Overlays Toggles */}
+      <div className="flex flex-col gap-2 pt-2 border-t border-white/5">
+        <span className="text-[10px] font-black text-muted-foreground uppercase tracking-tighter">
+          {t('etit.controls.overlays')}
+        </span>
+        <div className="flex flex-wrap gap-2">
+          <OverlayToggle
+            active={showStops}
+            onClick={() => onShowStopsChange(!showStops)}
+            icon={<Pause className="h-3 w-3" />}
+            label={t('etit.controls.toggleStops')}
+            color="purple"
+          />
+          <OverlayToggle
+            active={showIgnitions}
+            onClick={() => onShowIgnitionsChange(!showIgnitions)}
+            icon={<Zap className="h-3 w-3" />}
+            label={t('etit.controls.toggleIgnitions')}
+            color="cyan"
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+  return (
+    <div className="group flex items-center justify-between rounded-lg border border-white/5 bg-white/5 p-2 transition-all hover:bg-white/10">
+      <div className="flex items-center gap-2 text-[10px] font-bold text-white/50 uppercase tracking-tight">
+        <div className="text-primary group-hover:scale-110 transition-transform">
+          {icon}
+        </div>
+        <span className="truncate">{label}</span>
+      </div>
+      <div className="truncate text-xs font-black tracking-tight text-white">{value}</div>
+    </div>
+  );
+}
+
+function OverlayToggle({
+  active,
+  onClick,
+  icon,
+  label,
+  color,
+}: {
+  active: boolean;
+  onClick: () => void;
+  icon: React.ReactNode;
+  label: string;
+  color: 'purple' | 'cyan';
+}) {
+  const colorRing =
+    color === 'purple'
+      ? 'data-[active=true]:border-purple-500/50 data-[active=true]:bg-purple-500/10 data-[active=true]:text-purple-300'
+      : 'data-[active=true]:border-cyan-500/50 data-[active=true]:bg-cyan-500/10 data-[active=true]:text-cyan-300';
+
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      data-active={active}
+      className={cn(
+        'inline-flex h-8 items-center gap-2 rounded-lg border px-3 text-[10px] font-bold uppercase transition-all',
+        'border-transparent bg-white/5 text-muted-foreground hover:bg-white/10',
+        colorRing,
+      )}
+    >
+      {icon}
+      {label}
+    </button>
+  );
+}
+
+
+
+========================================
+FILE: src/entities/etit-vehicle/.DS_Store
+========================================
+   Bud1           	                                                           t sIlocblob                                                                                                                                                                                                                                                                                                                                                                                                                                           a p i . t sIlocblob      H   2������      c a i r o . t sIlocblob      �   2������      p l a y b a c k . t sIlocblob     @   2������     
+ q u e r i e s . t sIlocblob     �   2������     
+ s c h e m a s . t sIlocblob     8   2������                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          @      �                                        @      �                                          @      �                                          @                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   E  	                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       DSDB                                 `          �                                         @      �                                          @      �                                          @                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              
+
+
+========================================
+FILE: src/entities/etit-vehicle/queries.ts
+========================================
+import * as React from 'react';
+import {
+  useQuery,
+  useQueryClient,
+  type UseQueryOptions,
+} from '@tanstack/react-query';
+import { env } from '@/shared/config/env';
+import {
+  etitApi,
+  buildEtitLiveStreamUrl,
+  type HistoryDayArgs,
+  type HistoryRangeArgs,
+} from './api';
+import {
+  etitLiveStatusSchema,
+  type EtitHistoryResponse,
+  type EtitLiveStatus,
+  type EtitTripSummary,
+  type EtitVehicle,
+} from './schemas';
+
+/* -------------------------------------------------------------------------- */
+/* Query keys                                                                  */
+/* -------------------------------------------------------------------------- */
+
+export const etitKeys = {
+  all: ['etit'] as const,
+  vehicles: () => [...etitKeys.all, 'vehicles'] as const,
+  vehicle: (id: string) => [...etitKeys.all, 'vehicle', id] as const,
+  live: () => [...etitKeys.all, 'live'] as const,
+  liveOne: (id: string) => [...etitKeys.all, 'live', id] as const,
+  historyRange: (id: string, fromIso: string, toIso: string, refresh?: boolean) =>
+    [...etitKeys.all, 'history', id, 'range', fromIso, toIso, refresh ? 'refresh' : 'cached'] as const,
+  historyDay: (id: string, dayIso: string, refresh?: boolean) =>
+    [...etitKeys.all, 'history', id, 'day', dayIso, refresh ? 'refresh' : 'cached'] as const,
+  summary: (id: string, fromIso: string, toIso: string, refresh?: boolean) =>
+    [...etitKeys.all, 'summary', id, fromIso, toIso, refresh ? 'refresh' : 'cached'] as const,
+} as const;
+
+/* -------------------------------------------------------------------------- */
+/* Vehicles                                                                    */
+/* -------------------------------------------------------------------------- */
+
+export function useEtitVehicles(
+  options?: Omit<UseQueryOptions<EtitVehicle[]>, 'queryKey' | 'queryFn'>,
+) {
+  return useQuery<EtitVehicle[]>({
+    queryKey: etitKeys.vehicles(),
+    queryFn: () => etitApi.listVehicles(),
+    staleTime: 30 * 60_000,
+    gcTime: 60 * 60_000,
+    ...options,
+  });
+}
+
+/* -------------------------------------------------------------------------- */
+/* Live snapshot                                                               */
+/* -------------------------------------------------------------------------- */
+
+export interface UseEtitLiveOptions
+  extends Omit<UseQueryOptions<EtitLiveStatus[]>, 'queryKey' | 'queryFn'> {
+  streamConnected?: boolean;
+}
+
+export function useEtitLive({ streamConnected, ...options }: UseEtitLiveOptions = {}) {
+  return useQuery<EtitLiveStatus[]>({
+    queryKey: etitKeys.live(),
+    queryFn: () => etitApi.listLive(),
+    refetchInterval: streamConnected ? 5 * 60_000 : 30_000,
+    refetchOnWindowFocus: true,
+    staleTime: 30_000,
+    ...options,
+  });
+}
+
+/* -------------------------------------------------------------------------- */
+/* History                                                                     */
+/* -------------------------------------------------------------------------- */
+
+export function useEtitHistoryRange(
+  args: HistoryRangeArgs | null,
+  options?: Omit<UseQueryOptions<EtitHistoryResponse>, 'queryKey' | 'queryFn' | 'enabled'>,
+) {
+  const enabled = args !== null;
+  return useQuery<EtitHistoryResponse>({
+    queryKey: enabled
+      ? etitKeys.historyRange(args.vehicleId, args.from.toISOString(), args.to.toISOString(), args.refresh)
+      : ['etit', 'history', 'disabled'],
+    queryFn: () => etitApi.historyForRange(args!),
+    enabled,
+    refetchOnWindowFocus: false,
+    staleTime: 5 * 60_000,
+    ...options,
+  });
+}
+
+export function useEtitHistoryDay(
+  args: HistoryDayArgs | null,
+  options?: Omit<UseQueryOptions<EtitHistoryResponse>, 'queryKey' | 'queryFn' | 'enabled'>,
+) {
+  const enabled = args !== null;
+  return useQuery<EtitHistoryResponse>({
+    queryKey: enabled
+      ? etitKeys.historyDay(args.vehicleId, args.day.toISOString(), args.refresh)
+      : ['etit', 'history', 'disabled'],
+    queryFn: () => etitApi.historyForDay(args!),
+    enabled,
+    refetchOnWindowFocus: false,
+    staleTime: 5 * 60_000,
+    ...options,
+  });
+}
+
+export function useEtitTripSummary(
+  args: HistoryRangeArgs | null,
+  options?: Omit<UseQueryOptions<EtitTripSummary>, 'queryKey' | 'queryFn' | 'enabled'>,
+) {
+  const enabled = args !== null;
+  return useQuery<EtitTripSummary>({
+    queryKey: enabled
+      ? etitKeys.summary(args.vehicleId, args.from.toISOString(), args.to.toISOString(), args.refresh)
+      : ['etit', 'summary', 'disabled'],
+    queryFn: () => etitApi.historySummary(args!),
+    enabled,
+    refetchOnWindowFocus: false,
+    staleTime: 5 * 60_000,
+    ...options,
+  });
+}
+
+/* -------------------------------------------------------------------------- */
+/* Live stream (SSE)                                                           */
+/* -------------------------------------------------------------------------- */
+
+export interface UseEtitLiveStreamResult {
+  connected: boolean;
+  error: Error | null;
+}
+
+export function useEtitLiveStream(): UseEtitLiveStreamResult {
+  const queryClient = useQueryClient();
+  const [connected, setConnected] = React.useState(false);
+  const [error, setError] = React.useState<Error | null>(null);
+
+  React.useEffect(() => {
+    if (typeof window === 'undefined' || typeof EventSource === 'undefined') return;
+
+    const baseUrl = env.VITE_API_BASE_URL_ETIT ?? env.VITE_API_BASE_URL;
+    if (!baseUrl) return;
+
+    let es: EventSource | null = null;
+    let retryTimer: number | null = null;
+    let attempt = 0;
+    let cancelled = false;
+
+    const open = () => {
+      if (cancelled) return;
+      const url = buildEtitLiveStreamUrl(baseUrl);
+
+      try {
+        es = new EventSource(url.toString(), { withCredentials: true });
+      } catch (err) {
+        scheduleRetry(err);
+        return;
+      }
+
+      es.onopen = () => {
+        attempt = 0;
+        setConnected(true);
+        setError(null);
+      };
+
+      es.onerror = () => {
+        setConnected(false);
+        scheduleRetry(new Error('SSE connection lost'));
+      };
+
+      const handleMessage = (e: MessageEvent) => {
+        applyDelta(e.data);
+      };
+      es.addEventListener('live', handleMessage);
+      es.addEventListener('message', handleMessage);
+    };
+
+    const applyDelta = (raw: string) => {
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(raw);
+      } catch {
+        return;
+      }
+
+      const updates = etitLiveStatusSchema.array().safeParse(
+        Array.isArray(parsed) ? parsed : [parsed],
+      );
+      if (!updates.success || updates.data.length === 0) return;
+
+      queryClient.setQueryData<EtitLiveStatus[]>(etitKeys.live(), (prev) => {
+        const next = prev ? [...prev] : [];
+        const indexById = new Map<string, number>();
+        next.forEach((s, i) => indexById.set(s.id, i));
+
+        for (const u of updates.data) {
+          const existing = indexById.get(u.id);
+          if (existing === undefined) {
+            indexById.set(u.id, next.length);
+            next.push(u);
+          } else {
+            next[existing] = { ...next[existing], ...u };
+          }
+        }
+        return next;
+      });
+    };
+
+    const scheduleRetry = (err: unknown) => {
+      setError(err instanceof Error ? err : new Error(String(err)));
+      if (es) { es.close(); es = null; }
+      if (cancelled) return;
+      const delay = Math.min(30_000, 1000 * 2 ** attempt);
+      attempt += 1;
+      retryTimer = window.setTimeout(open, delay);
+    };
+
+    open();
+
+    return () => {
+      cancelled = true;
+      if (retryTimer !== null) window.clearTimeout(retryTimer);
+      if (es) es.close();
+      setConnected(false);
+    };
+  }, [queryClient]);
+
+  return { connected, error };
+}
+
+/* -------------------------------------------------------------------------- */
+/* Fleet Hook (Consolidated)                                                   */
+/* -------------------------------------------------------------------------- */
+
+export function useEtitFleet() {
+  const metadata = useEtitVehicles();
+  const liveStream = useEtitLiveStream();
+  const snapshots = useEtitLive({ streamConnected: liveStream.connected });
+
+  const fleet = React.useMemo(() => {
+    if (!metadata.data) return [];
+
+    const liveMap = new Map<string, EtitLiveStatus>();
+    if (snapshots.data) {
+      for (const s of snapshots.data) liveMap.set(s.id, s);
+    }
+
+    return metadata.data.map((v) => {
+      const live = liveMap.get(v.id);
+      if (!live) return v;
+
+      return {
+        ...v,
+        speed: live.speed,
+        status: live.status,
+        statusLabel: live.statusLabel,
+        lat: live.lat,
+        lng: live.lng,
+      };
+    });
+  }, [metadata.data, snapshots.data]);
+
+  return {
+    fleet,
+    loading: metadata.isLoading || snapshots.isLoading,
+    isLoading: metadata.isLoading || snapshots.isLoading,
+    error: metadata.error || snapshots.error,
+    liveConnected: liveStream.connected,
+    liveError: liveStream.error,
+    refreshMetadata: () => metadata.refetch(),
+    liveStatuses: snapshots.data ?? [],
+    isError: metadata.isError || snapshots.isError,
+  };
+}
+
+
+
+========================================
+FILE: src/entities/etit-vehicle/schemas.ts
+========================================
+import { z } from 'zod';
+
+/* -------------------------------------------------------------------------- */
+/* Status code → label mapping                                                 */
+/*                                                                             */
+/* Mirrors `domain::status_label` in the Rust proxy. Keeping a parallel copy  */
+/* on the frontend means the dashboard can render badges/colours without     */
+/* needing the backend's `statusLabel` field — useful when the proxy's       */
+/* live snapshot is stale or partial.                                         */
+/* -------------------------------------------------------------------------- */
+
+export const ETIT_STATUS_GROUPS = {
+  moving: [1, 4],
+  stoppedIgnitionOff: [3],
+  offline: [12],
+  idling: [13],
+  geofenceViolation: [17, 18],
+} as const;
+
+export type EtitStatusGroup = keyof typeof ETIT_STATUS_GROUPS;
+
+export function classifyStatus(code: number): EtitStatusGroup | 'unknown' {
+  for (const [group, codes] of Object.entries(ETIT_STATUS_GROUPS) as [
+    EtitStatusGroup,
+    readonly number[],
+  ][]) {
+    if (codes.includes(code)) return group;
+  }
+  return 'unknown';
+}
+
+export function isEtitOnline(status: number): boolean {
+  return classifyStatus(status) !== 'offline';
+}
+
+/**
+ * A single colour per status group, used by the map markers, the vehicle
+ * list rows, and the playback player. Keep these in sync with the Tailwind
+ * tokens used elsewhere — but the map itself takes raw hex (its SVG marker
+ * builder doesn't read CSS variables), so we hardcode here.
+ */
+export const ETIT_STATUS_COLOR: Record<EtitStatusGroup | 'unknown', string> = {
+  moving: '#16A34A',                // green-600
+  stoppedIgnitionOff: '#6B7280',    // gray-500
+  offline: '#52525B',               // zinc-600
+  idling: '#F59E0B',                // amber-500
+  geofenceViolation: '#DC2626',     // red-600
+  unknown: '#94A3B8',               // slate-400
+};
+
+/* -------------------------------------------------------------------------- */
+/* Vehicle                                                                     */
+/*                                                                             */
+/* The proxy serializes camelCase via `#[serde(rename_all = "camelCase")]`,   */
+/* so most fields pass through unchanged. The only normalisation we do is    */
+/* coerce `lastLocationAt` to `Date | null`.                                  */
+/* -------------------------------------------------------------------------- */
+
+const optionalIso = z
+  .string()
+  .nullish()
+  .transform((s) => (s ? new Date(s) : null));
+
+export const etitVehicleSchema = z.object({
+  id: z.string(),
+  codename: z.string(),
+  plate: z.string(),
+  speedLimit: z.number(),
+  online: z.boolean(),
+  speed: z.number(),
+  status: z.number(),
+  statusLabel: z.string(),
+  lastLocationAt: optionalIso,
+  lat: z.number().optional(),
+  lng: z.number().optional(),
+  // The proxy carries an `extra` map for forward-compat. Pass through so
+  // we don't break when the upstream adds new columns.
+  extra: z.record(z.unknown()).optional().default({}),
+});
+
+export type EtitVehicle = z.output<typeof etitVehicleSchema>;
+export const etitVehiclesSchema = z.array(etitVehicleSchema);
+
+/* -------------------------------------------------------------------------- */
+/* Live status                                                                 */
+/* -------------------------------------------------------------------------- */
+
+export const etitLiveStatusSchema = z.object({
+  id: z.string(),
+  plate: z.string().nullish(),
+  speed: z.number(),
+  status: z.number(),
+  statusLabel: z.string(),
+  lat: z.number(),
+  lng: z.number(),
+  timestamp: optionalIso,
+  event: z.string().nullish(),
+  sensorData: z.string().nullish(),
+});
+
+export type EtitLiveStatus = z.output<typeof etitLiveStatusSchema>;
+export const etitLiveListSchema = z.array(etitLiveStatusSchema);
+
+/* -------------------------------------------------------------------------- */
+/* History                                                                     */
+/* -------------------------------------------------------------------------- */
+
+export const etitHistoryPointSchema = z.object({
+  lat: z.number(),
+  lng: z.number(),
+  timestamp: optionalIso,
+  speed: z.number(),
+  speedLimit: z.number(),
+});
+
+export type EtitHistoryPoint = z.output<typeof etitHistoryPointSchema>;
+
+export const etitStopSchema = z.object({
+  lat: z.number(),
+  lng: z.number(),
+  from: z.string().transform((s) => new Date(s)),
+  to: z.string().transform((s) => new Date(s)),
+  duration: z.string(),
+  address: z.string(),
+});
+
+export type EtitStop = z.output<typeof etitStopSchema>;
+
+export const etitSensorEventSchema = z.object({
+  lat: z.number(),
+  lng: z.number(),
+  timestamp: z.string().transform((s) => new Date(s)),
+  typeName: z.string(),
+});
+
+export type EtitSensorEvent = z.output<typeof etitSensorEventSchema>;
+
+export const etitHistoryResponseSchema = z.object({
+  vehicleId: z.string(),
+  from: z.string().transform((s) => new Date(s)),
+  to: z.string().transform((s) => new Date(s)),
+  points: z.array(etitHistoryPointSchema),
+  stops: z.array(etitStopSchema),
+  sensors: z.array(etitSensorEventSchema),
+  geometry: z.string(),
+  cached: z.boolean(),
+  fetchedAt: z.string().transform((s) => new Date(s)),
+});
+
+export type EtitHistoryResponse = z.output<typeof etitHistoryResponseSchema>;
+
+/* -------------------------------------------------------------------------- */
+/* Trip summary                                                                */
+/*                                                                             */
+/* Every field arrives as a string from the legacy ETIT system, including    */
+/* numeric counts — we leave them as strings for display and rely on the     */
+/* proxy to have already done any normalisation. Consumers that need the    */
+/* numeric version can `parseFloat` on the spot.                             */
+/* -------------------------------------------------------------------------- */
+
+export const etitTripSummarySchema = z.object({
+  totalMileage: z.string(),
+  totalActiveTime: z.string(),
+  totalPassiveTime: z.string().optional(),
+  totalIdleTime: z.string(),
+  driverName: z.string(),
+  numberOfStops: z.string(),
+  totalDisconnectedTime: z.string().optional(),
+  totalFuelConsumption: z.string(),
+  ignitionOffCount: z.string().optional(),
+  ignitionOnCount: z.string(),
+});
+
+export type EtitTripSummary = z.output<typeof etitTripSummarySchema>;
+
+
+
+========================================
+FILE: src/entities/etit-vehicle/cairo.ts
+========================================
+/**
+ * Cairo-locked time helpers.
+ *
+ * The etit-proxy backend interprets `from` / `to` query parameters as
+ * **wall-clock time in `Africa/Cairo`** (configurable via env, but Cairo
+ * in our deployment). The Rust side converts that back to UTC and on to
+ * the legacy ETIT system, which itself thinks in Cairo time.
+ *
+ * The browser's local timezone is not Cairo for every user — drivers and
+ * managers travel — so we MUST format requests in Cairo regardless of
+ * what the browser thinks "now" is. Likewise, every timestamp we render
+ * back to the user is rendered in Cairo so the dashboard reads the same
+ * for everyone.
+ *
+ * No external date library is needed for this; `Intl.DateTimeFormat`
+ * with `timeZone: 'Africa/Cairo'` does it all.
+ */
+
+const CAIRO_TZ = 'Africa/Cairo';
+
+/* -------------------------------------------------------------------------- */
+/* Internal: extract Cairo wall-clock parts from any Date                      */
+/* -------------------------------------------------------------------------- */
+
+interface CairoParts {
+  year: number;
+  month: number; // 1-indexed for human readability (matches Intl)
+  day: number;
+  hour: number;
+  minute: number;
+  second: number;
+}
+
+function cairoParts(date: Date): CairoParts {
+  // `formatToParts` returns the same calendar fields the user would see on
+  // a Cairo wall clock, regardless of the runtime's local timezone.
+  const fmt = new Intl.DateTimeFormat('en-GB', {
+    timeZone: CAIRO_TZ,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+  });
+  const parts = fmt.formatToParts(date);
+  const get = (type: Intl.DateTimeFormatPartTypes) =>
+    Number(parts.find((p) => p.type === type)?.value ?? 0);
+
+  // `hour: '2-digit'` with `hour12: false` can emit "24" for midnight on
+  // some runtimes — normalise to 0.
+  const rawHour = get('hour');
+  return {
+    year: get('year'),
+    month: get('month'),
+    day: get('day'),
+    hour: rawHour === 24 ? 0 : rawHour,
+    minute: get('minute'),
+    second: get('second'),
+  };
+}
+
+const pad2 = (n: number) => String(n).padStart(2, '0');
+
+/* -------------------------------------------------------------------------- */
+/* Public API                                                                  */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Format a Date as the proxy's expected `YYYY-MM-DDTHH:MM:SS` string,
+ * reading the wall clock in Africa/Cairo. The proxy parses this back as
+ * Cairo local time on the server.
+ *
+ * Example: a `Date` whose UTC instant is 12:00 UTC on a winter day
+ * becomes "...T14:00:00" (Cairo is UTC+2 in winter).
+ */
+export function formatCairoForProxy(date: Date): string {
+  const p = cairoParts(date);
+  return (
+    `${p.year}-${pad2(p.month)}-${pad2(p.day)}` +
+    `T${pad2(p.hour)}:${pad2(p.minute)}:${pad2(p.second)}`
+  );
+}
+
+/**
+ * Cairo `YYYY-MM-DD` for a given Date. Used by the `date=` query
+ * shortcut, where the proxy resolves the boundaries itself.
+ */
+export function formatCairoDate(date: Date): string {
+  const p = cairoParts(date);
+  return `${p.year}-${pad2(p.month)}-${pad2(p.day)}`;
+}
+
+/**
+ * "Today" in Cairo as a JS Date pointing to the *Cairo midnight* instant.
+ *
+ * We don't trust `new Date()` to land at the right calendar day on a
+ * browser configured to a non-Cairo TZ; instead we read today's Cairo
+ * date parts and reconstruct an instant that — when re-formatted back
+ * through Cairo — yields 00:00:00.
+ */
+export function cairoStartOfDay(date: Date = new Date()): Date {
+  const p = cairoParts(date);
+  return cairoFromParts(p.year, p.month, p.day, 0, 0, 0);
+}
+
+/** End-of-day in Cairo (23:59:59.999). */
+export function cairoEndOfDay(date: Date = new Date()): Date {
+  const p = cairoParts(date);
+  return cairoFromParts(p.year, p.month, p.day, 23, 59, 59, 999);
+}
+
+/**
+ * Reverse of `cairoParts` — given Cairo wall-clock fields, return the
+ * UTC instant they refer to. Iteratively corrects for DST: the naïve
+ * `Date.UTC(...)` is treated as UTC, then we measure the timezone delta
+ * at that instant and shift.
+ *
+ * `month` here is 1-indexed (matches every other function in this file).
+ */
+export function cairoFromParts(
+  year: number,
+  month: number,
+  day: number,
+  hour = 0,
+  minute = 0,
+  second = 0,
+  ms = 0,
+): Date {
+  // First guess: pretend Cairo is UTC.
+  const guessUtc = Date.UTC(year, month - 1, day, hour, minute, second, ms);
+
+  // Measure offset of Africa/Cairo at that instant by reading the same
+  // wall-clock fields back out and computing the diff between the
+  // intended fields and what Cairo reports.
+  const guessDate = new Date(guessUtc);
+  const cairo = cairoParts(guessDate);
+  const cairoUtcEquivalent = Date.UTC(
+    cairo.year,
+    cairo.month - 1,
+    cairo.day,
+    cairo.hour,
+    cairo.minute,
+    cairo.second,
+  );
+
+  const offsetMs = cairoUtcEquivalent - guessUtc;
+  return new Date(guessUtc - offsetMs);
+}
+
+/**
+ * Format a UTC ISO timestamp (or Date / millis) as a human-readable
+ * Cairo string.
+ *
+ * Used everywhere we surface backend timestamps to the user:
+ *   - "23 Apr 2026, 16:42"   (default)
+ *   - "16:42:18"              (when `style: 'time'`)
+ *   - "23 Apr 2026"           (when `style: 'date'`)
+ */
+export function formatCairo(
+  value: string | Date | number | null | undefined,
+  style: 'datetime' | 'date' | 'time' = 'datetime',
+): string {
+  if (value == null) return '—';
+  const date = value instanceof Date ? value : new Date(value);
+  if (!Number.isFinite(date.getTime())) return '—';
+
+  const opts: Intl.DateTimeFormatOptions = { timeZone: CAIRO_TZ };
+  if (style === 'date' || style === 'datetime') {
+    opts.day = '2-digit';
+    opts.month = 'short';
+    opts.year = 'numeric';
+  }
+  if (style === 'time' || style === 'datetime') {
+    opts.hour = '2-digit';
+    opts.minute = '2-digit';
+    opts.hour12 = true;
+    if (style === 'time') opts.second = '2-digit';
+  }
+
+  return new Intl.DateTimeFormat('en-GB', opts).format(date);
+}
+
+/**
+ * Cairo time-of-day string (HH:MM:SS) from any Date / ISO / millis —
+ * handy for the playback player's clock readout.
+ */
+export function formatCairoClock(value: string | Date | number | null | undefined): string {
+  if (value == null) return '--:--:--';
+  const date = value instanceof Date ? value : new Date(value);
+  if (!Number.isFinite(date.getTime())) return '--:--:--';
+  const p = cairoParts(date);
+  const h12 = p.hour % 12 || 12;
+  const ampm = p.hour >= 12 ? 'PM' : 'AM';
+  return `${pad2(h12)}:${pad2(p.minute)}:${pad2(p.second)} ${ampm}`;
+}
+
+
+
+========================================
+FILE: src/entities/etit-vehicle/api.ts
+========================================
+import { apiClientEtit } from '@/shared/api/client';
+import { formatCairoDate, formatCairoForProxy } from './cairo';
+import {
+  etitHistoryResponseSchema,
+  etitLiveListSchema,
+  etitLiveStatusSchema,
+  etitTripSummarySchema,
+  etitVehicleSchema,
+  etitVehiclesSchema,
+  type EtitHistoryResponse,
+  type EtitLiveStatus,
+  type EtitTripSummary,
+  type EtitVehicle,
+} from './schemas';
+
+/**
+ * The etit-proxy is reached through the dedicated `apiClientEtit` axios
+ * instance, whose base URL (`VITE_API_BASE_URL_ETIT`) resolves to the
+ * proxy's public mount point — e.g. `https://apextransport.ddns.net/api/etit`.
+ * The proxy's stable endpoints live under `/api/v1/...` *inside* that
+ * mount, so the full URL on the wire is
+ * `https://apextransport.ddns.net/api/etit/api/v1/vehicles`. We pass
+ * the bare `/api/v1/...` path here and let axios resolve against the
+ * base URL.
+ *
+ * Auth: `apiClientEtit` shares the request interceptor that attaches
+ * `Authorization: Bearer <jwt>` from localStorage and is configured
+ * with `withCredentials: true`. SSE consumers rely on the same cookie/
+ * Authorization combo — see `subscribeLive` in `queries.ts`.
+ */
+const PREFIX = 'api/v1';
+
+/* -------------------------------------------------------------------------- */
+/* Vehicles + live                                                             */
+/* -------------------------------------------------------------------------- */
+
+async function listVehicles(): Promise<EtitVehicle[]> {
+  const res = await apiClientEtit.get(`${PREFIX}/vehicles`);
+  return etitVehiclesSchema.parse(res.data);
+}
+
+async function getVehicle(id: string): Promise<EtitVehicle> {
+  const res = await apiClientEtit.get(`${PREFIX}/vehicles/${encodeURIComponent(id)}`);
+  return etitVehicleSchema.parse(res.data);
+}
+
+async function listLive(): Promise<EtitLiveStatus[]> {
+  const res = await apiClientEtit.get(`${PREFIX}/vehicles/live`);
+  return etitLiveListSchema.parse(res.data);
+}
+
+async function getLive(id: string): Promise<EtitLiveStatus> {
+  const res = await apiClientEtit.get(`${PREFIX}/vehicles/${encodeURIComponent(id)}/live`);
+  return etitLiveStatusSchema.parse(res.data);
+}
+
+/* -------------------------------------------------------------------------- */
+/* History                                                                     */
+/* -------------------------------------------------------------------------- */
+
+export interface HistoryRangeArgs {
+  vehicleId: string;
+  /** UTC `Date` representing the start of the range — formatted to Cairo wall-clock for the proxy. */
+  from: Date;
+  /** UTC `Date` representing the end of the range. */
+  to: Date;
+  /** If true, the backend will bypass its internal cache and force a fresh fetch from the legacy provider. */
+  refresh?: boolean;
+}
+
+export interface HistoryDayArgs {
+  vehicleId: string;
+  /** UTC `Date` whose Cairo calendar day will be queried. */
+  day: Date;
+  /** If true, the backend will bypass its internal cache. */
+  refresh?: boolean;
+}
+
+/** Range query — uses `from` + `to` (both Cairo wall-clock). */
+async function historyForRange(args: HistoryRangeArgs): Promise<EtitHistoryResponse> {
+  const params = new URLSearchParams({
+    from: formatCairoForProxy(args.from),
+    to: formatCairoForProxy(args.to),
+  });
+  if (args.refresh) params.set('refresh', 'true');
+
+  const res = await apiClientEtit.get(
+    `${PREFIX}/vehicles/${encodeURIComponent(args.vehicleId)}/history?${params}`,
+  );
+  return etitHistoryResponseSchema.parse(res.data);
+}
+
+/** Day query — uses `date=YYYY-MM-DD`. The proxy resolves the bounds in its tz. */
+async function historyForDay(args: HistoryDayArgs): Promise<EtitHistoryResponse> {
+  const params = new URLSearchParams({ date: formatCairoDate(args.day) });
+  if (args.refresh) params.set('refresh', 'true');
+
+  const res = await apiClientEtit.get(
+    `${PREFIX}/vehicles/${encodeURIComponent(args.vehicleId)}/history?${params}`,
+  );
+  return etitHistoryResponseSchema.parse(res.data);
+}
+
+/** Trip summary — same `from`/`to` semantics as the range history call. */
+async function historySummary(args: HistoryRangeArgs): Promise<EtitTripSummary> {
+  const params = new URLSearchParams({
+    from: formatCairoForProxy(args.from),
+    to: formatCairoForProxy(args.to),
+  });
+  if (args.refresh) params.set('refresh', 'true');
+
+  const res = await apiClientEtit.get(
+    `${PREFIX}/vehicles/${encodeURIComponent(args.vehicleId)}/history/summary?${params}`,
+  );
+  return etitTripSummarySchema.parse(res.data);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Public surface                                                              */
+/* -------------------------------------------------------------------------- */
+
+export const etitApi = {
+  listVehicles,
+  getVehicle,
+  listLive,
+  getLive,
+  historyForRange,
+  historyForDay,
+  historySummary,
+} as const;
+
+/**
+ * Helper to build the absolute SSE URL for the live stream.
+ */
+export function buildEtitLiveStreamUrl(baseUrl: string): URL {
+  // We ensure the URL ends with the stable stream path. 
+  // Relative path (no leading slash) preserves the base URL's path.
+  return new URL(`${PREFIX}/stream/live`, baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`);
+}
+
+export const ETIT_LIVE_STREAM_PATH = `${PREFIX}/stream/live`;
+
+
+
+========================================
+FILE: src/entities/etit-vehicle/playback.ts
+========================================
+import type { EtitHistoryPoint, EtitSensorEvent, EtitStop } from './schemas';
+
+/* -------------------------------------------------------------------------- */
+/* Polyline decoder                                                            */
+/*                                                                             */
+/* Mirrors `encode_polyline` in `src/domain/history.rs`. Precision-5,         */
+/* compatible with `google.maps.geometry.encoding.decodePath`.                 */
+/*                                                                             */
+/* The proxy already encodes the simplified polyline server-side, so we      */
+/* only need a decoder. Returns `[lat, lng]` pairs.                            */
+/* -------------------------------------------------------------------------- */
+
+export function decodePolyline(encoded: string): Array<[number, number]> {
+  if (!encoded) return [];
+  const out: Array<[number, number]> = [];
+  let index = 0;
+  let lat = 0;
+  let lng = 0;
+  const len = encoded.length;
+
+  while (index < len) {
+    let shift = 0;
+    let result = 0;
+    let b: number;
+    do {
+      if (index >= len) return out;
+      b = encoded.charCodeAt(index++) - 63;
+      result |= (b & 0x1f) << shift;
+      shift += 5;
+    } while (b >= 0x20);
+    const dLat = result & 1 ? ~(result >> 1) : result >> 1;
+    lat += dLat;
+
+    shift = 0;
+    result = 0;
+    do {
+      if (index >= len) return out;
+      b = encoded.charCodeAt(index++) - 63;
+      result |= (b & 0x1f) << shift;
+      shift += 5;
+    } while (b >= 0x20);
+    const dLng = result & 1 ? ~(result >> 1) : result >> 1;
+    lng += dLng;
+
+    out.push([lat / 1e5, lng / 1e5]);
+  }
+  return out;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Time-indexed playback                                                       */
+/*                                                                             */
+/* The proxy returns `points` sorted ascending by timestamp, but a few of    */
+/* the points may have `timestamp: null` (the upstream's row-level metadata */
+/* sometimes lacks it). We pre-filter to keep only points with parseable     */
+/* timestamps, sort defensively, and snapshot start/end millis for cheap    */
+/* boundary checks during scrubbing.                                         */
+/* -------------------------------------------------------------------------- */
+
+export interface PlaybackTrack {
+  /** Points with a non-null timestamp, sorted ascending. */
+  points: Array<EtitHistoryPoint & { timestamp: Date }>;
+  /** Cached `points[i].timestamp.getTime()` for hot-path binary search. */
+  times: number[];
+  /** First / last timestamps in millis. Equal when `points.length === 1`. */
+  startMs: number;
+  endMs: number;
+  /** Total span in millis. Zero when there's <2 points. */
+  spanMs: number;
+}
+
+export function buildPlaybackTrack(points: EtitHistoryPoint[]): PlaybackTrack {
+  const filtered = points.filter(
+    (p): p is EtitHistoryPoint & { timestamp: Date } =>
+      p.timestamp instanceof Date && Number.isFinite(p.timestamp.getTime()),
+  );
+  filtered.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+
+  const times = filtered.map((p) => p.timestamp.getTime());
+  const startMs = times[0] ?? 0;
+  const endMs = times[times.length - 1] ?? 0;
+  return {
+    points: filtered,
+    times,
+    startMs,
+    endMs,
+    spanMs: Math.max(0, endMs - startMs),
+  };
+}
+
+/* -------------------------------------------------------------------------- */
+/* Lookup                                                                      */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Index of the latest point whose timestamp is `<= ms`. Returns -1 when
+ * `ms` precedes every point. Binary search; O(log n).
+ */
+export function indexAtTime(times: number[], ms: number): number {
+  if (times.length === 0 || ms < times[0]) return -1;
+  if (ms >= times[times.length - 1]) return times.length - 1;
+
+  let lo = 0;
+  let hi = times.length - 1;
+  while (lo < hi) {
+    const mid = (lo + hi + 1) >>> 1;
+    if (times[mid] <= ms) lo = mid;
+    else hi = mid - 1;
+  }
+  return lo;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Interpolated state                                                          */
+/*                                                                             */
+/* Returns the vehicle's interpolated position at `ms`. We linearly         */
+/* interpolate between the two surrounding points so the marker glides     */
+/* between samples instead of teleporting. Speed is taken from the *prior* */
+/* point — speed is reported in km/h *at* the sample, not between samples, */
+/* so interpolating it would invent values that didn't happen.             */
+/*                                                                             */
+/* When `ms` is before the first point or there's only one point, we      */
+/* return the first/only point as-is.                                       */
+/* -------------------------------------------------------------------------- */
+
+export interface PlaybackState {
+  lat: number;
+  lng: number;
+  /** km/h at the most recent sample. */
+  speed: number;
+  /** km/h limit at the most recent sample. */
+  speedLimit: number;
+  /** Wall-clock time being shown. */
+  timestamp: Date;
+  /** Whether `timestamp` is over the speed limit (>0 limit && speed > limit). */
+  speeding: boolean;
+}
+
+export function stateAtTime(track: PlaybackTrack, ms: number): PlaybackState | null {
+  if (track.points.length === 0) return null;
+  if (ms <= track.startMs) {
+    const p = track.points[0];
+    return {
+      lat: p.lat,
+      lng: p.lng,
+      speed: p.speed,
+      speedLimit: p.speedLimit,
+      timestamp: p.timestamp,
+      speeding: p.speedLimit > 0 && p.speed > p.speedLimit,
+    };
+  }
+  if (ms >= track.endMs) {
+    const p = track.points[track.points.length - 1];
+    return {
+      lat: p.lat,
+      lng: p.lng,
+      speed: p.speed,
+      speedLimit: p.speedLimit,
+      timestamp: p.timestamp,
+      speeding: p.speedLimit > 0 && p.speed > p.speedLimit,
+    };
+  }
+
+  const i = indexAtTime(track.times, ms);
+  // i is guaranteed to be in range now (we handled both ends above).
+  const a = track.points[i];
+  const b = track.points[i + 1] ?? a;
+
+  const span = track.times[i + 1] - track.times[i] || 1;
+  const t = (ms - track.times[i]) / span;
+
+  return {
+    lat: a.lat + (b.lat - a.lat) * t,
+    lng: a.lng + (b.lng - a.lng) * t,
+    // Speed is held from the prior sample — see comment above.
+    speed: a.speed,
+    speedLimit: a.speedLimit,
+    timestamp: new Date(ms),
+    speeding: a.speedLimit > 0 && a.speed > a.speedLimit,
+  };
+}
+
+/* -------------------------------------------------------------------------- */
+/* Stops + sensor events near a moment                                         */
+/*                                                                             */
+/* Used by the player's "what's happening now" panel. Returns the current   */
+/* stop (if `ms` is between any stop's from/to), and the most recent sensor */
+/* event within a reasonable window — by default 5 minutes.                 */
+/* -------------------------------------------------------------------------- */
+
+const RECENT_SENSOR_WINDOW_MS = 5 * 60_000;
+
+export function activeStop(stops: EtitStop[], ms: number): EtitStop | null {
+  for (const s of stops) {
+    if (s.from.getTime() <= ms && ms <= s.to.getTime()) return s;
+  }
+  return null;
+}
+
+export function recentSensor(
+  sensors: EtitSensorEvent[],
+  ms: number,
+  windowMs = RECENT_SENSOR_WINDOW_MS,
+): EtitSensorEvent | null {
+  let latest: EtitSensorEvent | null = null;
+  for (const s of sensors) {
+    const t = s.timestamp.getTime();
+    if (t <= ms && ms - t <= windowMs) {
+      if (!latest || s.timestamp > latest.timestamp) latest = s;
+    }
+  }
+  return latest;
+}
