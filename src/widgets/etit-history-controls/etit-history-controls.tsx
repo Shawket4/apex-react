@@ -2,8 +2,6 @@ import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Clock,
-  Eye,
-  EyeOff,
   Gauge,
   Loader2,
   MapPin,
@@ -243,49 +241,36 @@ function OverlayToggle({
     <button
       type="button"
       onClick={onClick}
-      data-active={active ? 'true' : 'false'}
+      data-active={active}
       className={cn(
-        'inline-flex h-7 items-center gap-1 rounded-full border bg-background px-2.5 text-[11px] font-medium transition-colors',
-        'hover:bg-accent',
+        'inline-flex h-7 items-center gap-1.5 rounded-full border px-2.5 text-[10px] font-medium transition-all',
+        'border-transparent bg-muted/50 text-muted-foreground hover:bg-muted',
         colorRing,
       )}
     >
       {icon}
-      <span>{label}</span>
-      {active ? (
-        <Eye className="h-3 w-3 opacity-70" />
-      ) : (
-        <EyeOff className="h-3 w-3 opacity-30" />
-      )}
+      {label}
     </button>
   );
 }
 
-function Stat({
-  icon,
-  label,
-  value,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-}) {
+function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
-    <div className="rounded-md border bg-muted/30 p-2">
-      <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-muted-foreground">
+    <div className="flex flex-col rounded-md border bg-muted/20 p-2">
+      <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
         {icon}
-        {label}
+        <span className="truncate">{label}</span>
       </div>
-      <div className="mt-0.5 truncate text-sm font-semibold tabular-nums">{value}</div>
+      <div className="mt-0.5 truncate text-sm font-bold tracking-tight">{value}</div>
     </div>
   );
 }
 
 function PlaceholderStat({ label }: { label: string }) {
   return (
-    <div className="rounded-md border border-dashed bg-muted/10 p-2">
-      <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
-      <div className="mt-0.5 text-sm font-semibold text-muted-foreground/50">—</div>
+    <div className="flex flex-col rounded-md border border-dashed bg-muted/5 p-2 opacity-50">
+      <span className="truncate text-[10px] text-muted-foreground">{label}</span>
+      <span className="mt-0.5 text-sm font-bold tracking-tight">—</span>
     </div>
   );
 }

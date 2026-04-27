@@ -54,6 +54,19 @@ function loadVisibleIds(): Set<string> {
 
 type MobileTab = 'controls' | 'playback';
 
+function MobileTabButton({ active, onClick, label, disabled }: { active: boolean; onClick: () => void; label: string; disabled?: boolean }) {
+  return (
+    <Button
+      variant={active ? 'secondary' : 'ghost'}
+      className={cn("flex-1 text-xs", active && "bg-background shadow-sm")}
+      onClick={onClick}
+      disabled={disabled}
+    >
+      {label}
+    </Button>
+  );
+}
+
 export function EtitPage() {
   const { t } = useTranslation();
   const isDesktop = useIsDesktop();
@@ -268,7 +281,7 @@ export function EtitPage() {
     />
   );
 
-  const historyControls = (
+  const historyControlsNode = (
     <EtitHistoryControls
       vehicle={activeVehicle}
       history={historyQuery.data ?? null}
@@ -285,7 +298,7 @@ export function EtitPage() {
     />
   );
 
-  const playbackPlayer = (
+  const playbackPlayerNode = (
     <EtitPlaybackPlayer
       points={historyQuery.data?.points ?? []}
       stops={historyQuery.data?.stops ?? []}
@@ -297,7 +310,7 @@ export function EtitPage() {
 
   return (
     <div ref={containerRef} className="flex h-full flex-col bg-background">
-      {/* Custom Header — matching the rest of the app's visual style but without PageShell's layout constraints */}
+      {/* Header */}
       {!isFullScreen && (
         <header className="flex h-14 shrink-0 items-center justify-between border-b bg-card/80 px-4 backdrop-blur-md">
           <div className="flex items-center gap-3">
@@ -426,7 +439,7 @@ export function EtitPage() {
 
           {/* Full-Screen Overlay (Top) */}
           {isFullScreen && (
-            <div className="absolute inset-x-0 top-0 z-30 pointer-events-none p-4 flex flex-col items-center">
+            <div className="absolute inset-x-0 top-0 z-[1000] pointer-events-none p-4 flex flex-col items-center">
               <div className="pointer-events-auto flex flex-col gap-2 w-full max-w-4xl bg-background/80 backdrop-blur-md rounded-xl shadow-2xl border p-3">
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex items-center gap-3">
@@ -459,8 +472,8 @@ export function EtitPage() {
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="flex flex-col">{historyControls}</div>
-                  <div className="flex flex-col justify-end">{playbackPlayer}</div>
+                  <div className="flex flex-col">{historyControlsNode}</div>
+                  <div className="flex flex-col justify-end">{playbackPlayerNode}</div>
                 </div>
               </div>
             </div>
@@ -526,7 +539,7 @@ export function EtitPage() {
                 />
               </div>
               <div className="max-h-[42vh] overflow-y-auto p-2">
-                {mobileTab === 'controls' ? historyControls : (playbackPlayer)}
+                {mobileTab === 'controls' ? historyControlsNode : (playbackPlayerNode)}
               </div>
             </div>
           )}
@@ -566,47 +579,14 @@ export function EtitPage() {
             )}
             <div className="flex w-full flex-col overflow-hidden bg-background">
               <aside className="flex h-full flex-col overflow-y-auto p-3">
-                {historyControls}
-                {playbackPlayer}
+                {historyControlsNode}
+                {playbackPlayerNode}
               </aside>
             </div>
           </div>
         )}
       </div>
     </div>
-  );
-}
-
-/* -------------------------------------------------------------------------- */
-/* Mobile tab button                                                           */
-/* -------------------------------------------------------------------------- */
-
-function MobileTabButton({
-  active,
-  onClick,
-  label,
-  disabled,
-}: {
-  active: boolean;
-  onClick: () => void;
-  label: string;
-  disabled?: boolean;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      className={cn(
-        'inline-flex h-8 flex-1 items-center justify-center rounded text-xs font-medium transition-colors',
-        active
-          ? 'bg-background text-foreground shadow-sm'
-          : 'text-muted-foreground hover:text-foreground',
-        disabled && 'opacity-40',
-      )}
-    >
-      {label}
-    </button>
   );
 }
 
