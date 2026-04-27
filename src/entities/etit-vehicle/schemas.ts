@@ -2,11 +2,11 @@ import { z } from 'zod';
 
 /* -------------------------------------------------------------------------- */
 /* Status code → label mapping                                                 */
-/*                                                                             */
+/* */
 /* Mirrors `domain::status_label` in the Rust proxy. Keeping a parallel copy  */
 /* on the frontend means the dashboard can render badges/colours without     */
 /* needing the backend's `statusLabel` field — useful when the proxy's       */
-/* live snapshot is stale or partial.                                         */
+/* live snapshot is stale or partial.                                          */
 /* -------------------------------------------------------------------------- */
 
 export const ETIT_STATUS_GROUPS = {
@@ -20,12 +20,15 @@ export const ETIT_STATUS_GROUPS = {
 export type EtitStatusGroup = keyof typeof ETIT_STATUS_GROUPS;
 
 export function classifyStatus(code: number): EtitStatusGroup | 'unknown' {
-  for (const [group, codes] of Object.entries(ETIT_STATUS_GROUPS) as [
+  const entries = Object.entries(ETIT_STATUS_GROUPS) as Array<[
     EtitStatusGroup,
-    readonly number[],
-  ][]) {
+    readonly number[]
+  ]>;
+
+  for (const [group, codes] of entries) {
     if (codes.includes(code)) return group;
   }
+
   return 'unknown';
 }
 
@@ -50,10 +53,10 @@ export const ETIT_STATUS_COLOR: Record<EtitStatusGroup | 'unknown', string> = {
 
 /* -------------------------------------------------------------------------- */
 /* Vehicle                                                                     */
-/*                                                                             */
+/* */
 /* The proxy serializes camelCase via `#[serde(rename_all = "camelCase")]`,   */
 /* so most fields pass through unchanged. The only normalisation we do is    */
-/* coerce `lastLocationAt` to `Date | null`.                                  */
+/* coerce `lastLocationAt` to `Date | null`.                                   */
 /* -------------------------------------------------------------------------- */
 
 const optionalIso = z
@@ -93,10 +96,13 @@ export const etitLiveStatusSchema = z.object({
   statusLabel: z.string(),
   lat: z.number(),
   lng: z.number(),
+  heading: z.number().optional(), // Added heading support
   timestamp: optionalIso,
   event: z.string().nullish(),
   sensorData: z.string().nullish(),
 });
+
+export const etitLiveDeltaSchema = etitLiveStatusSchema.partial().extend({ id: z.string() });
 
 export type EtitLiveStatus = z.output<typeof etitLiveStatusSchema>;
 export const etitLiveListSchema = z.array(etitLiveStatusSchema);
@@ -151,11 +157,11 @@ export type EtitHistoryResponse = z.output<typeof etitHistoryResponseSchema>;
 
 /* -------------------------------------------------------------------------- */
 /* Trip summary                                                                */
-/*                                                                             */
+/* */
 /* Every field arrives as a string from the legacy ETIT system, including    */
 /* numeric counts — we leave them as strings for display and rely on the     */
 /* proxy to have already done any normalisation. Consumers that need the    */
-/* numeric version can `parseFloat` on the spot.                             */
+/* numeric version can `parseFloat` on the spot.                               */
 /* -------------------------------------------------------------------------- */
 
 export const etitTripSummarySchema = z.object({

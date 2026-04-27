@@ -1,55 +1,11 @@
 {
   "common": {
-    "appName": "أبيكس",
-    "tagline": "إدارة أسطول",
-    "search": "بحث",
-    "searchPlaceholder": "ابحث...",
-    "refreshing": "تحديث",
-    "filter": "تصفية",
-    "save": "حفظ",
-    "cancel": "إلغاء",
-    "delete": "حذف",
-    "edit": "تعديل",
-    "confirm": "تأكيد",
-    "close": "إغلاق",
-    "exit": "خروج",
-    "back": "رجوع",
-    "retry": "إعادة المحاولة",
-    "reset": "إعادة ضبط",
-    "loading": "جاري التحميل...",
-    "saving": "جاري الحفظ...",
-    "optional": "اختياري",
-    "selectOne": "اختر واحداً",
-    "noResults": "لا توجد نتائج",
-    "notFound": "غير موجود",
-    "viewAll": "عرض الكل",
-    "details": "التفاصيل",
-    "status": "الحالة",
-    "goodMorning": "صباح الخير",
-    "goodAfternoon": "مساء الخير",
-    "goodEvening": "مساء الخير",
-    "signOut": "تسجيل الخروج",
-    "profile": "الملف الشخصي",
-    "viewOnly": "عرض فقط",
     "from": "من",
     "to": "إلى",
-    "export": "تصدير",
-    "clear": "مسح",
-    "selectDate": "اختر تاريخاً",
-    "view": "عرض",
-    "remove": "إزالة",
-    "select": "اختر",
-    "selectedCount": "{{count}} محدد",
-    "options": "خيارات",
-    "noOptions": "لا توجد خيارات",
-    "use": "استخدام",
-    "today": "اليوم",
-    "yesterday": "أمس",
-    "thisWeek": "هذا الأسبوع",
-    "lastWeek": "الأسبوع الماضي",
-    "thisMonth": "هذا الشهر",
-    "lastMonth": "الشهر الماضي",
-    "custom": "نطاق مخصص"
+    "cancel": "إلغاء",
+    "refreshing": "تحديث...",
+    "loading": "تحميل...",
+    "exit": "خروج"
   },
   "nav": {
     "overview": "نظرة عامة",
@@ -75,7 +31,7 @@
     "speedViolations": "مخالفات السرعة",
     "tablets": "الأجهزة اللوحية",
     "feeMappings": "خرائط الأسعار",
-    "etit": "التتبع المباشر"
+    "etit": "تتبع المركبات"
   },
   "auth": {
     "loginTitle": "مرحباً بعودتك",
@@ -987,70 +943,16 @@
     }
   },
   "etit": {
-    "header": {
-      "title": "التتبع المباشر — ETIT",
-      "subtitle": "{{vehicleCount}} مركبات · {{onMapCount}} على الخريطة",
-      "live": "مباشر",
-      "liveOffline": "البث متوقف",
-      "openVehicleList": "فتح قائمة المركبات",
-      "liveStream": "مباشر (بث)"
-    },
-    "list": {
-      "searchPlaceholder": "ابحث برقم اللوحة أو الاسم الكودي",
-      "focusOnMap": "تركيز على الخريطة",
-      "focusOnMapFor": "تركيز الخريطة على {{name}}",
-      "filter": {
-        "all": "الكل",
-        "online": "متصل",
-        "moving": "متحرك",
-        "idling": "متوقف بالمحرك",
-        "offline": "غير متصل"
-      },
-      "empty": {
-        "title": "لا توجد مركبات مطابقة",
-        "description": "لا توجد مركبات ضمن هذا التصفية.",
-        "descriptionSearch": "جرّب مصطلحًا آخر للبحث."
-      },
-      "heading": "المركبات ({{count}})",
-      "toggleAllVisible": "تبديل عرض كل المركبات المعروضة",
-      "shownOnMap": "على الخريطة: {{shown}}/{{total}}",
-      "hideAll": "إخفاء الكل",
-      "showOnMap": "عرض {{name}} على الخريطة",
-      "hideFromMap": "إخفاء {{name}} من الخريطة"
-    },
-    "controls": {
-      "noVehicle": "اختر مركبة",
-      "noVehicleHint": "اختر من القائمة لتحميل السجل",
-      "loadHistory": "تحميل السجل",
-      "loadHistoryHint": "انقر للتحميل، اضغط مطولاً لفرض تحديث ذاكرة التخزين المؤقت",
-      "cairoTime": "توقيت القاهرة",
-      "unassignedDriver": "بدون سائق",
-      "ignitionOn": "تشغيل المحرك",
-      "ignitionOff": "إيقاف المحرك",
-      "idle": "خمول",
-      "disconnected": "انقطاع",
-      "stats": {
-        "mileage": "المسافة",
-        "activeTime": "زمن الحركة",
-        "stops": "التوقفات",
-        "fuel": "الوقود"
-      },
-      "overlays": "الطبقات",
-      "toggleStops": "التوقفات",
-      "toggleIgnitions": "تشغيل المحرك"
-    },
-    "player": {
-      "empty": "حمّل نطاقًا زمنيًا يحتوي على نقطتين موقّتتين على الأقل لتفعيل التشغيل.",
-      "play": "تشغيل",
-      "pause": "إيقاف مؤقت",
-      "stop": "إيقاف",
-      "restart": "إعادة من البداية",
-      "speed": "السرعة",
-      "over": "متجاوز",
-      "scrubberLabel": "موضع التشغيل",
-      "stoppedFor": "متوقف · {{duration}}",
-      "atTime": "عند {{time}}",
-      "idleSlot": "لا يوجد توقف أو حدث حالي"
+    "live": "مباشر",
+    "history": "السجل",
+    "speed": "سرعة {{val}}x",
+    "play": "تشغيل",
+    "pause": "إيقاف مؤقت",
+    "vehicle": "مركبة",
+    "plate": "رقم اللوحة",
+    "units": {
+      "kmh": "كم/س",
+      "km": "كم"
     },
     "map": {
       "popup": {
@@ -1059,41 +961,75 @@
         "from": "من",
         "to": "إلى",
         "time": "الوقت",
-        "limit": "الحد",
+        "limit": "حد السرعة",
         "stopHeading": "توقف",
         "unknownLocation": "موقع غير معروف",
-        "playback": "التشغيل"
-      },
-      "empty": {
-        "title": "اختر مركبة لعرضها",
-        "descDesktop": "حدّد المربع بجانب مركبة في القائمة، أو اضغط على الهدف لتركيز الكاميرا.",
-        "descMobile": "افتح قائمة المركبات وحدّد ما تريد عرضه على الخريطة."
+        "playback": "إعادة تشغيل"
       }
     },
-    "units": {
-      "kmh": "كم/س",
-      "km": "كم"
+    "controls": {
+      "overlays": "تراكبات",
+      "toggleStops": "التوقفات",
+      "toggleIgnitions": "المحرك",
+      "loadHistory": "تحميل السجل",
+      "loadHistoryHint": "اضغط مطولاً للتحديث من الخادم",
+      "noVehicle": "لا توجد مركبة",
+      "noVehicleHint": "اختر مركبة لعرض السجل",
+      "stats": {
+        "mileage": "المسافة",
+        "activeTime": "وقت النشاط",
+        "stops": "التوقفات"
+      },
+      "unassignedDriver": "سائق غير معين",
+      "ignitionOn": "المحرك يعمل",
+      "ignitionOff": "المحرك متوقف",
+      "idle": "خمول"
     },
-    "errors": {
-      "proxyUnreachable": "تعذّر الوصول إلى خدمة ETIT."
+    "list": {
+      "heading": "المركبات ({{count}})",
+      "searchPlaceholder": "البحث باللوحة أو الاسم...",
+      "toggleAllVisible": "تبديل الرؤية للكل",
+      "shownOnMap": "{{shown}} من {{total}} معروضة",
+      "hideAll": "إخفاء الكل",
+      "hideFromMap": "إخفاء {{name}} من الخريطة",
+      "showOnMap": "عرض {{name}} على الخريطة",
+      "focusOnMap": "التركيز على الخريطة",
+      "focusOnMapFor": "التركيز على {{name}}",
+      "empty": {
+        "title": "لا توجد مركبات",
+        "description": "لا توجد مركبات تطابق معاييرك.",
+        "descriptionSearch": "لا توجد مركبات تطابق بحثك."
+      },
+      "filter": {
+        "all": "الكل",
+        "online": "متصل",
+        "moving": "متحرك",
+        "idling": "خامل",
+        "offline": "غير متصل"
+      }
+    },
+    "player": {
+      "empty": "لا توجد بيانات متاحة لهذه الفترة.",
+      "scrubberLabel": "شريط الوقت",
+      "restart": "إعادة البدء",
+      "speed": "السرعة",
+      "stoppedFor": "متوقف لمدة {{duration}}",
+      "atTime": "في {{time}}",
+      "idleSlot": "لا توجد أحداث مسجلة"
     },
     "range": {
-      "custom": "مخصص",
+      "period": "الفترة",
+      "hours": "ساعات",
+      "minutes": " دقائق",
       "preset": {
         "lastHour": "آخر ساعة",
         "last3h": "آخر 3 ساعات",
         "today": "اليوم",
-        "yesterday": "أمس",
+        "yesterday": "الأمس",
         "last7d": "آخر 7 أيام"
       },
-      "hours": "الساعات",
-      "minutes": "الدقائق",
-      "period": "الفترة"
+      "custom": "مخصص"
     },
-    "mobile": {
-      "controls": "السجل",
-      "playback": "التشغيل"
-    },
-    "loadingHistory": "جاري تحميل بيانات خط السير..."
+    "loadingHistory": "جاري تحميل السجل..."
   }
 }

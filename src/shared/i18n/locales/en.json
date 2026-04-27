@@ -4,7 +4,7 @@
     "tagline": "Fleet Management",
     "search": "Search",
     "searchPlaceholder": "Search...",
-    "refreshing": "Refreshing",
+    "refreshing": "Refreshing...",
     "filter": "Filter",
     "save": "Save",
     "cancel": "Cancel",
@@ -75,7 +75,7 @@
     "speedViolations": "Speed Violations",
     "tablets": "Tablets",
     "feeMappings": "Fee Mappings",
-    "etit": "Live tracking"
+    "etit": "ETIT Tracking"
   },
   "auth": {
     "loginTitle": "Welcome back",
@@ -987,113 +987,93 @@
     }
   },
   "etit": {
-    "header": {
-      "title": "ETIT live tracking",
-      "subtitle": "{{vehicleCount}} vehicles · {{onMapCount}} on map",
-      "live": "Live",
-      "liveOffline": "Live offline",
-      "openVehicleList": "Open vehicle list",
-      "liveStream": "Live (stream)"
+    "live": "Live",
+    "history": "History",
+    "speed": "{{val}}x Speed",
+    "play": "Play",
+    "pause": "Pause",
+    "vehicle": "Vehicle",
+    "plate": "Plate Number",
+    "units": {
+      "kmh": "km/h",
+      "km": "km"
+    },
+    "map": {
+      "popup": {
+        "speed": "Speed",
+        "lastSeen": "Last Seen",
+        "from": "From",
+        "to": "To",
+        "time": "Time",
+        "limit": "Speed Limit",
+        "stopHeading": "Stop",
+        "unknownLocation": "Unknown Location",
+        "playback": "Playback"
+      }
+    },
+    "controls": {
+      "overlays": "Overlays",
+      "toggleStops": "Stops",
+      "toggleIgnitions": "Ignition",
+      "loadHistory": "Load History",
+      "loadHistoryHint": "Press and hold to refresh from server",
+      "noVehicle": "No Vehicle",
+      "noVehicleHint": "Select a vehicle to view history",
+      "stats": {
+        "mileage": "Mileage",
+        "activeTime": "Active Time",
+        "stops": "Stops"
+      },
+      "unassignedDriver": "Unassigned Driver",
+      "ignitionOn": "Ignition On",
+      "ignitionOff": "Ignition Off",
+      "idle": "Idle"
     },
     "list": {
-      "searchPlaceholder": "Search by plate or codename",
+      "heading": "Vehicles ({{count}})",
+      "searchPlaceholder": "Search by plate or name...",
+      "toggleAllVisible": "Toggle all visible",
+      "shownOnMap": "{{shown}} of {{total}} shown",
+      "hideAll": "Hide all",
+      "hideFromMap": "Hide {{name}} from map",
+      "showOnMap": "Show {{name}} on map",
       "focusOnMap": "Focus on map",
-      "focusOnMapFor": "Focus map on {{name}}",
+      "focusOnMapFor": "Focus on {{name}}",
+      "empty": {
+        "title": "No vehicles found",
+        "description": "There are no vehicles matching your criteria.",
+        "descriptionSearch": "No vehicles match your search."
+      },
       "filter": {
         "all": "All",
         "online": "Online",
         "moving": "Moving",
         "idling": "Idling",
         "offline": "Offline"
-      },
-      "empty": {
-        "title": "No vehicles match",
-        "description": "No vehicles in this filter.",
-        "descriptionSearch": "Try a different search term."
-      },
-      "heading": "Vehicles ({{count}})",
-      "toggleAllVisible": "Toggle visibility for all listed vehicles",
-      "shownOnMap": "On map: {{shown}}/{{total}}",
-      "hideAll": "Hide all",
-      "showOnMap": "Show {{name}} on map",
-      "hideFromMap": "Hide {{name}} from map"
-    },
-    "controls": {
-      "noVehicle": "Select a vehicle",
-      "noVehicleHint": "Pick from the list to load history",
-      "loadHistory": "Load history",
-      "loadHistoryHint": "Click to load, long press to force refresh cache",
-      "cairoTime": "Cairo time",
-      "unassignedDriver": "Unassigned driver",
-      "ignitionOn": "Ignition on",
-      "ignitionOff": "Ignition off",
-      "idle": "Idle",
-      "disconnected": "Disconnected",
-      "stats": {
-        "mileage": "Mileage",
-        "activeTime": "Active time",
-        "stops": "Stops",
-        "fuel": "Fuel"
-      },
-      "overlays": "Overlays",
-      "toggleStops": "Stops",
-      "toggleIgnitions": "Ignitions"
-    },
-    "player": {
-      "empty": "Load a history range with at least two timestamped points to enable playback.",
-      "play": "Play",
-      "pause": "Pause",
-      "stop": "Stop",
-      "restart": "Restart",
-      "speed": "Speed",
-      "over": "over",
-      "scrubberLabel": "Playback position",
-      "stoppedFor": "Stopped · {{duration}}",
-      "atTime": "at {{time}}",
-      "idleSlot": "No active stop or event"
-    },
-    "map": {
-      "popup": {
-        "speed": "Speed",
-        "lastSeen": "Last seen",
-        "from": "From",
-        "to": "To",
-        "time": "Time",
-        "limit": "Limit",
-        "stopHeading": "Stop",
-        "unknownLocation": "Unknown location",
-        "playback": "Playback"
-      },
-      "empty": {
-        "title": "Pick a vehicle to show",
-        "descDesktop": "Tick the checkbox next to a vehicle in the list, or click the crosshair to focus the camera.",
-        "descMobile": "Open the vehicle list and tick the ones you want on the map."
       }
     },
-    "units": {
-      "kmh": "km/h",
-      "km": "km"
-    },
-    "errors": {
-      "proxyUnreachable": "Could not reach the ETIT proxy."
+    "player": {
+      "empty": "No data available for this range.",
+      "scrubberLabel": "Timeline scrubber",
+      "restart": "Restart",
+      "speed": "Speed",
+      "stoppedFor": "Stopped for {{duration}}",
+      "atTime": "at {{time}}",
+      "idleSlot": "No recorded events"
     },
     "range": {
-      "custom": "Custom",
-      "preset": {
-        "lastHour": "Last hour",
-        "last3h": "Last 3 hours",
-        "today": "Today",
-        "yesterday": "Yesterday",
-        "last7d": "Last 7 days"
-      },
+      "period": "Period",
       "hours": "Hours",
       "minutes": "Minutes",
-      "period": "Period"
+      "preset": {
+        "lastHour": "Last Hour",
+        "last3h": "Last 3 Hours",
+        "today": "Today",
+        "yesterday": "Yesterday",
+        "last7d": "Last 7 Days"
+      },
+      "custom": "Custom"
     },
-    "mobile": {
-      "controls": "History",
-      "playback": "Playback"
-    },
-    "loadingHistory": "Loading history data..."
+    "loadingHistory": "Loading history..."
   }
 }

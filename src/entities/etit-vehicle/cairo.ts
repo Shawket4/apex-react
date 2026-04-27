@@ -31,7 +31,7 @@ interface CairoParts {
   second: number;
 }
 
-function cairoParts(date: Date): CairoParts {
+export function cairoParts(date: Date): CairoParts {
   // `formatToParts` returns the same calendar fields the user would see on
   // a Cairo wall clock, regardless of the runtime's local timezone.
   const fmt = new Intl.DateTimeFormat('en-GB', {
@@ -44,6 +44,7 @@ function cairoParts(date: Date): CairoParts {
     second: '2-digit',
     hour12: false,
   });
+
   const parts = fmt.formatToParts(date);
   const get = (type: Intl.DateTimeFormatPartTypes) =>
     Number(parts.find((p) => p.type === type)?.value ?? 0);
@@ -51,6 +52,7 @@ function cairoParts(date: Date): CairoParts {
   // `hour: '2-digit'` with `hour12: false` can emit "24" for midnight on
   // some runtimes — normalise to 0.
   const rawHour = get('hour');
+
   return {
     year: get('year'),
     month: get('month'),
@@ -77,6 +79,7 @@ const pad2 = (n: number) => String(n).padStart(2, '0');
  */
 export function formatCairoForProxy(date: Date): string {
   const p = cairoParts(date);
+
   return (
     `${p.year}-${pad2(p.month)}-${pad2(p.day)}` +
     `T${pad2(p.hour)}:${pad2(p.minute)}:${pad2(p.second)}`
@@ -154,15 +157,16 @@ export function cairoFromParts(
  * Cairo string.
  *
  * Used everywhere we surface backend timestamps to the user:
- *   - "23 Apr 2026, 16:42"   (default)
- *   - "16:42:18"              (when `style: 'time'`)
- *   - "23 Apr 2026"           (when `style: 'date'`)
+ * - "23 Apr 2026, 16:42"   (default)
+ * - "16:42:18"              (when `style: 'time'`)
+ * - "23 Apr 2026"           (when `style: 'date'`)
  */
 export function formatCairo(
   value: string | Date | number | null | undefined,
   style: 'datetime' | 'date' | 'time' = 'datetime',
 ): string {
   if (value == null) return '—';
+
   const date = value instanceof Date ? value : new Date(value);
   if (!Number.isFinite(date.getTime())) return '—';
 
@@ -188,10 +192,13 @@ export function formatCairo(
  */
 export function formatCairoClock(value: string | Date | number | null | undefined): string {
   if (value == null) return '--:--:--';
+
   const date = value instanceof Date ? value : new Date(value);
   if (!Number.isFinite(date.getTime())) return '--:--:--';
   const p = cairoParts(date);
+
   const h12 = p.hour % 12 || 12;
   const ampm = p.hour >= 12 ? 'PM' : 'AM';
+
   return `${pad2(h12)}:${pad2(p.minute)}:${pad2(p.second)} ${ampm}`;
 }
