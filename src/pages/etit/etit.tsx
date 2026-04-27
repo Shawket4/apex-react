@@ -32,6 +32,8 @@ import { EtitVehicleHistorySelector } from '@/widgets/etit-vehicle-history-selec
 import { EtitFloatingStats } from '@/widgets/etit-history-controls/etit-floating-stats';
 import { EtitPlaybackPlayer } from '@/widgets/etit-playback-player/etit-playback-player';
 import { defaultCairoTodayRange } from '@/widgets/etit-datetime-range/etit-datetime-range';
+import { useLayoutStore } from '@/shared/hooks/use-layout-store';
+import { Draggable } from '@/shared/ui/draggable';
 
 /* -------------------------------------------------------------------------- */
 /* Persistence                                                                 */
@@ -90,6 +92,8 @@ export function EtitPage() {
   const isDesktop = useIsDesktop();
   const queryClient = useQueryClient();
   const containerRef = React.useRef<HTMLDivElement>(null);
+  
+  const { setSidebarCollapsed } = useLayoutStore();
   
   const [mobileListOpen, setMobileListOpen] = React.useState(false);
   const [mobileTab, setMobileTab] = React.useState<MobileTab>('controls');
@@ -193,7 +197,7 @@ export function EtitPage() {
 
   /* ---- History range ---- */
   const [range, setRange] = React.useState(defaultCairoTodayRange());
-  const [loadedRange, setLoadedRange] = React.useState<{ from: Date; to: Date } | null>(null);
+  const [loadedRange, setLoadedRange] = React.useState<{ from: Date; to: Date; refresh?: boolean } | null>(null);
 
   const historyQuery = useEtitHistoryRange(
     activeId && loadedRange ? { vehicleId: activeId, ...loadedRange } : null,
@@ -202,8 +206,8 @@ export function EtitPage() {
     activeId && loadedRange ? { vehicleId: activeId, ...loadedRange } : null,
   );
 
-  const handleLoadHistory = React.useCallback(() => {
-    setLoadedRange({ ...range });
+  const handleLoadHistory = React.useCallback((refresh?: boolean) => {
+    setLoadedRange({ ...range, refresh });
   }, [range]);
 
   const clearHistory = React.useCallback(() => {
@@ -213,6 +217,14 @@ export function EtitPage() {
       queryClient.removeQueries({ queryKey: etitKeys.summary(activeId, '', '') });
     }
   }, [activeId, queryClient]);
+
+  /* ---- Auto-collapse ---- */
+  React.useEffect(() => {
+    if (loadedRange && isDesktop) {
+      setLeftCollapsed(true);
+      setSidebarCollapsed(true);
+    }
+  }, [loadedRange, isDesktop, setSidebarCollapsed]);
 
   /* ---- Playback ---- */
   const [showStops, setShowStops] = React.useState(true);
@@ -267,6 +279,8 @@ export function EtitPage() {
       onRangeChange={setRange}
       onLoad={handleLoadHistory}
       onBack={() => setActiveId(null)}
+      onClearHistory={clearHistory}
+      isHistoryLoaded={!!loadedRange}
       loading={historyQuery.isLoading || summaryQuery.isLoading}
       className="h-full w-full"
     />
@@ -405,24 +419,28 @@ export function EtitPage() {
 
           {loadedRange && (
             <div className="absolute inset-x-0 top-6 z-[1000] pointer-events-none flex justify-center px-4">
-              <div className="pointer-events-auto flex flex-col gap-2 w-full max-w-2xl bg-background/40 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/10 p-2 transition-all hover:bg-background/60">
-                <div className="flex items-center justify-between px-3 pt-1">
-                  <div className="flex items-center gap-3">
-                    <Radar className="h-4 w-4 text-primary animate-pulse" />
-                    <span className="text-xs font-black uppercase tracking-widest">{activeVehicle?.plate}</span>
+              <Draggable className="group relative">
+                <div className="pointer-events-auto flex flex-col gap-1 w-full max-w-2xl bg-slate-950/90 backdrop-blur-xl rounded-xl shadow-2xl border border-white/20 p-1.5 transition-all hover:border-white/40">
+                  <div className="flex items-center justify-between px-2 pt-0.5">
+                    <div className="flex items-center gap-2">
+                      <Radar className="h-3.5 w-3.5 text-primary animate-pulse" />
+                      <span className="text-[10px] font-black uppercase tracking-widest text-white/90">{activeVehicle?.plate}</span>
+                    </div>
+                    <Button size="icon" variant="ghost" className="h-5 w-5 rounded-md hover:bg-destructive/20 hover:text-destructive text-white/40" onClick={clearHistory}>
+                      <X className="h-3 w-3" />
+                    </Button>
                   </div>
-                  <Button size="icon" variant="ghost" className="h-6 w-6 rounded-lg hover:bg-destructive/10 hover:text-destructive" onClick={clearHistory}>
-                    <X className="h-3 w-3" />
-                  </Button>
+                  {playbackPlayerNode}
                 </div>
-                {playbackPlayerNode}
-              </div>
+              </Draggable>
             </div>
           )}
 
           {loadedRange && isDesktop && (
-            <div className="absolute right-6 top-6 z-[1000] pointer-events-none">
-              <div className="w-72">{floatingStatsNode}</div>
+            <div className="absolute right-6 top-24 z-[1000] pointer-events-none">
+              <Draggable className="group relative">
+                {floatingStatsNode}
+              </Draggable>
             </div>
           )}
 

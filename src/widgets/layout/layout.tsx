@@ -5,10 +5,11 @@ import { Header } from '@/widgets/header/header';
 import { CommandPalette, useCommandPalette } from '@/widgets/command-palette/command-palette';
 import { Sheet, SheetContent } from '@/shared/ui/sheet';
 import { useIsDesktop } from '@/shared/hooks/use-media-query';
+import { useLayoutStore } from '@/shared/hooks/use-layout-store';
 
 export function Layout() {
   const { open: paletteOpen, setOpen: setPaletteOpen } = useCommandPalette();
-  const [collapsed, setCollapsed] = React.useState(false);
+  const { sidebarCollapsed, toggleSidebar } = useLayoutStore();
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const isDesktop = useIsDesktop();
 
@@ -19,7 +20,7 @@ export function Layout() {
     <div className="flex h-dvh bg-background">
       {/* Desktop sidebar — fixed, collapsible, always viewport-height */}
       {isDesktop && (
-        <Sidebar collapsed={collapsed} onToggleCollapse={() => setCollapsed((v) => !v)} />
+        <Sidebar collapsed={sidebarCollapsed} onToggleCollapse={toggleSidebar} />
       )}
 
       {/* Mobile sidebar — slide-out Sheet */}

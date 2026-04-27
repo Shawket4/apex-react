@@ -42,7 +42,14 @@
     "selectedCount": "{{count}} محدد",
     "options": "خيارات",
     "noOptions": "لا توجد خيارات",
-    "use": "استخدام"
+    "use": "استخدام",
+    "today": "اليوم",
+    "yesterday": "أمس",
+    "thisWeek": "هذا الأسبوع",
+    "lastWeek": "الأسبوع الماضي",
+    "thisMonth": "هذا الشهر",
+    "lastMonth": "الشهر الماضي",
+    "custom": "نطاق مخصص"
   },
   "nav": {
     "overview": "نظرة عامة",
@@ -829,7 +836,7 @@
     "actions": {
       "create": "تسجيل تغيير الزيت",
       "save": "حفظ التغييرات",
-      "viewHistory": "عرض السجل"
+      "viewHistory": "عرض خط السير"
     },
     "form": {
       "sections": {
@@ -1084,8 +1091,9 @@
       "period": "الفترة"
     },
     "mobile": {
-      "controls": "التحكم",
+      "controls": "السجل",
       "playback": "التشغيل"
-    }
+    },
+    "loadingHistory": "جاري تحميل بيانات خط السير..."
   }
 }

@@ -25,7 +25,7 @@ export function EtitFloatingStats({
 
   return (
     <div className={cn(
-      "pointer-events-auto flex flex-col gap-3 bg-background/40 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/10 p-4 transition-all hover:bg-background/60",
+      "pointer-events-auto flex flex-col gap-2.5 bg-slate-950/90 backdrop-blur-xl rounded-xl shadow-2xl border border-white/20 p-3 transition-all hover:border-white/40",
       className
     )}>
       {/* Metrics Grid */}
@@ -91,14 +91,14 @@ export function EtitFloatingStats({
 
 function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
-    <div className="group flex flex-col rounded-xl border bg-background/20 p-3 transition-all hover:bg-background/40">
-      <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground uppercase tracking-tight">
-        <div className="rounded-md bg-primary/10 p-1 text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+    <div className="group flex items-center justify-between rounded-lg border border-white/5 bg-white/5 p-2 transition-all hover:bg-white/10">
+      <div className="flex items-center gap-2 text-[10px] font-bold text-white/50 uppercase tracking-tight">
+        <div className="text-primary group-hover:scale-110 transition-transform">
           {icon}
         </div>
         <span className="truncate">{label}</span>
       </div>
-      <div className="mt-1 truncate text-sm font-black tracking-tight text-foreground">{value}</div>
+      <div className="truncate text-xs font-black tracking-tight text-white">{value}</div>
     </div>
   );
 }

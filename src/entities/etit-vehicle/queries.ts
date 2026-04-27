@@ -29,12 +29,12 @@ export const etitKeys = {
   vehicle: (id: string) => [...etitKeys.all, 'vehicle', id] as const,
   live: () => [...etitKeys.all, 'live'] as const,
   liveOne: (id: string) => [...etitKeys.all, 'live', id] as const,
-  historyRange: (id: string, fromIso: string, toIso: string) =>
-    [...etitKeys.all, 'history', id, 'range', fromIso, toIso] as const,
-  historyDay: (id: string, dayIso: string) =>
-    [...etitKeys.all, 'history', id, 'day', dayIso] as const,
-  summary: (id: string, fromIso: string, toIso: string) =>
-    [...etitKeys.all, 'summary', id, fromIso, toIso] as const,
+  historyRange: (id: string, fromIso: string, toIso: string, refresh?: boolean) =>
+    [...etitKeys.all, 'history', id, 'range', fromIso, toIso, refresh ? 'refresh' : 'cached'] as const,
+  historyDay: (id: string, dayIso: string, refresh?: boolean) =>
+    [...etitKeys.all, 'history', id, 'day', dayIso, refresh ? 'refresh' : 'cached'] as const,
+  summary: (id: string, fromIso: string, toIso: string, refresh?: boolean) =>
+    [...etitKeys.all, 'summary', id, fromIso, toIso, refresh ? 'refresh' : 'cached'] as const,
 } as const;
 
 /* -------------------------------------------------------------------------- */
@@ -84,7 +84,7 @@ export function useEtitHistoryRange(
   const enabled = args !== null;
   return useQuery<EtitHistoryResponse>({
     queryKey: enabled
-      ? etitKeys.historyRange(args.vehicleId, args.from.toISOString(), args.to.toISOString())
+      ? etitKeys.historyRange(args.vehicleId, args.from.toISOString(), args.to.toISOString(), args.refresh)
       : ['etit', 'history', 'disabled'],
     queryFn: () => etitApi.historyForRange(args!),
     enabled,
@@ -101,7 +101,7 @@ export function useEtitHistoryDay(
   const enabled = args !== null;
   return useQuery<EtitHistoryResponse>({
     queryKey: enabled
-      ? etitKeys.historyDay(args.vehicleId, args.day.toISOString())
+      ? etitKeys.historyDay(args.vehicleId, args.day.toISOString(), args.refresh)
       : ['etit', 'history', 'disabled'],
     queryFn: () => etitApi.historyForDay(args!),
     enabled,
@@ -118,7 +118,7 @@ export function useEtitTripSummary(
   const enabled = args !== null;
   return useQuery<EtitTripSummary>({
     queryKey: enabled
-      ? etitKeys.summary(args.vehicleId, args.from.toISOString(), args.to.toISOString())
+      ? etitKeys.summary(args.vehicleId, args.from.toISOString(), args.to.toISOString(), args.refresh)
       : ['etit', 'summary', 'disabled'],
     queryFn: () => etitApi.historySummary(args!),
     enabled,

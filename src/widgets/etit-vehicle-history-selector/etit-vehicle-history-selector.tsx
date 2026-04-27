@@ -12,6 +12,8 @@ interface EtitVehicleHistorySelectorProps {
   onRangeChange: (range: { from: Date; to: Date }) => void;
   onLoad: (refresh?: boolean) => void;
   onBack: () => void;
+  onClearHistory?: () => void;
+  isHistoryLoaded?: boolean;
   loading?: boolean;
   className?: string;
 }
@@ -94,6 +96,17 @@ export function EtitVehicleHistorySelector({
           )}
           {t('etit.controls.loadHistory')}
         </Button>
+
+        {isHistoryLoaded && (
+          <Button
+            variant="outline"
+            className="w-full gap-2 border-destructive/20 text-destructive hover:bg-destructive/10 hover:border-destructive/40 transition-all"
+            onClick={onClearHistory}
+            disabled={loading}
+          >
+            {t('common.exit')}
+          </Button>
+        )}
 
         <div className="rounded-lg bg-muted/30 p-3 border border-dashed border-border/50">
           <p className="text-[10px] leading-relaxed text-muted-foreground italic">
