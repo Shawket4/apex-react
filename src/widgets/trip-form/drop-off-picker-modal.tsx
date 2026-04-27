@@ -172,17 +172,15 @@ export function DropOffPickerModal({
                   const fee = Number(mapping?.fee ?? 0);
                   const distance = Number(mapping?.distance ?? 0);
                   const isSelected = dropOff === value;
-                  const isExcluded = excludedDropOffs.includes(dropOff);
 
                   return (
                     <li key={dropOff}>
                       <button
                         type="button"
-                        onClick={() => !isExcluded && handlePick(dropOff, mapping)}
-                        disabled={isExcluded}
+                        onClick={() => handlePick(dropOff, mapping)}
                         className={cn(
                           'flex w-full items-center gap-3 px-3 py-2.5 text-start transition-colors',
-                          'hover:bg-muted/60 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent',
+                          'hover:bg-muted/60',
                           isSelected && 'bg-primary/5',
                         )}
                       >
@@ -194,11 +192,6 @@ export function DropOffPickerModal({
                             <span className="truncate text-sm font-medium">
                               {dropOff}
                             </span>
-                            {isExcluded && (
-                              <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
-                                {t('trips.form.dropOffPicker.alreadySelected')}
-                              </span>
-                            )}
                           </div>
                           {mapping && (
                             <div className="flex items-center gap-3 text-xs text-muted-foreground">

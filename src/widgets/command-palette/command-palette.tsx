@@ -48,7 +48,7 @@ export function useCommandPalette() {
 
   React.useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === 'k' && (e.metaKey || e.ctrlKey)) {
+      if (e.key.toLowerCase() === 'k' && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
         setOpen((o) => !o);
       }
@@ -241,7 +241,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
       : page.type === 'fuel-terminals'
       ? t('commandPalette.searchTerminals', { company: page.company })
       : page.type === 'fuel-up'
-      ? t('fuelEvents.fields.searchPlaceholder')
+      ? t('fuelEvents.searchPlaceholder')
       : t('common.searchPlaceholder');
 
   // ─── Render ─────────────────────────────────────────────────────────────────

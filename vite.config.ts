@@ -91,6 +91,17 @@ export default defineConfig({
          * Order matters: more-specific matches above the catch-alls.
          */
         manualChunks(id) {
+          // ETIT domain code — group the page, widgets, and entities into a
+          // single chunk so the live-tracking logic doesn't bloat the main
+          // bundle or the primary dashboard chunks.
+          if (
+            id.includes('/pages/etit/') ||
+            id.includes('/widgets/etit-') ||
+            id.includes('/entities/etit-')
+          ) {
+            return 'etit-module';
+          }
+
           if (!id.includes('node_modules')) return undefined;
 
           // Google Maps loader — small package (~8 kB minified) that barely
@@ -108,7 +119,7 @@ export default defineConfig({
             return 'chart-vendor';
           }
 
-          // MessagePack decoder — only the trip-statistics page uses it.
+          // MessagePack decoder — used by trip-statistics and ETIT history.
           if (id.includes('@msgpack/')) return 'msgpack-vendor';
 
           // Forms + validation — react-hook-form, zod, hookform resolver.

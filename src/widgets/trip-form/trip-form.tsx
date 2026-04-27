@@ -779,10 +779,7 @@ export function TripForm({ parentId }: TripFormProps) {
             handleDropOffPicked(pickingContainerIdx, dropOff, mapping);
           }
         }}
-        excludedDropOffs={containers
-          .filter((_, i) => i !== pickingContainerIdx)
-          .map((c) => c.drop_off_point)
-          .filter(Boolean)}
+        excludedDropOffs={[]}
       />
 
       {/* Duplicate detection */}
