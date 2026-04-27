@@ -7,6 +7,9 @@ import '@/shared/i18n';
 
 import { Providers } from './providers';
 import { router } from './router';
+import { initConsoleSilencer } from './console-silencer';
+
+initConsoleSilencer();
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {

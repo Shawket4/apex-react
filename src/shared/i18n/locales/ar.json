@@ -66,7 +66,8 @@
     "settings": "الإعدادات",
     "speedViolations": "مخالفات السرعة",
     "tablets": "الأجهزة اللوحية",
-    "feeMappings": "خرائط الأسعار"
+    "feeMappings": "خرائط الأسعار",
+    "etit": "التتبع المباشر"
   },
   "auth": {
     "loginTitle": "مرحباً بعودتك",
@@ -975,6 +976,81 @@
     },
     "errors": {
       "loadFailed": "فشل تحميل خرائط الأسعار"
+    }
+  },
+  "etit": {
+    "header": {
+      "title": "التتبع المباشر — ETIT",
+      "subtitle": "{{vehicleCount}} مركبات · {{onMapCount}} على الخريطة",
+      "live": "مباشر",
+      "liveOffline": "غير متصل",
+      "openVehicleList": "فتح قائمة المركبات"
+    },
+    "list": {
+      "searchPlaceholder": "ابحث برقم اللوحة أو الاسم الكودي",
+      "focusOnMap": "التركيز على الخريطة",
+      "focusOnMapFor": "تركيز {{name}} على الخريطة",
+      "filter": {
+        "all": "الكل",
+        "online": "متصل",
+        "moving": "متحرك",
+        "idling": "متوقف بالمحرك",
+        "offline": "غير متصل"
+      },
+      "empty": {
+        "title": "لا توجد مركبات مطابقة",
+        "description": "لا توجد مركبات ضمن هذا التصفية.",
+        "descriptionSearch": "جرّب مصطلحًا آخر للبحث."
+      }
+    },
+    "controls": {
+      "noVehicle": "اختر مركبة",
+      "noVehicleHint": "اختر من القائمة لتحميل السجل",
+      "loadHistory": "تحميل السجل",
+      "cairoTime": "توقيت القاهرة",
+      "unassignedDriver": "بدون سائق",
+      "ignitionOn": "تشغيل المحرك",
+      "ignitionOff": "إيقاف المحرك",
+      "idle": "خمول",
+      "disconnected": "انقطاع",
+      "stats": {
+        "mileage": "المسافة",
+        "activeTime": "زمن الحركة",
+        "stops": "التوقفات",
+        "fuel": "الوقود"
+      }
+    },
+    "player": {
+      "empty": "حمّل نطاقًا زمنيًا يحتوي على نقطتين موقّتتين على الأقل لتفعيل التشغيل.",
+      "play": "تشغيل",
+      "pause": "إيقاف مؤقت",
+      "stop": "إيقاف",
+      "restart": "إعادة من البداية",
+      "speed": "السرعة",
+      "over": "متجاوز",
+      "scrubberLabel": "موضع التشغيل",
+      "stoppedFor": "متوقف · {{duration}}",
+      "atTime": "عند {{time}}"
+    },
+    "map": {
+      "popup": {
+        "speed": "السرعة",
+        "lastSeen": "آخر ظهور",
+        "from": "من",
+        "to": "إلى",
+        "time": "الوقت",
+        "limit": "الحد",
+        "stopHeading": "توقف",
+        "unknownLocation": "موقع غير معروف",
+        "playback": "تشغيل المسار"
+      }
+    },
+    "units": {
+      "kmh": "كم/س",
+      "km": "كم"
+    },
+    "errors": {
+      "proxyUnreachable": "تعذّر الوصول إلى خدمة ETIT."
     }
   }
 }

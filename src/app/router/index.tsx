@@ -49,6 +49,8 @@ const OilChangeHistoryPage = React.lazy(
 );
 const FeeMappingsPage = React.lazy(() => import('@/pages/fee-mappings/fee-mappings'));
 
+const EtitPage = React.lazy(() => import('@/pages/etit/etit'));
+
 // Named exports — placeholder file. All resolve to the same chunk; the
 // browser fetches it once and React picks the right component per route.
 const placeholderLoader = () => import('@/pages/placeholder/placeholder');
@@ -63,6 +65,7 @@ const LogsPage = lazyNamed(placeholderLoader, 'LogsPage');
 const SettingsPage = lazyNamed(placeholderLoader, 'SettingsPage');
 const TabletsPage = lazyNamed(placeholderLoader, 'TabletsPage');
 const SpeedViolationsPage = lazyNamed(placeholderLoader, 'SpeedViolationsPage');
+
 
 /* -------------------------------------------------------------------------- */
 /* Suspense fallback                                                           */
@@ -212,6 +215,7 @@ export const router = createBrowserRouter([
               </ProtectedRoute>
             ),
           },
+          { path: 'etit', element: <EtitPage /> },
           {
             path: 'users',
             element: (

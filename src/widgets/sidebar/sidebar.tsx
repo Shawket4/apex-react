@@ -20,6 +20,7 @@ import {
   Tablet,
   Gauge,
   Banknote,
+  Radar,
   type LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/shared/lib/cn';
@@ -49,13 +50,14 @@ export const NAV_SECTIONS: NavSection[] = [
     items: [{ to: '/', labelKey: 'nav.dashboard', icon: LayoutDashboard }],
   },
   {
-    titleKey: 'nav.operations',
-    items: [
-      { to: '/fuel-events', labelKey: 'nav.fuelEvents', icon: Fuel },
-      { to: '/trips', labelKey: 'nav.trips', icon: Route },
-      { to: '/oil-changes', labelKey: 'nav.oilChanges', icon: Droplets },
-    ],
-  },
+  titleKey: 'nav.operations',
+  items: [
+    { to: '/fuel-events', labelKey: 'nav.fuelEvents', icon: Fuel },
+    { to: '/trips', labelKey: 'nav.trips', icon: Route },
+    { to: '/etit', labelKey: 'nav.etit', icon: Radar },
+    { to: '/oil-changes', labelKey: 'nav.oilChanges', icon: Droplets },
+  ],
+},
   {
     titleKey: 'nav.fleet',
     items: [

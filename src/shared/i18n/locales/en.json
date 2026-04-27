@@ -66,7 +66,8 @@
     "settings": "Settings",
     "speedViolations": "Speed Violations",
     "tablets": "Tablets",
-    "feeMappings": "Fee Mappings"
+    "feeMappings": "Fee Mappings",
+    "etit": "Live tracking"
   },
   "auth": {
     "loginTitle": "Welcome back",
@@ -975,6 +976,81 @@
     },
     "errors": {
       "loadFailed": "Failed to load fee mappings"
+    }
+  },
+  "etit": {
+    "header": {
+      "title": "ETIT live tracking",
+      "subtitle": "{{vehicleCount}} vehicles · {{onMapCount}} on map",
+      "live": "Live",
+      "liveOffline": "Live offline",
+      "openVehicleList": "Open vehicle list"
+    },
+    "list": {
+      "searchPlaceholder": "Search by plate or codename",
+      "focusOnMap": "Focus on map",
+      "focusOnMapFor": "Focus {{name}} on map",
+      "filter": {
+        "all": "All",
+        "online": "Online",
+        "moving": "Moving",
+        "idling": "Idling",
+        "offline": "Offline"
+      },
+      "empty": {
+        "title": "No vehicles match",
+        "description": "No vehicles in this filter.",
+        "descriptionSearch": "Try a different search term."
+      }
+    },
+    "controls": {
+      "noVehicle": "Select a vehicle",
+      "noVehicleHint": "Pick from the list to load history",
+      "loadHistory": "Load history",
+      "cairoTime": "Cairo time",
+      "unassignedDriver": "Unassigned driver",
+      "ignitionOn": "Ignition on",
+      "ignitionOff": "Ignition off",
+      "idle": "Idle",
+      "disconnected": "Disconnected",
+      "stats": {
+        "mileage": "Mileage",
+        "activeTime": "Active time",
+        "stops": "Stops",
+        "fuel": "Fuel"
+      }
+    },
+    "player": {
+      "empty": "Load a history range with at least two timestamped points to enable playback.",
+      "play": "Play",
+      "pause": "Pause",
+      "stop": "Stop",
+      "restart": "Restart",
+      "speed": "Speed",
+      "over": "over",
+      "scrubberLabel": "Playback position",
+      "stoppedFor": "Stopped · {{duration}}",
+      "atTime": "at {{time}}"
+    },
+    "map": {
+      "popup": {
+        "speed": "Speed",
+        "lastSeen": "Last seen",
+        "from": "From",
+        "to": "To",
+        "time": "Time",
+        "limit": "Limit",
+        "stopHeading": "Stop",
+        "unknownLocation": "Unknown location",
+        "playback": "Playback"
+      }
+    },
+    "units": {
+      "kmh": "km/h",
+      "km": "km"
+    },
+    "errors": {
+      "proxyUnreachable": "Could not reach the ETIT proxy."
     }
   }
 }
