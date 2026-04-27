@@ -27,13 +27,13 @@ export function EtitVehicleHistorySelector({
 }: EtitVehicleHistorySelectorProps) {
   const { t } = useTranslation();
 
+  const [isRefreshing, setIsRefreshing] = React.useState(false);
   const [longPressTimer, setLongPressTimer] = React.useState<NodeJS.Timeout | null>(null);
-  const isLongPressRef = React.useRef(false);
 
   const handlePointerDown = React.useCallback(() => {
-    isLongPressRef.current = false;
+    setIsRefreshing(false);
     const timer = setTimeout(() => {
-      isLongPressRef.current = true;
+      setIsRefreshing(true);
       onLoad(true);
       setLongPressTimer(null);
     }, 700);
@@ -44,11 +44,16 @@ export function EtitVehicleHistorySelector({
     if (longPressTimer) {
       clearTimeout(longPressTimer);
       setLongPressTimer(null);
-      if (!isLongPressRef.current) {
+      if (!isRefreshing) {
         onLoad(false);
       }
     }
-  }, [longPressTimer, onLoad]);
+  }, [longPressTimer, onLoad, isRefreshing]);
+
+  // Reset local refreshing state when parent loading starts/ends
+  React.useEffect(() => {
+    if (loading) setIsRefreshing(false);
+  }, [loading]);
 
   return (
     <div className={cn('flex h-full flex-col bg-card', className)}>
@@ -85,7 +90,7 @@ export function EtitVehicleHistorySelector({
           {loading ? (
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
-            <RefreshCw className={cn('h-4 w-4', isLongPressRef.current && 'animate-spin')} />
+            <RefreshCw className={cn('h-4 w-4', isRefreshing && 'animate-spin')} />
           )}
           {t('etit.controls.loadHistory')}
         </Button>

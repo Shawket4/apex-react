@@ -282,7 +282,7 @@ export function GoogleMapView({
           title: m.title,
           draggable: !!m.draggable,
           icon: {
-            url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(buildMarkerContent(m))}`,
+            url: buildMarkerContent(m),
             anchor: new google.maps.Point(markerSize(m.kind || 'pin').anchorX, markerSize(m.kind || 'pin').anchorY),
           },
         });
@@ -312,7 +312,7 @@ export function GoogleMapView({
         // Update existing
         entry.marker.setPosition(position);
         entry.marker.setIcon({
-          url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(buildMarkerContent(m))}`,
+          url: buildMarkerContent(m),
           anchor: new google.maps.Point(markerSize(m.kind || 'pin').anchorX, markerSize(m.kind || 'pin').anchorY),
         });
       }
@@ -344,7 +344,7 @@ export function GoogleMapView({
     const map = mapRef.current;
     if (!map) return;
 
-    // We use the sentinel marker to detect a "focus" intent.
+    // A: Sentinel Focus (Priority)
     const sentinel = markers.find((m) => m.id.startsWith('focus-sentinel-'));
     if (sentinel) {
       if (flyTokenRef.current) {
@@ -352,8 +352,16 @@ export function GoogleMapView({
         if (flyTokenRef.current.rafId) cancelAnimationFrame(flyTokenRef.current.rafId);
       }
       flyTokenRef.current = smoothFlyTo(map, { lat: sentinel.lat, lng: sentinel.lng }, 16);
+      return;
     }
-  }, [markers]);
+
+    // B: Route Fit
+    if (route.length > 1) {
+      const bounds = new google.maps.LatLngBounds();
+      route.forEach(([lat, lng]) => bounds.extend({ lat, lng }));
+      map.fitBounds(bounds, { top: 100, bottom: 100, left: 100, right: 100 });
+    }
+  }, [markers, route]);
 
   /* -------- Render ------------------------------------------------------ */
 

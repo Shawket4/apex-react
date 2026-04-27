@@ -119,7 +119,7 @@ function vehicleSvg(color: string, filterId: string, _heading: number): string {
     'M28.27,23.87c-.51,0-.93.41-.93.92,0,.51.41.93.92.93.51,0,.93-.41.93-.92' +
     ',0,0,0,0,0,0,0-.51-.41-.92-.92-.92Z';
 
-  return `<svg width="40" height="53.28" viewBox="0 0 40 53.28" fill="none" xmlns="http://www.w3.org/2000/svg">
+  return `<svg width="30" height="40" viewBox="0 0 40 53.28" fill="none" xmlns="http://www.w3.org/2000/svg">
     <defs>${shadowDef(sId)}</defs>
     <g filter="url(#${sId})">
       <circle cx="19.97" cy="20.27" r="15.6" fill="white"/>
