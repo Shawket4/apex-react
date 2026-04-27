@@ -216,10 +216,13 @@ function EtitVehicleListBase({
     let idling = 0;
     let offline = 0;
     for (const v of visible) {
-      if (v.online) online++;
-      else offline++;
       const live = liveById.get(v.id);
       const group = live ? classifyStatus(live.status) : classifyStatus(v.status);
+      const isOnline = v.online && group !== 'offline';
+
+      if (isOnline) online++;
+      else offline++;
+
       if (group === 'moving') moving++;
       if (group === 'idling') idling++;
     }

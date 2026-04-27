@@ -76,68 +76,55 @@ function pinSvg(color: string, filterId: string): string {
 }
 
 /* -------------------------------------------------------------------------- */
-/* Vehicle (top-down tanker; rotates with heading around the centre)           */
+/* Vehicle (teardrop pin with a truck diagram in the head)                     */
 /*                                                                             */
-/* The silhouette is a single combined path so cab + tank read as one truck   */
-/* rather than two floating boxes. Going clockwise from the cab top-left:     */
-/*                                                                             */
-/*   start ──┐                                                                 */
-/*           ├── rounded cab top                                               */
-/*           │                                                                 */
-/*           ├── cab side, then a sharp step out to the wider tank            */
-/*           │                                                                 */
-/*           ╰── tank side, then a half-circle around the rear                */
-/*                                                                             */
-/* Front = up at heading 0 (north). Anchor is centre — that's the GPS fix.    */
+/* Custom artwork from Illustrator. Anchor is the tip of the teardrop.        */
+/* The `heading` parameter is intentionally unused — the truck glyph is       */
+/* drawn upright regardless of vehicle direction.                             */
 /* -------------------------------------------------------------------------- */
 
-function vehicleSvg(color: string, filterId: string, heading: number): string {
+function vehicleSvg(color: string, filterId: string, _heading: number): string {
   const sId = `${filterId}-s`;
-  const tId = `${filterId}-t`;
-  const cId = `${filterId}-c`;
-  const rotation = Number.isFinite(heading) ? heading : 0;
-
-  // Single combined silhouette: rounded cab on top, step out to the wider
-  // tank, half-circle rear. Drawn once for the white outline (stroke) and
-  // again for the colour fill — avoids a visible seam at the cab/tank joint.
+  // Teardrop pin body — has a circular hole cut out (evenodd) so the white
+  // circle behind shows through as the badge for the truck glyph.
   const body =
-    'M16.5 4 H23.5 ' +
-    'A2.5 2.5 0 0 1 26 6.5 V12 ' +
-    'H29 V27 ' +
-    'A9 9 0 0 1 11 27 V12 ' +
-    'H14 V6.5 ' +
-    'A2.5 2.5 0 0 1 16.5 4 Z';
+    'M21.29,53.05c-.39.28-.92.32-1.35.04-4.68-2.98-8.62-6.56-11.71-10.44' +
+    'C3.97,37.3,1.28,31.36.36,25.65c-.94-5.79-.06-11.37,2.82-15.9,' +
+    '1.14-1.79,2.59-3.42,4.36-4.83C11.61,1.68,16.26-.03,20.88,0' +
+    'c4.46.03,8.86,1.7,12.66,5.17,1.34,1.21,2.46,2.61,3.38,4.11,' +
+    '3.1,5.1,3.77,11.62,2.41,18.22-2.13,10.34-8.96,20.04-18.04,25.55h0Z' +
+    'M20,4.65c8.62,0,15.6,6.99,15.6,15.6s-6.99,15.6-15.6,15.6' +
+    '-15.6-6.99-15.6-15.6,6.99-15.6,15.6-15.6Z';
+  // Truck glyph that sits inside the white badge.
+  const truck =
+    'M28.27,22.39c-1.33,0-2.41,1.08-2.41,2.41,0,1.33,1.08,2.41,2.41,2.41,' +
+    '1.33,0,2.41-1.08,2.41-2.41,0,0,0,0,0,0,0-1.33-1.08-2.4-2.41-2.41Z' +
+    'M14.47,19.48v.71s0,.01,0,.02c.01.37.27.51.61.39.02,0,.04-.02.05-.03' +
+    '.86-.67,1.36-1.21,2.21-1.88h.01c.12-.1.18-.26.15-.42-.04-.12-.12-.23-.22-.3' +
+    'l-2.01-1.72c-.41-.32-.83-.26-.83.33v.65h-1.94c-.11,0-.2.09-.2.2' +
+    'v1.82c0,.11.09.2.2.2h1.97Z' +
+    'M12.03,23.04c.97-.97,2.54-.97,3.5,0,.97.97.97,2.54,0,3.5-.97.97-2.54.97-3.5,0' +
+    '-.47-.47-.73-1.1-.73-1.75,0-.66.26-1.29.73-1.75Z' +
+    'M26.74,16.04l-4.14-.02v-1.5c0-.35-.14-.69-.38-.94l-.02-.02' +
+    'c-.26-.26-.6-.4-.97-.41h-12.31c-.75,0-1.36.61-1.37,1.37v9.56' +
+    'c0,.37.15.72.41.98.25.27.6.42.96.42h1.26c.23,0,.41-.18.41-.41' +
+    's-.18-.41-.41-.41h-1.27c-.14,0-.27-.06-.37-.16-.11-.11-.17-.25-.17-.41' +
+    'v-9.58c0-.3.24-.54.54-.54h12.31c.14,0,.28.06.39.16l.02.02' +
+    'c.09.1.14.23.14.37v10.13h-4.27c-.23,0-.41.18-.41.41s.18.41.41.41' +
+    'h4.68c.22,0,.41-.18.41-.41v-.41h2.69c.16-3.7,5.47-4.21,6.01,0h1.17' +
+    'l-.15-1.56c-.24-2.66.25-2.17-2.21-3.06l-1.82-.7-1.53-3.3Z' +
+    'M25.81,17.05l-2.39-.02v2.31h3.6l-1.22-2.29h0Z' +
+    'M13.79,23.87c-.51,0-.93.41-.93.92,0,.51.41.93.92.93.51,0,.93-.41.93-.92' +
+    ',0,0,0,0,0,0,0-.51-.41-.92-.92-.92h0Z' +
+    'M28.27,23.87c-.51,0-.93.41-.93.92,0,.51.41.93.92.93.51,0,.93-.41.93-.92' +
+    ',0,0,0,0,0,0,0-.51-.41-.92-.92-.92Z';
 
-  return `<svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <defs>
-      ${shadowDef(sId)}
-      <linearGradient id="${cId}" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stop-color="white" stop-opacity="0.34"/>
-        <stop offset="55%" stop-color="white" stop-opacity="0"/>
-        <stop offset="100%" stop-color="black" stop-opacity="0.22"/>
-      </linearGradient>
-      <linearGradient id="${tId}" x1="0" y1="0" x2="1" y2="0">
-        <stop offset="0%" stop-color="white" stop-opacity="0"/>
-        <stop offset="50%" stop-color="white" stop-opacity="0.20"/>
-        <stop offset="100%" stop-color="white" stop-opacity="0"/>
-      </linearGradient>
-    </defs>
+  return `<svg width="40" height="53.28" viewBox="0 0 40 53.28" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>${shadowDef(sId)}</defs>
     <g filter="url(#${sId})">
-      <g transform="rotate(${rotation} 20 20)">
-        <!-- white halo (outline) -->
-        <path d="${body}" fill="white" stroke="white" stroke-width="3" stroke-linejoin="round"/>
-        <!-- body fill -->
-        <path d="${body}" fill="${color}"/>
-        <!-- top-light molding -->
-        <path d="${body}" fill="url(#${cId})"/>
-        <!-- vertical highlight stripe down the tank suggests cylindrical curve -->
-        <rect x="13.5" y="14" width="13" height="20" fill="url(#${tId})"/>
-        <!-- windshield: the strongest "front" cue -->
-        <rect x="15" y="6" width="10" height="2.6" rx="1.3" fill="white" fill-opacity="0.92"/>
-        <!-- headlights -->
-        <circle cx="16" cy="11" r="0.85" fill="white" fill-opacity="0.95"/>
-        <circle cx="24" cy="11" r="0.85" fill="white" fill-opacity="0.95"/>
-      </g>
+      <circle cx="19.97" cy="20.27" r="15.6" fill="white"/>
+      <path d="${body}" fill="${color}" fill-rule="evenodd"/>
+      <path d="${truck}" fill="white" fill-rule="evenodd"/>
     </g>
   </svg>`;
 }
@@ -244,7 +231,7 @@ export interface MarkerSize {
 
 const SIZES: Record<MarkerKind, MarkerSize> = {
   pin: { width: 26, height: 34, anchorX: 13, anchorY: 34 },
-  vehicle: { width: 40, height: 40, anchorX: 20, anchorY: 20 },
+  vehicle: { width: 40, height: 53, anchorX: 20, anchorY: 53 },
   stop: { width: 24, height: 24, anchorX: 12, anchorY: 12 },
   'ignition-on': { width: 24, height: 24, anchorX: 12, anchorY: 12 },
   'ignition-off': { width: 24, height: 24, anchorX: 12, anchorY: 12 },

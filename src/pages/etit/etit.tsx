@@ -4,11 +4,7 @@ import {
   Activity,
   AlertCircle,
   Menu,
-  MapPinned,
   Radar,
-  WifiOff,
-  ChevronLeft,
-  ChevronRight,
   Maximize2,
   Minimize2,
   X,
@@ -36,36 +32,24 @@ import { EtitPlaybackPlayer } from '@/widgets/etit-playback-player/etit-playback
 import { defaultCairoTodayRange } from '@/widgets/etit-datetime-range/etit-datetime-range';
 
 /* -------------------------------------------------------------------------- */
-/* Storage                                                                     */
+/* Persistence                                                                 */
 /* -------------------------------------------------------------------------- */
 
-const STORAGE_VISIBLE_IDS = 'apex:etit:visibleIds';
-const STORAGE_SHOW_STOPS = 'apex:etit:showStops';
-const STORAGE_SHOW_IGNITIONS = 'apex:etit:showIgnitions';
+const STORAGE_VISIBLE_IDS = 'etit_visible_ids';
 
 function loadVisibleIds(): Set<string> {
-  if (typeof window === 'undefined') return new Set();
   try {
     const raw = window.localStorage.getItem(STORAGE_VISIBLE_IDS);
     if (!raw) return new Set();
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return new Set();
-    return new Set(parsed.filter((x): x is string => typeof x === 'string'));
+    const arr = JSON.parse(raw);
+    return new Set(Array.isArray(arr) ? arr : []);
   } catch {
     return new Set();
   }
 }
 
-function loadBool(key: string, fallback: boolean): boolean {
-  if (typeof window === 'undefined') return fallback;
-  const raw = window.localStorage.getItem(key);
-  if (raw === '1') return true;
-  if (raw === '0') return false;
-  return fallback;
-}
-
 /* -------------------------------------------------------------------------- */
-/* Page                                                                        */
+/* Component                                                                   */
 /* -------------------------------------------------------------------------- */
 
 type MobileTab = 'controls' | 'playback';
@@ -97,10 +81,14 @@ export function EtitPage() {
     }
   }, [visibleIds]);
 
-  // First-load default: if storage was empty AND we have vehicles, show
-  // none — let the user opt in. (Showing 20+ markers by default at fleet
-  // scale is noisy; the empty-state overlay nudges them to pick.)
-  // Existing storage values are preserved.
+  // First-load default: if storage was empty AND we have vehicles, show top 5
+  React.useEffect(() => {
+    if (visibleIds.size === 0 && vehicles.length > 0) {
+      const top5 = vehicles.slice(0, 5).map((v) => v.id);
+      setVisibleIds(new Set(top5));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [vehicles.length === 0]);
 
   const toggleVisible = React.useCallback((id: string) => {
     setVisibleIds((prev) => {
@@ -129,9 +117,11 @@ export function EtitPage() {
   const [focusedId, setFocusedId] = React.useState<string | null>(null);
 
   /* ---- Layout states ---- */
+  const [isFullScreen, setIsFullScreen] = React.useState(false);
   const [leftCollapsed, setLeftCollapsed] = React.useState(false);
   const [rightCollapsed, setRightCollapsed] = React.useState(false);
-  const [isFullScreen, setIsFullScreen] = React.useState(false);
+  const [leftWidth, setLeftWidth] = React.useState(320);
+  const [rightWidth, setRightWidth] = React.useState(380);
 
   const activeVehicle = React.useMemo(
     () => vehicles.find((v) => v.id === activeId) ?? null,
@@ -140,8 +130,6 @@ export function EtitPage() {
 
   const handleActivate = React.useCallback((id: string) => {
     setActiveId(id);
-    // Auto-show the active vehicle on the map — selecting in the list
-    // implies the user wants to see it.
     setVisibleIds((prev) => {
       if (prev.has(id)) return prev;
       const next = new Set(prev);
@@ -163,77 +151,32 @@ export function EtitPage() {
     if (!isDesktop) setMobileListOpen(false);
   }, [isDesktop]);
 
-  /* ---- History ---- */
-  const [range, setRange] = React.useState(() => defaultCairoTodayRange());
-  const [loadedRange, setLoadedRange] = React.useState<{
-    vehicleId: string;
-    from: Date;
-    to: Date;
-    refresh?: boolean;
-  } | null>(null);
+  /* ---- History range ---- */
+  const [range, setRange] = React.useState(defaultCairoTodayRange());
+  const [loadedRange, setLoadedRange] = React.useState<{ from: Date; to: Date } | null>(null);
 
-  // Drop loaded history on vehicle change — the polyline belongs to a
-  // specific vehicle and another vehicle's range is irrelevant.
-  React.useEffect(() => {
+  const historyQuery = useEtitHistoryRange(
+    activeId && loadedRange ? { vehicleId: activeId, ...loadedRange } : null,
+  );
+  const summaryQuery = useEtitTripSummary(
+    activeId && loadedRange ? { vehicleId: activeId, ...loadedRange } : null,
+  );
+
+  const handleLoadHistory = React.useCallback(() => {
+    setLoadedRange({ ...range });
+  }, [range]);
+
+  const clearHistory = React.useCallback(() => {
     setLoadedRange(null);
-  }, [activeId]);
-
-  const handleLoad = React.useCallback((refresh = false) => {
-    if (!activeVehicle) return;
-
-    if (refresh) {
-      // Clear existing cache for history and summary to ensure a fresh UI state.
-      queryClient.removeQueries({ queryKey: [...etitKeys.all, 'history'] });
-      queryClient.removeQueries({ queryKey: [...etitKeys.all, 'summary'] });
+    if (activeId) {
+      queryClient.removeQueries({ queryKey: etitKeys.historyRange(activeId, '', '') });
+      queryClient.removeQueries({ queryKey: etitKeys.summary(activeId, '', '') });
     }
+  }, [activeId, queryClient]);
 
-    setLoadedRange({
-      vehicleId: activeVehicle.id,
-      from: range.from,
-      to: range.to,
-      refresh,
-    });
-  }, [activeVehicle, range, queryClient]);
-
-  const historyArgs = loadedRange
-    ? {
-        vehicleId: loadedRange.vehicleId,
-        from: loadedRange.from,
-        to: loadedRange.to,
-        refresh: loadedRange.refresh,
-      }
-    : null;
-
-  const historyQuery = useEtitHistoryRange(historyArgs);
-  const summaryQuery = useEtitTripSummary(historyArgs);
-
-  const history = historyQuery.data ?? null;
-  const summary = summaryQuery.data ?? null;
-
-  const route = React.useMemo<Array<[number, number]>>(() => {
-    if (!history?.geometry) return [];
-    try {
-      return decodePolyline(history.geometry);
-    } catch {
-      return [];
-    }
-  }, [history?.geometry]);
-
-  /* ---- Overlays ---- */
-  const [showStops, setShowStops] = React.useState(() =>
-    loadBool(STORAGE_SHOW_STOPS, true),
-  );
-  const [showIgnitions, setShowIgnitions] = React.useState(() =>
-    loadBool(STORAGE_SHOW_IGNITIONS, false),
-  );
-  React.useEffect(() => {
-    window.localStorage.setItem(STORAGE_SHOW_STOPS, showStops ? '1' : '0');
-  }, [showStops]);
-  React.useEffect(() => {
-    window.localStorage.setItem(STORAGE_SHOW_IGNITIONS, showIgnitions ? '1' : '0');
-  }, [showIgnitions]);
-
-  /* ---- Playback ---- */
+  /* ---- Playback state (synced with the map) ---- */
+  const [showStops, setShowStops] = React.useState(true);
+  const [showIgnitions, setShowIgnitions] = React.useState(true);
   const [playbackState, setPlaybackState] = React.useState<PlaybackState | null>(null);
   const [playbackPrev, setPlaybackPrev] = React.useState<{ lat: number; lng: number } | null>(null);
 
@@ -265,11 +208,19 @@ export function EtitPage() {
         ? 'success'
         : 'muted';
 
-  const onMapCount = liveStatuses.filter((s) => visibleIds.has(s.id)).length;
+  // When a route is loaded, hide all other vehicles on the map
+  const effectiveVisibleIds = React.useMemo(() => {
+    if (loadedRange) return new Set<string>();
+    return visibleIds;
+  }, [loadedRange, visibleIds]);
 
-  /* ---- Renderable bits ---- */
+  const onMapCount = React.useMemo(() => {
+    return liveStatuses.filter(s => visibleIds.has(s.id)).length;
+  }, [liveStatuses, visibleIds]);
 
-  const vehicleListNode = (
+  /* ---- Shared nodes ---- */
+
+  const vehicleList = (
     <EtitVehicleList
       vehicles={vehicles}
       liveStatuses={liveStatuses}
@@ -285,15 +236,15 @@ export function EtitPage() {
     />
   );
 
-  const controlsNode = (
+  const historyControls = (
     <EtitHistoryControls
       vehicle={activeVehicle}
-      history={history}
-      summary={summary}
+      history={historyQuery.data ?? null}
+      summary={summaryQuery.data ?? null}
       range={range}
       onRangeChange={setRange}
-      onLoad={handleLoad}
-      loading={historyQuery.isFetching || summaryQuery.isFetching}
+      onLoad={handleLoadHistory}
+      loading={historyQuery.isLoading || summaryQuery.isLoading}
       showStops={showStops}
       onShowStopsChange={setShowStops}
       showIgnitions={showIgnitions}
@@ -301,12 +252,13 @@ export function EtitPage() {
     />
   );
 
-  const playerNode = history && (
+  const playbackPlayer = (
     <EtitPlaybackPlayer
-      points={history.points}
-      stops={history.stops}
-      sensors={history.sensors}
+      points={historyQuery.data?.points ?? []}
+      stops={historyQuery.data?.stops ?? []}
+      sensors={historyQuery.data?.sensors ?? []}
       onStateChange={handlePlaybackChange}
+      className="mt-auto border-t"
     />
   );
 
@@ -314,219 +266,176 @@ export function EtitPage() {
     <div className="flex h-full flex-col">
       {/* Header — hide in full screen to maximize map space */}
       {!isFullScreen && (
-        <div className="flex shrink-0 items-center justify-between border-b bg-card px-4 py-3">
-          <div className="flex min-w-0 items-center gap-3">
+        <header className="flex h-14 shrink-0 items-center justify-between border-b bg-card/80 px-4 backdrop-blur-md">
+          <div className="flex items-center gap-3">
             {!isDesktop && (
               <Button
                 variant="ghost"
                 size="icon"
                 className="h-9 w-9"
                 onClick={() => setMobileListOpen(true)}
-                aria-label={t('etit.header.openVehicleList')}
               >
-                <Menu className="h-4 w-4" />
+                <Menu className="h-5 w-5" />
               </Button>
             )}
-            <div className="hidden h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary sm:flex">
-              <Radar className="h-4 w-4" />
-            </div>
-            <div className="min-w-0">
-              <h1 className="truncate text-base font-semibold leading-tight md:text-lg">
-                {t('etit.header.title')}
+            <div className="flex flex-col">
+              <h1 className="text-base font-bold tracking-tight">
+                {t('nav.etit')}
               </h1>
-              <p className="truncate text-[11px] text-muted-foreground">
-                {t('etit.header.subtitle', {
-                  vehicleCount: vehicles.length,
-                  onMapCount,
-                })}
-              </p>
+              <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
+                <span className="flex items-center gap-1 font-medium">
+                  <Radar className="h-2.5 w-2.5 text-primary" />
+                  {t('etit.list.shownOnMap', { shown: onMapCount, total: vehicles.length })}
+                </span>
+                <span className="flex items-center gap-1">
+                  <div className={cn("h-1.5 w-1.5 rounded-full", 
+                    liveTone === 'success' ? 'bg-success animate-pulse' : 
+                    liveTone === 'destructive' ? 'bg-destructive' : 'bg-muted')} 
+                  />
+                  {liveLabel}
+                </span>
+              </div>
             </div>
           </div>
 
-          <div className="flex shrink-0 items-center gap-2">
-            <span
-              className={cn(
-                'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium',
-                liveTone === 'success' && 'bg-success/10 text-success',
-                liveTone === 'destructive' && 'bg-destructive/10 text-destructive',
-                liveTone === 'muted' && 'bg-muted text-muted-foreground',
-              )}
+          <div className="flex items-center gap-2">
+            {error && (
+              <div className="flex items-center gap-2 rounded-full bg-destructive/10 px-3 py-1 text-xs font-medium text-destructive">
+                <AlertCircle className="h-3 w-3" />
+                <span className="max-w-[140px] truncate">{extractErrorMessage(error)}</span>
+              </div>
+            )}
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-9 w-9 rounded-full"
+              onClick={() => setIsFullScreen(!isFullScreen)}
             >
-              {liveTone === 'destructive' ? (
-                <WifiOff className="h-3 w-3" />
-              ) : (
-                <Activity className={cn('h-3 w-3', liveTone === 'success' && 'animate-pulse')} />
-              )}
-              {liveLabel}
-            </span>
+              {isFullScreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+            </Button>
           </div>
-        </div>
-      )}
-
-      {/* Error banner — flat, no nested card */}
-      {error && (
-        <div className="shrink-0 border-b border-destructive/20 bg-destructive/5 px-4 py-2">
-          <div className="flex items-start gap-2 text-xs text-destructive">
-            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-            <p>{extractErrorMessage(error, t('etit.errors.proxyUnreachable'))}</p>
-          </div>
-        </div>
+        </header>
       )}
 
       {/* Body */}
       <div className="flex min-h-0 flex-1">
-        {/* Vehicle list — desktop sidebar */}
-        {isDesktop && !leftCollapsed && !isFullScreen && (
-          <div className="h-full w-72 shrink-0 border-e bg-card/50">{vehicleListNode}</div>
+        {/* Left Sidebar — desktop only */}
+        {isDesktop && !isFullScreen && (
+          <div 
+            className={cn(
+              "relative flex transition-all duration-300 ease-in-out",
+              leftCollapsed ? "w-0" : ""
+            )}
+            style={{ width: leftCollapsed ? 0 : leftWidth }}
+          >
+            {vehicleList}
+            {!leftCollapsed && (
+              <div
+                className="absolute -right-1 top-0 bottom-0 z-50 w-2 cursor-col-resize hover:bg-primary/20 active:bg-primary/40"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  const startX = e.clientX;
+                  const startWidth = leftWidth;
+                  const onMouseMove = (moveEvent: MouseEvent) => {
+                    const delta = moveEvent.clientX - startX;
+                    setLeftWidth(Math.max(260, Math.min(500, startWidth + delta)));
+                  };
+                  const onMouseUp = () => {
+                    document.removeEventListener('mousemove', onMouseMove);
+                    document.removeEventListener('mouseup', onMouseUp);
+                  };
+                  document.addEventListener('mousemove', onMouseMove);
+                  document.addEventListener('mouseup', onMouseUp);
+                }}
+              />
+            )}
+          </div>
         )}
 
         {/* Vehicle list — mobile sheet */}
         {!isDesktop && (
           <Sheet open={mobileListOpen} onOpenChange={setMobileListOpen}>
-            <SheetContent side="left" className="w-80 max-w-[85vw] p-0" hideCloseButton>
-              <div className="flex h-dvh flex-col">
-                <div className="flex shrink-0 items-center justify-between border-b px-3 py-2.5">
-                  <span className="text-sm font-semibold">
-                    {t('etit.list.heading', { count: vehicles.length })}
-                  </span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setMobileListOpen(false)}
-                  >
+            <SheetContent side="left" className="w-[300px] p-0">
+              <div className="flex h-full flex-col">
+                <div className="flex h-14 items-center justify-between border-b px-4">
+                  <span className="text-sm font-bold">{t('etit.list.heading', { count: vehicles.length })}</span>
+                  <Button variant="ghost" size="icon" onClick={() => setMobileListOpen(false)}>
                     {t('common.close')}
                   </Button>
                 </div>
-                <div className="min-h-0 flex-1">{vehicleListNode}</div>
+                <div className="min-h-0 flex-1">{vehicleList}</div>
               </div>
             </SheetContent>
           </Sheet>
         )}
 
-        {/* Center column */}
-        <div className="flex min-w-0 flex-1 flex-col">
-          {/* Map */}
-          <div className="relative min-h-0 flex-1">
-            <EtitMap
-              vehicles={vehicles}
-              liveStatuses={liveStatuses}
-              visibleIds={visibleIds}
-              activeVehicleId={activeId}
-              focusedVehicleId={focusedId}
-              focusBump={focusBump}
-              route={route}
-              stops={history?.stops ?? []}
-              sensors={history?.sensors ?? []}
-              showStops={showStops}
-              showIgnitions={showIgnitions}
-              playback={playbackState}
-              playbackPrev={playbackPrev}
-              height="100%"
-              className="absolute inset-0"
-            />
+        {/* Map Area */}
+        <div className="relative min-w-0 flex-1 bg-muted/5">
+          <EtitMap
+            vehicles={vehicles}
+            liveStatuses={liveStatuses}
+            visibleIds={effectiveVisibleIds}
+            activeVehicleId={activeId}
+            focusedVehicleId={focusedId}
+            focusBump={focusBump}
+            route={historyQuery.data ? decodePolyline(historyQuery.data.geometry) : []}
+            stops={historyQuery.data?.stops}
+            sensors={historyQuery.data?.sensors}
+            showStops={showStops}
+            showIgnitions={showIgnitions}
+            playback={playbackState}
+            playbackPrev={playbackPrev}
+            height="100%"
+          />
 
-            {/* Desktop Layout Controls Overlay */}
-            {isDesktop && (
-              <>
-                <div className="absolute left-3 top-3 z-20 flex flex-col gap-2">
-                  {!isFullScreen && (
-                    <Button
-                      variant="secondary"
-                      size="icon"
-                      className="h-8 w-8 shadow-md backdrop-blur-sm"
-                      onClick={() => setLeftCollapsed(!leftCollapsed)}
-                      title={leftCollapsed ? t('common.expand') : t('common.collapse')}
-                    >
-                      {leftCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-                    </Button>
-                  )}
-                </div>
-                <div className="absolute right-3 top-3 z-20 flex flex-col gap-2">
-                  <Button
-                    variant="secondary"
-                    size="icon"
-                    className="h-8 w-8 shadow-md backdrop-blur-sm"
-                    onClick={() => setIsFullScreen(!isFullScreen)}
-                    title={isFullScreen ? t('common.exitFullScreen') : t('common.fullScreen')}
-                  >
-                    {isFullScreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
-                  </Button>
-                  {!isFullScreen && (
-                    <Button
-                      variant="secondary"
-                      size="icon"
-                      className="h-8 w-8 shadow-md backdrop-blur-sm"
-                      onClick={() => setRightCollapsed(!rightCollapsed)}
-                      title={rightCollapsed ? t('common.expand') : t('common.collapse')}
-                    >
-                      {rightCollapsed ? <ChevronLeft className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                    </Button>
-                  )}
-                  {loadedRange && !isFullScreen && (
-                    <Button
-                      variant="destructive"
-                      size="icon"
-                      className="h-8 w-8 shadow-md"
-                      onClick={() => setLoadedRange(null)}
-                      title={t('common.exit')}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-              </>
-            )}
-
-            {/* Full Screen Mode — Top Overlay Controls */}
+          {/* Map Overlays */}
+          <div className="absolute right-3 top-3 z-20 flex flex-col gap-2">
             {isFullScreen && (
-              <div className="absolute inset-x-0 top-0 z-30 flex items-center justify-center p-4">
-                <div className="flex items-center gap-2 rounded-xl border bg-card/90 p-2 shadow-2xl backdrop-blur-md">
-                   <div className="flex items-center gap-3 border-e pe-3 px-2">
-                     <Radar className="h-5 w-5 text-primary" />
-                     <div className="flex flex-col">
-                       <span className="text-xs font-bold leading-none">{t('etit.header.title')}</span>
-                       <span className="text-[10px] text-muted-foreground">{liveLabel}</span>
-                     </div>
-                   </div>
-                   
-                   {/* Minimal controls for full screen */}
-                   <div className="flex items-center gap-1 px-1">
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        className="h-8 gap-2 text-xs"
-                        onClick={() => setIsFullScreen(false)}
-                      >
-                        <Minimize2 className="h-3.5 w-3.5" />
-                        {t('common.exit')}
-                      </Button>
-                   </div>
-                </div>
-              </div>
+              <Button
+                size="icon"
+                variant="secondary"
+                className="h-9 w-9 rounded-full shadow-lg"
+                onClick={() => setIsFullScreen(false)}
+                title="Exit Full Screen"
+              >
+                <Minimize2 className="h-4 w-4" />
+              </Button>
             )}
+            
+            <Button
+              size="icon"
+              variant={rightCollapsed ? 'secondary' : 'default'}
+              className="h-9 w-9 rounded-full shadow-lg"
+              onClick={() => setRightCollapsed(!rightCollapsed)}
+              title={rightCollapsed ? 'Show Timeline' : 'Hide Timeline'}
+            >
+              <Activity className="h-4 w-4" />
+            </Button>
 
-            {/* Empty-state overlay — invites the user to pick something to show */}
-            {visibleIds.size === 0 && !historyQuery.isFetching && (
-              <div className="pointer-events-none absolute inset-0 flex items-center justify-center p-4">
-                <div className="pointer-events-auto rounded-xl border bg-card/95 px-4 py-3 text-center shadow-xl backdrop-blur-sm">
-                  <MapPinned className="mx-auto mb-2 h-6 w-6 text-muted-foreground" />
-                  <p className="text-sm font-medium">{t('etit.map.empty.title')}</p>
-                  <p className="mt-0.5 text-xs text-muted-foreground">
-                    {isDesktop
-                      ? t('etit.map.empty.descDesktop')
-                      : t('etit.map.empty.descMobile')}
-                  </p>
-                  {!isDesktop && (
-                    <Button
-                      size="sm"
-                      className="mt-3"
-                      onClick={() => setMobileListOpen(true)}
-                    >
-                      {t('etit.header.openVehicleList')}
-                    </Button>
-                  )}
-                </div>
-              </div>
+            {loadedRange && (
+              <Button
+                size="icon"
+                variant="destructive"
+                className="h-9 w-9 rounded-full shadow-lg"
+                onClick={clearHistory}
+                title={t('common.exit')}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+
+          <div className="absolute left-3 top-3 z-20 flex flex-col gap-2">
+            {isDesktop && !isFullScreen && (
+              <Button
+                size="icon"
+                variant={leftCollapsed ? 'secondary' : 'default'}
+                className="h-9 w-9 rounded-full shadow-lg"
+                onClick={() => setLeftCollapsed(!leftCollapsed)}
+                title={leftCollapsed ? 'Show List' : 'Hide List'}
+              >
+                <Menu className="h-4 w-4" />
+              </Button>
             )}
           </div>
 
@@ -543,29 +452,52 @@ export function EtitPage() {
                   active={mobileTab === 'playback'}
                   onClick={() => setMobileTab('playback')}
                   label={t('etit.mobile.playback')}
-                  disabled={!history}
+                  disabled={!historyQuery.data}
                 />
               </div>
               <div className="max-h-[42vh] overflow-y-auto p-2">
-                {mobileTab === 'controls' ? controlsNode : (playerNode ?? (
-                  <div className="rounded-lg border border-dashed bg-muted/20 p-4 text-center text-xs text-muted-foreground">
-                    {t('etit.player.empty')}
-                  </div>
-                ))}
+                {mobileTab === 'controls' ? historyControls : (playbackPlayer)}
               </div>
             </div>
           )}
         </div>
 
-        {/* Right pane — desktop only */}
-        {isDesktop && !rightCollapsed && !isFullScreen && (
-          <aside className={cn(
-            "flex h-full shrink-0 flex-col gap-3 overflow-y-auto border-s bg-background p-3 transition-[width] duration-300 ease-in-out",
-            leftCollapsed ? "w-[420px]" : "w-[360px]"
-          )}>
-            {controlsNode}
-            {playerNode}
-          </aside>
+        {/* Right Sidebar — desktop only */}
+        {isDesktop && !isFullScreen && (
+          <div 
+            className={cn(
+              "relative flex border-s transition-all duration-300 ease-in-out",
+              rightCollapsed ? "w-0" : ""
+            )}
+            style={{ width: rightCollapsed ? 0 : rightWidth }}
+          >
+            {!rightCollapsed && (
+              <div
+                className="absolute -left-1 top-0 bottom-0 z-50 w-2 cursor-col-resize hover:bg-primary/20 active:bg-primary/40"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  const startX = e.clientX;
+                  const startWidth = rightWidth;
+                  const onMouseMove = (moveEvent: MouseEvent) => {
+                    const delta = startX - moveEvent.clientX;
+                    setRightWidth(Math.max(300, Math.min(600, startWidth + delta)));
+                  };
+                  const onMouseUp = () => {
+                    document.removeEventListener('mousemove', onMouseMove);
+                    document.removeEventListener('mouseup', onMouseUp);
+                  };
+                  document.addEventListener('mousemove', onMouseMove);
+                  document.addEventListener('mouseup', onMouseUp);
+                }}
+              />
+            )}
+            <div className="flex w-full flex-col overflow-hidden bg-background">
+              <aside className="flex h-full flex-col overflow-y-auto p-3">
+                {historyControls}
+                {playbackPlayer}
+              </aside>
+            </div>
+          </div>
         )}
       </div>
     </div>

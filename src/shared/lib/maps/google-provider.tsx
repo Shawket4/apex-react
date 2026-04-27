@@ -514,7 +514,7 @@ export function GoogleMapView({
       <div ref={containerRef} className="h-full w-full rounded-lg" />
 
       {mapReady && (
-        <div className="absolute end-3 bottom-16 z-10 flex flex-col-reverse gap-1.5">
+        <div className="absolute end-3 bottom-32 z-10 flex flex-col-reverse gap-1.5">
           <Button
             size="icon"
             variant={isSatellite ? 'default' : 'secondary'}

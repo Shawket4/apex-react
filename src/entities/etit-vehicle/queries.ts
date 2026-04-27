@@ -246,7 +246,7 @@ export function useEtitFleet() {
 
   const fleet = React.useMemo(() => {
     if (!metadata.data) return [];
-    
+
     const liveMap = new Map<string, EtitLiveStatus>();
     if (snapshots.data) {
       for (const s of snapshots.data) liveMap.set(s.id, s);
@@ -255,7 +255,7 @@ export function useEtitFleet() {
     return metadata.data.map((v) => {
       const live = liveMap.get(v.id);
       if (!live) return v;
-      
+
       return {
         ...v,
         speed: live.speed,

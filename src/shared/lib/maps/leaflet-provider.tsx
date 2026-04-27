@@ -391,7 +391,7 @@ export function LeafletMapView({
       <div ref={containerRef} className="h-full w-full rounded-lg" />
 
       {mapReady && (
-        <div className="absolute end-3 top-3 z-[1000] flex flex-col gap-1.5">
+        <div className="absolute end-3 bottom-32 z-[1000] flex flex-col gap-1.5">
           <Button
             size="icon"
             variant="secondary"
