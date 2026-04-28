@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Locate, Layers } from 'lucide-react';
-import { setOptions } from '@googlemaps/js-api-loader';
+import { setOptions, importLibrary } from '@googlemaps/js-api-loader';
 import { Button } from '@/shared/ui/button';
 import { cn } from '@/shared/lib/cn';
 import { buildMarkerSvg, markerSize } from './marker-svg';
@@ -69,7 +69,7 @@ function injectInfoWindowStyles() {
 }
 
 /* -------------------------------------------------------------------------- */
-/* Loader                                                                      */
+/* Loader configuration                                                        */
 /* -------------------------------------------------------------------------- */
 
 let loaderConfigured = false;
@@ -85,7 +85,34 @@ export function isGoogleMapsConfigured(): boolean {
 }
 
 /* -------------------------------------------------------------------------- */
-/* Smooth fly-to                                                               */
+/* EAGER PRELOAD — fixes the Leaflet-fallback-on-slow-network bug             */
+/*                                                                             */
+/* MapView.tsx does a top-level import from this module to get               */
+/* `isGoogleMapsConfigured`, which means this module evaluates the moment   */
+/* MapView mounts — well before `GoogleMapView` is lazy-loaded. Kicking     */
+/* off the SDK load here means by the time `getSharedMap()` awaits          */
+/* `importLibrary`, the libraries are usually cached.                       */
+/*                                                                             */
+/* Without this, on slower connections the SDK download takes longer than   */
+/* MapView's 3s `fallbackTimeoutMs`. MapView sees no `.gm-style` element,   */
+/* assumes Google failed, and switches to Leaflet permanently — even       */
+/* though the API key is valid and Google would have succeeded a moment    */
+/* later. The eager preload moves the network race to a window before     */
+/* the timer is even armed.                                                 */
+/* -------------------------------------------------------------------------- */
+
+if (typeof window !== 'undefined' && isGoogleMapsConfigured()) {
+  configureLoader();
+  void Promise.all([
+    importLibrary('maps'),
+    importLibrary('marker'),
+  ]).catch(() => {
+    /* errors are surfaced inside init() when the component actually mounts */
+  });
+}
+
+/* -------------------------------------------------------------------------- */
+/* Smooth fly-to (manual focus, preserves caller's chosen zoom)                */
 /* -------------------------------------------------------------------------- */
 
 interface FlyToken { cancelled: boolean; rafId: number | null }
@@ -145,7 +172,6 @@ function buildMarkerContent(m: MapMarker): string {
   return buildMarkerSvg(m.color, `m-${m.id}`, m.kind || 'pin', rotation);
 }
 
-/** Fingerprint of marker fields that affect the icon image. */
 function iconKey(m: MapMarker): string {
   return `${m.kind ?? 'pin'}|${m.color}|${m.kind === 'vehicle' ? m.heading ?? 0 : 0}`;
 }
@@ -154,11 +180,12 @@ interface MarkerEntry {
   id: string;
   marker: google.maps.Marker;
   listeners: google.maps.MapsEventListener[];
-  /** Last applied icon fingerprint — skips `setIcon` when unchanged. */
   lastIconKey: string;
-  /** Latest marker spec for popup binding. */
   spec: MapMarker;
 }
+
+/** Marker IDs that trigger zoom-preserving auto-pan when their position changes. */
+const PAN_FOLLOW_IDS = new Set(['playback-current']);
 
 /* -------------------------------------------------------------------------- */
 /* Component                                                                   */
@@ -181,6 +208,8 @@ export function GoogleMapView({
   const mapListenersRef = React.useRef<google.maps.MapsEventListener[]>([]);
   const themeObserverRef = React.useRef<MutationObserver | null>(null);
   const flyTokenRef = React.useRef<FlyToken | null>(null);
+  const lastSentinelIdRef = React.useRef<string | null>(null);
+  const lastRouteSignatureRef = React.useRef<string>('');
   const readyRef = React.useRef(false);
   const [, forceRerender] = React.useReducer((x) => x + 1, 0);
 
@@ -224,7 +253,6 @@ export function GoogleMapView({
         mapRef.current = handle.map;
         infoWindowRef.current = handle.infoWindow;
 
-        // Map click delegates to consumer.
         const clickListener = handle.map.addListener(
           'click',
           (e: google.maps.MapMouseEvent) => {
@@ -234,7 +262,6 @@ export function GoogleMapView({
         );
         mapListenersRef.current.push(clickListener);
 
-        // Theme observer — DISCONNECTED on cleanup (was leaking).
         const observer = new MutationObserver(() => {
           if (!mapRef.current) return;
           if (mapRef.current.getMapTypeId() !== google.maps.MapTypeId.ROADMAP) return;
@@ -248,7 +275,7 @@ export function GoogleMapView({
         themeObserverRef.current = observer;
 
         readyRef.current = true;
-        forceRerender(); // trigger marker sync now that map is ready
+        forceRerender();
       } catch (err) {
         console.error('[GoogleMapView] Failed to init map', err);
       }
@@ -259,9 +286,9 @@ export function GoogleMapView({
     return () => {
       cancelled = true;
       readyRef.current = false;
+      lastRouteSignatureRef.current = '';
+      lastSentinelIdRef.current = null;
 
-      // Detach all marker listeners + remove markers from THIS map.
-      // The shared map persists; we only own the markers we created.
       for (const entry of markerEntriesRef.current.values()) {
         entry.listeners.forEach((l) => google.maps.event.removeListener(l));
         entry.marker.setMap(null);
@@ -295,7 +322,15 @@ export function GoogleMapView({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  /* -------- Sync markers + polylines ---------------------------------- */
+  /* -------- Sync markers + polylines ----------------------------------- */
+  /*                                                                       */
+  /* This is also where AUTO-PAN happens. When a marker whose id is in     */
+  /* PAN_FOLLOW_IDS (currently only `playback-current`) updates its       */
+  /* position, we call `map.panTo(...)`. `panTo` preserves the current    */
+  /* zoom and animates smoothly via the Maps API's internal compositor —  */
+  /* exactly the "follow without zooming" behavior asked for during      */
+  /* timeline scrubbing.                                                 */
+  /* -------------------------------------------------------------------- */
 
   React.useEffect(() => {
     const map = mapRef.current;
@@ -330,9 +365,6 @@ export function GoogleMapView({
 
         const listeners: google.maps.MapsEventListener[] = [];
 
-        // Click handler reads `entry.spec` via closure — fix for the
-        // stale-popup bug. The spec is updated in the else branch below
-        // so the click always sees the most recent popupHtml.
         const clickListener = marker.addListener('click', () => {
           const live = markerEntriesRef.current.get(m.id);
           if (!live || !live.spec.popupHtml || !infoWindowRef.current) return;
@@ -351,14 +383,23 @@ export function GoogleMapView({
 
         entry = { id: m.id, marker, listeners, lastIconKey: newIconKey, spec: m };
         markerEntriesRef.current.set(m.id, entry);
-      } else {
-        // Update position only when changed.
-        const cur = entry.marker.getPosition();
-        if (!cur || cur.lat() !== m.lat || cur.lng() !== m.lng) {
-          entry.marker.setPosition({ lat: m.lat, lng: m.lng });
+
+        // First-render auto-pan: when playback-current first appears,
+        // pan to it so the user starts following from frame zero.
+        if (PAN_FOLLOW_IDS.has(m.id)) {
+          map.panTo({ lat: m.lat, lng: m.lng });
         }
-        // Repaint icon ONLY when icon-affecting fields change. SVG
-        // re-encoding + data URL parsing was the dominant marker cost.
+      } else {
+        const cur = entry.marker.getPosition();
+        const moved = !cur || cur.lat() !== m.lat || cur.lng() !== m.lng;
+        if (moved) {
+          entry.marker.setPosition({ lat: m.lat, lng: m.lng });
+          if (PAN_FOLLOW_IDS.has(m.id)) {
+            // Zoom-preserving follow. The Maps API smooth-animates
+            // panTo internally when the delta is small.
+            map.panTo({ lat: m.lat, lng: m.lng });
+          }
+        }
         if (entry.lastIconKey !== newIconKey) {
           entry.marker.setIcon({ url: buildMarkerContent(m), anchor });
           entry.lastIconKey = newIconKey;
@@ -384,28 +425,56 @@ export function GoogleMapView({
     }
   }, [markers, route]);
 
-  /* -------- Camera focus ---------------------------------------------- */
+  /* -------- fitBounds — fires only when the route IDENTITY changes ----- */
+  /*                                                                       */
+  /* Previously this was lumped into the same effect as marker sync, so   */
+  /* a playback frame (which changes `markers` but not `route`) re-ran    */
+  /* fitBounds and undid every panTo from the auto-follow logic. Splitting */
+  /* fixes that. We use a string signature of the route so unrelated     */
+  /* `route` array identity changes (which shouldn't happen with the      */
+  /* useMemo upstream, but defense in depth) don't refit.                 */
+  /* -------------------------------------------------------------------- */
+
+  React.useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !readyRef.current) return;
+    if (route.length < 2) {
+      lastRouteSignatureRef.current = '';
+      return;
+    }
+    const signature = `${route.length}|${route[0].join(',')}|${route[route.length - 1].join(',')}`;
+    if (signature === lastRouteSignatureRef.current) return;
+    lastRouteSignatureRef.current = signature;
+
+    const bounds = new google.maps.LatLngBounds();
+    route.forEach(([lat, lng]) => bounds.extend({ lat, lng }));
+    map.fitBounds(bounds, { top: 80, bottom: 80, left: 60, right: 60 });
+  }, [route]);
+
+  /* -------- Sentinel-driven flyTo (manual focus button) ---------------- */
+  /*                                                                       */
+  /* Splits sentinel handling from the rest of the marker effect so it    */
+  /* fires only when the sentinel id genuinely changes — not on every   */
+  /* unrelated marker mutation.                                           */
+  /* -------------------------------------------------------------------- */
 
   React.useEffect(() => {
     const map = mapRef.current;
     if (!map || !readyRef.current) return;
 
     const sentinel = markers.find((m) => m.id.startsWith('focus-sentinel-'));
-    if (sentinel) {
-      if (flyTokenRef.current) {
-        flyTokenRef.current.cancelled = true;
-        if (flyTokenRef.current.rafId) cancelAnimationFrame(flyTokenRef.current.rafId);
-      }
-      flyTokenRef.current = smoothFlyTo(map, { lat: sentinel.lat, lng: sentinel.lng }, 16);
-      return;
-    }
+    const newId = sentinel?.id ?? null;
+    if (newId === lastSentinelIdRef.current) return;
+    lastSentinelIdRef.current = newId;
 
-    if (route.length > 1) {
-      const bounds = new google.maps.LatLngBounds();
-      route.forEach(([lat, lng]) => bounds.extend({ lat, lng }));
-      map.fitBounds(bounds, { top: 80, bottom: 80, left: 60, right: 60 });
+    if (!sentinel) return;
+
+    if (flyTokenRef.current) {
+      flyTokenRef.current.cancelled = true;
+      if (flyTokenRef.current.rafId) cancelAnimationFrame(flyTokenRef.current.rafId);
     }
-  }, [markers, route]);
+    flyTokenRef.current = smoothFlyTo(map, { lat: sentinel.lat, lng: sentinel.lng }, 16);
+  }, [markers]);
 
   /* -------- Render ---------------------------------------------------- */
 

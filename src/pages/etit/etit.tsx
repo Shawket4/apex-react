@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next';
 import {
   Activity,
   AlertCircle,
+  ChevronLeft,
+  ChevronRight,
   Clock,
   Maximize2,
   Menu,
@@ -19,9 +21,7 @@ import {
   decodePolyline,
   type PlaybackState,
 } from '@/entities/etit-vehicle/playback';
-import {
-  defaultCairoTodayRange,
-} from '@/entities/etit-vehicle/cairo';
+import { defaultCairoTodayRange } from '@/entities/etit-vehicle/cairo';
 import {
   etitKeys,
   useEtitFleet,
@@ -42,6 +42,7 @@ import { Draggable } from '@/shared/ui/draggable';
 
 const STORAGE_VISIBLE_IDS = 'etit_visible_ids';
 const STORAGE_LEFT_WIDTH = 'etit_left_width';
+const STORAGE_LEFT_COLLAPSED = 'etit_left_collapsed';
 
 function loadVisibleIds(): Set<string> {
   try {
@@ -63,6 +64,14 @@ function loadLeftWidth(fallback: number): number {
     /* ignore */
   }
   return fallback;
+}
+
+function loadLeftCollapsed(): boolean {
+  try {
+    return window.localStorage.getItem(STORAGE_LEFT_COLLAPSED) === '1';
+  } catch {
+    return false;
+  }
 }
 
 /* -------------------------------------------------------------------------- */
@@ -157,14 +166,28 @@ export function EtitPage() {
   const [focusedId, setFocusedId] = React.useState<string | null>(null);
   const [isFullScreen, setIsFullScreen] = React.useState(false);
   const [isResizing, setIsResizing] = React.useState(false);
-  const [leftCollapsed, setLeftCollapsed] = React.useState(false);
+  const [leftCollapsed, setLeftCollapsed] = React.useState(() => loadLeftCollapsed());
   const [leftWidth, setLeftWidth] = React.useState(() => loadLeftWidth(320));
 
+  // Smaller laptops: collapse on first paint, but only the first time —
+  // never override a user choice once they've toggled it.
+  const initialCollapseAppliedRef = React.useRef(false);
   React.useLayoutEffect(() => {
-    if (typeof window !== 'undefined' && window.innerWidth < 1280) {
+    if (initialCollapseAppliedRef.current) return;
+    initialCollapseAppliedRef.current = true;
+    if (typeof window !== 'undefined' && window.innerWidth < 1280 && !loadLeftCollapsed()) {
       setLeftCollapsed(true);
     }
   }, []);
+
+  // Persist collapse state.
+  React.useEffect(() => {
+    try {
+      window.localStorage.setItem(STORAGE_LEFT_COLLAPSED, leftCollapsed ? '1' : '0');
+    } catch {
+      /* ignore */
+    }
+  }, [leftCollapsed]);
 
   // Persist resized width.
   React.useEffect(() => {
@@ -262,13 +285,10 @@ export function EtitPage() {
     }
   }, [activeId, queryClient]);
 
-  /* ---- Auto-collapse left panel when history loads.
-   *      No global sidebar mutation — that side effect was leaking into
-   *      other pages (the previous implementation set the global store
-   *      to collapsed and never restored it).                             ---- */
-  React.useEffect(() => {
-    if (loadedRange && isDesktop) setLeftCollapsed(true);
-  }, [loadedRange, isDesktop]);
+  /* ---- DELIBERATELY NOT collapsing the left panel when history loads.
+   *      The previous version did, hiding the vehicle history selector
+   *      with no obvious way back. The selector now stays visible by
+   *      default; the user can collapse manually via the toggle.        ---- */
 
   /* ---- Playback ---- */
   const [showStops, setShowStops] = React.useState(true);
@@ -360,7 +380,10 @@ export function EtitPage() {
       range={range}
       onRangeChange={setRange}
       onLoad={handleLoadHistory}
-      onBack={() => setActiveId(null)}
+      onBack={() => {
+        setActiveId(null);
+        if (loadedRange) clearHistory();
+      }}
       onClearHistory={clearHistory}
       isHistoryLoaded={!!loadedRange}
       loading={historyQuery.isLoading || summaryQuery.isLoading}
@@ -389,7 +412,7 @@ export function EtitPage() {
 
   return (
     <div ref={containerRef} className="flex h-full flex-col bg-background">
-      {/* Header — collapses on small viewports */}
+      {/* Header */}
       {!isFullScreen && (
         <header className="flex h-14 shrink-0 items-center justify-between gap-2 border-b bg-card/80 px-3 sm:px-4 backdrop-blur-md z-[50]">
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
@@ -528,7 +551,49 @@ export function EtitPage() {
             height="100%"
           />
 
-          {/* Floating playback overlay — top-center, scales with viewport */}
+          {/* Top-right controls — fullscreen + (when collapsed) selector toggle */}
+          <div className="absolute end-3 top-3 z-20 flex flex-col gap-2">
+            {!loadedRange && (
+              <Button
+                size="icon"
+                variant="outline"
+                className="h-9 w-9 rounded-full shadow-lg bg-card/85 backdrop-blur-sm"
+                onClick={toggleFullScreen}
+              >
+                {isFullScreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+              </Button>
+            )}
+          </div>
+
+          {/* SIDE-PANEL TOGGLE — always visible on desktop, prominent when
+              collapsed. Now uses a directional chevron so it's obvious which
+              way the panel will move. The original Menu icon was easy to
+              miss when the playback overlay was on top. */}
+          {isDesktop && !isFullScreen && (
+            <div className="absolute start-3 top-3 z-[1100] flex flex-col gap-2">
+              <Button
+                size="icon"
+                variant={leftCollapsed ? 'default' : 'outline'}
+                className={cn(
+                  'h-9 w-9 rounded-full shadow-lg backdrop-blur-md transition-all',
+                  leftCollapsed
+                    ? 'bg-primary text-primary-foreground shadow-primary/30 hover:shadow-primary/50'
+                    : 'bg-card/85',
+                )}
+                onClick={() => setLeftCollapsed(!leftCollapsed)}
+                aria-label={t(leftCollapsed ? 'common.show' : 'common.hide')}
+                title={t(leftCollapsed ? 'common.show' : 'common.hide')}
+              >
+                {leftCollapsed ? (
+                  <ChevronRight className="h-4 w-4 rtl:rotate-180" />
+                ) : (
+                  <ChevronLeft className="h-4 w-4 rtl:rotate-180" />
+                )}
+              </Button>
+            </div>
+          )}
+
+          {/* Floating playback overlay */}
           {loadedRange && (
             <div className="absolute inset-x-0 top-4 sm:top-6 z-[1000] pointer-events-none flex justify-center px-3 sm:px-4">
               <Draggable
@@ -542,7 +607,7 @@ export function EtitPage() {
                     'w-full max-w-[640px]',
                     'bg-card/95 backdrop-blur-xl rounded-2xl shadow-2xl',
                     'border border-border/60 ring-1 ring-inset ring-foreground/5',
-                    'p-1.5 transition-all hover:border-border',
+                    'p-1.5 hover:border-border',
                   )}
                 >
                   <div className="flex items-center justify-between px-2 pt-0.5">
@@ -562,15 +627,13 @@ export function EtitPage() {
                       <X className="h-3 w-3" />
                     </Button>
                   </div>
-                  {/* Playback only renders inline on desktop / tablet wide;
-                      mobile gets it via the bottom-tab switcher below. */}
                   <div className="hidden md:block">{playbackPlayerNode}</div>
                 </div>
               </Draggable>
             </div>
           )}
 
-          {/* Floating stats — top-end, draggable, persisted */}
+          {/* Floating stats — desktop only */}
           {loadedRange && isDesktop && (
             <div className="absolute end-6 top-24 z-[1000] pointer-events-none">
               <Draggable persistKey="stats" className="relative">
@@ -590,35 +653,6 @@ export function EtitPage() {
               </div>
             </div>
           )}
-
-          {/* Floating fullscreen toggle when no overlay is present */}
-          <div className="absolute end-3 top-3 z-20 flex flex-col gap-2">
-            {!loadedRange && (
-              <Button
-                size="icon"
-                variant="outline"
-                className="h-9 w-9 rounded-full shadow-lg bg-card/85 backdrop-blur-sm"
-                onClick={toggleFullScreen}
-              >
-                {isFullScreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
-              </Button>
-            )}
-          </div>
-
-          {/* Side-panel toggle */}
-          <div className="absolute start-3 top-3 z-20 flex flex-col gap-2">
-            {isDesktop && !isFullScreen && (
-              <Button
-                size="icon"
-                variant={leftCollapsed ? 'secondary' : 'default'}
-                className="h-9 w-9 rounded-full shadow-lg backdrop-blur-md"
-                onClick={() => setLeftCollapsed(!leftCollapsed)}
-                aria-label={t(leftCollapsed ? 'common.show' : 'common.hide')}
-              >
-                <Menu className="h-4 w-4" />
-              </Button>
-            )}
-          </div>
 
           {/* Mobile bottom panel — controls / playback */}
           {!isDesktop && !isFullScreen && loadedRange && (
