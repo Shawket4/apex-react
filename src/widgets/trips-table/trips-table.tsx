@@ -658,31 +658,73 @@ function MobileSummary({
 }) {
   const distance = trip.mileage || trip.distance || 0;
   return (
-    <div className="mt-1 space-y-0.5 text-xs text-muted-foreground md:hidden">
-      <div className="flex items-center gap-2">
-        <CalendarIcon className="h-3 w-3" />
-        <span className="tabular-nums">{format(trip.date, 'MMM d')}</span>
-        <span>·</span>
-        <Building2 className="h-3 w-3" />
-        <span className="truncate">{trip.company}</span>
+    <div className="mt-2 space-y-2.5 text-xs text-muted-foreground md:hidden border-t pt-2.5 border-primary/5">
+      {/* Primary Detail Row (Date & Company) */}
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex items-center gap-1.5 shrink-0 pt-0.5">
+          <CalendarIcon className="h-3 w-3" />
+          <span className="tabular-nums font-medium">
+            {format(trip.date, 'MMM d, yyyy')}
+          </span>
+        </div>
+        <div className="flex items-start gap-1.5 font-semibold text-foreground text-end">
+          <span className="leading-tight">{trip.company}</span>
+          <Building2 className="h-3 w-3 text-muted-foreground shrink-0 mt-0.5" />
+        </div>
       </div>
-      <div className="flex items-center gap-2">
-        <Car className="h-3 w-3" />
-        <span className="tabular-nums">{trip.car_no_plate}</span>
-        <span>·</span>
-        <DollarSign className="h-3 w-3" />
-        <span className="tabular-nums text-success">
-          {formatCurrency(parentTotal?.fee ?? trip.fee)}
-        </span>
+
+      {/* Driver & Vehicle Row */}
+      <div className="flex flex-wrap items-center justify-between gap-y-1.5 bg-muted/40 rounded-md px-2 py-1.5">
+        <div className="flex items-center gap-2 min-w-[140px] flex-1">
+          <User className="h-3 w-3 shrink-0" />
+          <span className="font-semibold text-foreground leading-tight">
+            {trip.driver_name}
+          </span>
+        </div>
+        <div className="flex items-center gap-1.5 tabular-nums shrink-0 ps-2 xs:border-s border-muted-foreground/20">
+          <Car className="h-3 w-3 text-muted-foreground" />
+          <span>{trip.car_no_plate}</span>
+        </div>
       </div>
-      <div className="flex items-center gap-2">
-        <MapPin className="h-3 w-3" />
-        <span className="tabular-nums">{formatNumber(distance, 1)} km</span>
-        <span>·</span>
-        <Fuel className="h-3 w-3" />
-        <span className="tabular-nums">
-          {formatNumber(parentTotal?.capacity ?? trip.tank_capacity, 0)}L
-        </span>
+
+      {/* Route Row (Source -> Destination) */}
+      <div className="space-y-2 relative ps-4 border-s border-dashed border-muted-foreground/40 ms-1.5 py-1">
+        <div className="flex items-start gap-2">
+          <span
+            className="absolute -start-[3.5px] top-2 h-2 w-2 rounded-full bg-success ring-2 ring-background"
+            aria-hidden
+          />
+          <span className="leading-snug break-words">{trip.terminal}</span>
+        </div>
+        <div className="flex items-start gap-2">
+          <span
+            className="absolute -start-[3.5px] bottom-2 h-2 w-2 rounded-full bg-destructive ring-2 ring-background"
+            aria-hidden
+          />
+          <span className="leading-snug font-medium text-foreground break-words">
+            {trip.drop_off_point}
+          </span>
+        </div>
+      </div>
+
+      {/* Stats Row */}
+      <div className="flex items-center justify-between pt-1">
+        <div className="flex items-center gap-3 text-[10px] uppercase tracking-wider font-bold">
+          <span className="flex items-center gap-1">
+            <Fuel className="h-2.5 w-2.5 text-muted-foreground" />
+            {formatNumber(parentTotal?.capacity ?? trip.tank_capacity, 0)}L
+          </span>
+          <span className="flex items-center gap-1">
+            <MapPin className="h-2.5 w-2.5 text-muted-foreground" />
+            {formatNumber(distance, 1)} km
+          </span>
+        </div>
+        <div className="flex items-center gap-1 text-success tabular-nums font-bold">
+          <DollarSign className="h-3 w-3" />
+          <span className="text-sm">
+            {formatCurrency(parentTotal?.fee ?? trip.fee)}
+          </span>
+        </div>
       </div>
     </div>
   );

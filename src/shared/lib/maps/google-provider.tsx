@@ -210,8 +210,7 @@ export function GoogleMapView({
   const flyTokenRef = React.useRef<FlyToken | null>(null);
   const lastSentinelIdRef = React.useRef<string | null>(null);
   const lastRouteSignatureRef = React.useRef<string>('');
-  const readyRef = React.useRef(false);
-  const [, forceRerender] = React.useReducer((x) => x + 1, 0);
+  const [mapReady, setMapReady] = React.useState(false);
 
   const [isSatellite, setIsSatellite] = React.useState(false);
 
@@ -274,8 +273,7 @@ export function GoogleMapView({
         });
         themeObserverRef.current = observer;
 
-        readyRef.current = true;
-        forceRerender();
+        setMapReady(true);
       } catch (err) {
         console.error('[GoogleMapView] Failed to init map', err);
       }
@@ -285,7 +283,7 @@ export function GoogleMapView({
 
     return () => {
       cancelled = true;
-      readyRef.current = false;
+      setMapReady(false);
       lastRouteSignatureRef.current = '';
       lastSentinelIdRef.current = null;
 
@@ -334,7 +332,7 @@ export function GoogleMapView({
 
   React.useEffect(() => {
     const map = mapRef.current;
-    if (!map || !readyRef.current) return;
+    if (!map || !mapReady) return;
 
     const currentIds = new Set(markers.map((m) => m.id));
 
@@ -437,7 +435,7 @@ export function GoogleMapView({
         }),
       );
     }
-  }, [markers, route]);
+  }, [mapReady, markers, route]);
 
   /* -------- fitBounds — fires only when the route IDENTITY changes ----- */
   /*                                                                       */
@@ -451,7 +449,7 @@ export function GoogleMapView({
 
   React.useEffect(() => {
     const map = mapRef.current;
-    if (!map || !readyRef.current) return;
+    if (!map || !mapReady) return;
     if (route.length < 2) {
       lastRouteSignatureRef.current = '';
       return;
@@ -463,7 +461,7 @@ export function GoogleMapView({
     const bounds = new google.maps.LatLngBounds();
     route.forEach(([lat, lng]) => bounds.extend({ lat, lng }));
     map.fitBounds(bounds, { top: 80, bottom: 80, left: 60, right: 60 });
-  }, [route]);
+  }, [mapReady, route]);
 
   /* -------- Sentinel-driven flyTo (manual focus button) ---------------- */
   /*                                                                       */
@@ -474,7 +472,7 @@ export function GoogleMapView({
 
   React.useEffect(() => {
     const map = mapRef.current;
-    if (!map || !readyRef.current) return;
+    if (!map || !mapReady) return;
 
     const sentinel = markers.find((m) => m.id.startsWith('focus-sentinel-'));
     const newId = sentinel?.id ?? null;
@@ -488,7 +486,7 @@ export function GoogleMapView({
       if (flyTokenRef.current.rafId) cancelAnimationFrame(flyTokenRef.current.rafId);
     }
     flyTokenRef.current = smoothFlyTo(map, { lat: sentinel.lat, lng: sentinel.lng }, 18);
-  }, [markers]);
+  }, [mapReady, markers]);
 
   /* -------- Render ---------------------------------------------------- */
 
