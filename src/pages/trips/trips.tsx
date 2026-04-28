@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { toast } from 'sonner';
+import { toast } from '@/shared/ui/toaster';
 import { saveAs } from 'file-saver';
 import {
   BarChart3,

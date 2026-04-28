@@ -48,6 +48,7 @@ const OilChangeHistoryPage = React.lazy(
   () => import('@/pages/oil-changes/oil-change-history'),
 );
 const FeeMappingsPage = React.lazy(() => import('@/pages/fee-mappings/fee-mappings'));
+const UsersPage = React.lazy(() => import('@/pages/users/users'));
 
 const EtitPage = React.lazy(() => import('@/pages/etit/etit'));
 
@@ -60,7 +61,6 @@ const TiresPage = lazyNamed(placeholderLoader, 'TiresPage');
 const PayrollPage = lazyNamed(placeholderLoader, 'PayrollPage');
 const VendorsPage = lazyNamed(placeholderLoader, 'VendorsPage');
 const FleetExpensesPage = lazyNamed(placeholderLoader, 'FleetExpensesPage');
-const UsersPage = lazyNamed(placeholderLoader, 'UsersPage');
 const LogsPage = lazyNamed(placeholderLoader, 'LogsPage');
 const SettingsPage = lazyNamed(placeholderLoader, 'SettingsPage');
 const TabletsPage = lazyNamed(placeholderLoader, 'TabletsPage');

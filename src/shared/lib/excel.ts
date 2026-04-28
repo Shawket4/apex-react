@@ -13,7 +13,7 @@
  *   - Lazy ExcelJS import — no bundle cost until user clicks Export
  */
 
-import { toast } from 'sonner';
+import { toast } from '@/shared/ui/toaster';
 import i18n from '@/shared/i18n';
 
 // ── Column types ─────────────────────────────────────────────────────────────

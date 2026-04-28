@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { toast } from 'sonner';
+import { toast } from '@/shared/ui/toaster';
 import { AlertCircle, Banknote, Download, Loader2, RefreshCw } from 'lucide-react';
 import { Button } from '@/shared/ui/button';
 import { Card, CardContent } from '@/shared/ui/card';

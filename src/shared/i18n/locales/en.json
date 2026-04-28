@@ -1102,5 +1102,41 @@
       "playback": "Playback"
     },
     "loadingHistory": "Loading history data..."
+  },
+  "users": {
+    "title": "User Management",
+    "subtitle": "Manage system users and access permissions",
+    "addUser": "Add User",
+    "searchPlaceholder": "Search by name, email, or phone...",
+    "fields": {
+      "name": "Name",
+      "email": "Email",
+      "phone": "Phone",
+      "permission": "Permission",
+      "password": "Password",
+      "createdAt": "Created at"
+    },
+    "permissions": {
+      "user": "User",
+      "manager": "Manager",
+      "admin": "Admin",
+      "superAdmin": "Super Admin"
+    },
+    "stats": {
+      "total": "Total users",
+      "regulars": "Regular users",
+      "managers": "Managers",
+      "admins": "Admins"
+    },
+    "dialog": {
+      "createTitle": "Create New User",
+      "editTitle": "Edit User",
+      "passwordOptional": "Leave blank to keep current"
+    },
+    "delete": {
+      "title": "Delete User?",
+      "description": "This will permanently delete {{name}}. They will no longer be able to sign in."
+    },
+    "empty": "No users found"
   }
 }

@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { toast } from 'sonner';
+import { toast } from '@/shared/ui/toaster';
 import { Loader2, Pencil, Plus, X } from 'lucide-react';
 import { Card, CardContent } from '@/shared/ui/card';
 import { Button } from '@/shared/ui/button';
