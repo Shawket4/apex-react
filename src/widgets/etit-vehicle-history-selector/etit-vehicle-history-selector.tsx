@@ -31,39 +31,55 @@ export function EtitVehicleHistorySelector({
 }: EtitVehicleHistorySelectorProps) {
   const { t } = useTranslation();
 
-  const [isRefreshing, setIsRefreshing] = React.useState(false);
-  const [longPressTimer, setLongPressTimer] = React.useState<NodeJS.Timeout | null>(null);
+  // Refs (not state) — see etit-history-controls.tsx for the original
+  // pattern. Storing the timer in state caused unnecessary re-renders
+  // and a stale-closure window where a press could register as both
+  // long and short.
+  const timerRef = React.useRef<number | null>(null);
+  const wasLongPressRef = React.useRef(false);
+  const [refreshing, setRefreshing] = React.useState(false);
+
+  const clearTimer = () => {
+    if (timerRef.current !== null) {
+      window.clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+  };
 
   const handlePointerDown = React.useCallback(() => {
-    setIsRefreshing(false);
-    const timer = setTimeout(() => {
-      setIsRefreshing(true);
+    wasLongPressRef.current = false;
+    timerRef.current = window.setTimeout(() => {
+      wasLongPressRef.current = true;
+      setRefreshing(true);
       onLoad(true);
-      setLongPressTimer(null);
+      timerRef.current = null;
     }, 700);
-    setLongPressTimer(timer);
   }, [onLoad]);
 
   const handlePointerUp = React.useCallback(() => {
-    if (longPressTimer) {
-      clearTimeout(longPressTimer);
-      setLongPressTimer(null);
-      if (!isRefreshing) {
-        onLoad(false);
-      }
+    if (timerRef.current !== null) {
+      clearTimer();
+      if (!wasLongPressRef.current) onLoad(false);
     }
-  }, [longPressTimer, onLoad, isRefreshing]);
+  }, [onLoad]);
 
-  // Reset local refreshing state when parent loading starts/ends
+  const handlePointerCancel = React.useCallback(() => {
+    clearTimer();
+  }, []);
+
   React.useEffect(() => {
-    if (loading) setIsRefreshing(false);
+    if (loading) setRefreshing(false);
   }, [loading]);
+
+  React.useEffect(() => {
+    return () => clearTimer();
+  }, []);
 
   return (
     <div className={cn('flex h-full flex-col bg-card', className)}>
       <div className="flex h-14 items-center gap-2 border-b px-4 shrink-0">
-        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onBack}>
-          <ChevronLeft className="h-4 w-4" />
+        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onBack} aria-label={t('common.back')}>
+          <ChevronLeft className="h-4 w-4 rtl:rotate-180" />
         </Button>
         <div className="min-w-0">
           <h2 className="truncate text-sm font-bold tracking-tight">
@@ -85,16 +101,17 @@ export function EtitVehicleHistorySelector({
 
         <Button
           size="lg"
-          className="w-full gap-2 shadow-lg shadow-primary/20 transition-all active:scale-[0.98]"
+          className="w-full gap-2 shadow-lg shadow-primary/20 transition-all active:scale-[0.98] select-none"
           onPointerDown={handlePointerDown}
           onPointerUp={handlePointerUp}
-          onPointerCancel={() => longPressTimer && clearTimeout(longPressTimer)}
+          onPointerCancel={handlePointerCancel}
           disabled={loading}
+          title={t('etit.controls.loadHistoryHint')}
         >
           {loading ? (
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
-            <RefreshCw className={cn('h-4 w-4', isRefreshing && 'animate-spin')} />
+            <RefreshCw className={cn('h-4 w-4', refreshing && 'animate-spin')} />
           )}
           {t('etit.controls.loadHistory')}
         </Button>

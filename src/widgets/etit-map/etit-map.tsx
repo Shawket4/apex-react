@@ -26,28 +26,19 @@ const IGNITION_OFF_COLOR = '#64748B';
 
 /* -------------------------------------------------------------------------- */
 /* Sensor classification                                                       */
-/*                                                                             *
- * The proxy relays the upstream's sensor event names verbatim. We classify   *
- * by substring match on the localized + raw type name; anything that's      *
- * neither ignition-on nor ignition-off is treated as a generic event and    *
- * skipped (we don't want to render door/temperature/odometer sensors with  *
- * an ignition icon).                                                        *
- * -------------------------------------------------------------------------- */
+/* -------------------------------------------------------------------------- */
 
 type IgnitionKind = 'ignition-on' | 'ignition-off' | null;
 
 function classifySensor(name: string): IgnitionKind {
   const s = name.toLowerCase();
-  if (s.includes('ignition off') || s.includes('engine off') || s.includes('تشغيل المحرك')) {
-    // Some Arabic feeds label the off event ambiguously — fall through.
-  }
   if (s.includes('off') || s.includes('إيقاف')) return 'ignition-off';
   if (s.includes('on') || s.includes('تشغيل')) return 'ignition-on';
   return null;
 }
 
 /* -------------------------------------------------------------------------- */
-/* Heading interpolation for the playback marker                               */
+/* Heading from two points                                                     */
 /* -------------------------------------------------------------------------- */
 
 function bearing(a: { lat: number; lng: number }, b: { lat: number; lng: number }): number {
@@ -68,30 +59,31 @@ function bearing(a: { lat: number; lng: number }, b: { lat: number; lng: number 
 export interface EtitMapProps {
   vehicles: EtitVehicle[];
   liveStatuses: EtitLiveStatus[];
-  /** Vehicles to render as markers on the map (multi-select from the list). */
   visibleIds: Set<string>;
-  /** Optional: vehicle whose route is currently being investigated. */
   activeVehicleId?: string | null;
-  /** Optional: vehicle to camera-fly to when `focusBump` increments. */
   focusedVehicleId?: string | null;
-  /** Bump this to re-focus the camera on the focused vehicle. */
   focusBump?: number;
-  /** Decoded polyline for the loaded history range. */
   route?: Array<[number, number]>;
-  /** Stops — rendered as purple stop badges when `showStops` is true. */
   stops?: EtitStop[];
-  /** Sensor events — rendered as ignition badges when `showIgnitions` is true. */
   sensors?: EtitSensorEvent[];
-  /** Conditional overlays. */
   showStops?: boolean;
   showIgnitions?: boolean;
-  /** Playback marker — rendered above all others when supplied. */
   playback?: PlaybackState | null;
-  /** Optional previous playback state for heading interpolation. */
   playbackPrev?: { lat: number; lng: number } | null;
   className?: string;
   height?: number | string;
 }
+
+/* -------------------------------------------------------------------------- */
+/* Popup memo cache                                                            */
+/*                                                                             */
+/* Live popups change only when timestamp / speed / status / event changes.   */
+/* Caching by a fingerprint avoids re-running escapeHtml + template assembly  */
+/* per vehicle on every SSE delta. Expected to hit ~95% during steady state. */
+/* -------------------------------------------------------------------------- */
+
+interface CachedPopup { key: string; html: string }
+const livePopupCache = new WeakMap<EtitLiveStatus, CachedPopup>();
 
 /* -------------------------------------------------------------------------- */
 /* Component                                                                   */
@@ -142,17 +134,10 @@ function EtitMapBase({
   );
 
   /* -------- Camera focus via fingerprint sentinel ----------------------- */
-  /*
-   * The map only refits when its bounds fingerprint changes. To force a
-   * re-focus when the user clicks a crosshair (even on the same vehicle),
-   * we mix the `focusBump` into a sentinel marker id that has zero size
-   * and `affectsBounds: true`. The fingerprint changes → fitBounds runs.
-   */
   const focusSentinel = React.useMemo<MapMarker | null>(() => {
     if (!focusedVehicleId) return null;
     const live = liveStatuses.find((s) => s.id === focusedVehicleId);
-    if (!live) return null;
-    if (!isValidCoordinate(live.lat, live.lng)) return null;
+    if (!live || !isValidCoordinate(live.lat, live.lng)) return null;
     return {
       id: `focus-sentinel-${focusBump}`,
       lat: live.lat,
@@ -160,55 +145,61 @@ function EtitMapBase({
       color: 'transparent',
       kind: 'invisible',
       title: '',
-      // When focusing, this sentinel should be the ONLY thing affecting bounds
-      // if we want a clean snap-to-vehicle. 
       affectsBounds: true,
     };
   }, [focusedVehicleId, focusBump, liveStatuses]);
 
-  /* -------- Vehicle markers (only the ones the user toggled on) -------- */
+  /* -------- Markers --------------------------------------------------- */
 
   const markers = React.useMemo<MapMarker[]>(() => {
     const out: MapMarker[] = [];
+    const historyActive = route.length > 0;
 
-    for (const s of liveStatuses) {
-      if (!visibleIds.has(s.id)) continue;
-      if (!isValidCoordinate(s.lat, s.lng)) continue;
+    // Short-circuit: when history is loaded for a vehicle, the live
+    // markers are suppressed for the active vehicle and visibleIds is
+    // cleared at the page level — but defend in depth here too.
+    if (!historyActive || visibleIds.size > 0) {
+      for (const s of liveStatuses) {
+        if (!visibleIds.has(s.id)) continue;
+        if (!isValidCoordinate(s.lat, s.lng)) continue;
+        if (historyActive && s.id === activeVehicleId) continue;
 
-      // When a route is displayed, the "live" marker for the active vehicle 
-      // (the one the route belongs to) is often confusing.
-      if (route.length > 0 && s.id === activeVehicleId) continue;
+        const group = classifyStatus(s.status);
+        const plate = plateById.get(s.id) ?? s.plate ?? s.id;
 
-      const group = classifyStatus(s.status);
-      const plate = plateById.get(s.id) ?? s.plate ?? s.id;
-      const heading =
-        typeof (s as { heading?: number }).heading === 'number'
-          ? ((s as { heading?: number }).heading ?? 0)
-          : 0;
-      out.push({
-        id: `live-${s.id}`,
-        lat: s.lat,
-        lng: s.lng,
-        color: ETIT_STATUS_COLOR[group],
-        kind: 'vehicle',
-        heading,
-        // If we are focusing, we suppress other markers' contribution to bounds
-        // so the camera snaps tightly to the sentinel.
-        affectsBounds: !focusSentinel,
-        title: plate,
-        popupHtml: buildLivePopup({
-          plate,
-          statusLabel: s.statusLabel,
-          speed: s.speed,
-          timestamp: s.timestamp,
-          event: s.event ?? null,
+        // Cached popup: only rebuild when the fingerprint changes.
+        const popupKey = `${s.statusLabel}|${s.speed}|${(s.timestamp?.getTime() ?? 0)}|${s.event ?? ''}`;
+        let popupHtml: string;
+        const cached = livePopupCache.get(s);
+        if (cached && cached.key === popupKey) {
+          popupHtml = cached.html;
+        } else {
+          popupHtml = buildLivePopup({
+            plate,
+            statusLabel: s.statusLabel,
+            speed: s.speed,
+            timestamp: s.timestamp,
+            event: s.event ?? null,
+            color: ETIT_STATUS_COLOR[group],
+            labels,
+          });
+          livePopupCache.set(s, { key: popupKey, html: popupHtml });
+        }
+
+        out.push({
+          id: `live-${s.id}`,
+          lat: s.lat,
+          lng: s.lng,
           color: ETIT_STATUS_COLOR[group],
-          labels,
-        }),
-      });
+          kind: 'vehicle',
+          heading: s.heading ?? 0,
+          affectsBounds: !focusSentinel,
+          title: plate,
+          popupHtml,
+        });
+      }
     }
 
-    // Route endpoints
     if (route.length > 0) {
       out.push({
         id: 'route-start',
@@ -228,7 +219,6 @@ function EtitMapBase({
       });
     }
 
-    // Stops
     if (showStops) {
       for (let i = 0; i < stops.length; i++) {
         const s = stops[i];
@@ -246,7 +236,6 @@ function EtitMapBase({
       }
     }
 
-    // Sensor events (ignition only)
     if (showIgnitions) {
       for (let i = 0; i < sensors.length; i++) {
         const s = sensors[i];
@@ -266,7 +255,6 @@ function EtitMapBase({
       }
     }
 
-    // Playback marker — never affects bounds, never sorts into auto-fit.
     if (playback) {
       const heading = playbackPrev
         ? bearing(playbackPrev, { lat: playback.lat, lng: playback.lng })
@@ -285,12 +273,12 @@ function EtitMapBase({
     }
 
     if (focusSentinel) out.push(focusSentinel);
-
     return out;
   }, [
     liveStatuses,
     visibleIds,
     plateById,
+    activeVehicleId,
     showStops,
     stops,
     showIgnitions,
@@ -299,10 +287,10 @@ function EtitMapBase({
     playbackPrev,
     focusSentinel,
     labels,
+    route,
   ]);
 
   const centerFallback = React.useMemo<[number, number]>(() => {
-    // If we have a route, the user is likely investigating it; center on start.
     if (route.length > 0) return route[0];
     if (markers.length > 0) return [markers[0].lat, markers[0].lng];
     return DEFAULT_MAP_CENTER;
@@ -427,6 +415,7 @@ function buildPlaybackPopup(p: PlaybackState, labels: PopupLabels): string {
     </div>
   `;
 }
+
 export const EtitMap = React.memo(EtitMapBase);
 
 function escapeHtml(s: string): string {

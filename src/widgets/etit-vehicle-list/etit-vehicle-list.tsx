@@ -41,51 +41,59 @@ type StatusFilter = 'all' | 'online' | 'moving' | 'idling' | 'offline';
 
 /* -------------------------------------------------------------------------- */
 /* Vehicle Row                                                                 */
+/*                                                                             */
+/* The previous row took `visibleIds` (Set) and `activeId` (string) and        */
+/* derived `isVisible` / `isActive` inside. Both reference-changed on every    */
+/* parent render, so `React.memo` always failed its shallow compare and the   */
+/* memo did nothing. Now we pass primitive booleans (and a derived live       */
+/* fingerprint) so the memo is meaningful: a row only re-renders when its    */
+/* own data changes.                                                          */
 /* -------------------------------------------------------------------------- */
 
 interface VehicleRowProps {
-  vehicle: EtitVehicle;
-  live: EtitLiveStatus | undefined;
-  activeId: string | null;
-  visibleIds: Set<string>;
+  vehicleId: string;
+  displayName: string;
+  isActive: boolean;
+  isVisible: boolean;
+  isOnline: boolean;
+  groupColor: string;
+  statusLabel: string;
+  speed: number;
+  lastSeen: Date | null;
   onActivate: (id: string) => void;
   onToggleVisible: (id: string) => void;
   onFocus: (id: string) => void;
 }
 
-const VehicleRow = React.memo(({
-  vehicle,
-  live,
-  activeId,
-  visibleIds,
+const VehicleRow = React.memo(function VehicleRow({
+  vehicleId,
+  displayName,
+  isActive,
+  isVisible,
+  isOnline,
+  groupColor,
+  statusLabel,
+  speed,
+  lastSeen,
   onActivate,
   onToggleVisible,
   onFocus,
-}: VehicleRowProps) => {
+}: VehicleRowProps) {
   const { t } = useTranslation();
-  const status = live?.status ?? vehicle.status;
-  const isOnline = isEtitOnline(status);
-  const group = classifyStatus(status);
-  const color = ETIT_STATUS_COLOR[group];
-  const speed = live?.speed ?? vehicle.speed;
-  const lastSeen = live?.timestamp ?? vehicle.lastLocationAt;
-  const isActive = activeId === vehicle.id;
-  const isVisible = visibleIds.has(vehicle.id);
-  const displayName = vehicle.plate || vehicle.codename;
 
   return (
     <li>
       <div
         className={cn(
-          'group flex items-center gap-2 rounded-md border border-transparent px-2 py-2 transition-colors',
+          'group flex items-center gap-2 rounded-lg border border-transparent px-2 py-2 transition-all',
           isActive
-            ? 'border-primary/40 bg-primary/5'
-            : 'hover:bg-accent hover:text-accent-foreground',
+            ? 'border-primary/40 bg-primary/5 shadow-sm'
+            : 'hover:bg-accent/60 hover:text-accent-foreground hover:border-border/50',
         )}
       >
         <Checkbox
           checked={isVisible}
-          onCheckedChange={() => onToggleVisible(vehicle.id)}
+          onCheckedChange={() => onToggleVisible(vehicleId)}
           aria-label={
             isVisible
               ? t('etit.list.hideFromMap', { name: displayName })
@@ -95,22 +103,22 @@ const VehicleRow = React.memo(({
         />
 
         <span
-          className="h-2.5 w-2.5 shrink-0 rounded-full ring-2 ring-background"
-          style={{ backgroundColor: color }}
+          className="h-2.5 w-2.5 shrink-0 rounded-full ring-2 ring-background shadow-sm"
+          style={{ backgroundColor: groupColor }}
           aria-hidden
         />
 
         <button
           type="button"
-          onClick={() => onActivate(vehicle.id)}
+          onClick={() => onActivate(vehicleId)}
           className="min-w-0 flex-1 text-start"
         >
           <div className="flex items-center gap-1.5">
-            <span className="truncate text-sm font-semibold">{displayName}</span>
+            <span className="truncate text-sm font-semibold tracking-tight">{displayName}</span>
             {isOnline ? (
-              <Wifi className="h-3 w-3 shrink-0 text-success" />
+              <Wifi className="h-3 w-3 shrink-0 text-success" aria-label={t('etit.list.online')} />
             ) : (
-              <WifiOff className="h-3 w-3 shrink-0 text-muted-foreground" />
+              <WifiOff className="h-3 w-3 shrink-0 text-muted-foreground" aria-label={t('etit.list.offline')} />
             )}
             {isVisible ? (
               <Eye className="h-3 w-3 shrink-0 text-primary" />
@@ -119,15 +127,15 @@ const VehicleRow = React.memo(({
             )}
           </div>
           <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
-            <span className="truncate">{live?.statusLabel ?? vehicle.statusLabel}</span>
+            <span className="truncate">{statusLabel}</span>
             {speed > 0 && (
-              <span className="tabular-nums">
+              <span className="tabular-nums shrink-0">
                 · {speed} {t('etit.units.kmh')}
               </span>
             )}
           </div>
           {lastSeen && (
-            <div className="mt-0.5 truncate text-[10px] text-muted-foreground/80">
+            <div className="mt-0.5 truncate text-[10px] text-muted-foreground/80 tabular-nums">
               {formatCairo(lastSeen, 'datetime')}
             </div>
           )}
@@ -138,27 +146,27 @@ const VehicleRow = React.memo(({
           variant="ghost"
           size="icon"
           className={cn(
-            "h-8 w-8 shrink-0 rounded-full transition-all",
-            isActive ? "bg-primary text-primary-foreground shadow-md" : "hover:bg-primary/10 hover:text-primary"
+            'h-8 w-8 shrink-0 rounded-full transition-all',
+            isActive
+              ? 'bg-primary text-primary-foreground shadow-md hover:bg-primary/90'
+              : 'opacity-60 hover:opacity-100 hover:bg-primary/10 hover:text-primary',
           )}
           onClick={(e) => {
             e.stopPropagation();
-            onFocus(vehicle.id);
+            onFocus(vehicleId);
           }}
           title={t('etit.list.focusOnMap')}
           aria-label={t('etit.list.focusOnMapFor', { name: displayName })}
         >
-          <Crosshair className={cn("h-4 w-4", isActive && "animate-pulse")} />
+          <Crosshair className={cn('h-4 w-4', isActive && 'animate-pulse')} />
         </Button>
       </div>
     </li>
   );
 });
 
-VehicleRow.displayName = 'VehicleRow';
-
 /* -------------------------------------------------------------------------- */
-/* Main Component                                                              */
+/* Main                                                                        */
 /* -------------------------------------------------------------------------- */
 
 function EtitVehicleListBase({
@@ -194,9 +202,10 @@ function EtitVehicleListBase({
         }
         if (filter === 'all') return true;
         const live = liveById.get(v.id);
-        if (filter === 'online') return isEtitOnline(live?.status ?? v.status);
-        if (filter === 'offline') return !isEtitOnline(live?.status ?? v.status);
-        const group = live ? classifyStatus(live.status) : classifyStatus(v.status);
+        const status = live?.status ?? v.status;
+        if (filter === 'online') return isEtitOnline(status);
+        if (filter === 'offline') return !isEtitOnline(status);
+        const group = classifyStatus(status);
         if (filter === 'moving') return group === 'moving';
         if (filter === 'idling') return group === 'idling';
         return true;
@@ -204,7 +213,6 @@ function EtitVehicleListBase({
       .sort((a, b) => {
         const aOnline = isEtitOnline(liveById.get(a.id)?.status ?? a.status);
         const bOnline = isEtitOnline(liveById.get(b.id)?.status ?? b.status);
-
         if (aOnline !== bOnline) return aOnline ? -1 : 1;
         return a.plate.localeCompare(b.plate);
       });
@@ -222,11 +230,8 @@ function EtitVehicleListBase({
       const live = liveById.get(v.id);
       const status = live?.status ?? v.status;
       const group = classifyStatus(status);
-      const isOnline = isEtitOnline(status);
-
-      if (isOnline) online++;
+      if (isEtitOnline(status)) online++;
       else offline++;
-
       if (group === 'moving') moving++;
       if (group === 'idling') idling++;
     }
@@ -241,12 +246,7 @@ function EtitVehicleListBase({
   const someFilteredVisible = visibleCountInFilter > 0 && !allFilteredVisible;
 
   return (
-    <aside
-      className={cn(
-        'flex flex-col border-e bg-card',
-        className,
-      )}
-    >
+    <aside className={cn('flex flex-col border-e bg-card', className)}>
       {/* Header */}
       <div className="shrink-0 border-b">
         <div className="p-3 pb-2">
@@ -257,7 +257,6 @@ function EtitVehicleListBase({
           />
         </div>
 
-        {/* Show / hide bar */}
         <div className="flex items-center gap-2 border-y bg-muted/30 px-3 py-1.5 text-[11px]">
           <Checkbox
             checked={allFilteredVisible ? true : someFilteredVisible ? 'indeterminate' : false}
@@ -267,7 +266,7 @@ function EtitVehicleListBase({
             }}
             aria-label={t('etit.list.toggleAllVisible')}
           />
-          <span className="font-medium">
+          <span className="font-medium tabular-nums">
             {t('etit.list.shownOnMap', {
               shown: visibleCountInFilter,
               total: filtered.length,
@@ -276,7 +275,7 @@ function EtitVehicleListBase({
           {visibleCountInFilter > 0 && (
             <button
               type="button"
-              className="ms-auto text-muted-foreground hover:text-foreground"
+              className="ms-auto text-muted-foreground hover:text-foreground transition-colors"
               onClick={onClearVisible}
             >
               {t('etit.list.hideAll')}
@@ -284,8 +283,7 @@ function EtitVehicleListBase({
           )}
         </div>
 
-        {/* Filter chips */}
-        <div className="flex flex-wrap gap-2 p-3 pt-2">
+        <div className="flex flex-wrap gap-1.5 p-2.5 pt-2">
           <FilterChip active={filter === 'all'} onClick={() => setFilter('all')} count={counts.all}>
             {t('etit.list.filter.all')}
           </FilterChip>
@@ -330,7 +328,7 @@ function EtitVehicleListBase({
           <ul className="space-y-1 p-2">
             {Array.from({ length: 8 }).map((_, i) => (
               <li key={i}>
-                <Skeleton className="h-14 rounded-md" />
+                <Skeleton className="h-14 rounded-lg" />
               </li>
             ))}
           </ul>
@@ -349,18 +347,28 @@ function EtitVehicleListBase({
           </div>
         ) : (
           <ul className="space-y-0.5 p-2">
-            {filtered.map((v) => (
-              <VehicleRow
-                key={v.id}
-                vehicle={v}
-                live={liveById.get(v.id)}
-                activeId={activeId}
-                visibleIds={visibleIds}
-                onActivate={onActivate}
-                onToggleVisible={onToggleVisible}
-                onFocus={onFocus}
-              />
-            ))}
+            {filtered.map((v) => {
+              const live = liveById.get(v.id);
+              const status = live?.status ?? v.status;
+              const group = classifyStatus(status);
+              return (
+                <VehicleRow
+                  key={v.id}
+                  vehicleId={v.id}
+                  displayName={v.plate || v.codename}
+                  isActive={activeId === v.id}
+                  isVisible={visibleIds.has(v.id)}
+                  isOnline={isEtitOnline(status)}
+                  groupColor={ETIT_STATUS_COLOR[group]}
+                  statusLabel={live?.statusLabel ?? v.statusLabel}
+                  speed={live?.speed ?? v.speed}
+                  lastSeen={live?.timestamp ?? v.lastLocationAt}
+                  onActivate={onActivate}
+                  onToggleVisible={onToggleVisible}
+                  onFocus={onFocus}
+                />
+              );
+            })}
           </ul>
         )}
       </ScrollArea>
@@ -388,7 +396,7 @@ function FilterChip({ active, onClick, count, children, icon }: FilterChipProps)
       type="button"
       onClick={onClick}
       className={cn(
-        'inline-flex h-8 items-center gap-2 rounded-lg px-3 text-xs font-medium transition-all',
+        'inline-flex h-7 items-center gap-1.5 rounded-full px-2.5 text-[11px] font-medium transition-all',
         active
           ? 'bg-primary text-primary-foreground shadow-sm'
           : 'bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground',
@@ -398,7 +406,7 @@ function FilterChip({ active, onClick, count, children, icon }: FilterChipProps)
       {children}
       <span
         className={cn(
-          'inline-block min-w-[1.5rem] rounded-md px-1 py-0.5 text-center text-[10px] font-bold tabular-nums',
+          'inline-block min-w-[1.25rem] rounded-md px-1 py-0.5 text-center text-[10px] font-bold tabular-nums',
           active ? 'bg-primary-foreground/20' : 'bg-background shadow-inner',
         )}
       >

@@ -4,6 +4,7 @@ import { setOptions } from '@googlemaps/js-api-loader';
 import { Button } from '@/shared/ui/button';
 import { cn } from '@/shared/lib/cn';
 import { buildMarkerSvg, markerSize } from './marker-svg';
+import { getSharedMap, releaseSharedMap } from './map-pool';
 import type { MapMarker, MapViewProps } from './types';
 
 /* -------------------------------------------------------------------------- */
@@ -37,7 +38,7 @@ const lightMapStyle: google.maps.MapTypeStyle[] = [
 ];
 
 /* -------------------------------------------------------------------------- */
-/* Info-window styles (idempotent injection)                                   */
+/* Info-window styles (idempotent)                                             */
 /* -------------------------------------------------------------------------- */
 
 function injectInfoWindowStyles() {
@@ -54,13 +55,13 @@ function injectInfoWindowStyles() {
       overflow: hidden !important;
     }
     .dark .gm-style-iw-c {
-      background-color: #1e2535 !important;
+      background-color: hsl(var(--card, 222 47% 11%)) !important;
       border-color: rgba(255,255,255,0.07) !important;
       box-shadow: 0 4px 24px rgba(0,0,0,0.5) !important;
     }
-    .dark .gm-style-iw-tc::after { background: #1e2535 !important; }
+    .dark .gm-style-iw-tc::after { background: hsl(var(--card, 222 47% 11%)) !important; }
     .gm-style-iw-d { overflow: hidden !important; padding: 0 !important; }
-    .gm-ui-hover-effect { top: 6px !important; right: 6px !important; opacity: 0.5 !important; }
+    .gm-ui-hover-effect { top: 6px !important; inset-inline-end: 6px !important; opacity: 0.5 !important; }
     .gm-ui-hover-effect:hover { opacity: 1 !important; }
     .dark .gm-ui-hover-effect > span { background-color: #94a3b8 !important; }
   `;
@@ -136,7 +137,7 @@ function smoothFlyTo(
 }
 
 /* -------------------------------------------------------------------------- */
-/* Helpers                                                                     */
+/* Marker helpers                                                              */
 /* -------------------------------------------------------------------------- */
 
 function buildMarkerContent(m: MapMarker): string {
@@ -144,20 +145,29 @@ function buildMarkerContent(m: MapMarker): string {
   return buildMarkerSvg(m.color, `m-${m.id}`, m.kind || 'pin', rotation);
 }
 
-/* -------------------------------------------------------------------------- */
-/* Component                                                                   */
-/* -------------------------------------------------------------------------- */
+/** Fingerprint of marker fields that affect the icon image. */
+function iconKey(m: MapMarker): string {
+  return `${m.kind ?? 'pin'}|${m.color}|${m.kind === 'vehicle' ? m.heading ?? 0 : 0}`;
+}
 
 interface MarkerEntry {
   id: string;
   marker: google.maps.Marker;
   listeners: google.maps.MapsEventListener[];
+  /** Last applied icon fingerprint — skips `setIcon` when unchanged. */
+  lastIconKey: string;
+  /** Latest marker spec for popup binding. */
+  spec: MapMarker;
 }
+
+/* -------------------------------------------------------------------------- */
+/* Component                                                                   */
+/* -------------------------------------------------------------------------- */
 
 export function GoogleMapView({
   markers = [],
   route = [],
-  centerFallback = [30.0444, 31.2357], // Cairo fallback
+  centerFallback = [30.0444, 31.2357],
   onMapClick,
   onMarkerDragEnd,
   className,
@@ -169,36 +179,32 @@ export function GoogleMapView({
   const markerEntriesRef = React.useRef<Map<string, MarkerEntry>>(new Map());
   const polylinesRef = React.useRef<google.maps.Polyline[]>([]);
   const mapListenersRef = React.useRef<google.maps.MapsEventListener[]>([]);
+  const themeObserverRef = React.useRef<MutationObserver | null>(null);
   const flyTokenRef = React.useRef<FlyToken | null>(null);
+  const readyRef = React.useRef(false);
+  const [, forceRerender] = React.useReducer((x) => x + 1, 0);
 
   const [isSatellite, setIsSatellite] = React.useState(false);
 
-  // Refs for callbacks to avoid re-running effects
   const onMapClickRef = React.useRef(onMapClick);
   const onMarkerDragEndRef = React.useRef(onMarkerDragEnd);
   React.useEffect(() => { onMapClickRef.current = onMapClick; }, [onMapClick]);
   React.useEffect(() => { onMarkerDragEndRef.current = onMarkerDragEnd; }, [onMarkerDragEnd]);
 
-  /* -------- Init once --------------------------------------------------- */
+  /* -------- Init via MapPool ------------------------------------------ */
 
   React.useEffect(() => {
-    if (!containerRef.current || mapRef.current) return;
+    if (!containerRef.current) return;
 
     let cancelled = false;
+    let claimedMap: google.maps.Map | null = null;
     injectInfoWindowStyles();
     configureLoader();
 
-    const initMap = async () => {
+    const init = async () => {
       try {
-        const { importLibrary } = await import('@googlemaps/js-api-loader');
-        const [mapsLib] = await Promise.all([
-          importLibrary('maps') as Promise<google.maps.MapsLibrary>,
-          importLibrary('marker'),
-        ]);
-        if (cancelled || !containerRef.current) return;
-
         const isDark = document.documentElement.classList.contains('dark');
-        const map = new mapsLib.Map(containerRef.current, {
+        const handle = await getSharedMap(containerRef.current!, {
           center: { lat: centerFallback[0], lng: centerFallback[1] },
           zoom: 11,
           mapTypeId: google.maps.MapTypeId.ROADMAP,
@@ -210,94 +216,131 @@ export function GoogleMapView({
           gestureHandling: 'greedy',
           keyboardShortcuts: false,
         });
+        if (cancelled) {
+          releaseSharedMap(handle.map);
+          return;
+        }
+        claimedMap = handle.map;
+        mapRef.current = handle.map;
+        infoWindowRef.current = handle.infoWindow;
 
-        mapRef.current = map;
-        infoWindowRef.current = new mapsLib.InfoWindow({ disableAutoPan: false });
-
-        const clickListener = map.addListener('click', (e: google.maps.MapMouseEvent) => {
-          if (!e.latLng) return;
-          onMapClickRef.current?.(e.latLng.lat(), e.latLng.lng());
-        });
+        // Map click delegates to consumer.
+        const clickListener = handle.map.addListener(
+          'click',
+          (e: google.maps.MapMouseEvent) => {
+            if (!e.latLng) return;
+            onMapClickRef.current?.(e.latLng.lat(), e.latLng.lng());
+          },
+        );
         mapListenersRef.current.push(clickListener);
 
+        // Theme observer — DISCONNECTED on cleanup (was leaking).
         const observer = new MutationObserver(() => {
           if (!mapRef.current) return;
           if (mapRef.current.getMapTypeId() !== google.maps.MapTypeId.ROADMAP) return;
           const dark = document.documentElement.classList.contains('dark');
           mapRef.current.setOptions({ styles: dark ? darkMapStyle : lightMapStyle });
         });
-        observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+        observer.observe(document.documentElement, {
+          attributes: true,
+          attributeFilter: ['class'],
+        });
+        themeObserverRef.current = observer;
 
-        syncMarkers();
+        readyRef.current = true;
+        forceRerender(); // trigger marker sync now that map is ready
       } catch (err) {
         console.error('[GoogleMapView] Failed to init map', err);
       }
     };
 
-    initMap();
+    init();
 
     return () => {
       cancelled = true;
+      readyRef.current = false;
+
+      // Detach all marker listeners + remove markers from THIS map.
+      // The shared map persists; we only own the markers we created.
+      for (const entry of markerEntriesRef.current.values()) {
+        entry.listeners.forEach((l) => google.maps.event.removeListener(l));
+        entry.marker.setMap(null);
+      }
+      markerEntriesRef.current.clear();
+
+      polylinesRef.current.forEach((p) => p.setMap(null));
+      polylinesRef.current = [];
+
       mapListenersRef.current.forEach((l) => google.maps.event.removeListener(l));
       mapListenersRef.current = [];
+
+      if (themeObserverRef.current) {
+        themeObserverRef.current.disconnect();
+        themeObserverRef.current = null;
+      }
+
       if (flyTokenRef.current) {
         flyTokenRef.current.cancelled = true;
         if (flyTokenRef.current.rafId) cancelAnimationFrame(flyTokenRef.current.rafId);
       }
+
       if (infoWindowRef.current) {
         infoWindowRef.current.close();
         infoWindowRef.current = null;
       }
+
+      if (claimedMap) releaseSharedMap(claimedMap);
       mapRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  /* -------- Sync Markers + Polylines ------------------------------------ */
+  /* -------- Sync markers + polylines ---------------------------------- */
 
-  const syncMarkers = React.useCallback(() => {
+  React.useEffect(() => {
     const map = mapRef.current;
-    if (!map) return;
+    if (!map || !readyRef.current) return;
 
     const currentIds = new Set(markers.map((m) => m.id));
 
-    // 1. Remove deleted
+    // 1. Remove deleted.
     for (const [id, entry] of markerEntriesRef.current.entries()) {
       if (!currentIds.has(id)) {
-        entry.marker.setMap(null);
         entry.listeners.forEach((l) => google.maps.event.removeListener(l));
+        entry.marker.setMap(null);
         markerEntriesRef.current.delete(id);
       }
     }
 
-    // 2. Add or update
+    // 2. Add or update.
     for (const m of markers) {
+      const sz = markerSize(m.kind || 'pin');
+      const anchor = new google.maps.Point(sz.anchorX, sz.anchorY);
+      const newIconKey = iconKey(m);
       let entry = markerEntriesRef.current.get(m.id);
-      const position = { lat: m.lat, lng: m.lng };
 
       if (!entry) {
         const marker = new google.maps.Marker({
-          position,
+          position: { lat: m.lat, lng: m.lng },
           map,
           title: m.title,
           draggable: !!m.draggable,
-          icon: {
-            url: buildMarkerContent(m),
-            anchor: new google.maps.Point(markerSize(m.kind || 'pin').anchorX, markerSize(m.kind || 'pin').anchorY),
-          },
+          icon: { url: buildMarkerContent(m), anchor },
         });
 
         const listeners: google.maps.MapsEventListener[] = [];
-        if (m.popupHtml) {
-          listeners.push(
-            marker.addListener('click', () => {
-              if (infoWindowRef.current) {
-                infoWindowRef.current.setContent(m.popupHtml!);
-                infoWindowRef.current.open(map, marker);
-              }
-            }),
-          );
-        }
+
+        // Click handler reads `entry.spec` via closure — fix for the
+        // stale-popup bug. The spec is updated in the else branch below
+        // so the click always sees the most recent popupHtml.
+        const clickListener = marker.addListener('click', () => {
+          const live = markerEntriesRef.current.get(m.id);
+          if (!live || !live.spec.popupHtml || !infoWindowRef.current) return;
+          infoWindowRef.current.setContent(live.spec.popupHtml);
+          infoWindowRef.current.open(map, live.marker);
+        });
+        listeners.push(clickListener);
+
         if (m.draggable) {
           listeners.push(
             marker.addListener('dragend', (e: google.maps.MapMouseEvent) => {
@@ -306,45 +349,47 @@ export function GoogleMapView({
           );
         }
 
-        entry = { id: m.id, marker, listeners };
+        entry = { id: m.id, marker, listeners, lastIconKey: newIconKey, spec: m };
         markerEntriesRef.current.set(m.id, entry);
       } else {
-        // Update existing
-        entry.marker.setPosition(position);
-        entry.marker.setIcon({
-          url: buildMarkerContent(m),
-          anchor: new google.maps.Point(markerSize(m.kind || 'pin').anchorX, markerSize(m.kind || 'pin').anchorY),
-        });
+        // Update position only when changed.
+        const cur = entry.marker.getPosition();
+        if (!cur || cur.lat() !== m.lat || cur.lng() !== m.lng) {
+          entry.marker.setPosition({ lat: m.lat, lng: m.lng });
+        }
+        // Repaint icon ONLY when icon-affecting fields change. SVG
+        // re-encoding + data URL parsing was the dominant marker cost.
+        if (entry.lastIconKey !== newIconKey) {
+          entry.marker.setIcon({ url: buildMarkerContent(m), anchor });
+          entry.lastIconKey = newIconKey;
+        }
+        entry.spec = m;
       }
     }
 
-    // 3. Sync Route Polylines
+    // 3. Sync route polyline.
     polylinesRef.current.forEach((p) => p.setMap(null));
     polylinesRef.current = [];
     if (route.length > 1) {
       const path = route.map(([lat, lng]) => ({ lat, lng }));
-      const poly = new google.maps.Polyline({
-        path,
-        map,
-        strokeColor: '#3b82f6',
-        strokeOpacity: 0.8,
-        strokeWeight: 4,
-      });
-      polylinesRef.current.push(poly);
+      polylinesRef.current.push(
+        new google.maps.Polyline({
+          path,
+          map,
+          strokeColor: '#3b82f6',
+          strokeOpacity: 0.85,
+          strokeWeight: 4,
+        }),
+      );
     }
   }, [markers, route]);
 
-  React.useEffect(() => {
-    syncMarkers();
-  }, [syncMarkers]);
-
-  /* -------- Fly-to logic ------------------------------------------------ */
+  /* -------- Camera focus ---------------------------------------------- */
 
   React.useEffect(() => {
     const map = mapRef.current;
-    if (!map) return;
+    if (!map || !readyRef.current) return;
 
-    // A: Sentinel Focus (Priority)
     const sentinel = markers.find((m) => m.id.startsWith('focus-sentinel-'));
     if (sentinel) {
       if (flyTokenRef.current) {
@@ -355,15 +400,14 @@ export function GoogleMapView({
       return;
     }
 
-    // B: Route Fit
     if (route.length > 1) {
       const bounds = new google.maps.LatLngBounds();
       route.forEach(([lat, lng]) => bounds.extend({ lat, lng }));
-      map.fitBounds(bounds, { top: 100, bottom: 100, left: 100, right: 100 });
+      map.fitBounds(bounds, { top: 80, bottom: 80, left: 60, right: 60 });
     }
   }, [markers, route]);
 
-  /* -------- Render ------------------------------------------------------ */
+  /* -------- Render ---------------------------------------------------- */
 
   const toggleSatellite = () => {
     const next = !isSatellite;
@@ -386,24 +430,28 @@ export function GoogleMapView({
   return (
     <div className={cn('relative h-full w-full', className)}>
       <div ref={containerRef} className="h-full w-full" />
-      
-      {/* Controls */}
-      <div className="absolute bottom-32 right-3 z-10 flex flex-col gap-2">
+
+      <div className="absolute bottom-32 end-3 z-10 flex flex-col gap-2">
         <Button
           variant="secondary"
           size="icon"
-          className="h-9 w-9 rounded-full shadow-lg"
+          className="h-9 w-9 rounded-full shadow-lg backdrop-blur-md bg-card/90 hover:bg-card"
           onClick={centerOnMarkers}
           title="Center on markers"
+          aria-label="Center map on markers"
         >
           <Locate className="h-4 w-4" />
         </Button>
         <Button
           variant={isSatellite ? 'default' : 'secondary'}
           size="icon"
-          className="h-9 w-9 rounded-full shadow-lg"
+          className={cn(
+            'h-9 w-9 rounded-full shadow-lg backdrop-blur-md',
+            !isSatellite && 'bg-card/90 hover:bg-card',
+          )}
           onClick={toggleSatellite}
-          title="Toggle Hybrid"
+          title="Toggle satellite"
+          aria-label="Toggle satellite view"
         >
           <Layers className="h-4 w-4" />
         </Button>

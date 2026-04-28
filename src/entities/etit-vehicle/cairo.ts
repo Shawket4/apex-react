@@ -1,39 +1,38 @@
 /**
  * Cairo-locked time helpers.
  *
- * The etit-proxy backend interprets `from` / `to` query parameters as
- * **wall-clock time in `Africa/Cairo`** (configurable via env, but Cairo
- * in our deployment). The Rust side converts that back to UTC and on to
- * the legacy ETIT system, which itself thinks in Cairo time.
+ * The etit-proxy backend interprets `from`/`to` query parameters as
+ * wall-clock time in `Africa/Cairo`. The browser's local timezone is not
+ * Cairo for every user, so we MUST format requests in Cairo regardless
+ * of what the browser thinks "now" is. Likewise, every timestamp we
+ * render back to the user is rendered in Cairo so the dashboard reads
+ * the same for everyone.
  *
- * The browser's local timezone is not Cairo for every user — drivers and
- * managers travel — so we MUST format requests in Cairo regardless of
- * what the browser thinks "now" is. Likewise, every timestamp we render
- * back to the user is rendered in Cairo so the dashboard reads the same
- * for everyone.
- *
- * No external date library is needed for this; `Intl.DateTimeFormat`
- * with `timeZone: 'Africa/Cairo'` does it all.
+ * DST note: Egypt has irregular DST observance (currently resumed).
+ * `cairoFromParts` uses single-iteration offset correction, which is
+ * correct outside DST transition hours. Inside the transition hour
+ * itself there's a 1-hour ambiguity we don't resolve — Cairo midnight
+ * is far from the transition so it doesn't bite in practice.
  */
 
 const CAIRO_TZ = 'Africa/Cairo';
 
-/* -------------------------------------------------------------------------- */
-/* Internal: extract Cairo wall-clock parts from any Date                      */
-/* -------------------------------------------------------------------------- */
-
-interface CairoParts {
+export interface CairoParts {
   year: number;
-  month: number; // 1-indexed for human readability (matches Intl)
+  /** 1-indexed (matches `Intl` and human readability). */
+  month: number;
   day: number;
   hour: number;
   minute: number;
   second: number;
 }
 
-function cairoParts(date: Date): CairoParts {
-  // `formatToParts` returns the same calendar fields the user would see on
-  // a Cairo wall clock, regardless of the runtime's local timezone.
+/**
+ * Extract Cairo wall-clock fields from any `Date`. Exported so widgets
+ * can avoid reimplementing this — earlier in the project's life this
+ * lived in three different files with subtly different signatures.
+ */
+export function cairoParts(date: Date): CairoParts {
   const fmt = new Intl.DateTimeFormat('en-GB', {
     timeZone: CAIRO_TZ,
     year: 'numeric',
@@ -63,18 +62,7 @@ function cairoParts(date: Date): CairoParts {
 
 const pad2 = (n: number) => String(n).padStart(2, '0');
 
-/* -------------------------------------------------------------------------- */
-/* Public API                                                                  */
-/* -------------------------------------------------------------------------- */
-
-/**
- * Format a Date as the proxy's expected `YYYY-MM-DDTHH:MM:SS` string,
- * reading the wall clock in Africa/Cairo. The proxy parses this back as
- * Cairo local time on the server.
- *
- * Example: a `Date` whose UTC instant is 12:00 UTC on a winter day
- * becomes "...T14:00:00" (Cairo is UTC+2 in winter).
- */
+/** Proxy's expected `YYYY-MM-DDTHH:MM:SS` reading the wall clock in Cairo. */
 export function formatCairoForProxy(date: Date): string {
   const p = cairoParts(date);
   return (
@@ -83,29 +71,17 @@ export function formatCairoForProxy(date: Date): string {
   );
 }
 
-/**
- * Cairo `YYYY-MM-DD` for a given Date. Used by the `date=` query
- * shortcut, where the proxy resolves the boundaries itself.
- */
+/** Cairo `YYYY-MM-DD` for the `date=` query shortcut. */
 export function formatCairoDate(date: Date): string {
   const p = cairoParts(date);
   return `${p.year}-${pad2(p.month)}-${pad2(p.day)}`;
 }
 
-/**
- * "Today" in Cairo as a JS Date pointing to the *Cairo midnight* instant.
- *
- * We don't trust `new Date()` to land at the right calendar day on a
- * browser configured to a non-Cairo TZ; instead we read today's Cairo
- * date parts and reconstruct an instant that — when re-formatted back
- * through Cairo — yields 00:00:00.
- */
 export function cairoStartOfDay(date: Date = new Date()): Date {
   const p = cairoParts(date);
   return cairoFromParts(p.year, p.month, p.day, 0, 0, 0);
 }
 
-/** End-of-day in Cairo (23:59:59.999). */
 export function cairoEndOfDay(date: Date = new Date()): Date {
   const p = cairoParts(date);
   return cairoFromParts(p.year, p.month, p.day, 23, 59, 59, 999);
@@ -113,11 +89,7 @@ export function cairoEndOfDay(date: Date = new Date()): Date {
 
 /**
  * Reverse of `cairoParts` — given Cairo wall-clock fields, return the
- * UTC instant they refer to. Iteratively corrects for DST: the naïve
- * `Date.UTC(...)` is treated as UTC, then we measure the timezone delta
- * at that instant and shift.
- *
- * `month` here is 1-indexed (matches every other function in this file).
+ * UTC instant they refer to. `month` is 1-indexed.
  */
 export function cairoFromParts(
   year: number,
@@ -131,11 +103,9 @@ export function cairoFromParts(
   // First guess: pretend Cairo is UTC.
   const guessUtc = Date.UTC(year, month - 1, day, hour, minute, second, ms);
 
-  // Measure offset of Africa/Cairo at that instant by reading the same
-  // wall-clock fields back out and computing the diff between the
-  // intended fields and what Cairo reports.
-  const guessDate = new Date(guessUtc);
-  const cairo = cairoParts(guessDate);
+  // Measure the offset of Africa/Cairo at that instant by reading the
+  // same wall-clock fields back out and computing the diff.
+  const cairo = cairoParts(new Date(guessUtc));
   const cairoUtcEquivalent = Date.UTC(
     cairo.year,
     cairo.month - 1,
@@ -150,17 +120,17 @@ export function cairoFromParts(
 }
 
 /**
- * Format a UTC ISO timestamp (or Date / millis) as a human-readable
- * Cairo string.
+ * Format a Cairo-zoned timestamp for display.
  *
- * Used everywhere we surface backend timestamps to the user:
- *   - "23 Apr 2026, 16:42"   (default)
- *   - "16:42:18"              (when `style: 'time'`)
- *   - "23 Apr 2026"           (when `style: 'date'`)
+ * Locale defaults to `en-GB` for stability across the dashboard. Pass
+ * `'ar-EG'` to render in Arabic — note Arabic locales use Arabic-Indic
+ * numerals by default. Pass `'ar-EG-u-nu-latn'` to keep Latin digits
+ * if you need tabular alignment with mixed Latin numbers elsewhere.
  */
 export function formatCairo(
   value: string | Date | number | null | undefined,
   style: 'datetime' | 'date' | 'time' = 'datetime',
+  locale: string = 'en-GB',
 ): string {
   if (value == null) return '—';
   const date = value instanceof Date ? value : new Date(value);
@@ -179,13 +149,10 @@ export function formatCairo(
     if (style === 'time') opts.second = '2-digit';
   }
 
-  return new Intl.DateTimeFormat('en-GB', opts).format(date);
+  return new Intl.DateTimeFormat(locale, opts).format(date);
 }
 
-/**
- * Cairo time-of-day string (HH:MM:SS) from any Date / ISO / millis —
- * handy for the playback player's clock readout.
- */
+/** Cairo HH:MM:SS string from any Date / ISO / millis. */
 export function formatCairoClock(value: string | Date | number | null | undefined): string {
   if (value == null) return '--:--:--';
   const date = value instanceof Date ? value : new Date(value);
@@ -194,4 +161,10 @@ export function formatCairoClock(value: string | Date | number | null | undefine
   const h12 = p.hour % 12 || 12;
   const ampm = p.hour >= 12 ? 'PM' : 'AM';
   return `${pad2(h12)}:${pad2(p.minute)}:${pad2(p.second)} ${ampm}`;
+}
+
+/** Default range producer (today in Cairo). Moved here from widgets layer. */
+export function defaultCairoTodayRange(): { from: Date; to: Date } {
+  const now = new Date();
+  return { from: cairoStartOfDay(now), to: cairoEndOfDay(now) };
 }
