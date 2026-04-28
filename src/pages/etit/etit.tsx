@@ -307,7 +307,7 @@ export function EtitPage() {
 
   /* ---- Errors & Status ---- */
   const error = fleetQuery.error || historyQuery.error || summaryQuery.error;
-  const liveLabel = fleetQuery.liveConnected ? t('common.refreshing') : t('common.loading');
+  const liveLabel = fleetQuery.liveConnected ? t('common.live') : t('common.loading');
   const liveTone = fleetQuery.liveConnected ? 'success' : 'muted';
 
   const effectiveVisibleIds = React.useMemo(() => {

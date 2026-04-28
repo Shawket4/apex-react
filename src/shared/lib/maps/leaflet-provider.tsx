@@ -140,6 +140,9 @@ interface MarkerEntry {
   popupHtml?: string;
 }
 
+/** Marker IDs that trigger zoom-preserving auto-pan when their position changes. */
+const PAN_FOLLOW_IDS = new Set(['playback-current']);
+
 /* -------------------------------------------------------------------------- */
 /* Component                                                                   */
 /* -------------------------------------------------------------------------- */
@@ -191,10 +194,12 @@ export function LeafletMapView({
       const map = L.map(containerRef.current, {
         center: centerFallback,
         zoom: 11,
-        zoomControl: true,
+        zoomControl: false,
         scrollWheelZoom: true,
         attributionControl: true,
       });
+
+      L.control.zoom({ position: 'bottomleft' }).addTo(map);
 
       const tile = L.tileLayer(isDark ? TILE_DARK : TILE_LIGHT, {
         attribution: TILE_ATTR, maxZoom: 19,
@@ -294,6 +299,9 @@ export function LeafletMapView({
         const cur = existing.marker.getLatLng();
         if (cur.lat !== info.lat || cur.lng !== info.lng) {
           existing.marker.setLatLng([info.lat, info.lng]);
+          if (liveUpdates && PAN_FOLLOW_IDS.has(info.id)) {
+            map.panTo([info.lat, info.lng]);
+          }
         }
         if (existing.signature !== sig) {
           existing.marker.setIcon(buildDivIcon(L, info, filterId));
@@ -324,9 +332,10 @@ export function LeafletMapView({
         marker.bindPopup(info.popupHtml, { closeButton: true, autoPan: true, maxWidth: 240 });
       }
 
-      marker.on('dblclick', () => {
+      marker.on('dblclick', (e: import('leaflet').LeafletMouseEvent) => {
+        L.DomEvent.stopPropagation(e);
         map.closePopup();
-        map.flyTo([info.lat, info.lng], 17, { duration: 0.75 });
+        map.flyTo([info.lat, info.lng], 18, { duration: 0.75 });
       });
 
       if (info.draggable) {
@@ -361,7 +370,7 @@ export function LeafletMapView({
 
     if (shouldAutoFit) {
       if (boundsPoints.length === 1) {
-        map.setView(boundsPoints[0], 14);
+        map.setView(boundsPoints[0], 18);
       } else {
         map.fitBounds(L.latLngBounds(boundsPoints), { padding: [40, 40] });
       }
@@ -382,7 +391,7 @@ export function LeafletMapView({
     if (points.length > 1) {
       map.fitBounds(L.latLngBounds(points), { padding: [40, 40] });
     } else if (points.length === 1) {
-      map.setView(points[0], 14);
+      map.setView(points[0], 18);
     }
   }, [markers, route, suppressRoute]);
 

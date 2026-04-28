@@ -381,6 +381,20 @@ export function GoogleMapView({
           );
         }
 
+        listeners.push(
+          marker.addListener('dblclick', (e: google.maps.MapMouseEvent) => {
+            e.stop(); // Prevent map zoom
+            if (flyTokenRef.current) {
+              flyTokenRef.current.cancelled = true;
+              if (flyTokenRef.current.rafId) cancelAnimationFrame(flyTokenRef.current.rafId);
+            }
+            const pos = marker.getPosition();
+            if (pos) {
+              flyTokenRef.current = smoothFlyTo(map, { lat: pos.lat(), lng: pos.lng() }, 18);
+            }
+          }),
+        );
+
         entry = { id: m.id, marker, listeners, lastIconKey: newIconKey, spec: m };
         markerEntriesRef.current.set(m.id, entry);
 
@@ -473,7 +487,7 @@ export function GoogleMapView({
       flyTokenRef.current.cancelled = true;
       if (flyTokenRef.current.rafId) cancelAnimationFrame(flyTokenRef.current.rafId);
     }
-    flyTokenRef.current = smoothFlyTo(map, { lat: sentinel.lat, lng: sentinel.lng }, 16);
+    flyTokenRef.current = smoothFlyTo(map, { lat: sentinel.lat, lng: sentinel.lng }, 18);
   }, [markers]);
 
   /* -------- Render ---------------------------------------------------- */
@@ -493,7 +507,15 @@ export function GoogleMapView({
     markers.forEach((m) => {
       if (m.affectsBounds) bounds.extend({ lat: m.lat, lng: m.lng });
     });
-    if (!bounds.isEmpty()) map.fitBounds(bounds, 40);
+    if (!bounds.isEmpty()) {
+      if (markers.filter(m => m.affectsBounds).length === 1) {
+        const m = markers.find(m => m.affectsBounds)!;
+        map.setZoom(18);
+        map.panTo({ lat: m.lat, lng: m.lng });
+      } else {
+        map.fitBounds(bounds, 40);
+      }
+    }
   };
 
   return (

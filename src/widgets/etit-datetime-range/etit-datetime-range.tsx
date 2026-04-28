@@ -204,7 +204,6 @@ export function EtitDateTimeRange({
     setOpen(false);
   };
 
-  const isPresetActive = (p: Preset) => rangesEqual(value, p.build());
 
   const apply = () => {
     if (draft.from.getTime() > draft.to.getTime()) return;
@@ -234,218 +233,244 @@ export function EtitDateTimeRange({
   const lo = Math.min(fromNum, toNum);
   const hi = Math.max(fromNum, toNum);
 
-  const triggerLabel = `${formatCairo(value.from, 'datetime')} → ${formatCairo(value.to, 'datetime')}`;
+
+  const activePreset = PRESETS.find((p) => rangesEqual(value, p.build()));
 
   return (
     <div className={cn('flex flex-col gap-2', className)}>
-      {/* Preset chips */}
-      <div className="flex flex-wrap gap-1.5">
-        {PRESETS.map((p) => (
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
           <Button
-            key={p.key}
-            variant={isPresetActive(p) ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => handlePreset(p)}
-            className="h-8 text-xs"
+            variant="outline"
+            className={cn(
+              'h-auto min-h-[44px] w-full justify-start px-3 py-2 text-start transition-all hover:bg-accent/50 active:scale-[0.99]',
+              !activePreset && 'border-primary/30 bg-primary/5',
+            )}
           >
-            {t(`etit.range.preset.${p.key}`)}
+            <CalendarIcon className="me-2 h-4 w-4 shrink-0 text-primary" />
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center justify-between gap-2">
+                <span className="truncate text-xs font-bold tracking-tight">
+                  {activePreset ? t(`etit.range.preset.${activePreset.key}`) : t('etit.range.custom')}
+                </span>
+                {!activePreset && <div className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />}
+              </div>
+              <div className="flex items-center gap-1 text-[10px] text-muted-foreground tabular-nums">
+                <span className="truncate">{formatCairo(value.from, 'datetime')}</span>
+                <span className="shrink-0 opacity-50">→</span>
+                <span className="truncate">{formatCairo(value.to, 'datetime')}</span>
+              </div>
+            </div>
           </Button>
-        ))}
-
-        <Popover open={open} onOpenChange={setOpen}>
-          <PopoverTrigger asChild>
-            <Button
-              variant={PRESETS.some(isPresetActive) ? 'outline' : 'default'}
-              size="sm"
-              className="h-8 gap-1.5 text-xs"
-            >
-              <CalendarIcon className="h-3 w-3" />
-              {t('etit.range.custom')}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-[320px] p-3" align="start">
-            {/* Side toggle */}
-            <div className="mb-3 grid grid-cols-2 gap-2">
-              <SideButton
-                active={side === 'from'}
-                onClick={() => setSide('from')}
-                label={t('common.from')}
-                value={formatCairo(draft.from, 'datetime')}
-              />
-              <SideButton
-                active={side === 'to'}
-                onClick={() => setSide('to')}
-                label={t('common.to')}
-                value={formatCairo(draft.to, 'datetime')}
-              />
-            </div>
-
-            {/* Month nav */}
-            <MonthYearSelector
-              month={viewMonth}
-              year={viewYear}
-              onChange={(m, y) => {
-                setViewMonth(m);
-                setViewYear(y);
-              }}
-              maxYear={maxPartsRef.year}
-            />
-
-            {/* Calendar */}
-            <div className="mb-1 grid grid-cols-7">
-              {weekdayNames.map((d) => (
-                <div
-                  key={d}
-                  className="py-1 text-center text-[10px] font-semibold text-muted-foreground"
-                >
-                  {d}
-                </div>
-              ))}
-            </div>
-
-            <div className="grid grid-cols-7 gap-y-0.5">
-              {cells.map((d, i) => {
-                if (!d) return <div key={i} />;
-                const dn = viewYear * 10000 + (viewMonth + 1) * 100 + d;
-                const disabled = dn > maxNum;
-                const isToday = dn === todayNum;
-                const isFrom = dn === fromNum;
-                const isTo = dn === toNum && fromNum !== toNum;
-                const inRange = dn > lo && dn < hi;
-                const isSelected =
-                  (side === 'from' && isFrom) || (side === 'to' && (isTo || (fromNum === toNum && isFrom)));
-
-                return (
-                  <div
-                    key={i}
-                    className={cn(
-                      'relative flex h-8 items-center justify-center',
-                      inRange && 'bg-primary/10',
-                      isFrom && 'rounded-s-full bg-primary/10',
-                      isTo && 'rounded-e-full bg-primary/10',
-                    )}
+        </PopoverTrigger>
+        <PopoverContent className="w-[320px] p-3 shadow-2xl z-[1200]" align="start" side="right" sideOffset={12}>
+          <div className="space-y-4">
+            {/* Presets Grid */}
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-1">
+                {t('etit.range.preset.period') || 'Presets'}
+              </label>
+              <div className="grid grid-cols-2 gap-1.5">
+                {PRESETS.map((p) => (
+                  <Button
+                    key={p.key}
+                    variant={activePreset?.key === p.key ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => handlePreset(p)}
+                    className="h-9 justify-start px-2.5 text-xs font-medium"
                   >
-                    <button
-                      type="button"
-                      disabled={disabled}
-                      onClick={() => !disabled && setSideDate(viewYear, viewMonth, d)}
-                      className={cn(
-                        'flex h-8 w-8 items-center justify-center rounded-full text-xs font-medium transition-colors',
-                        disabled && 'cursor-not-allowed text-muted-foreground/30',
-                        !disabled && !isSelected && 'hover:bg-muted',
-                        isToday && !isSelected && 'border border-primary text-primary',
-                        isSelected &&
-                          'bg-primary font-semibold text-primary-foreground shadow-sm',
-                      )}
+                    <div className={cn(
+                      "me-2 h-1.5 w-1.5 rounded-full",
+                      activePreset?.key === p.key ? "bg-primary-foreground" : "bg-muted-foreground/30"
+                    )} />
+                    {t(`etit.range.preset.${p.key}`)}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            <div className="h-px bg-border/60" />
+
+            {/* Custom Picker Section */}
+            <div className="space-y-3">
+              <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-1">
+                {t('etit.range.custom')}
+              </label>
+              
+              {/* Side toggle */}
+              <div className="grid grid-cols-2 gap-2">
+                <SideButton
+                  active={side === 'from'}
+                  onClick={() => setSide('from')}
+                  label={t('common.from')}
+                  value={formatCairo(draft.from, 'datetime')}
+                />
+                <SideButton
+                  active={side === 'to'}
+                  onClick={() => setSide('to')}
+                  label={t('common.to')}
+                  value={formatCairo(draft.to, 'datetime')}
+                />
+              </div>
+
+              {/* Month nav */}
+              <MonthYearSelector
+                month={viewMonth}
+                year={viewYear}
+                onChange={(m, y) => {
+                  setViewMonth(m);
+                  setViewYear(y);
+                }}
+                maxYear={maxPartsRef.year}
+              />
+
+              {/* Calendar */}
+              <div className="space-y-1">
+                <div className="grid grid-cols-7">
+                  {weekdayNames.map((d) => (
+                    <div
+                      key={d}
+                      className="py-1 text-center text-[10px] font-semibold text-muted-foreground"
                     >
                       {d}
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Time picker for the active side */}
-            <div className="mt-4 border-t pt-3">
-              <div className="mb-2 flex items-center justify-between">
-                <div className="flex items-center gap-1.5 text-xs font-semibold">
-                  <Clock className="h-3.5 w-3.5 text-primary" />
-                  {side === 'from' ? t('common.from') : t('common.to')}
+                    </div>
+                  ))}
                 </div>
-                <div className="flex gap-1">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 px-1.5 text-[10px]"
-                    onClick={() => setSideTime(0, 0)}
-                  >
-                    00:00
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 px-1.5 text-[10px]"
-                    onClick={() => setSideTime(23, 59)}
-                  >
-                    23:59
-                  </Button>
+
+                <div className="grid grid-cols-7 gap-y-0.5">
+                  {cells.map((d, i) => {
+                    if (!d) return <div key={i} />;
+                    const dn = viewYear * 10000 + (viewMonth + 1) * 100 + d;
+                    const disabled = dn > maxNum;
+                    const isToday = dn === todayNum;
+                    const isFrom = dn === fromNum;
+                    const isTo = dn === toNum && fromNum !== toNum;
+                    const inRange = dn > lo && dn < hi;
+                    const isSelected =
+                      (side === 'from' && isFrom) || (side === 'to' && (isTo || (fromNum === toNum && isFrom)));
+
+                    return (
+                      <div
+                        key={i}
+                        className={cn(
+                          'relative flex h-8 items-center justify-center',
+                          inRange && 'bg-primary/10',
+                          isFrom && 'rounded-s-full bg-primary/10',
+                          isTo && 'rounded-e-full bg-primary/10',
+                        )}
+                      >
+                        <button
+                          type="button"
+                          disabled={disabled}
+                          onClick={() => !disabled && setSideDate(viewYear, viewMonth, d)}
+                          className={cn(
+                            'flex h-8 w-8 items-center justify-center rounded-full text-xs font-medium transition-colors',
+                            disabled && 'cursor-not-allowed text-muted-foreground/30',
+                            !disabled && !isSelected && 'hover:bg-muted',
+                            isToday && !isSelected && 'border border-primary text-primary',
+                            isSelected &&
+                              'bg-primary font-semibold text-primary-foreground shadow-sm',
+                          )}
+                        >
+                          {d}
+                        </button>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 
-              <div className="flex items-start gap-4 rounded-lg border bg-muted/20 p-2.5">
-                {/* Hours selector */}
-                <div className="flex flex-1 flex-col gap-1.5">
-                  <label className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-                    {t('etit.range.hours')}
-                  </label>
-                  <div className="grid grid-cols-4 gap-1">
-                    {[12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((h12) => {
-                      const isPM = sideParts.hour >= 12;
-                      const h24 = (h12 % 12) + (isPM ? 12 : 0);
-                      const active = sideParts.hour === h24;
-                      return (
-                        <button
-                          key={h12}
-                          type="button"
-                          onClick={() => setSideTime(h24, sideParts.minute)}
-                          className={cn(
-                            'h-7 rounded-md text-xs transition-colors',
-                            active
-                              ? 'bg-primary text-primary-foreground font-bold'
-                              : 'hover:bg-muted bg-background border'
-                          )}
-                        >
-                          {h12}
-                        </button>
-                      );
-                    })}
+              {/* Time picker for the active side */}
+              <div className="rounded-xl border bg-muted/20 p-3">
+                <div className="mb-3 flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-xs font-bold">
+                    <Clock className="h-3.5 w-3.5 text-primary" />
+                    {side === 'from' ? t('common.from') : t('common.to')}
+                  </div>
+                  <div className="flex gap-1">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      className="h-6 px-2 text-[10px] font-bold"
+                      onClick={() => setSideTime(0, 0)}
+                    >
+                      00:00
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      className="h-6 px-2 text-[10px] font-bold"
+                      onClick={() => setSideTime(23, 59)}
+                    >
+                      23:59
+                    </Button>
                   </div>
                 </div>
 
-                {/* Vertical Divider */}
-                <div className="h-20 w-px bg-border" />
-
-                {/* Minutes & Period */}
-                <div className="flex w-24 flex-col gap-3">
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-                      {t('etit.range.period')}
-                    </label>
-                    <div className="flex gap-1">
-                      {['AM', 'PM'].map((p) => {
-                        const isPM = p === 'PM';
-                        const currentIsPM = sideParts.hour >= 12;
-                        const active = isPM === currentIsPM;
+                <div className="flex items-start gap-4">
+                  {/* Hours selector */}
+                  <div className="flex flex-1 flex-col gap-2">
+                    <div className="grid grid-cols-4 gap-1">
+                      {[12, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((h12) => {
+                        const isPM = sideParts.hour >= 12;
+                        const h24 = (h12 % 12) + (isPM ? 12 : 0);
+                        const active = sideParts.hour === h24;
                         return (
                           <button
-                            key={p}
+                            key={h12}
                             type="button"
-                            onClick={() => {
-                              let nextH = sideParts.hour % 12;
-                              if (isPM) nextH += 12;
-                              setSideTime(nextH, sideParts.minute);
-                            }}
+                            onClick={() => setSideTime(h24, sideParts.minute)}
                             className={cn(
-                              'flex-1 h-7 rounded-md text-[10px] font-bold transition-colors',
+                              'h-7 rounded-md text-xs transition-colors',
                               active
-                                ? 'bg-primary text-primary-foreground'
-                                : 'hover:bg-muted bg-background border'
+                                ? 'bg-primary text-primary-foreground font-bold'
+                                : 'hover:bg-muted bg-background border border-border/50'
                             )}
                           >
-                            {p}
+                            {h12}
                           </button>
                         );
                       })}
                     </div>
                   </div>
 
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-                      {t('etit.range.minutes')}
-                    </label>
-                    <div className="flex gap-1">
+                  {/* Vertical Divider */}
+                  <div className="self-stretch w-px bg-border/60" />
+
+                  {/* Minutes & Period */}
+                  <div className="flex w-24 flex-col gap-4">
+                    <div className="flex flex-col gap-1.5">
+                      <div className="flex gap-1">
+                        {['AM', 'PM'].map((p) => {
+                          const isPM = p === 'PM';
+                          const currentIsPM = sideParts.hour >= 12;
+                          const active = isPM === currentIsPM;
+                          return (
+                            <button
+                              key={p}
+                              type="button"
+                              onClick={() => {
+                                let nextH = sideParts.hour % 12;
+                                if (isPM) nextH += 12;
+                                setSideTime(nextH, sideParts.minute);
+                              }}
+                              className={cn(
+                                'flex-1 h-8 rounded-md text-[10px] font-bold transition-colors',
+                                active
+                                  ? 'bg-primary text-primary-foreground'
+                                  : 'hover:bg-muted bg-background border border-border/50'
+                              )}
+                            >
+                              {p}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-1.5">
                       <Input
                         type="number"
                         min={0}
@@ -455,26 +480,26 @@ export function EtitDateTimeRange({
                           const m = Math.max(0, Math.min(59, Number(e.target.value || 0)));
                           setSideTime(sideParts.hour, m);
                         }}
-                        className="h-7 w-full text-center text-xs font-semibold tabular-nums"
+                        className="h-8 w-full border-border/50 text-center text-xs font-bold tabular-nums focus-visible:ring-1"
                       />
                     </div>
                   </div>
                 </div>
               </div>
-
             </div>
 
             {/* Footer */}
-            <div className="mt-3 flex items-center justify-between border-t pt-2">
-              <p className="truncate text-[10px] text-muted-foreground">
-                {triggerLabel}
+            <div className="flex items-center justify-between border-t border-border/60 pt-3">
+              <p className="truncate text-[9px] font-medium text-muted-foreground uppercase tracking-tighter opacity-70">
+                {formatCairo(draft.from, 'time')} → {formatCairo(draft.to, 'time')}
               </p>
               <div className="flex gap-2">
-                <Button variant="ghost" size="sm" onClick={() => setOpen(false)}>
+                <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => setOpen(false)}>
                   {t('common.cancel')}
                 </Button>
                 <Button
                   size="sm"
+                  className="h-8 px-4 text-xs font-bold"
                   onClick={apply}
                   disabled={draft.from.getTime() > draft.to.getTime()}
                 >
@@ -482,20 +507,9 @@ export function EtitDateTimeRange({
                 </Button>
               </div>
             </div>
-          </PopoverContent>
-        </Popover>
-      </div>
-
-      {/* Active range readout */}
-      <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-        <span className="truncate font-medium text-foreground">
-          {formatCairo(value.from, 'datetime')}
-        </span>
-        <span className="text-muted-foreground">→</span>
-        <span className="truncate font-medium text-foreground">
-          {formatCairo(value.to, 'datetime')}
-        </span>
-      </div>
+          </div>
+        </PopoverContent>
+      </Popover>
     </div>
   );
 }
