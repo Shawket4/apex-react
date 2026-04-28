@@ -197,6 +197,7 @@ export function GoogleMapView({
   centerFallback = [30.0444, 31.2357],
   onMapClick,
   onMarkerDragEnd,
+  suppressRoute,
   className,
 }: MapViewProps) {
   const containerRef = React.useRef<HTMLDivElement>(null);
@@ -423,7 +424,7 @@ export function GoogleMapView({
     // 3. Sync route polyline.
     polylinesRef.current.forEach((p) => p.setMap(null));
     polylinesRef.current = [];
-    if (route.length > 1) {
+    if (route.length > 1 && !suppressRoute) {
       const path = route.map(([lat, lng]) => ({ lat, lng }));
       polylinesRef.current.push(
         new google.maps.Polyline({
@@ -450,18 +451,43 @@ export function GoogleMapView({
   React.useEffect(() => {
     const map = mapRef.current;
     if (!map || !mapReady) return;
-    if (route.length < 2) {
-      lastRouteSignatureRef.current = '';
-      return;
-    }
-    const signature = `${route.length}|${route[0].join(',')}|${route[route.length - 1].join(',')}`;
+
+    const boundsMarkers = markers.filter((m) => m.affectsBounds !== false);
+    const mIds = boundsMarkers
+      .map((m) => m.id)
+      .sort()
+      .join(',');
+    const rLen = route.length;
+    const rStart = rLen > 0 ? route[0].join(',') : '';
+    const rEnd = rLen > 0 ? route[rLen - 1].join(',') : '';
+    const signature = `${mIds}|${rLen}|${rStart}|${rEnd}|${suppressRoute ? 1 : 0}`;
+
     if (signature === lastRouteSignatureRef.current) return;
     lastRouteSignatureRef.current = signature;
 
     const bounds = new google.maps.LatLngBounds();
-    route.forEach(([lat, lng]) => bounds.extend({ lat, lng }));
-    map.fitBounds(bounds, { top: 80, bottom: 80, left: 60, right: 60 });
-  }, [mapReady, route]);
+    let hasPoints = false;
+
+    if (rLen > 0 && !suppressRoute) {
+      route.forEach(([lat, lng]) => bounds.extend({ lat, lng }));
+      hasPoints = true;
+    } else {
+      boundsMarkers.forEach((m) => {
+        bounds.extend({ lat: m.lat, lng: m.lng });
+        hasPoints = true;
+      });
+    }
+
+    if (!hasPoints) return;
+
+    if (rLen === 0 && boundsMarkers.length === 1) {
+      const m = boundsMarkers[0];
+      map.setZoom(18);
+      map.panTo({ lat: m.lat, lng: m.lng });
+    } else {
+      map.fitBounds(bounds, { top: 80, bottom: 80, left: 60, right: 60 });
+    }
+  }, [mapReady, markers, route, suppressRoute]);
 
   /* -------- Sentinel-driven flyTo (manual focus button) ---------------- */
   /*                                                                       */
