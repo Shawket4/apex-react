@@ -64,6 +64,8 @@ export interface MapViewProps {
   centerFallback?: [number, number];
   /** Container height; passes through to the wrapping div. */
   height?: string | number;
+  /** Vertical offset for map controls (e.g. to avoid bottom panels). */
+  bottomOffset?: number;
   className?: string;
   /** Fired when user clicks an empty area of the map. */
   onMapClick?: MapClickHandler;
@@ -75,6 +77,8 @@ export interface MapViewProps {
   onMarkerDragEnd?: MarkerDragHandler;
   /** Fired when the active provider changes (Google → Leaflet fallback). */
   onProviderChange?: (provider: MapProvider) => void;
+  /** Fired when a snap-to-time button is clicked in a popup. */
+  onSnapTimestamp?: (ts: number) => void;
   /** Override the SDK-load timeout for Google. Defaults to 3000ms. */
   fallbackTimeoutMs?: number;
   /**

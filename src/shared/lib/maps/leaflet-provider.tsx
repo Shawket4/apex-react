@@ -162,6 +162,8 @@ export function LeafletMapView({
   onMarkerClick,
   onMarkerDoubleClick,
   onMarkerDragEnd,
+  onSnapTimestamp,
+  bottomOffset = 0,
   liveUpdates = false,
 }: MapViewProps) {
   const containerRef = React.useRef<HTMLDivElement>(null);
@@ -178,10 +180,12 @@ export function LeafletMapView({
   const onMarkerClickRef = React.useRef(onMarkerClick);
   const onMarkerDoubleClickRef = React.useRef(onMarkerDoubleClick);
   const onMarkerDragEndRef = React.useRef(onMarkerDragEnd);
+  const onSnapTimestampRef = React.useRef(onSnapTimestamp);
   React.useEffect(() => { onMapClickRef.current = onMapClick; }, [onMapClick]);
   React.useEffect(() => { onMarkerClickRef.current = onMarkerClick; }, [onMarkerClick]);
   React.useEffect(() => { onMarkerDoubleClickRef.current = onMarkerDoubleClick; }, [onMarkerDoubleClick]);
   React.useEffect(() => { onMarkerDragEndRef.current = onMarkerDragEnd; }, [onMarkerDragEnd]);
+  React.useEffect(() => { onSnapTimestampRef.current = onSnapTimestamp; }, [onSnapTimestamp]);
 
   /* ---- Init map once -------------------------------------------------- */
 
@@ -235,6 +239,22 @@ export function LeafletMapView({
       themeObserverRef.current = observer;
 
       mapRef.current = map;
+
+      // Snap-to-time event delegation
+      const container = containerRef.current;
+      if (container) {
+        const handleSnapClick = (e: MouseEvent) => {
+          const btn = (e.target as HTMLElement).closest('.snap-timestamp-btn');
+          if (btn instanceof HTMLElement) {
+            const ts = Number(btn.dataset.timestamp);
+            if (Number.isFinite(ts)) {
+              onSnapTimestampRef.current?.(ts);
+            }
+          }
+        };
+        container.addEventListener('click', handleSnapClick);
+      }
+
       if (!cancelled) setMapReady(true);
     };
 
@@ -415,7 +435,10 @@ export function LeafletMapView({
       <div ref={containerRef} className="h-full w-full rounded-lg" />
 
       {mapReady && (
-        <div className="absolute end-3 bottom-32 z-[1000] flex flex-col gap-1.5">
+        <div 
+          className="absolute end-3 z-[1000] flex flex-col gap-1.5"
+          style={{ bottom: 128 + bottomOffset }}
+        >
           <Button
             size="icon"
             variant="secondary"

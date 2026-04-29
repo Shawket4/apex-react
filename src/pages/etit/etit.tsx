@@ -297,6 +297,10 @@ export function EtitPage() {
   const [playbackPrev, setPlaybackPrev] =
     React.useState<{ lat: number; lng: number } | null>(null);
 
+  const [currentMs, setCurrentMs] = React.useState<number>(0);
+  const [playing, setPlaying] = React.useState(false);
+  const [speed, setSpeed] = React.useState<number>(16);
+
   const handlePlaybackChange = React.useCallback(
     (state: PlaybackState | null, prev: { lat: number; lng: number } | null) => {
       setPlaybackState(state);
@@ -304,6 +308,19 @@ export function EtitPage() {
     },
     [],
   );
+
+  const handleSnapTimestamp = React.useCallback((ts: number) => {
+    setCurrentMs(ts);
+  }, []);
+
+  // When history finishes loading or changes, reset playback
+  React.useEffect(() => {
+    if (historyQuery.data) {
+      const startMs = historyQuery.data.points[0]?.timestamp?.getTime() ?? 0;
+      setCurrentMs(startMs);
+      setPlaying(false);
+    }
+  }, [historyQuery.data]);
 
   /* ---- Errors & Status ---- */
   const error = fleetQuery.error || historyQuery.error || summaryQuery.error;
@@ -410,6 +427,12 @@ export function EtitPage() {
       points={historyQuery.data?.points ?? []}
       stops={historyQuery.data?.stops ?? []}
       sensors={historyQuery.data?.sensors ?? []}
+      currentMs={currentMs}
+      onCurrentMsChange={setCurrentMs}
+      playing={playing}
+      onPlayingChange={setPlaying}
+      speed={speed}
+      onSpeedChange={setSpeed}
       onStateChange={handlePlaybackChange}
     />
   );
@@ -552,6 +575,8 @@ export function EtitPage() {
             showIgnitions={showIgnitions}
             playback={playbackState}
             playbackPrev={playbackPrev}
+            onSnapTimestamp={handleSnapTimestamp}
+            bottomOffset={!isDesktop && loadedRange ? 320 : 0}
             height="100%"
           />
 
@@ -648,12 +673,18 @@ export function EtitPage() {
 
           {/* Loading overlay */}
           {(historyQuery.isLoading || summaryQuery.isLoading) && (
-            <div className="absolute inset-0 z-[1100] flex items-center justify-center bg-background/40 backdrop-blur-sm">
-              <div className="flex flex-col items-center gap-3 rounded-2xl bg-card/95 p-6 sm:p-8 shadow-2xl border border-border/60 ring-1 ring-inset ring-foreground/5">
-                <Radar className="h-10 w-10 text-primary animate-ping" />
-                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground animate-pulse">
-                  {t('etit.loadingHistory')}
-                </span>
+            <div className="absolute inset-0 z-[2000] flex flex-col items-center justify-center bg-background/60 backdrop-blur-md transition-all animate-in fade-in duration-500">
+              <div className="relative flex flex-col items-center gap-5 p-10 rounded-3xl bg-card/40 shadow-2xl ring-1 ring-white/10 border border-white/5">
+                <div className="relative">
+                  <div className="h-20 w-20 animate-spin rounded-full border-4 border-primary/10 border-t-primary shadow-[0_0_30px_rgba(59,130,246,0.2)]" />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <Radar className="h-8 w-8 text-primary animate-pulse" />
+                  </div>
+                </div>
+                <div className="flex flex-col items-center gap-2">
+                  <span className="text-xs font-black tracking-[0.3em] uppercase text-foreground/90">{t('etit.loadingHistory')}</span>
+                  <span className="text-[9px] font-bold text-muted-foreground/40 uppercase tracking-widest animate-pulse">Synchronizing Track</span>
+                </div>
               </div>
             </div>
           )}

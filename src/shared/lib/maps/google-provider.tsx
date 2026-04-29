@@ -199,6 +199,8 @@ export function GoogleMapView({
   onMarkerClick,
   onMarkerDoubleClick,
   onMarkerDragEnd,
+  onSnapTimestamp,
+  bottomOffset = 0,
   suppressRoute,
   className,
 }: MapViewProps) {
@@ -221,10 +223,12 @@ export function GoogleMapView({
   const onMarkerClickRef = React.useRef(onMarkerClick);
   const onMarkerDoubleClickRef = React.useRef(onMarkerDoubleClick);
   const onMarkerDragEndRef = React.useRef(onMarkerDragEnd);
+  const onSnapTimestampRef = React.useRef(onSnapTimestamp);
   React.useEffect(() => { onMapClickRef.current = onMapClick; }, [onMapClick]);
   React.useEffect(() => { onMarkerClickRef.current = onMarkerClick; }, [onMarkerClick]);
   React.useEffect(() => { onMarkerDoubleClickRef.current = onMarkerDoubleClick; }, [onMarkerDoubleClick]);
   React.useEffect(() => { onMarkerDragEndRef.current = onMarkerDragEnd; }, [onMarkerDragEnd]);
+  React.useEffect(() => { onSnapTimestampRef.current = onSnapTimestamp; }, [onSnapTimestamp]);
 
   /* -------- Init via MapPool ------------------------------------------ */
 
@@ -281,6 +285,22 @@ export function GoogleMapView({
         themeObserverRef.current = observer;
 
         setMapReady(true);
+
+        // Snap-to-time event delegation
+        const container = containerRef.current;
+        if (container) {
+          const handleSnapClick = (e: MouseEvent) => {
+            const btn = (e.target as HTMLElement).closest('.snap-timestamp-btn');
+            if (btn instanceof HTMLElement) {
+              const ts = Number(btn.dataset.timestamp);
+              if (Number.isFinite(ts)) {
+                onSnapTimestampRef.current?.(ts);
+              }
+            }
+          };
+          container.addEventListener('click', handleSnapClick);
+          // Store for cleanup if needed, though the container itself goes away.
+        }
       } catch (err) {
         console.error('[GoogleMapView] Failed to init map', err);
       }
@@ -547,7 +567,10 @@ export function GoogleMapView({
     <div className={cn('relative h-full w-full', className)}>
       <div ref={containerRef} className="h-full w-full" />
 
-      <div className="absolute bottom-32 end-3 z-10 flex flex-col gap-2">
+      <div 
+        className="absolute end-3 z-10 flex flex-col gap-2"
+        style={{ bottom: 128 + bottomOffset }}
+      >
         <Button
           variant="secondary"
           size="icon"

@@ -40,6 +40,12 @@ export interface EtitPlaybackPlayerProps {
   points: EtitHistoryPoint[];
   stops: EtitStop[];
   sensors: EtitSensorEvent[];
+  currentMs: number;
+  onCurrentMsChange: (ms: number) => void;
+  playing: boolean;
+  onPlayingChange: (playing: boolean) => void;
+  speed: number;
+  onSpeedChange: (speed: number) => void;
   onStateChange: (
     state: PlaybackState | null,
     prev: { lat: number; lng: number } | null,
@@ -55,6 +61,12 @@ export function EtitPlaybackPlayer({
   points,
   stops,
   sensors,
+  currentMs,
+  onCurrentMsChange,
+  playing,
+  onPlayingChange,
+  speed,
+  onSpeedChange,
   onStateChange,
   className,
 }: EtitPlaybackPlayerProps) {
@@ -62,15 +74,6 @@ export function EtitPlaybackPlayer({
 
   const track = React.useMemo<PlaybackTrack>(() => buildPlaybackTrack(points), [points]);
   const playable = track.points.length >= 2;
-
-  const [currentMs, setCurrentMs] = React.useState<number>(track.startMs);
-  const [playing, setPlaying] = React.useState(false);
-  const [speed, setSpeed] = React.useState<number>(16);
-
-  React.useEffect(() => {
-    setCurrentMs(track.startMs);
-    setPlaying(false);
-  }, [track]);
 
   /* -------- rAF loop — only runs when playing ------------------------- */
 
@@ -93,17 +96,15 @@ export function EtitPlaybackPlayer({
       const next = currentMsRef.current + dt * speedRef.current;
       if (next >= track.endMs) {
         currentMsRef.current = track.endMs;
-        setCurrentMs(track.endMs);
-        setPlaying(false);
+        onCurrentMsChange(track.endMs);
+        onPlayingChange(false);
         return;
       }
       currentMsRef.current = next;
 
-      // Throttle internal renders to RENDER_INTERVAL_MS. The marker still
-      // animates smoothly because the parent gets handed off below at
-      // the same cadence and the map provider tweens between positions.
+      // Throttle internal renders to RENDER_INTERVAL_MS.
       if (now - lastRender >= RENDER_INTERVAL_MS) {
-        setCurrentMs(next);
+        onCurrentMsChange(next);
         lastRender = now;
       }
       rafId = requestAnimationFrame(tick);
@@ -111,7 +112,7 @@ export function EtitPlaybackPlayer({
 
     rafId = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(rafId);
-  }, [playable, playing, track.endMs]);
+  }, [playable, playing, track.endMs, onCurrentMsChange, onPlayingChange]);
 
   /* -------- Derived state -------------------------------------------- */
 
@@ -127,8 +128,6 @@ export function EtitPlaybackPlayer({
 
   const prevPositionRef = React.useRef<{ lat: number; lng: number } | null>(null);
   const lastHandoffRef = React.useRef(0);
-  const playingRef = React.useRef(playing);
-  React.useEffect(() => { playingRef.current = playing; }, [playing]);
 
   React.useEffect(() => {
     const now = performance.now();
@@ -139,12 +138,12 @@ export function EtitPlaybackPlayer({
       lastHandoffRef.current = now;
       return;
     }
-    if (!playingRef.current || elapsed >= HANDOFF_INTERVAL_MS) {
+    if (!playing || elapsed >= HANDOFF_INTERVAL_MS) {
       onStateChangeRef.current(state, prevPositionRef.current);
       prevPositionRef.current = { lat: state.lat, lng: state.lng };
       lastHandoffRef.current = now;
     }
-  }, [state]);
+  }, [state, playing]);
 
   /* -------- Active context ------------------------------------------- */
 
@@ -162,22 +161,39 @@ export function EtitPlaybackPlayer({
   const handleScrub = (e: React.ChangeEvent<HTMLInputElement>) => {
     const ts = Number(e.target.value);
     if (!Number.isFinite(ts)) return;
-    setCurrentMs(ts);
-    currentMsRef.current = ts;
+
+    // Find nearest point in track.points for snapping
+    if (track.points.length > 0) {
+      let nearestTs = track.points[0].timestamp.getTime();
+      let minDiff = Math.abs(ts - nearestTs);
+
+      for (let i = 1; i < track.points.length; i++) {
+        const pointTs = track.points[i].timestamp.getTime();
+        const diff = Math.abs(ts - pointTs);
+        if (diff < minDiff) {
+          minDiff = diff;
+          nearestTs = pointTs;
+        } else if (diff > minDiff) {
+          // Since points are sorted by time, if diff starts increasing, we found it.
+          break;
+        }
+      }
+      onCurrentMsChange(nearestTs);
+    } else {
+      onCurrentMsChange(ts);
+    }
   };
 
   const handleTogglePlay = () => {
     if (!playable) return;
     if (currentMs >= track.endMs && !playing) {
-      setCurrentMs(track.startMs);
-      currentMsRef.current = track.startMs;
+      onCurrentMsChange(track.startMs);
     }
-    setPlaying((p) => !p);
+    onPlayingChange(!playing);
   };
 
   const handleRestart = () => {
-    setCurrentMs(track.startMs);
-    currentMsRef.current = track.startMs;
+    onCurrentMsChange(track.startMs);
   };
 
   /* -------- Render --------------------------------------------------- */
@@ -224,7 +240,7 @@ export function EtitPlaybackPlayer({
           type="range"
           min={track.startMs}
           max={track.endMs}
-          step={1000}
+          step={1}
           value={currentMs}
           onChange={handleScrub}
           data-no-drag
@@ -272,7 +288,7 @@ export function EtitPlaybackPlayer({
               <button
                 key={s}
                 type="button"
-                onClick={() => setSpeed(s)}
+                onClick={() => onSpeedChange(s)}
                 className={cn(
                   'rounded px-1.5 py-0.5 text-[10px] font-black tabular-nums transition-colors',
                   speed === s

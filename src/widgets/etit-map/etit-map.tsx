@@ -70,6 +70,8 @@ export interface EtitMapProps {
   showIgnitions?: boolean;
   playback?: PlaybackState | null;
   playbackPrev?: { lat: number; lng: number } | null;
+  onSnapTimestamp?: (ts: number) => void;
+  bottomOffset?: number;
   className?: string;
   height?: number | string;
 }
@@ -103,6 +105,8 @@ function EtitMapBase({
   showIgnitions = false,
   playback = null,
   playbackPrev = null,
+  onSnapTimestamp,
+  bottomOffset = 0,
   className,
   height = 600,
 }: EtitMapProps) {
@@ -128,6 +132,7 @@ function EtitMapBase({
       stopHeading: t('etit.map.popup.stopHeading'),
       unknownLocation: t('etit.map.popup.unknownLocation'),
       playbackHeading: t('etit.map.popup.playback'),
+      snapToTime: t('etit.map.popup.snapToTime'),
       kmh: t('etit.units.kmh'),
     }),
     [t],
@@ -250,7 +255,7 @@ function EtitMapBase({
           kind,
           affectsBounds: !focusSentinel,
           title: s.typeName,
-          popupHtml: buildSensorPopup(s),
+          popupHtml: buildSensorPopup(s, labels),
         });
       }
     }
@@ -313,6 +318,8 @@ function EtitMapBase({
         // The providers already do a flyTo(18) on dblclick internally now.
         // But we might want to trigger a 'focus' state in the parent.
       }}
+      onSnapTimestamp={onSnapTimestamp}
+      bottomOffset={bottomOffset}
     />
   );
 }
@@ -331,6 +338,7 @@ interface PopupLabels {
   stopHeading: string;
   unknownLocation: string;
   playbackHeading: string;
+  snapToTime: string;
   kmh: string;
 }
 
@@ -388,15 +396,31 @@ function buildStopPopup(stop: EtitStop, labels: PopupLabels): string {
       <div style="display:flex;justify-content:space-between;font-size:11px;color:#71717a">
         <span>${escapeHtml(labels.to)}</span><span>${escapeHtml(formatCairo(stop.to, 'time'))}</span>
       </div>
+      <button 
+        class="snap-timestamp-btn"
+        data-timestamp="${stop.from.getTime()}"
+        style="margin-top:12px;width:100%;padding:6px;border-radius:6px;background:#2563eb;color:white;border:none;font-size:10px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19 7-7-7-7"/><path d="M5 19l7-7-7-7"/></svg>
+        ${escapeHtml(labels.snapToTime)}
+      </button>
     </div>
   `;
 }
 
-function buildSensorPopup(s: EtitSensorEvent): string {
+function buildSensorPopup(s: EtitSensorEvent, labels: PopupLabels): string {
   return `
     <div style="padding:14px 14px 12px;min-width:160px;font-family:inherit">
       <div style="font-size:13px;font-weight:600;margin-bottom:4px">${escapeHtml(s.typeName)}</div>
       <div style="font-size:11px;color:#71717a">${escapeHtml(formatCairo(s.timestamp, 'datetime'))}</div>
+      <button 
+        class="snap-timestamp-btn"
+        data-timestamp="${s.timestamp.getTime()}"
+        style="margin-top:10px;width:100%;padding:5px;border-radius:6px;background:#2563eb;color:white;border:none;font-size:10px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 19 7-7-7-7"/><path d="M5 19l7-7-7-7"/></svg>
+        ${escapeHtml(labels.snapToTime)}
+      </button>
     </div>
   `;
 }

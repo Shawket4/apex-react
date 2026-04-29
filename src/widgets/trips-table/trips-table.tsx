@@ -323,118 +323,127 @@ function TripMobileCard({
   const distance = trip.mileage || trip.distance || 0;
 
   return (
-    <Card
+    <div
       className={cn(
-        'overflow-hidden transition-all active:scale-[0.99]',
-        isExpanded ? 'ring-2 ring-primary/20 shadow-lg' : 'hover:shadow-md',
-        isContainer && 'bg-primary/[0.02]',
+        'group relative overflow-hidden transition-all duration-300 active:scale-[0.98]',
+        'bg-card/95 backdrop-blur-xl rounded-2xl shadow-xl',
+        'border border-border/60',
+        'ring-1 ring-inset ring-foreground/5',
+        isExpanded ? 'ring-primary/20 shadow-primary/10' : 'hover:shadow-2xl hover:border-border',
+        isContainer && 'bg-primary/[0.03]',
       )}
     >
-      <div className="p-4" onClick={onToggleDetail}>
-        <div className="mb-4 flex items-start justify-between gap-3">
-          <div className="flex items-center gap-3">
+      {/* Decorative gradient corner */}
+      <div className="absolute -end-8 -top-8 h-24 w-24 rounded-full bg-primary/5 blur-2xl transition-opacity group-hover:opacity-100" />
+      
+      <div className="relative p-5" onClick={onToggleDetail}>
+        <div className="mb-5 flex items-start justify-between gap-3">
+          <div className="flex items-center gap-3.5">
             <div
               className={cn(
-                'flex h-10 w-10 shrink-0 items-center justify-center rounded-xl font-bold',
+                'flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl font-black text-base transition-transform duration-500 group-hover:scale-110',
                 isContainer
-                  ? 'bg-primary/10 text-primary'
-                  : 'bg-primary/15 text-primary shadow-inner',
+                  ? 'bg-primary/10 text-primary shadow-[inset_0_0_12px_rgba(59,130,246,0.1)]'
+                  : 'bg-primary text-primary-foreground shadow-lg shadow-primary/20',
               )}
             >
-              {isContainer ? (
-                index !== undefined ? (
-                  index + 1
-                ) : (
-                  <FileText className="h-5 w-5" />
-                )
+              {isContainer && index !== undefined ? (
+                index + 1
               ) : (
-                <FileText className="h-5 w-5" />
+                <FileText className="h-5.5 w-5.5" />
               )}
             </div>
             <div>
-              <div className="flex items-center gap-1.5">
-                <span className="text-sm font-black tabular-nums tracking-tight">
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-black tabular-nums tracking-tight text-foreground">
                   #{trip.receipt_no || '—'}
                 </span>
                 <ReceiptStatusBadge trip={trip} compact />
               </div>
-              <div className="mt-0.5 flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+              <div className="mt-1 flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">
                 <span className="flex items-center gap-1">
-                  <CalendarIcon className="h-2.5 w-2.5" />
+                  <CalendarIcon className="h-3 w-3" />
                   {format(trip.date, 'MMM d, yyyy')}
                 </span>
-                <span>·</span>
-                <span className="truncate max-w-[120px]">{trip.company}</span>
+                <span className="opacity-40">·</span>
+                <span className="truncate max-w-[120px] text-foreground/60">{trip.company}</span>
               </div>
             </div>
           </div>
-          <ChevronCell expanded={isExpanded} />
+          <div className={cn(
+            "p-2 rounded-full transition-colors",
+            isExpanded ? "bg-primary/10 text-primary" : "bg-muted/50 text-muted-foreground"
+          )}>
+            <ChevronCell expanded={isExpanded} />
+          </div>
         </div>
 
-        <div className="relative mb-4 space-y-4 ps-6">
-          {/* Vertical route line */}
-          <div className="absolute start-[3.5px] top-1.5 bottom-1.5 w-[1.5px] border-s border-dashed border-muted-foreground/30" />
+        <div className="relative mb-5 space-y-4 ps-7">
+          {/* Vertical route line - premium gradient style */}
+          <div className="absolute start-[4.5px] top-2 bottom-2 w-[1.5px] bg-gradient-to-b from-success via-muted-foreground/20 to-destructive rounded-full" />
 
           <div className="relative">
             <span
-              className="absolute -start-[26px] top-1 h-2.5 w-2.5 rounded-full bg-success ring-4 ring-background"
+              className="absolute -start-[28px] top-1.5 h-3 w-3 rounded-full bg-success shadow-[0_0_10px_rgba(34,197,94,0.4)] ring-4 ring-card"
               aria-hidden
             />
-            <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground/70">
+            <div className="text-[10px] font-black uppercase tracking-[0.15em] text-muted-foreground/60 mb-0.5">
               {t('trips.columns.terminal')}
             </div>
-            <div className="text-sm font-semibold leading-snug">{trip.terminal}</div>
+            <div className="text-sm font-bold leading-tight text-foreground/90">{trip.terminal}</div>
           </div>
 
           <div className="relative">
             <span
-              className="absolute -start-[26px] top-1 h-2.5 w-2.5 rounded-full bg-destructive ring-4 ring-background"
+              className="absolute -start-[28px] top-1.5 h-3 w-3 rounded-full bg-destructive shadow-[0_0_10px_rgba(239,68,68,0.4)] ring-4 ring-card"
               aria-hidden
             />
-            <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground/70">
+            <div className="text-[10px] font-black uppercase tracking-[0.15em] text-muted-foreground/60 mb-0.5">
               {t('trips.columns.route')}
             </div>
-            <div className="text-sm font-semibold leading-snug">
+            <div className="text-sm font-bold leading-tight text-foreground/90">
               {trip.drop_off_point}
             </div>
           </div>
         </div>
 
-        <div className="mb-4 grid grid-cols-2 gap-3 rounded-xl bg-muted/40 p-3">
-          <div className="space-y-1">
-            <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80">
-              <User className="h-2.5 w-2.5" />
+        <div className="mb-5 grid grid-cols-2 gap-3 rounded-2xl bg-muted/30 p-3.5 ring-1 ring-inset ring-foreground/[0.03]">
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-muted-foreground/60">
+              <User className="h-3 w-3 text-primary/60" />
               {t('trips.fields.driver')}
             </div>
-            <div className="truncate text-xs font-bold text-foreground">
+            <div className="truncate text-[11px] font-bold text-foreground/90">
               {trip.driver_name}
             </div>
           </div>
-          <div className="space-y-1">
-            <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80">
-              <Car className="h-2.5 w-2.5" />
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest text-muted-foreground/60">
+              <Car className="h-3 w-3 text-primary/60" />
               {t('trips.fields.vehicle')}
             </div>
-            <div className="text-xs font-black tabular-nums text-foreground">
+            <div className="text-[11px] font-black tabular-nums text-foreground/90">
               {trip.car_no_plate}
             </div>
           </div>
         </div>
 
-        <div className="flex items-center justify-between border-t border-primary/5 pt-4">
+        <div className="flex items-center justify-between border-t border-border/40 pt-4">
           <div className="flex items-center gap-4 text-[10px] font-black uppercase tracking-tighter">
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-muted/40">
               <Fuel className="h-3 w-3 text-muted-foreground" />
-              {formatNumber(trip.tank_capacity, 0)}L
+              <span className="text-foreground/80">{formatNumber(trip.tank_capacity, 0)}L</span>
             </div>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-muted/40">
               <MapPin className="h-3 w-3 text-muted-foreground" />
-              {formatNumber(distance, 1)}km
+              <span className="text-foreground/80">{formatNumber(distance, 1)}km</span>
             </div>
           </div>
-          <div className="flex items-center gap-1 text-success tabular-nums">
-            <DollarSign className="h-3.5 w-3.5" />
-            <span className="text-base font-black">
+          <div className="flex items-center gap-1.5 text-success tabular-nums">
+            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-success/10">
+              <DollarSign className="h-4 w-4" />
+            </div>
+            <span className="text-lg font-black tracking-tight">
               {formatCurrency(trip.fee)}
             </span>
           </div>
@@ -442,13 +451,13 @@ function TripMobileCard({
       </div>
 
       {isExpanded && (
-        <div className="border-t bg-muted/20">
+        <div className="relative border-t border-border/40 bg-muted/10 animate-in fade-in slide-in-from-top-2 duration-300">
           <TripsRowExpanded
             trip={trip}
             onOpenReceipt={onOpenReceipt}
             onOpenMap={onOpenMap}
           />
-          <div className="flex justify-end gap-2 p-4 pt-0">
+          <div className="flex justify-end gap-2 p-5 pt-0">
             <RowActions
               editPath={`/trips/${trip.ID}`}
               onOpenReceipt={onOpenReceipt}
@@ -458,7 +467,7 @@ function TripMobileCard({
           </div>
         </div>
       )}
-    </Card>
+    </div>
   );
 }
 
@@ -499,33 +508,40 @@ function TripGroupCard({
   const isWatanya = first.company === 'Watanya';
 
   return (
-    <div className="space-y-3">
-      <Card
+    <div className="space-y-4">
+      <div
         className={cn(
-          'overflow-hidden ring-1 ring-primary/10 transition-all active:scale-[0.99]',
-          isGroupExpanded ? 'bg-primary/5 shadow-md' : 'bg-primary/[0.03]',
+          'group relative overflow-hidden transition-all duration-300 active:scale-[0.99]',
+          'bg-card/95 backdrop-blur-xl rounded-2xl shadow-xl',
+          'border border-primary/20',
+          'ring-1 ring-inset ring-primary/10',
+          isGroupExpanded ? 'bg-primary/[0.08] shadow-primary/10' : 'hover:bg-primary/[0.04]',
         )}
       >
-        <div className="p-4" onClick={onToggleGroup}>
+        {/* Decorative pattern for group */}
+        <div className="absolute -start-4 -top-4 h-20 w-20 rounded-full bg-primary/10 blur-2xl opacity-50" />
+        
+        <div className="relative p-5" onClick={onToggleGroup}>
           <div className="flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-lg shadow-primary/20">
-                <Layers className="h-5 w-5" />
+            <div className="flex items-center gap-4">
+              <div className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-primary/20 transition-transform duration-500 group-hover:rotate-12">
+                <Layers className="h-6 w-6" />
                 {hasReceiptBatch && (
-                  <span className="absolute -end-1 -top-1 h-3 w-3 rounded-full border-2 border-background bg-warning animate-pulse" />
+                  <span className="absolute -end-1 -top-1 h-3.5 w-3.5 rounded-full border-2 border-card bg-warning shadow-[0_0_8px_rgba(var(--warning),0.6)]" />
                 )}
               </div>
               <div>
-                <div className="text-sm font-black tracking-tight">
+                <div className="text-sm font-black tracking-tight text-foreground">
                   {t('trips.row.multiContainer', { id: parentId })}
                 </div>
-                <div className="mt-0.5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                  {t('trips.row.containersCount', { count: containers.length })} ·{' '}
-                  {first.company}
+                <div className="mt-1 flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">
+                  <span className="text-primary/70">{t('trips.row.containersCount', { count: containers.length })}</span>
+                  <span className="opacity-40">·</span>
+                  <span className="text-foreground/60">{first.company}</span>
                 </div>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               <ParentRowActions
                 parentId={parentId}
                 isWatanya={isWatanya}
@@ -534,30 +550,37 @@ function TripGroupCard({
                 onDeleteParent={onDeleteParent}
                 onOpenReceiptBatch={onOpenReceiptBatch}
               />
-              <ChevronCell expanded={isGroupExpanded} />
+              <div className={cn(
+                "p-2 rounded-full transition-colors",
+                isGroupExpanded ? "bg-primary/20 text-primary" : "bg-muted/50 text-muted-foreground"
+              )}>
+                <ChevronCell expanded={isGroupExpanded} />
+              </div>
             </div>
           </div>
 
-          <div className="mt-4 flex items-center justify-between border-t border-primary/10 pt-4">
+          <div className="mt-5 flex items-center justify-between border-t border-primary/10 pt-4">
             <div className="flex items-center gap-4 text-[10px] font-black uppercase tracking-tighter">
-              <div className="flex items-center gap-1">
-                <Fuel className="h-3 w-3 text-muted-foreground" />
-                {formatNumber(totalCapacity, 0)}L
+              <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-primary/5">
+                <Fuel className="h-3 w-3 text-primary/60" />
+                <span className="text-foreground/80">{formatNumber(totalCapacity, 0)}L</span>
               </div>
-              <div className="flex items-center gap-1">
-                <MapPin className="h-3 w-3 text-muted-foreground" />
-                {formatNumber(totalDistance, 1)}km
+              <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-primary/5">
+                <MapPin className="h-3 w-3 text-primary/60" />
+                <span className="text-foreground/80">{formatNumber(totalDistance, 1)}km</span>
               </div>
             </div>
-            <div className="flex items-center gap-1 text-success tabular-nums">
-              <DollarSign className="h-3.5 w-3.5" />
-              <span className="text-base font-black">
+            <div className="flex items-center gap-1.5 text-success tabular-nums">
+              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-success/10">
+                <DollarSign className="h-4 w-4" />
+              </div>
+              <span className="text-lg font-black tracking-tight">
                 {formatCurrency(totalFee)}
               </span>
             </div>
           </div>
         </div>
-      </Card>
+      </div>
 
       {isGroupExpanded && (
         <div className="ms-4 space-y-3 border-s-2 border-primary/10 ps-4">
