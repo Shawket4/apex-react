@@ -45,17 +45,17 @@ export default function ServiceInvoicesPage() {
   const { 
     data: carsData, 
     isLoading: carsLoading 
-  } = useServiceCars(carPage);
+  } = useServiceCars(carPage, 20);
 
   const { 
     data: invoicesData, 
     isLoading: invoicesLoading 
-  } = useServiceInvoices(selectedCar?.ID, invoicePage);
+  } = useServiceInvoices(selectedCar?.ID, invoicePage, 20);
 
   const { 
     data: searchData, 
     isFetching: searchLoading 
-  } = useSearchServiceInvoices(debouncedSearch, selectedCar?.ID, searchPage);
+  } = useSearchServiceInvoices(debouncedSearch, selectedCar?.ID, searchPage, 20);
 
   const deleteMutation = useDeleteServiceInvoice();
 

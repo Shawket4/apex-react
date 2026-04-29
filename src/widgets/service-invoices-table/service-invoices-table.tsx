@@ -96,7 +96,7 @@ export function ServiceInvoicesTable({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => navigate(`/service-invoices/${invoice.ID}`)}>
+                <DropdownMenuItem onClick={() => navigate(`/service-invoices/${invoice.ID}`, { state: { invoice } })}>
                   <Eye className="mr-2 h-4 w-4" />
                   {t('common.view')}
                 </DropdownMenuItem>

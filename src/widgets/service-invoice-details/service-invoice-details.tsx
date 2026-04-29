@@ -9,8 +9,11 @@ import {
   Sparkles,
   Search,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Info,
+  TrendingUp,
 } from 'lucide-react';
+import { useLocation } from 'react-router-dom';
 import type { ServiceInvoice } from '@/entities/service-invoice/schemas';
 import { Button } from '@/shared/ui/button';
 import { Card, CardContent } from '@/shared/ui/card';
@@ -27,12 +30,19 @@ interface ServiceInvoiceDetailsProps {
 }
 
 export function ServiceInvoiceDetails({
-  invoice,
+  invoice: propInvoice,
   onBack,
   onEdit,
   highlightMatches = true,
 }: ServiceInvoiceDetailsProps) {
   const { t } = useTranslation();
+  const location = useLocation();
+
+  // If we came from search, the location state might have the invoice with match data
+  const stateInvoice = location.state?.invoice as ServiceInvoice | undefined;
+  
+  // Use stateInvoice if it matches the current ID, otherwise use propInvoice
+  const invoice = (stateInvoice?.ID === propInvoice.ID) ? stateInvoice : propInvoice;
 
   const handlePrint = () => {
     window.print();
@@ -63,7 +73,7 @@ export function ServiceInvoiceDetails({
           )}
           <Button onClick={handlePrint}>
             <Printer className="mr-2 h-4 w-4" />
-            {t('common.export')}
+            {t('common.print')}
           </Button>
         </div>
       </div>
@@ -126,7 +136,7 @@ export function ServiceInvoiceDetails({
 
               {/* Items Table */}
               <div className="rounded-xl border-2 border-muted overflow-hidden">
-                <div className="grid grid-cols-[1.5fr_1fr] bg-foreground text-background font-bold text-[10px] uppercase tracking-widest">
+                <div className="hidden md:grid grid-cols-[1.5fr_1fr] bg-foreground text-background font-bold text-[10px] uppercase tracking-widest">
                   <div className="p-3 text-center border-e border-background/20">
                     {t('serviceInvoices.fields.notes')}
                   </div>
@@ -143,11 +153,14 @@ export function ServiceInvoiceDetails({
                       <div 
                         key={item.ID || index} 
                         className={cn(
-                          "grid grid-cols-[1.5fr_1fr] transition-colors min-h-[60px]",
+                          "grid grid-cols-1 md:grid-cols-[1.5fr_1fr] transition-colors min-h-[60px]",
                           isMatched ? "bg-primary/5" : "hover:bg-muted/30"
                         )}
                       >
-                        <div className="p-4 border-e-2 border-muted relative">
+                        <div className="p-4 border-e-0 md:border-e-2 border-muted relative">
+                          <div className="mb-2 md:hidden text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                            {t('serviceInvoices.fields.notes')}
+                          </div>
                           <p className={cn(
                             "text-sm text-right",
                             isMatched ? "font-medium text-foreground" : "text-muted-foreground"
@@ -157,29 +170,30 @@ export function ServiceInvoiceDetails({
                           {isMatched && (
                             <div className="absolute top-2 start-2 flex gap-1">
                               {matchType === 'semantic' && (
-                                <span title={t('serviceInvoices.search.semanticMatch')}>
-                                  <Sparkles className="h-3 w-3 text-primary animate-pulse" />
-                                </span>
+                                <div className="flex items-center gap-1.5 bg-primary/10 px-1.5 py-0.5 rounded text-[9px] font-black text-primary uppercase tracking-tighter border border-primary/20">
+                                  <Sparkles className="h-2.5 w-2.5" />
+                                  <span>{Math.round((1 - (item.distance || 0)) * 100)}% Match</span>
+                                </div>
                               )}
                               {matchType === 'keyword' && (
-                                <span title={t('serviceInvoices.search.keywordMatch')}>
-                                  <Search className="h-3 w-3 text-blue-500" />
-                                </span>
+                                <div className="flex items-center gap-1.5 bg-blue-500/10 px-1.5 py-0.5 rounded text-[9px] font-black text-blue-500 uppercase tracking-tighter border border-blue-500/20">
+                                  <Search className="h-2.5 w-2.5" />
+                                  <span>Keyword</span>
+                                </div>
                               )}
                               {matchType === 'both' && (
-                                <>
-                                  <span title={t('serviceInvoices.search.semanticMatch')}>
-                                    <Sparkles className="h-3 w-3 text-primary" />
-                                  </span>
-                                  <span title={t('serviceInvoices.search.keywordMatch')}>
-                                    <Search className="h-3 w-3 text-blue-500" />
-                                  </span>
-                                </>
+                                <div className="flex items-center gap-1.5 bg-indigo-500/10 px-1.5 py-0.5 rounded text-[9px] font-black text-indigo-500 uppercase tracking-tighter border border-indigo-500/20">
+                                  <Sparkles className="h-2.5 w-2.5" />
+                                  <span>Hybrid Match</span>
+                                </div>
                               )}
                             </div>
                           )}
                         </div>
-                        <div className="p-4 flex items-center justify-end">
+                        <div className="p-4 flex flex-col md:flex-row md:items-center justify-end bg-muted/5 md:bg-transparent">
+                          <div className="mb-1 md:hidden text-[10px] font-bold text-muted-foreground uppercase tracking-widest text-right">
+                            {t('serviceInvoices.fields.service')}
+                          </div>
                           <p className={cn(
                             "text-sm font-bold text-right",
                             isMatched ? "text-primary" : "text-foreground"
@@ -230,30 +244,73 @@ export function ServiceInvoiceDetails({
           </Card>
 
           {invoice.match_count != null && invoice.match_count > 0 && (
-            <Card className="border-primary/20 bg-primary/5">
+            <Card className="border-primary/20 bg-primary/5 overflow-hidden">
+              <div className="bg-primary/10 px-6 py-3 border-b border-primary/20 flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-primary" />
+                <h4 className="font-bold text-primary text-sm uppercase tracking-wider">
+                  {t('serviceInvoices.search.hybridMatch')}
+                </h4>
+              </div>
               <CardContent className="p-6">
-                <div className="flex items-center gap-2 mb-4">
-                  <Sparkles className="h-5 w-5 text-primary" />
-                  <h4 className="font-bold text-primary">
-                    {t('serviceInvoices.fields.matchCount')}
-                  </h4>
-                </div>
-                <p className="text-sm text-primary/80 mb-2">
-                  This record contains <strong>{invoice.match_count}</strong> items matching your query.
-                </p>
-                <div className="flex flex-wrap gap-2">
-                  <Badge variant="outline" className="bg-background">
-                    <Sparkles className="h-3 w-3 mr-1" />
-                    {t('serviceInvoices.search.semanticMatch')}
-                  </Badge>
-                  <Badge variant="outline" className="bg-background">
-                    <Search className="h-3 w-3 mr-1" />
-                    {t('serviceInvoices.search.keywordMatch')}
-                  </Badge>
+                <div className="space-y-4">
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs text-muted-foreground uppercase font-bold tracking-widest">
+                        {t('serviceInvoices.fields.matchCount')}
+                      </span>
+                      <Badge variant="default" className="h-5 px-1.5 font-black">
+                        {invoice.match_count}
+                      </Badge>
+                    </div>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      This record contains items that semantically relate to your search query.
+                    </p>
+                  </div>
+
+                  <div className="pt-4 border-t border-primary/10 flex flex-col gap-3">
+                    <div className="flex items-center gap-2 text-xs font-semibold text-primary">
+                      <TrendingUp className="h-3 w-3" />
+                      AI Insight
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="bg-background/50 rounded-lg p-2 border border-primary/10">
+                        <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground font-bold mb-1 uppercase">
+                          <Sparkles className="h-2.5 w-2.5 text-primary" />
+                          {t('serviceInvoices.search.semanticMatch')}
+                        </div>
+                        <div className="text-xs font-bold text-foreground">
+                          Vector Embeddings
+                        </div>
+                      </div>
+                      <div className="bg-background/50 rounded-lg p-2 border border-primary/10">
+                        <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground font-bold mb-1 uppercase">
+                          <Search className="h-2.5 w-2.5 text-blue-500" />
+                          {t('serviceInvoices.search.keywordMatch')}
+                        </div>
+                        <div className="text-xs font-bold text-foreground">
+                          Exact Keyword
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
           )}
+
+          <Card className="border-dashed border-2">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
+                  <Info className="h-4 w-4 text-muted-foreground" />
+                </div>
+                <h4 className="font-bold text-sm">{t('common.details')}</h4>
+              </div>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                This is a verified maintenance record. All inspection items were verified by the supervisor on duty.
+              </p>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

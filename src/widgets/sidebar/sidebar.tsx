@@ -152,9 +152,7 @@ export function Sidebar({ collapsed, onToggleCollapse, onNavigate, className }: 
     <aside
       data-collapsed={collapsed}
       className={cn(
-        // h-full is correct now that the Layout bounds the parent to h-dvh;
-        // the aside fills that bounded height and never grows with content.
-        'group/sidebar flex h-full shrink-0 flex-col border-e bg-card transition-[width] duration-200',
+        'group/sidebar flex h-full shrink-0 flex-col border-e bg-card transition-[width] duration-200 print:hidden',
         collapsed ? 'w-[72px]' : 'w-64',
         className,
       )}

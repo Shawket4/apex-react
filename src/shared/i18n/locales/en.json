@@ -35,6 +35,7 @@
     "use": "Use",
     "clear": "Clear",
     "export": "Export",
+    "print": "Print",
     "profile": "Profile",
     "signOut": "Sign out",
     "viewOnly": "View only",

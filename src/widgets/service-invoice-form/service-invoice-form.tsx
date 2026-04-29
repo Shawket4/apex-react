@@ -278,7 +278,7 @@ export function ServiceInvoiceForm({
               </h3>
             </div>
             
-            <div className="grid grid-cols-[1fr_1fr] bg-foreground text-background font-semibold text-sm">
+            <div className="hidden md:grid grid-cols-[1fr_1fr] bg-foreground text-background font-semibold text-sm">
               <div className="p-3 text-center border-e border-background/20">
                 {t('serviceInvoices.fields.notes')}
               </div>
@@ -289,11 +289,14 @@ export function ServiceInvoiceForm({
 
             <div className="divide-y-2 divide-muted">
               {fields.map((field, index) => (
-                <div key={field.id} className="grid grid-cols-[1fr_1fr] group hover:bg-muted/10 transition-colors">
-                  <div className="relative border-e-2 border-muted">
+                <div key={field.id} className="grid grid-cols-1 md:grid-cols-[1fr_1fr] group hover:bg-muted/10 transition-colors">
+                  <div className="relative border-e-0 md:border-e-2 border-muted">
+                    <div className="px-4 pt-3 md:hidden text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                      {t('serviceInvoices.fields.notes')}
+                    </div>
                     <Textarea
                       {...form.register(`inspection_items.${index}.notes` as const)}
-                      className="min-h-[60px] resize-none border-0 rounded-none bg-transparent focus-visible:ring-0 px-4 py-3"
+                      className="min-h-[60px] md:min-h-[80px] resize-none border-0 rounded-none bg-transparent focus-visible:ring-0 px-4 py-3"
                       placeholder={t('serviceInvoices.form.placeholderNotes')}
                     />
                     <div className="absolute top-2 start-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -312,7 +315,10 @@ export function ServiceInvoiceForm({
                       </Button>
                     </div>
                   </div>
-                  <div className="flex items-center">
+                  <div className="flex flex-col md:flex-row md:items-center bg-muted/5 md:bg-transparent">
+                    <div className="px-4 pt-3 md:hidden text-[10px] font-bold text-muted-foreground uppercase tracking-widest border-t border-muted/50">
+                      {t('serviceInvoices.fields.service')}
+                    </div>
                     <Input
                       {...form.register(`inspection_items.${index}.service` as const)}
                       className="h-full border-0 rounded-none bg-transparent focus-visible:ring-0 px-4 py-3 font-medium"
