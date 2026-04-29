@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { carSchema } from '../car/schemas';
 
 export const inspectionItemSchema = z.object({
-  id: z.number().optional(),
+  ID: z.number().optional(),
   service: z.string(),
   notes: z.string().optional().default(''),
   item_order: z.number(),
@@ -14,7 +14,7 @@ export const inspectionItemSchema = z.object({
 export type InspectionItem = z.infer<typeof inspectionItemSchema>;
 
 export const serviceInvoiceSchema = z.object({
-  id: z.number(),
+  ID: z.number(),
   car_id: z.number(),
   plate_number: z.string(),
   driver_name: z.string(),

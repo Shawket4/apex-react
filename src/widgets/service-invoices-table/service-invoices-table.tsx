@@ -90,18 +90,18 @@ export function ServiceInvoicesTable({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => navigate(`/service-invoices/${invoice.id}`)}>
+                <DropdownMenuItem onClick={() => navigate(`/service-invoices/${invoice.ID}`)}>
                   <Eye className="mr-2 h-4 w-4" />
                   {t('common.view')}
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate(`/service-invoices/${invoice.id}/edit`)}>
+                <DropdownMenuItem onClick={() => navigate(`/service-invoices/${invoice.ID}/edit`)}>
                   <Edit className="mr-2 h-4 w-4" />
                   {t('common.edit')}
                 </DropdownMenuItem>
                 {onDelete && (
                   <DropdownMenuItem 
                     className="text-destructive focus:bg-destructive/10 focus:text-destructive"
-                    onClick={() => onDelete(invoice.id)}
+                    onClick={() => onDelete(invoice.ID)}
                   >
                     <Trash2 className="mr-2 h-4 w-4" />
                     {t('common.delete')}

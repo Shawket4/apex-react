@@ -37,7 +37,7 @@ export async function deleteServiceInvoice(id: number | string): Promise<void> {
 export async function searchServiceInvoices(query: string, plateNumber?: string) {
   const params = new URLSearchParams({ query });
   if (plateNumber) params.append('plate_number', plateNumber);
-  
-  const data = await apiGet(`/api/search/service-invoices?${params.toString()}`);
+
+  const data = await apiGet(`/api/service-invoices/search?${params.toString()}`);
   return searchResponseSchema.parse(data);
 }

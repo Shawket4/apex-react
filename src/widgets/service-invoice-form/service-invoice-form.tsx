@@ -20,6 +20,7 @@ import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { Textarea } from '@/shared/ui/textarea';
 import { SearchableSelect } from '@/shared/ui/searchable-select';
+import { DatePicker } from '@/shared/ui/date-picker';
 import { Card, CardContent } from '@/shared/ui/card';
 import {
   Form,
@@ -148,10 +149,13 @@ export function ServiceInvoiceForm({
                   control={form.control}
                   name="date"
                   render={({ field }) => (
-                    <FormItem>
+                    <FormItem className="flex flex-col">
                       <FormLabel>{t('serviceInvoices.fields.date')}</FormLabel>
                       <FormControl>
-                        <Input type="date" {...field} />
+                        <DatePicker 
+                          value={field.value} 
+                          onChange={field.onChange} 
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

@@ -15,7 +15,7 @@ export default function ServiceInvoiceNewPage() {
     try {
       const result = await createMutation.mutateAsync(values);
       toast({ title: t('common.saveSuccess') });
-      navigate(`/service-invoices/${result.id}`);
+      navigate(`/service-invoices/${result.ID}`);
     } catch (err) {
       toast({ 
         title: t('errors.generic'), 

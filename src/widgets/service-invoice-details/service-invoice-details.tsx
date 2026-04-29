@@ -15,6 +15,7 @@ import type { ServiceInvoice } from '@/entities/service-invoice/schemas';
 import { Button } from '@/shared/ui/button';
 import { Card, CardContent } from '@/shared/ui/card';
 import { Badge } from '@/shared/ui/badge';
+import { StatCard } from '@/shared/ui/stat-card';
 import { cn } from '@/shared/lib/cn';
 import { formatNumber } from '@/shared/lib/format';
 
@@ -47,7 +48,7 @@ export function ServiceInvoiceDetails({
           </Button>
           <div>
             <h1 className="text-2xl font-bold tracking-tight">
-              {t('serviceInvoices.receipt.title')} #{invoice.id}
+              {t('serviceInvoices.receipt.title')} #{invoice.ID}
             </h1>
             <p className="text-sm text-muted-foreground">
               {invoice.plate_number} • {invoice.date.split('T')[0]}
@@ -70,6 +71,44 @@ export function ServiceInvoiceDetails({
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Content (Receipt) */}
         <div className="lg:col-span-2 space-y-6 print:col-span-3">
+          {/* Quick Stats Grid */}
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 print:hidden">
+            <StatCard
+              label={t('serviceInvoices.fields.date')}
+              value={invoice.date.split('T')[0]}
+              icon={Calendar}
+              tone="primary"
+            />
+            <StatCard
+              label={t('serviceInvoices.fields.meterReading')}
+              value={`${formatNumber(invoice.meter_reading)} KM`}
+              icon={Gauge}
+              tone="success"
+            />
+            <StatCard
+              label={t('serviceInvoices.fields.driver')}
+              value={invoice.driver_name}
+              icon={User}
+            />
+            <StatCard
+              label={t('serviceInvoices.fields.supervisor')}
+              value={invoice.supervisor}
+              icon={AlertCircle}
+              tone="warning"
+            />
+            <StatCard
+              label={t('serviceInvoices.fields.region')}
+              value={invoice.operating_region}
+              icon={MapPin}
+            />
+            <StatCard
+              label={t('serviceInvoices.fields.plateNumber')}
+              value={invoice.plate_number}
+              icon={CheckCircle2}
+              tone="primary"
+            />
+          </div>
+
           <Card className="border-2 border-muted shadow-lg print:shadow-none print:border-muted/50">
             <CardContent className="p-8">
               {/* Receipt Header */}
@@ -83,56 +122,6 @@ export function ServiceInvoiceDetails({
                 <h3 className="text-lg font-medium text-muted-foreground uppercase tracking-[0.3em] mt-1 print:text-sm">
                   {t('serviceInvoices.form.truckSubtitle')}
                 </h3>
-              </div>
-
-              {/* Receipt Details Grid */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
-                <div className="space-y-4">
-                  <div className="flex items-center gap-3 text-sm">
-                    <Calendar className="h-4 w-4 text-primary shrink-0" />
-                    <span className="font-semibold text-muted-foreground w-32 uppercase tracking-wider text-[10px]">
-                      {t('serviceInvoices.fields.date')}
-                    </span>
-                    <span className="font-bold text-foreground">{invoice.date.split('T')[0]}</span>
-                  </div>
-                  <div className="flex items-center gap-3 text-sm">
-                    <User className="h-4 w-4 text-primary shrink-0" />
-                    <span className="font-semibold text-muted-foreground w-32 uppercase tracking-wider text-[10px]">
-                      {t('serviceInvoices.fields.driver')}
-                    </span>
-                    <span className="font-bold text-foreground">{invoice.driver_name}</span>
-                  </div>
-                  <div className="flex items-center gap-3 text-sm">
-                    <MapPin className="h-4 w-4 text-primary shrink-0" />
-                    <span className="font-semibold text-muted-foreground w-32 uppercase tracking-wider text-[10px]">
-                      {t('serviceInvoices.fields.region')}
-                    </span>
-                    <span className="font-bold text-foreground">{invoice.operating_region}</span>
-                  </div>
-                </div>
-                <div className="space-y-4">
-                  <div className="flex items-center gap-3 text-sm">
-                    <Gauge className="h-4 w-4 text-primary shrink-0" />
-                    <span className="font-semibold text-muted-foreground w-32 uppercase tracking-wider text-[10px]">
-                      {t('serviceInvoices.fields.meterReading')}
-                    </span>
-                    <span className="font-bold text-foreground">{formatNumber(invoice.meter_reading)} KM</span>
-                  </div>
-                  <div className="flex items-center gap-3 text-sm">
-                    <AlertCircle className="h-4 w-4 text-primary shrink-0" />
-                    <span className="font-semibold text-muted-foreground w-32 uppercase tracking-wider text-[10px]">
-                      {t('serviceInvoices.fields.supervisor')}
-                    </span>
-                    <span className="font-bold text-foreground">{invoice.supervisor}</span>
-                  </div>
-                  <div className="flex items-center gap-3 text-sm">
-                    <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />
-                    <span className="font-semibold text-muted-foreground w-32 uppercase tracking-wider text-[10px]">
-                      {t('serviceInvoices.fields.plateNumber')}
-                    </span>
-                    <span className="font-bold text-foreground">{invoice.plate_number}</span>
-                  </div>
-                </div>
               </div>
 
               {/* Items Table */}
@@ -152,7 +141,7 @@ export function ServiceInvoiceDetails({
                     
                     return (
                       <div 
-                        key={item.id || index} 
+                        key={item.ID || index} 
                         className={cn(
                           "grid grid-cols-[1.5fr_1fr] transition-colors min-h-[60px]",
                           isMatched ? "bg-primary/5" : "hover:bg-muted/30"
