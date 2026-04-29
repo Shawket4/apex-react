@@ -49,7 +49,7 @@ export function ServiceInvoiceDetails({
   };
 
   return (
-    <div className="flex flex-col gap-6 print:gap-0">
+    <div className="flex flex-col gap-6 print:gap-4 [print-color-adjust:exact] [-webkit-print-color-adjust:exact]">
       {/* Header */}
       <div className="flex items-center justify-between gap-4 print:hidden">
         <div className="flex items-center gap-3">
@@ -82,7 +82,7 @@ export function ServiceInvoiceDetails({
         {/* Main Content (Receipt) */}
         <div className="lg:col-span-2 space-y-6 print:col-span-3">
           {/* Quick Stats Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 print:hidden">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 print:gap-2">
             <StatCard
               label={t('serviceInvoices.fields.date')}
               value={invoice.date.split('T')[0]}
@@ -136,7 +136,7 @@ export function ServiceInvoiceDetails({
 
               {/* Items Table */}
               <div className="rounded-xl border-2 border-muted overflow-hidden">
-                <div className="hidden md:grid grid-cols-[1.5fr_1fr] bg-foreground text-background font-bold text-[10px] uppercase tracking-widest">
+                <div className="hidden md:grid grid-cols-[1.5fr_1fr] bg-foreground text-background font-bold text-[10px] uppercase tracking-widest print:grid">
                   <div className="p-3 text-center border-e border-background/20">
                     {t('serviceInvoices.fields.notes')}
                   </div>
@@ -168,23 +168,24 @@ export function ServiceInvoiceDetails({
                             {item.notes || '-'}
                           </p>
                           {isMatched && (
-                            <div className="absolute top-2 start-2 flex gap-1">
+                            <div className="absolute top-2 start-2 flex items-center gap-1">
                               {matchType === 'semantic' && (
-                                <div className="flex items-center gap-1.5 bg-primary/10 px-1.5 py-0.5 rounded text-[9px] font-black text-primary uppercase tracking-tighter border border-primary/20">
+                                <div className="flex items-center gap-1.5 bg-primary/10 px-2 py-0.5 rounded-full text-[9px] font-black text-primary uppercase tracking-tighter border border-primary/20 shadow-sm print:bg-primary/5">
                                   <Sparkles className="h-2.5 w-2.5" />
                                   <span>{Math.round((1 - (item.distance || 0)) * 100)}% Match</span>
                                 </div>
                               )}
                               {matchType === 'keyword' && (
-                                <div className="flex items-center gap-1.5 bg-blue-500/10 px-1.5 py-0.5 rounded text-[9px] font-black text-blue-500 uppercase tracking-tighter border border-blue-500/20">
+                                <div className="flex items-center gap-1.5 bg-blue-500/10 px-2 py-0.5 rounded-full text-[9px] font-black text-blue-500 uppercase tracking-tighter border border-blue-500/20 shadow-sm print:bg-blue-500/5">
                                   <Search className="h-2.5 w-2.5" />
                                   <span>Keyword</span>
                                 </div>
                               )}
                               {matchType === 'both' && (
-                                <div className="flex items-center gap-1.5 bg-indigo-500/10 px-1.5 py-0.5 rounded text-[9px] font-black text-indigo-500 uppercase tracking-tighter border border-indigo-500/20">
+                                <div className="flex items-center gap-1 bg-indigo-500/10 px-2 py-0.5 rounded-full text-[9px] font-black text-indigo-500 uppercase tracking-tighter border border-indigo-500/20 shadow-sm print:bg-indigo-500/5">
                                   <Sparkles className="h-2.5 w-2.5" />
-                                  <span>Hybrid Match</span>
+                                  <Search className="h-2.5 w-2.5" />
+                                  <span>Hybrid</span>
                                 </div>
                               )}
                             </div>
@@ -216,7 +217,7 @@ export function ServiceInvoiceDetails({
         </div>
 
         {/* Sidebar Info */}
-        <div className="space-y-6 print:hidden">
+        <div className="space-y-6 print:col-span-3 lg:print:col-span-1 print:mt-6">
           <Card>
             <CardContent className="p-6">
               <h4 className="font-bold mb-4 uppercase tracking-wider text-xs text-muted-foreground">
