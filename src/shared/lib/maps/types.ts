@@ -67,6 +67,10 @@ export interface MapViewProps {
   className?: string;
   /** Fired when user clicks an empty area of the map. */
   onMapClick?: MapClickHandler;
+  /** Fired when a marker is clicked. */
+  onMarkerClick?: (id: string) => void;
+  /** Fired when a marker is double-clicked. */
+  onMarkerDoubleClick?: (id: string) => void;
   /** Fired when a draggable marker finishes dragging. */
   onMarkerDragEnd?: MarkerDragHandler;
   /** Fired when the active provider changes (Google → Leaflet fallback). */

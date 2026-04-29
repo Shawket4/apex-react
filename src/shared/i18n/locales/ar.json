@@ -997,6 +997,7 @@
       "subtitle": "{{vehicleCount}} مركبات · {{onMapCount}} على الخريطة",
       "live": "مباشر",
       "liveOffline": "البث متوقف",
+      "reconnecting": "جاري إعادة الاتصال...",
       "openVehicleList": "فتح قائمة المركبات",
       "liveStream": "مباشر (بث)"
     },

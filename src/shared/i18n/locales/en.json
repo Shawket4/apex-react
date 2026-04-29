@@ -997,6 +997,7 @@
       "subtitle": "{{vehicleCount}} vehicles · {{onMapCount}} on map",
       "live": "Live",
       "liveOffline": "Live offline",
+      "reconnecting": "Reconnecting...",
       "openVehicleList": "Open vehicle list",
       "liveStream": "Live (stream)"
     },

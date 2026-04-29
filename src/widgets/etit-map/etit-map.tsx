@@ -296,6 +296,7 @@ function EtitMapBase({
     return DEFAULT_MAP_CENTER;
   }, [markers, route]);
 
+
   return (
     <MapView
       markers={markers}
@@ -305,6 +306,13 @@ function EtitMapBase({
       className={className}
       height={height}
       liveUpdates
+      onMarkerDoubleClick={() => {
+        // For live markers, they often have 'live-{id}'
+        // For playback, it's 'playback-current'
+        // We want the map to fly to this position.
+        // The providers already do a flyTo(18) on dblclick internally now.
+        // But we might want to trigger a 'focus' state in the parent.
+      }}
     />
   );
 }

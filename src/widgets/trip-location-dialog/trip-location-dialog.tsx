@@ -10,6 +10,7 @@ import {
   ExternalLink,
   Loader2,
   MapPin,
+  MapPinOff,
   Navigation,
   RefreshCw,
   Ruler,
@@ -251,13 +252,25 @@ export function TripLocationDialog({
               />
             )}
 
-            {showMap && (
+            {showMap ? (
               <MapView
                 markers={markers}
                 route={route}
-                suppressRoute={oneValid /* don't draw line to a missing endpoint */}
+                suppressRoute={oneValid}
                 className="h-full w-full"
+                centerFallback={terminalCoord || dropoffCoord || undefined}
               />
+            ) : (
+              !isLoading && !isError && (
+                <div className="flex h-full items-center justify-center">
+                  <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                    <MapPinOff className="h-8 w-8 opacity-20" />
+                    <span className="text-xs font-medium">
+                      {t('trips.dialog.map.noCoordinates')}
+                    </span>
+                  </div>
+                </div>
+              )
             )}
 
             {/* Legend */}

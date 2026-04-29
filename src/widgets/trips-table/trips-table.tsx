@@ -21,6 +21,7 @@ import {
   CheckCircle2,
   Clock,
 } from 'lucide-react';
+import { useIsMobile } from '@/shared/hooks/use-media-query';
 import {
   computeReceiptStatus,
   groupTrips,
@@ -166,6 +167,8 @@ export function TripsTable({
     setExpandedDetailId((prev) => (prev === id ? null : id));
   };
 
+  const isMobile = useIsMobile();
+
   if (!loading && items.length === 0) {
     return (
       <EmptyState
@@ -177,8 +180,49 @@ export function TripsTable({
     );
   }
 
+  if (isMobile) {
+    return (
+      <div className="space-y-4">
+        {loading && items.length === 0 ? (
+          <div className="space-y-4">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Skeleton key={i} className="h-48 w-full rounded-2xl" />
+            ))}
+          </div>
+        ) : (
+          items.map((item) =>
+            item.type === 'standalone' ? (
+              <TripMobileCard
+                key={`s-${item.trip.ID}`}
+                trip={item.trip}
+                isExpanded={expandedDetailId === item.trip.ID}
+                onToggleDetail={() => toggleDetail(item.trip.ID)}
+                onDelete={onDelete}
+                onOpenReceipt={() => onOpenReceipt(item.trip.ID)}
+                onOpenMap={() => onOpenMap(item.trip.ID)}
+              />
+            ) : (
+              <TripGroupCard
+                key={`p-${item.parentId}`}
+                item={item}
+                isGroupExpanded={expandedGroups.has(item.parentId)}
+                expandedDetailId={expandedDetailId}
+                onToggleGroup={() => toggleGroup(item.parentId)}
+                onToggleDetail={toggleDetail}
+                onDeleteParent={onDeleteParent}
+                onOpenReceipt={onOpenReceipt}
+                onOpenMap={onOpenMap}
+                onOpenReceiptBatch={onOpenReceiptBatch}
+              />
+            ),
+          )
+        )}
+      </div>
+    );
+  }
+
   return (
-    <Card className="overflow-hidden">
+    <Card className="overflow-hidden shadow-md">
       <div className="relative w-full overflow-auto">
         <table className="w-full caption-bottom text-sm">
           <thead className="border-b bg-muted/50 text-xs uppercase tracking-wider text-muted-foreground">
@@ -251,6 +295,290 @@ export function TripsTable({
     </Card>
   );
 }
+
+/* -------------------------------------------------------------------------- */
+/* Mobile Card components                                                      */
+/* -------------------------------------------------------------------------- */
+
+function TripMobileCard({
+  trip,
+  isExpanded,
+  onToggleDetail,
+  onDelete,
+  onOpenReceipt,
+  onOpenMap,
+  isContainer = false,
+  index,
+}: {
+  trip: Trip;
+  isExpanded: boolean;
+  onToggleDetail: () => void;
+  onDelete?: (id: number) => void;
+  onOpenReceipt: () => void;
+  onOpenMap: () => void;
+  isContainer?: boolean;
+  index?: number;
+}) {
+  const { t } = useTranslation();
+  const distance = trip.mileage || trip.distance || 0;
+
+  return (
+    <Card
+      className={cn(
+        'overflow-hidden transition-all active:scale-[0.99]',
+        isExpanded ? 'ring-2 ring-primary/20 shadow-lg' : 'hover:shadow-md',
+        isContainer && 'bg-primary/[0.02]',
+      )}
+    >
+      <div className="p-4" onClick={onToggleDetail}>
+        <div className="mb-4 flex items-start justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div
+              className={cn(
+                'flex h-10 w-10 shrink-0 items-center justify-center rounded-xl font-bold',
+                isContainer
+                  ? 'bg-primary/10 text-primary'
+                  : 'bg-primary/15 text-primary shadow-inner',
+              )}
+            >
+              {isContainer ? (
+                index !== undefined ? (
+                  index + 1
+                ) : (
+                  <FileText className="h-5 w-5" />
+                )
+              ) : (
+                <FileText className="h-5 w-5" />
+              )}
+            </div>
+            <div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-sm font-black tabular-nums tracking-tight">
+                  #{trip.receipt_no || '—'}
+                </span>
+                <ReceiptStatusBadge trip={trip} compact />
+              </div>
+              <div className="mt-0.5 flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                <span className="flex items-center gap-1">
+                  <CalendarIcon className="h-2.5 w-2.5" />
+                  {format(trip.date, 'MMM d, yyyy')}
+                </span>
+                <span>·</span>
+                <span className="truncate max-w-[120px]">{trip.company}</span>
+              </div>
+            </div>
+          </div>
+          <ChevronCell expanded={isExpanded} />
+        </div>
+
+        <div className="relative mb-4 space-y-4 ps-6">
+          {/* Vertical route line */}
+          <div className="absolute start-[3.5px] top-1.5 bottom-1.5 w-[1.5px] border-s border-dashed border-muted-foreground/30" />
+
+          <div className="relative">
+            <span
+              className="absolute -start-[26px] top-1 h-2.5 w-2.5 rounded-full bg-success ring-4 ring-background"
+              aria-hidden
+            />
+            <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground/70">
+              {t('trips.columns.terminal')}
+            </div>
+            <div className="text-sm font-semibold leading-snug">{trip.terminal}</div>
+          </div>
+
+          <div className="relative">
+            <span
+              className="absolute -start-[26px] top-1 h-2.5 w-2.5 rounded-full bg-destructive ring-4 ring-background"
+              aria-hidden
+            />
+            <div className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground/70">
+              {t('trips.columns.route')}
+            </div>
+            <div className="text-sm font-semibold leading-snug">
+              {trip.drop_off_point}
+            </div>
+          </div>
+        </div>
+
+        <div className="mb-4 grid grid-cols-2 gap-3 rounded-xl bg-muted/40 p-3">
+          <div className="space-y-1">
+            <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80">
+              <User className="h-2.5 w-2.5" />
+              {t('trips.fields.driver')}
+            </div>
+            <div className="truncate text-xs font-bold text-foreground">
+              {trip.driver_name}
+            </div>
+          </div>
+          <div className="space-y-1">
+            <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80">
+              <Car className="h-2.5 w-2.5" />
+              {t('trips.fields.vehicle')}
+            </div>
+            <div className="text-xs font-black tabular-nums text-foreground">
+              {trip.car_no_plate}
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between border-t border-primary/5 pt-4">
+          <div className="flex items-center gap-4 text-[10px] font-black uppercase tracking-tighter">
+            <div className="flex items-center gap-1">
+              <Fuel className="h-3 w-3 text-muted-foreground" />
+              {formatNumber(trip.tank_capacity, 0)}L
+            </div>
+            <div className="flex items-center gap-1">
+              <MapPin className="h-3 w-3 text-muted-foreground" />
+              {formatNumber(distance, 1)}km
+            </div>
+          </div>
+          <div className="flex items-center gap-1 text-success tabular-nums">
+            <DollarSign className="h-3.5 w-3.5" />
+            <span className="text-base font-black">
+              {formatCurrency(trip.fee)}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {isExpanded && (
+        <div className="border-t bg-muted/20">
+          <TripsRowExpanded
+            trip={trip}
+            onOpenReceipt={onOpenReceipt}
+            onOpenMap={onOpenMap}
+          />
+          <div className="flex justify-end gap-2 p-4 pt-0">
+            <RowActions
+              editPath={`/trips/${trip.ID}`}
+              onOpenReceipt={onOpenReceipt}
+              onOpenMap={onOpenMap}
+              onDelete={onDelete ? () => onDelete(trip.ID) : undefined}
+            />
+          </div>
+        </div>
+      )}
+    </Card>
+  );
+}
+
+function TripGroupCard({
+  item,
+  isGroupExpanded,
+  expandedDetailId,
+  onToggleGroup,
+  onToggleDetail,
+  onDeleteParent,
+  onOpenReceipt,
+  onOpenMap,
+  onOpenReceiptBatch,
+}: {
+  item: Extract<TripListItem, { type: 'parent' }>;
+  isGroupExpanded: boolean;
+  expandedDetailId: number | null;
+  onToggleGroup: () => void;
+  onToggleDetail: (id: number) => void;
+  onDeleteParent: (parentId: number, count: number) => void;
+  onOpenReceipt: (id: number) => void;
+  onOpenMap: (id: number) => void;
+  onOpenReceiptBatch: (parentId: number) => void;
+}) {
+  const { t } = useTranslation();
+  const { parentId, parentTrip, containers } = item;
+  const first = containers[0];
+  const totalCapacity = containers.reduce(
+    (sum, c) => sum + (c.tank_capacity || 0),
+    0,
+  );
+  const totalDistance = containers.reduce(
+    (sum, c) => sum + (c.mileage || c.distance || 0),
+    0,
+  );
+  const totalFee = containers.reduce((sum, c) => sum + (c.fee || 0), 0);
+  const hasReceiptBatch = !!parentTrip?.receipt_batch;
+  const isWatanya = first.company === 'Watanya';
+
+  return (
+    <div className="space-y-3">
+      <Card
+        className={cn(
+          'overflow-hidden ring-1 ring-primary/10 transition-all active:scale-[0.99]',
+          isGroupExpanded ? 'bg-primary/5 shadow-md' : 'bg-primary/[0.03]',
+        )}
+      >
+        <div className="p-4" onClick={onToggleGroup}>
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground shadow-lg shadow-primary/20">
+                <Layers className="h-5 w-5" />
+                {hasReceiptBatch && (
+                  <span className="absolute -end-1 -top-1 h-3 w-3 rounded-full border-2 border-background bg-warning animate-pulse" />
+                )}
+              </div>
+              <div>
+                <div className="text-sm font-black tracking-tight">
+                  {t('trips.row.multiContainer', { id: parentId })}
+                </div>
+                <div className="mt-0.5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                  {t('trips.row.containersCount', { count: containers.length })} ·{' '}
+                  {first.company}
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <ParentRowActions
+                parentId={parentId}
+                isWatanya={isWatanya}
+                hasReceiptBatch={hasReceiptBatch}
+                containerCount={containers.length}
+                onDeleteParent={onDeleteParent}
+                onOpenReceiptBatch={onOpenReceiptBatch}
+              />
+              <ChevronCell expanded={isGroupExpanded} />
+            </div>
+          </div>
+
+          <div className="mt-4 flex items-center justify-between border-t border-primary/10 pt-4">
+            <div className="flex items-center gap-4 text-[10px] font-black uppercase tracking-tighter">
+              <div className="flex items-center gap-1">
+                <Fuel className="h-3 w-3 text-muted-foreground" />
+                {formatNumber(totalCapacity, 0)}L
+              </div>
+              <div className="flex items-center gap-1">
+                <MapPin className="h-3 w-3 text-muted-foreground" />
+                {formatNumber(totalDistance, 1)}km
+              </div>
+            </div>
+            <div className="flex items-center gap-1 text-success tabular-nums">
+              <DollarSign className="h-3.5 w-3.5" />
+              <span className="text-base font-black">
+                {formatCurrency(totalFee)}
+              </span>
+            </div>
+          </div>
+        </div>
+      </Card>
+
+      {isGroupExpanded && (
+        <div className="ms-4 space-y-3 border-s-2 border-primary/10 ps-4">
+          {containers.map((container, idx) => (
+            <TripMobileCard
+              key={container.ID}
+              trip={container}
+              isExpanded={expandedDetailId === container.ID}
+              onToggleDetail={() => onToggleDetail(container.ID)}
+              onOpenReceipt={() => onOpenReceipt(container.ID)}
+              onOpenMap={() => onOpenMap(container.ID)}
+              isContainer
+              index={idx}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 
 /* -------------------------------------------------------------------------- */
 /* Standalone trip row                                                         */

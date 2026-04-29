@@ -112,10 +112,14 @@ function buildDivIcon(L: LeafletNamespace, info: MapMarker, filterId: string): L
 }
 
 function boundsFingerprint(markers: MapMarker[], route: Array<[number, number]>): string {
-  const ids: string[] = [];
-  for (const m of markers) if (m.affectsBounds !== false) ids.push(m.id);
-  ids.sort();
-  return `${ids.join(',')}|${route.length}`;
+  const points: string[] = [];
+  for (const m of markers) {
+    if (m.affectsBounds !== false) {
+      points.push(`${m.id}:${m.lat.toFixed(6)},${m.lng.toFixed(6)}`);
+    }
+  }
+  points.sort();
+  return `${points.join('|')}|${route.length}`;
 }
 
 function zIndexFor(kind: MapMarker['kind']): number {
@@ -155,6 +159,8 @@ export function LeafletMapView({
   height = 400,
   className,
   onMapClick,
+  onMarkerClick,
+  onMarkerDoubleClick,
   onMarkerDragEnd,
   liveUpdates = false,
 }: MapViewProps) {
@@ -169,8 +175,12 @@ export function LeafletMapView({
   const [mapReady, setMapReady] = React.useState(false);
 
   const onMapClickRef = React.useRef(onMapClick);
+  const onMarkerClickRef = React.useRef(onMarkerClick);
+  const onMarkerDoubleClickRef = React.useRef(onMarkerDoubleClick);
   const onMarkerDragEndRef = React.useRef(onMarkerDragEnd);
   React.useEffect(() => { onMapClickRef.current = onMapClick; }, [onMapClick]);
+  React.useEffect(() => { onMarkerClickRef.current = onMarkerClick; }, [onMarkerClick]);
+  React.useEffect(() => { onMarkerDoubleClickRef.current = onMarkerDoubleClick; }, [onMarkerDoubleClick]);
   React.useEffect(() => { onMarkerDragEndRef.current = onMarkerDragEnd; }, [onMarkerDragEnd]);
 
   /* ---- Init map once -------------------------------------------------- */
@@ -328,12 +338,17 @@ export function LeafletMapView({
         zIndexOffset: zIndexFor(info.kind),
       }).addTo(map);
 
+      marker.on('click', () => {
+        onMarkerClickRef.current?.(info.id);
+      });
+
       if (info.popupHtml) {
         marker.bindPopup(info.popupHtml, { closeButton: true, autoPan: true, maxWidth: 240 });
       }
 
       marker.on('dblclick', (e: import('leaflet').LeafletMouseEvent) => {
         L.DomEvent.stopPropagation(e);
+        onMarkerDoubleClickRef.current?.(info.id);
         map.closePopup();
         map.flyTo([info.lat, info.lng], 18, { duration: 0.75 });
       });

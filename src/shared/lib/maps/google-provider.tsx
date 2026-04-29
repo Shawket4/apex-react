@@ -196,6 +196,8 @@ export function GoogleMapView({
   route = [],
   centerFallback = [30.0444, 31.2357],
   onMapClick,
+  onMarkerClick,
+  onMarkerDoubleClick,
   onMarkerDragEnd,
   suppressRoute,
   className,
@@ -216,8 +218,12 @@ export function GoogleMapView({
   const [isSatellite, setIsSatellite] = React.useState(false);
 
   const onMapClickRef = React.useRef(onMapClick);
+  const onMarkerClickRef = React.useRef(onMarkerClick);
+  const onMarkerDoubleClickRef = React.useRef(onMarkerDoubleClick);
   const onMarkerDragEndRef = React.useRef(onMarkerDragEnd);
   React.useEffect(() => { onMapClickRef.current = onMapClick; }, [onMapClick]);
+  React.useEffect(() => { onMarkerClickRef.current = onMarkerClick; }, [onMarkerClick]);
+  React.useEffect(() => { onMarkerDoubleClickRef.current = onMarkerDoubleClick; }, [onMarkerDoubleClick]);
   React.useEffect(() => { onMarkerDragEndRef.current = onMarkerDragEnd; }, [onMarkerDragEnd]);
 
   /* -------- Init via MapPool ------------------------------------------ */
@@ -322,14 +328,6 @@ export function GoogleMapView({
   }, []);
 
   /* -------- Sync markers + polylines ----------------------------------- */
-  /*                                                                       */
-  /* This is also where AUTO-PAN happens. When a marker whose id is in     */
-  /* PAN_FOLLOW_IDS (currently only `playback-current`) updates its       */
-  /* position, we call `map.panTo(...)`. `panTo` preserves the current    */
-  /* zoom and animates smoothly via the Maps API's internal compositor —  */
-  /* exactly the "follow without zooming" behavior asked for during      */
-  /* timeline scrubbing.                                                 */
-  /* -------------------------------------------------------------------- */
 
   React.useEffect(() => {
     const map = mapRef.current;
@@ -365,6 +363,7 @@ export function GoogleMapView({
         const listeners: google.maps.MapsEventListener[] = [];
 
         const clickListener = marker.addListener('click', () => {
+          onMarkerClickRef.current?.(m.id);
           const live = markerEntriesRef.current.get(m.id);
           if (!live || !live.spec.popupHtml || !infoWindowRef.current) return;
           infoWindowRef.current.setContent(live.spec.popupHtml);
@@ -383,6 +382,7 @@ export function GoogleMapView({
         listeners.push(
           marker.addListener('dblclick', (e: google.maps.MapMouseEvent) => {
             e.stop(); // Prevent map zoom
+            onMarkerDoubleClickRef.current?.(m.id);
             if (flyTokenRef.current) {
               flyTokenRef.current.cancelled = true;
               if (flyTokenRef.current.rafId) cancelAnimationFrame(flyTokenRef.current.rafId);
@@ -460,7 +460,8 @@ export function GoogleMapView({
     const rLen = route.length;
     const rStart = rLen > 0 ? route[0].join(',') : '';
     const rEnd = rLen > 0 ? route[rLen - 1].join(',') : '';
-    const signature = `${mIds}|${rLen}|${rStart}|${rEnd}|${suppressRoute ? 1 : 0}`;
+    const mCoords = boundsMarkers.map(m => `${m.lat.toFixed(6)},${m.lng.toFixed(6)}`).join('|');
+    const signature = `${mIds}|${mCoords}|${rLen}|${rStart}|${rEnd}|${suppressRoute ? 1 : 0}`;
 
     if (signature === lastRouteSignatureRef.current) return;
     lastRouteSignatureRef.current = signature;

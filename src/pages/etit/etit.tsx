@@ -307,7 +307,11 @@ export function EtitPage() {
 
   /* ---- Errors & Status ---- */
   const error = fleetQuery.error || historyQuery.error || summaryQuery.error;
-  const liveLabel = fleetQuery.liveConnected ? t('common.live') : t('common.loading');
+  const liveLabel = fleetQuery.liveConnected 
+    ? t('etit.header.live') 
+    : fleetQuery.isLoading
+      ? t('common.loading')
+      : t('etit.header.reconnecting');
   const liveTone = fleetQuery.liveConnected ? 'success' : 'muted';
 
   const effectiveVisibleIds = React.useMemo(() => {
@@ -445,7 +449,7 @@ export function EtitPage() {
                       liveTone === 'success' ? 'bg-success animate-pulse' : 'bg-muted',
                     )}
                   />
-                  <span className="hidden sm:inline">{liveLabel}</span>
+                  <span className="text-[10px] sm:text-xs">{liveLabel}</span>
                 </span>
               </div>
             </div>
