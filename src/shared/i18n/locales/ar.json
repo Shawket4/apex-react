@@ -32,7 +32,24 @@
     "details": "التفاصيل",
     "status": "الحالة",
     "noOptions": "لا توجد خيارات",
-    "use": "استخدام"
+    "use": "استخدام",
+    "clear": "مسح",
+    "export": "تصدير",
+    "profile": "الملف الشخصي",
+    "signOut": "تسجيل الخروج",
+    "viewOnly": "عرض فقط",
+    "view": "عرض",
+    "remove": "إزالة",
+    "options": "خيارات",
+    "selectedCount": "تم تحديد {{count}}",
+    "saving": "جاري الحفظ...",
+    "select": "اختر",
+    "selectDate": "اختر التاريخ",
+    "from": "من",
+    "to": "إلى",
+    "goodMorning": "صباح الخير",
+    "goodAfternoon": "مساء الخير",
+    "goodEvening": "مساء الخير"
   },
   "nav": {
     "overview": "نظرة عامة",
@@ -1052,8 +1069,14 @@
     },
     "range": {
       "period": "الفترة",
+      "custom": "نطاق مخصص",
       "preset": {
-        "period": "الفترة"
+        "period": "فترات محددة",
+        "lastHour": "آخر ساعة",
+        "last3h": "آخر 3 ساعات",
+        "today": "اليوم",
+        "yesterday": "أمس",
+        "last7d": "آخر 7 أيام"
       }
     },
     "mobile": {

@@ -32,7 +32,24 @@
     "details": "Details",
     "status": "Status",
     "noOptions": "No options",
-    "use": "Use"
+    "use": "Use",
+    "clear": "Clear",
+    "export": "Export",
+    "profile": "Profile",
+    "signOut": "Sign out",
+    "viewOnly": "View only",
+    "view": "View",
+    "remove": "Remove",
+    "options": "Options",
+    "selectedCount": "{{count}} selected",
+    "saving": "Saving...",
+    "select": "Select",
+    "selectDate": "Select date",
+    "from": "From",
+    "to": "To",
+    "goodMorning": "Good morning",
+    "goodAfternoon": "Good afternoon",
+    "goodEvening": "Good evening"
   },
   "nav": {
     "overview": "Overview",
@@ -1052,8 +1069,14 @@
     },
     "range": {
       "period": "Period",
+      "custom": "Custom range",
       "preset": {
-        "period": "Period"
+        "period": "Presets",
+        "lastHour": "Last hour",
+        "last3h": "Last 3 hours",
+        "today": "Today",
+        "yesterday": "Yesterday",
+        "last7d": "Last 7 days"
       }
     },
     "mobile": {
