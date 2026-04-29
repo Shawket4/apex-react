@@ -462,7 +462,9 @@
       "destinationsCount_other": "{{count}} وجهة",
       "hasReceiptBatch": "تحتوي على صور إيصالات مرفوعة",
       "multiContainer": "متعددة العيون #{{id}}",
-      "singleTrip": "رحلة فردية"
+      "singleTrip": "رحلة فردية",
+      "containersCount": "{{count}} عين",
+      "destinationsCount": "{{count}} وجهة"
     },
     "expanded": {
       "audit": "السجل",
@@ -502,7 +504,9 @@
       "successParent_few": "تم حذف الرحلة متعددة العيون ({{count}} عيون)",
       "successParent_many": "تم حذف الرحلة متعددة العيون ({{count}} عين)",
       "successParent_other": "تم حذف الرحلة متعددة العيون ({{count}} عين)",
-      "failed": "فشل حذف الرحلة"
+      "failed": "فشل حذف الرحلة",
+      "descriptionParent": "سيتم حذف الرحلة الأم وجميع العيون نهائياً. لا يمكن التراجع.",
+      "successParent": "تم حذف الرحلة متعددة العيون"
     },
     "dialog": {
       "map": {
@@ -551,6 +555,7 @@
       "dialogDescription_few": "{{count}} صور مرفقة من السائق.",
       "dialogDescription_many": "{{count}} صورة مرفقة من السائق.",
       "dialogDescription_other": "{{count}} صورة مرفقة من السائق.",
+      "dialogDescription": "صور مرفقة من السائق.",
       "imageAlt": "صورة الإيصال {{n}}",
       "noImages": "لا توجد صور إيصالات مرفقة بهذه الرحلة"
     },
@@ -639,6 +644,7 @@
         "description_few": "{{count}} أرقام إيصالات موجودة بالفعل. راجع الفروقات وقرر الاستبدال.",
         "description_many": "{{count}} رقم إيصال موجود بالفعل. راجع الفروقات وقرر الاستبدال.",
         "description_other": "{{count}} رقم إيصال موجود بالفعل. راجع الفروقات وقرر الاستبدال.",
+        "description": "يوجد أرقام إيصالات مكررة. راجع الفروقات وقرر الاستبدال.",
         "duplicateNumber": "تكرار {{n}}",
         "existing": "الموجود",
         "existingParent": "رحلة متعددة العيون",

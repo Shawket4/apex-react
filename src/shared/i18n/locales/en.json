@@ -462,7 +462,9 @@
       "destinationsCount_other": "{{count}} destinations",
       "hasReceiptBatch": "Has uploaded receipt images",
       "multiContainer": "Multi-container #{{id}}",
-      "singleTrip": "Single trip"
+      "singleTrip": "Single trip",
+      "containersCount": "{{count}} containers",
+      "destinationsCount": "{{count}} destinations"
     },
     "expanded": {
       "audit": "Audit",
@@ -502,7 +504,9 @@
       "successParent_many": "Multi-container trip deleted ({{count}} containers)",
       "successParent_zero": "تم حذف الرحلة متعددة العيون",
       "successParent_two": "Multi-container trip deleted ({{count}} containers)",
-      "successParent_few": "Multi-container trip deleted ({{count}} containers)"
+      "successParent_few": "Multi-container trip deleted ({{count}} containers)",
+      "descriptionParent": "This will permanently delete the parent trip and all {{count}} containers. This cannot be undone.",
+      "successParent": "Multi-container trip deleted ({{count}} containers)"
     },
     "dialog": {
       "map": {
@@ -551,6 +555,7 @@
       "dialogDescription_few": "{{count}} images attached by the driver.",
       "dialogDescription_many": "{{count}} images attached by the driver.",
       "dialogDescription_other": "{{count}} images attached by the driver.",
+      "dialogDescription": "{{count}} images attached by the driver.",
       "imageAlt": "Receipt image {{n}}",
       "noImages": "No receipt images attached to this trip"
     },
@@ -639,6 +644,7 @@
         "description_few": "{{count}} receipt numbers already exist. Review the differences and decide whether to overwrite.",
         "description_many": "{{count}} receipt numbers already exist. Review the differences and decide whether to overwrite.",
         "description_other": "{{count}} receipt numbers already exist. Review the differences and decide whether to overwrite.",
+        "description": "{{count}} receipt numbers already exist. Review the differences and decide whether to overwrite.",
         "duplicateNumber": "Duplicate {{n}}",
         "existing": "Existing",
         "existingParent": "Multi-container trip",
