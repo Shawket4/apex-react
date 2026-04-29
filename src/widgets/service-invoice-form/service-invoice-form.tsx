@@ -16,6 +16,7 @@ import {
 } from '@/entities/service-invoice/schemas';
 import type { Car } from '@/entities/car/schemas';
 import { useCars } from '@/entities/car/queries';
+import { useDrivers } from '@/entities/driver/queries';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { Textarea } from '@/shared/ui/textarea';
@@ -53,6 +54,7 @@ export function ServiceInvoiceForm({
 }: ServiceInvoiceFormProps) {
   const { t } = useTranslation();
   const { data: cars = [] } = useCars();
+  const { data: drivers = [] } = useDrivers();
 
   const form = useForm<ServiceInvoiceFormValues>({
     resolver: zodResolver(serviceInvoiceFormSchema),
@@ -73,6 +75,11 @@ export function ServiceInvoiceForm({
   const carOptions = React.useMemo(
     () => cars.map((c) => ({ value: c.ID, label: c.car_no_plate })),
     [cars],
+  );
+
+  const driverOptions = React.useMemo(
+    () => drivers.map((d) => ({ value: d.name, label: d.name, description: d.mobile_number || undefined })),
+    [drivers],
   );
 
   const watchedCarId = form.watch('car_id');
@@ -169,7 +176,13 @@ export function ServiceInvoiceForm({
                     <FormItem>
                       <FormLabel>{t('serviceInvoices.fields.driver')}</FormLabel>
                       <FormControl>
-                        <Input placeholder={t('fuelEvents.fields.selectDriver')} {...field} />
+                        <SearchableSelect
+                          options={driverOptions}
+                          value={field.value}
+                          onChange={field.onChange}
+                          placeholder={t('fuelEvents.fields.selectDriver')}
+                          allowCustom
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
