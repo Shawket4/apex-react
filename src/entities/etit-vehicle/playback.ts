@@ -180,6 +180,57 @@ export function stateAtTime(track: PlaybackTrack, ms: number): PlaybackState | n
   };
 }
 
+/**
+ * Returns interpolated state at a fractional index.
+ * index 0.5 is halfway between points[0] and points[1].
+ */
+export function stateAtIndex(track: PlaybackTrack, index: number): PlaybackState | null {
+  const points = track.points;
+  const len = points.length;
+  if (len === 0) return null;
+
+  if (index <= 0) {
+    const p = points[0];
+    return {
+      lat: p.lat,
+      lng: p.lng,
+      speed: p.speed,
+      speedLimit: p.speedLimit,
+      timestamp: p.timestamp,
+      speeding: p.speedLimit > 0 && p.speed > p.speedLimit,
+    };
+  }
+
+  if (index >= len - 1) {
+    const p = points[len - 1];
+    return {
+      lat: p.lat,
+      lng: p.lng,
+      speed: p.speed,
+      speedLimit: p.speedLimit,
+      timestamp: p.timestamp,
+      speeding: p.speedLimit > 0 && p.speed > p.speedLimit,
+    };
+  }
+
+  const i = Math.floor(index);
+  const t = index - i;
+  const a = points[i];
+  const b = points[i + 1];
+
+  const timeA = a.timestamp.getTime();
+  const timeB = b.timestamp.getTime();
+
+  return {
+    lat: a.lat + (b.lat - a.lat) * t,
+    lng: a.lng + (b.lng - a.lng) * t,
+    speed: a.speed,
+    speedLimit: a.speedLimit,
+    timestamp: new Date(timeA + (timeB - timeA) * t),
+    speeding: a.speedLimit > 0 && a.speed > a.speedLimit,
+  };
+}
+
 /* -------------------------------------------------------------------------- */
 /* Stops + sensor events near a moment                                         */
 /*                                                                             */

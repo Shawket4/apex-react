@@ -8,7 +8,7 @@ import {
   activeStop,
   buildPlaybackTrack,
   recentSensor,
-  stateAtTime,
+  stateAtIndex,
   type PlaybackState,
   type PlaybackTrack,
 } from '@/entities/etit-vehicle/playback';
@@ -75,12 +75,47 @@ export function EtitPlaybackPlayer({
   const track = React.useMemo<PlaybackTrack>(() => buildPlaybackTrack(points), [points]);
   const playable = track.points.length >= 2;
 
+  // Derive current index from currentMs for initialization and snapping
+  const [currentIndex, setCurrentIndex] = React.useState(0);
+
+  // Sync currentIndex when currentMs changes from outside (e.g. Snap to timestamp)
+  // We use the nearest point index.
+  React.useEffect(() => {
+    if (track.points.length === 0) return;
+    
+    // If playing, we are the ones driving currentMs, so don't sync back 
+    // unless the gap is huge (indicates an external jump).
+    const state = stateAtIndex(track, currentIndexRef.current);
+    const currentDerivedMs = state?.timestamp.getTime() ?? 0;
+    const diffWithInternal = Math.abs(currentMs - currentDerivedMs);
+    
+    if (playing && diffWithInternal < 1000) return;
+
+    // Find nearest point index
+    let nearestIdx = 0;
+    let minDiff = Infinity;
+    for (let i = 0; i < track.points.length; i++) {
+      const diff = Math.abs(currentMs - track.points[i].timestamp.getTime());
+      if (diff < minDiff) {
+        minDiff = diff;
+        nearestIdx = i;
+      } else if (diff > minDiff) {
+        break;
+      }
+    }
+    
+    if (Math.abs(currentIndexRef.current - nearestIdx) > 0.01) {
+      setCurrentIndex(nearestIdx);
+      currentIndexRef.current = nearestIdx;
+    }
+  }, [currentMs, track.points, playing]);
+
   /* -------- rAF loop — only runs when playing ------------------------- */
 
   const speedRef = React.useRef<number>(speed);
-  const currentMsRef = React.useRef(currentMs);
+  const currentIndexRef = React.useRef(currentIndex);
   React.useEffect(() => { speedRef.current = speed; }, [speed]);
-  React.useEffect(() => { currentMsRef.current = currentMs; }, [currentMs]);
+  React.useEffect(() => { currentIndexRef.current = currentIndex; }, [currentIndex]);
 
   React.useEffect(() => {
     if (!playable || !playing) return;
@@ -93,18 +128,27 @@ export function EtitPlaybackPlayer({
       const dt = now - lastFrame;
       lastFrame = now;
 
-      const next = currentMsRef.current + dt * speedRef.current;
-      if (next >= track.endMs) {
-        currentMsRef.current = track.endMs;
-        onCurrentMsChange(track.endMs);
+      // Advance one point per second at speed=1
+      const deltaIndex = (dt / 1000) * speedRef.current;
+      const next = currentIndexRef.current + deltaIndex;
+
+      if (next >= track.points.length - 1) {
+        currentIndexRef.current = track.points.length - 1;
+        setCurrentIndex(track.points.length - 1);
+        onCurrentMsChange(track.points[track.points.length - 1].timestamp.getTime());
         onPlayingChange(false);
         return;
       }
-      currentMsRef.current = next;
+      currentIndexRef.current = next;
 
       // Throttle internal renders to RENDER_INTERVAL_MS.
       if (now - lastRender >= RENDER_INTERVAL_MS) {
-        onCurrentMsChange(next);
+        setCurrentIndex(next);
+        // Map back to timestamp for parent components
+        const state = stateAtIndex(track, next);
+        if (state) {
+          onCurrentMsChange(state.timestamp.getTime());
+        }
         lastRender = now;
       }
       rafId = requestAnimationFrame(tick);
@@ -117,8 +161,8 @@ export function EtitPlaybackPlayer({
   /* -------- Derived state -------------------------------------------- */
 
   const state = React.useMemo<PlaybackState | null>(
-    () => (playable ? stateAtTime(track, currentMs) : null),
-    [playable, track, currentMs],
+    () => (playable ? stateAtIndex(track, currentIndex) : null),
+    [playable, track, currentIndex],
   );
 
   /* -------- Throttled hand-off to parent ----------------------------- */
@@ -159,41 +203,28 @@ export function EtitPlaybackPlayer({
   /* -------- Handlers ------------------------------------------------- */
 
   const handleScrub = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const ts = Number(e.target.value);
-    if (!Number.isFinite(ts)) return;
+    const idx = Number(e.target.value);
+    if (!Number.isFinite(idx)) return;
 
-    // Find nearest point in track.points for snapping
-    if (track.points.length > 0) {
-      let nearestTs = track.points[0].timestamp.getTime();
-      let minDiff = Math.abs(ts - nearestTs);
-
-      for (let i = 1; i < track.points.length; i++) {
-        const pointTs = track.points[i].timestamp.getTime();
-        const diff = Math.abs(ts - pointTs);
-        if (diff < minDiff) {
-          minDiff = diff;
-          nearestTs = pointTs;
-        } else if (diff > minDiff) {
-          // Since points are sorted by time, if diff starts increasing, we found it.
-          break;
-        }
-      }
-      onCurrentMsChange(nearestTs);
-    } else {
-      onCurrentMsChange(ts);
+    setCurrentIndex(idx);
+    const point = track.points[Math.round(idx)];
+    if (point) {
+      onCurrentMsChange(point.timestamp.getTime());
     }
   };
 
   const handleTogglePlay = () => {
     if (!playable) return;
-    if (currentMs >= track.endMs && !playing) {
-      onCurrentMsChange(track.startMs);
+    if (currentIndex >= track.points.length - 1 && !playing) {
+      setCurrentIndex(0);
+      onCurrentMsChange(track.points[0].timestamp.getTime());
     }
     onPlayingChange(!playing);
   };
 
   const handleRestart = () => {
-    onCurrentMsChange(track.startMs);
+    setCurrentIndex(0);
+    onCurrentMsChange(track.points[0].timestamp.getTime());
   };
 
   /* -------- Render --------------------------------------------------- */
@@ -238,10 +269,10 @@ export function EtitPlaybackPlayer({
       <div className="relative mb-0.5">
         <input
           type="range"
-          min={track.startMs}
-          max={track.endMs}
-          step={1}
-          value={currentMs}
+          min={0}
+          max={track.points.length - 1}
+          step={0.01}
+          value={currentIndex}
           onChange={handleScrub}
           data-no-drag
           className="block h-1.5 w-full cursor-pointer appearance-none rounded-full bg-muted accent-primary"
@@ -249,11 +280,13 @@ export function EtitPlaybackPlayer({
         />
       </div>
 
-      {/* Time labels */}
+      {/* Point / Time labels */}
       <div className="mb-2 flex justify-between text-[9px] font-bold tabular-nums text-muted-foreground/60 uppercase tracking-tighter">
-        <span>{formatCairoClock(track.startMs)}</span>
-        <span className="text-muted-foreground">{formatCairo(currentMs, 'datetime')}</span>
-        <span>{formatCairoClock(track.endMs)}</span>
+        <span>#{1}</span>
+        <span className="text-muted-foreground">
+          {Math.round(currentIndex) + 1} / {track.points.length} • {formatCairo(currentMs, 'datetime')}
+        </span>
+        <span>#{track.points.length}</span>
       </div>
 
       {/* Controls */}

@@ -5,56 +5,34 @@
     "search": "Search",
     "searchPlaceholder": "Search...",
     "refreshing": "Refreshing",
-    "live": "Live",
     "filter": "Filter",
+    "clearFilters": "Clear filters",
     "save": "Save",
+    "saveSuccess": "Saved successfully",
     "cancel": "Cancel",
     "delete": "Delete",
+    "deleteSuccess": "Deleted successfully",
     "edit": "Edit",
+    "create": "Create",
+    "createSuccess": "Created successfully",
     "confirm": "Confirm",
     "close": "Close",
     "exit": "Exit",
     "back": "Back",
-    "show": "Show",
-    "hide": "Hide",
-    "enterFullscreen": "Enter fullscreen",
-    "exitFullscreen": "Exit fullscreen",
+    "actions": "Actions",
     "retry": "Retry",
     "reset": "Reset",
     "loading": "Loading...",
-    "saving": "Saving...",
     "optional": "Optional",
+    "unknown": "Unknown",
     "selectOne": "Select one",
     "noResults": "No results",
     "notFound": "Not found",
     "viewAll": "View all",
     "details": "Details",
     "status": "Status",
-    "goodMorning": "Good morning",
-    "goodAfternoon": "Good afternoon",
-    "goodEvening": "Good evening",
-    "signOut": "Sign out",
-    "profile": "Profile",
-    "viewOnly": "View only",
-    "from": "From",
-    "to": "To",
-    "export": "Export",
-    "clear": "Clear",
-    "selectDate": "Select a date",
-    "view": "View",
-    "remove": "Remove",
-    "select": "Select",
-    "selectedCount": "{{count}} selected",
-    "options": "Options",
     "noOptions": "No options",
-    "use": "Use",
-    "today": "Today",
-    "yesterday": "Yesterday",
-    "thisWeek": "This week",
-    "lastWeek": "Last week",
-    "thisMonth": "This month",
-    "lastMonth": "Last month",
-    "custom": "Custom range"
+    "use": "Use"
   },
   "nav": {
     "overview": "Overview",
@@ -394,7 +372,6 @@
       "deleteMultiContainer": "Delete multi-container trip",
       "editMultiContainer": "Edit multi-container trip",
       "manageReceipts": "Manage receipts",
-      "statistics": "Statistics",
       "viewOnMap": "View on map",
       "viewReceiptBatch": "View receipt batch",
       "viewRouteSummary": "View route summary",
@@ -409,6 +386,7 @@
       "route": "Route",
       "status": "Status",
       "tank": "Tank",
+      "terminal": "Terminal",
       "vehicleDriver": "Vehicle / Driver"
     },
     "fields": {
@@ -509,6 +487,11 @@
       "successParent_two": "Multi-container trip deleted ({{count}} containers)",
       "successParent_few": "Multi-container trip deleted ({{count}} containers)"
     },
+    "dialog": {
+      "map": {
+        "noCoordinates": "No coordinates available for this trip."
+      }
+    },
     "export": {
       "empty": "No trips to export for the current filters",
       "failed": "Failed to export trips",
@@ -599,8 +582,7 @@
         "selectCompanyFirst": "Select a company first",
         "selectTerminal": "Select a terminal",
         "selectTerminalFirst": "Select a terminal first",
-        "selectDropOff": "Select drop-off point",
-        "gasType": "e.g. 80, 92, 95"
+        "selectDropOff": "Select drop-off point"
       },
       "validation": {
         "fillRequired": "Please fill in all required fields",
@@ -993,13 +975,8 @@
   },
   "etit": {
     "header": {
-      "title": "ETIT live tracking",
-      "subtitle": "{{vehicleCount}} vehicles · {{onMapCount}} on map",
       "live": "Live",
-      "liveOffline": "Live offline",
-      "reconnecting": "Reconnecting...",
-      "openVehicleList": "Open vehicle list",
-      "liveStream": "Live (stream)"
+      "reconnecting": "Reconnecting..."
     },
     "list": {
       "searchPlaceholder": "Search by plate or codename",
@@ -1040,8 +1017,7 @@
       "stats": {
         "mileage": "Mileage",
         "activeTime": "Active time",
-        "stops": "Stops",
-        "fuel": "Fuel"
+        "stops": "Stops"
       },
       "overlays": "Overlays",
       "toggleStops": "Stops",
@@ -1049,12 +1025,8 @@
     },
     "player": {
       "empty": "Load a history range with at least two timestamped points to enable playback.",
-      "play": "Play",
-      "pause": "Pause",
-      "stop": "Stop",
       "restart": "Restart",
       "speed": "Speed",
-      "over": "over",
       "scrubberLabel": "Playback position",
       "stoppedFor": "Stopped · {{duration}}",
       "atTime": "at {{time}}",
@@ -1070,33 +1042,19 @@
         "limit": "Limit",
         "stopHeading": "Stop",
         "unknownLocation": "Unknown location",
-        "playback": "Playback"
-      },
-      "empty": {
-        "title": "Pick a vehicle to show",
-        "descDesktop": "Tick the checkbox next to a vehicle in the list, or click the crosshair to focus the camera.",
-        "descMobile": "Open the vehicle list and tick the ones you want on the map."
+        "playback": "Playback",
+        "snapToTime": "Snap to this timestamp"
       }
     },
     "units": {
       "kmh": "km/h",
       "km": "km"
     },
-    "errors": {
-      "proxyUnreachable": "Could not reach the ETIT proxy."
-    },
     "range": {
-      "custom": "Custom",
+      "period": "Period",
       "preset": {
-        "lastHour": "Last hour",
-        "last3h": "Last 3 hours",
-        "today": "Today",
-        "yesterday": "Yesterday",
-        "last7d": "Last 7 days"
-      },
-      "hours": "Hours",
-      "minutes": "Minutes",
-      "period": "Period"
+        "period": "Period"
+      }
     },
     "mobile": {
       "controls": "History",
