@@ -1,12 +1,20 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/shared/config/constants';
 import * as api from './api';
+import { getCars } from '@/entities/car/api';
 import type { ServiceInvoiceRequest } from './schemas';
 
-export function useServiceInvoices(page = 1, limit = 10) {
+export function useServiceInvoices(carId?: number | string, page = 1, limit = 10) {
   return useQuery({
-    queryKey: [...QUERY_KEYS.serviceInvoices, { page, limit }],
-    queryFn: () => api.getServiceInvoices(page, limit),
+    queryKey: [...QUERY_KEYS.serviceInvoices, { carId, page, limit }],
+    queryFn: () => api.getServiceInvoices(carId, page, limit),
+  });
+}
+
+export function useServiceCars(page = 1, limit = 10) {
+  return useQuery({
+    queryKey: [...QUERY_KEYS.serviceInvoices, 'cars', { page, limit }],
+    queryFn: () => getCars(page, limit),
   });
 }
 
@@ -49,11 +57,11 @@ export function useDeleteServiceInvoice() {
   });
 }
 
-export function useSearchServiceInvoices(query: string, plateNumber?: string) {
+export function useSearchServiceInvoices(query: string, carId?: number | string, page = 1, limit = 10) {
   return useQuery({
-    queryKey: [...QUERY_KEYS.serviceInvoices, 'search', { query, plateNumber }],
-    queryFn: () => api.searchServiceInvoices(query, plateNumber),
+    queryKey: [...QUERY_KEYS.serviceInvoices, 'search', { query, carId, page, limit }],
+    queryFn: () => api.searchServiceInvoices(query, carId, page, limit),
     enabled: query.length > 0,
-    staleTime: 0, // Search results should be fresh
+    staleTime: 0,
   });
 }

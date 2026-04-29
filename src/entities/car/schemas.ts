@@ -12,8 +12,19 @@ export const carSchema = z.object({
   // Trip module: capacity validation + dropdown subtitle
   tank_capacity: z.number().optional().nullable(),
   car_type: z.string().optional().nullable(),
+  transporter: z.string().optional().nullable(),
 });
 
 export type Car = z.infer<typeof carSchema>;
 
 export const carsResponseSchema = z.array(carSchema);
+
+export const paginatedCarsResponseSchema = z.object({
+  data: z.array(carSchema),
+  pagination: z.object({
+    total: z.number(),
+    page: z.number(),
+    limit: z.number(),
+    totalPages: z.number(),
+  }),
+});

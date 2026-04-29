@@ -50,6 +50,12 @@ interface DataTableProps<TData, TValue> {
    */
   getRowCanExpand?: (row: Row<TData>) => boolean;
   renderSubComponent?: (row: Row<TData>) => React.ReactNode;
+  /** Server-side pagination config */
+  pagination?: {
+    page: number;
+    totalPages: number;
+    onPageChange: (page: number) => void;
+  };
 }
 
 /**
@@ -81,6 +87,7 @@ export function DataTable<TData, TValue>({
   footer,
   getRowCanExpand,
   renderSubComponent,
+  pagination,
 }: DataTableProps<TData, TValue>) {
   const { t } = useTranslation();
   const [sorting, setSorting] = React.useState<SortingState>([]);
@@ -93,7 +100,18 @@ export function DataTable<TData, TValue>({
   const table = useReactTable({
     data,
     columns,
-    state: { sorting, columnFilters, rowSelection, expanded },
+    state: { 
+      sorting, 
+      columnFilters, 
+      rowSelection, 
+      expanded,
+      ...(pagination ? {
+        pagination: {
+          pageIndex: pagination.page - 1,
+          pageSize: pageSize,
+        }
+      } : {})
+    },
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onRowSelectionChange: setRowSelection,
@@ -101,10 +119,17 @@ export function DataTable<TData, TValue>({
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
+    getPaginationRowModel: pagination ? undefined : getPaginationRowModel(),
+    manualPagination: !!pagination,
+    pageCount: pagination?.totalPages,
     getExpandedRowModel: expansionEnabled ? getExpandedRowModel() : undefined,
     getRowCanExpand,
-    initialState: { pagination: { pageSize } },
+    initialState: { 
+      pagination: { 
+        pageSize,
+        pageIndex: pagination ? pagination.page - 1 : 0 
+      } 
+    },
   });
 
   // Resolve the footer slot — accept array-of-cells or rendered element forms
@@ -233,25 +258,25 @@ export function DataTable<TData, TValue>({
         </div>
       </div>
 
-      {table.getPageCount() > 1 && (
+      {(pagination ? pagination.totalPages > 1 : table.getPageCount() > 1) && (
         <div className="flex items-center justify-between gap-2 text-sm text-muted-foreground">
           <span>
-            {table.getState().pagination.pageIndex + 1} / {table.getPageCount()}
+            {pagination ? pagination.page : table.getState().pagination.pageIndex + 1} / {pagination ? pagination.totalPages : table.getPageCount()}
           </span>
           <div className="flex items-center gap-1">
             <Button
               variant="outline"
               size="icon"
-              onClick={() => table.previousPage()}
-              disabled={!table.getCanPreviousPage()}
+              onClick={() => pagination ? pagination.onPageChange(pagination.page - 1) : table.previousPage()}
+              disabled={pagination ? pagination.page <= 1 : !table.getCanPreviousPage()}
             >
               <ChevronLeft className="h-4 w-4 rtl:rotate-180" />
             </Button>
             <Button
               variant="outline"
               size="icon"
-              onClick={() => table.nextPage()}
-              disabled={!table.getCanNextPage()}
+              onClick={() => pagination ? pagination.onPageChange(pagination.page + 1) : table.nextPage()}
+              disabled={pagination ? pagination.page >= pagination.totalPages : !table.getCanNextPage()}
             >
               <ChevronRight className="h-4 w-4 rtl:rotate-180" />
             </Button>

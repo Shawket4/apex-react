@@ -1,6 +1,15 @@
 import { z } from 'zod';
 import { carSchema } from '../car/schemas';
 
+export const paginationSchema = z.object({
+  total: z.number(),
+  page: z.number(),
+  limit: z.number(),
+  totalPages: z.number(),
+});
+
+export type PaginationMetadata = z.infer<typeof paginationSchema>;
+
 export const inspectionItemSchema = z.preprocess((val: any) => {
   if (val && typeof val === 'object' && 'id' in val && !('ID' in val)) {
     return { ...val, ID: val.id };
@@ -36,7 +45,7 @@ export const serviceInvoiceSchema = z.preprocess((val: any) => {
   car_id: z.number().optional(), // Make optional as it might be missing in search results
   plate_number: z.string(),
   driver_name: z.string(),
-  date: z.string(), 
+  date: z.string(),
   meter_reading: z.number(),
   supervisor: z.string(),
   operating_region: z.string(),
@@ -70,12 +79,12 @@ export type ServiceInvoiceFormValues = z.infer<typeof serviceInvoiceFormSchema>;
 
 export const serviceInvoicesResponseSchema = z.object({
   data: z.array(serviceInvoiceSchema),
-  pagination: z.object({
-    total: z.number(),
-    page: z.number(),
-    limit: z.number(),
-    totalPages: z.number(),
-  }),
+  pagination: paginationSchema,
+});
+
+export const serviceCarsResponseSchema = z.object({
+  data: z.array(carSchema),
+  pagination: paginationSchema,
 });
 
 export const searchResponseSchema = z.object({
@@ -85,4 +94,5 @@ export const searchResponseSchema = z.object({
   invoice_count: z.number(),
   results: z.array(serviceInvoiceSchema),
   search_time: z.string(),
+  pagination: paginationSchema.optional(),
 });

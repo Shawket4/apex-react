@@ -6,10 +6,18 @@ import {
   Search, 
   Sparkles, 
   Loader2,
-  X
+  X,
+  ArrowLeft
 } from 'lucide-react';
-import { useServiceInvoices, useSearchServiceInvoices, useDeleteServiceInvoice } from '@/entities/service-invoice/queries';
+import { 
+  useServiceInvoices, 
+  useServiceCars,
+  useSearchServiceInvoices, 
+  useDeleteServiceInvoice 
+} from '@/entities/service-invoice/queries';
 import { ServiceInvoicesTable } from '@/widgets/service-invoices-table/service-invoices-table';
+import { ServiceCarsTable } from '@/widgets/service-cars-table/service-cars-table';
+import { type Car } from '@/entities/car/schemas';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { Card, CardContent } from '@/shared/ui/card';
@@ -17,30 +25,50 @@ import { PageShell } from '@/shared/ui/page-shell';
 import { useDebounce } from '@/shared/hooks/use-debounce';
 import { toast } from '@/shared/ui/toaster';
 import { ConfirmDialog } from '@/shared/ui/confirm-dialog';
-import { EmptyState } from '@/shared/ui/empty-state';
 
 export default function ServiceInvoicesPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  
+  // States
+  const [selectedCar, setSelectedCar] = React.useState<Car | null>(null);
   const [searchQuery, setSearchQuery] = React.useState('');
+  const [carPage, setCarPage] = React.useState(1);
+  const [invoicePage, setInvoicePage] = React.useState(1);
+  const [searchPage, setSearchPage] = React.useState(1);
+  const [deleteId, setDeleteId] = React.useState<number | null>(null);
+
   const debouncedSearch = useDebounce(searchQuery, 500);
+  const isSearching = debouncedSearch.length > 0;
+
+  // Queries
+  const { 
+    data: carsData, 
+    isLoading: carsLoading 
+  } = useServiceCars(carPage);
 
   const { 
-    data: listData, 
-    isLoading: listLoading,
-  } = useServiceInvoices(1); // Default to first page for now
+    data: invoicesData, 
+    isLoading: invoicesLoading 
+  } = useServiceInvoices(selectedCar?.ID, invoicePage);
 
   const { 
     data: searchData, 
     isFetching: searchLoading 
-  } = useSearchServiceInvoices(debouncedSearch);
+  } = useSearchServiceInvoices(debouncedSearch, selectedCar?.ID, searchPage);
 
   const deleteMutation = useDeleteServiceInvoice();
-  const [deleteId, setDeleteId] = React.useState<number | null>(null);
 
-  const isSearching = debouncedSearch.length > 0;
-  const currentData = isSearching ? searchData?.results || [] : listData?.data || [];
-  const loading = isSearching ? searchLoading : listLoading;
+  // Reset pages when context changes
+  React.useEffect(() => {
+    setInvoicePage(1);
+    setSearchPage(1);
+  }, [selectedCar?.ID]);
+
+  React.useEffect(() => {
+    setSearchPage(1);
+  }, [debouncedSearch]);
+
 
   const handleDelete = (id: number) => {
     setDeleteId(id);
@@ -60,13 +88,21 @@ export default function ServiceInvoicesPage() {
 
   return (
     <PageShell
-      title={t('serviceInvoices.title')}
-      description={t('serviceInvoices.subtitle')}
+      title={selectedCar ? selectedCar.car_no_plate : t('serviceInvoices.title')}
+      description={selectedCar ? t('serviceInvoices.subtitle') : t('serviceInvoices.subtitle')}
       actions={
-        <Button onClick={() => navigate('/service-invoices/new')}>
-          <Plus className="mr-2 h-4 w-4" />
-          {t('serviceInvoices.newInvoice')}
-        </Button>
+        <div className="flex items-center gap-2">
+          {selectedCar && (
+            <Button variant="outline" onClick={() => setSelectedCar(null)}>
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              {t('common.back')}
+            </Button>
+          )}
+          <Button onClick={() => navigate('/service-invoices/new')}>
+            <Plus className="mr-2 h-4 w-4" />
+            {t('serviceInvoices.newInvoice')}
+          </Button>
+        </div>
       }
     >
       <div className="flex flex-col gap-6">
@@ -114,20 +150,49 @@ export default function ServiceInvoicesPage() {
         </Card>
 
         {/* Results */}
-        {currentData.length === 0 && !loading ? (
-          <EmptyState
-            icon={<Search className="h-12 w-12" />}
-            title={t('common.noResults')}
-            description={isSearching ? t('trips.empty.description') : t('fuelEvents.noEventsDescription')}
-          />
-        ) : (
+        {isSearching ? (
           <Card>
             <CardContent className="p-0">
               <ServiceInvoicesTable 
-                data={currentData} 
-                loading={loading}
+                data={searchData?.results || []} 
+                loading={searchLoading}
                 onDelete={handleDelete}
-                isSearchResults={isSearching}
+                isSearchResults={true}
+                pagination={searchData?.pagination ? {
+                  page: searchData.pagination.page,
+                  totalPages: searchData.pagination.totalPages,
+                  onPageChange: setSearchPage,
+                } : undefined}
+              />
+            </CardContent>
+          </Card>
+        ) : selectedCar ? (
+          <Card>
+            <CardContent className="p-0">
+              <ServiceInvoicesTable 
+                data={invoicesData?.data || []} 
+                loading={invoicesLoading}
+                onDelete={handleDelete}
+                pagination={invoicesData?.pagination ? {
+                  page: invoicesData.pagination.page,
+                  totalPages: invoicesData.pagination.totalPages,
+                  onPageChange: setInvoicePage,
+                } : undefined}
+              />
+            </CardContent>
+          </Card>
+        ) : (
+          <Card>
+            <CardContent className="p-0">
+              <ServiceCarsTable 
+                data={carsData?.data || []} 
+                loading={carsLoading}
+                onSelect={setSelectedCar}
+                pagination={carsData?.pagination ? {
+                  page: carsData.pagination.page,
+                  totalPages: carsData.pagination.totalPages,
+                  onPageChange: setCarPage,
+                } : undefined}
               />
             </CardContent>
           </Card>

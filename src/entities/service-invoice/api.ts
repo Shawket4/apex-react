@@ -7,10 +7,17 @@ import {
   type ServiceInvoiceRequest,
 } from './schemas';
 
-export async function getServiceInvoices(page = 1, limit = 10) {
-  const data = await apiGet(`/api/service-invoices?page=${page}&limit=${limit}`);
+export async function getServiceInvoices(carId?: number | string, page = 1, limit = 10) {
+  const params = new URLSearchParams({ 
+    page: String(page), 
+    limit: String(limit) 
+  });
+  if (carId) params.append('car_id', String(carId));
+  
+  const data = await apiGet(`/api/service-invoices?${params.toString()}`);
   return serviceInvoicesResponseSchema.parse(data);
 }
+
 
 export async function getServiceInvoice(id: number | string): Promise<ServiceInvoice> {
   const response = await apiGet<{ data: unknown }>(`/api/service-invoices/${id}`);
@@ -34,10 +41,14 @@ export async function deleteServiceInvoice(id: number | string): Promise<void> {
   await apiDelete(`/api/service-invoices/${id}`);
 }
 
-export async function searchServiceInvoices(query: string, plateNumber?: string) {
-  const params = new URLSearchParams({ query });
-  if (plateNumber) params.append('plate_number', plateNumber);
-
+export async function searchServiceInvoices(query: string, carId?: number | string, page = 1, limit = 10) {
+  const params = new URLSearchParams({ 
+    query,
+    page: String(page),
+    limit: String(limit)
+  });
+  if (carId) params.append('car_id', String(carId));
+  
   const data = await apiGet(`/api/service-invoices/search?${params.toString()}`);
   return searchResponseSchema.parse(data);
 }

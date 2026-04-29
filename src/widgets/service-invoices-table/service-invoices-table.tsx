@@ -24,6 +24,11 @@ interface ServiceInvoicesTableProps {
   loading?: boolean;
   onDelete?: (id: number) => void;
   isSearchResults?: boolean;
+  pagination?: {
+    page: number;
+    totalPages: number;
+    onPageChange: (page: number) => void;
+  };
 }
 
 export function ServiceInvoicesTable({
@@ -31,6 +36,7 @@ export function ServiceInvoicesTable({
   loading,
   onDelete,
   isSearchResults = false,
+  pagination,
 }: ServiceInvoicesTableProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -121,6 +127,7 @@ export function ServiceInvoicesTable({
       data={data}
       loading={loading}
       emptyState={t('common.noResults')}
+      pagination={pagination}
     />
   );
 }
