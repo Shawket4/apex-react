@@ -75,7 +75,8 @@
     "speedViolations": "مخالفات السرعة",
     "tablets": "الأجهزة اللوحية",
     "feeMappings": "خرائط الأسعار",
-    "etit": "التتبع المباشر"
+    "etit": "التتبع المباشر",
+    "serviceInvoices": "فواتير الصيانة"
   },
   "auth": {
     "loginTitle": "مرحباً بعودتك",
@@ -1126,5 +1127,45 @@
       "description": "سيتم حذف {{name}} نهائياً. لن يتمكن من تسجيل الدخول بعد الآن."
     },
     "empty": "لا يوجد مستخدمون"
+  },
+  "serviceInvoices": {
+    "title": "فواتير الصيانة",
+    "subtitle": "تتبع سجلات صيانة وفحص المركبات",
+    "newInvoice": "فاتورة جديدة",
+    "searchPlaceholder": "ابحث في بنود الصيانة (ذكاء اصطناعي)...",
+    "fields": {
+      "date": "التاريخ",
+      "plateNumber": "رقم اللوحة",
+      "driver": "السائق",
+      "meterReading": "قراءة العداد",
+      "supervisor": "المشرف",
+      "region": "منطقة التشغيل",
+      "matchCount": "عدد التطابقات",
+      "service": "وصف الخدمة",
+      "notes": "ملاحظات",
+      "items": "بنود الفحص"
+    },
+    "search": {
+      "semanticMatch": "تطابق دلالي",
+      "keywordMatch": "تطابق كلمة مفتاحية",
+      "hybridMatch": "تطابق هجين",
+      "score": "الدرجة",
+      "distance": "مسافة المتجه"
+    },
+    "receipt": {
+      "title": "إيصال صيانة",
+      "subtitle": "سجل صيانة",
+      "billedTo": "بيانات المركبة",
+      "details": "تفاصيل الفاتورة",
+      "summary": "ملخص الخدمة"
+    },
+    "form": {
+      "checklistTitle": "قائمة فحص خدمة",
+      "truckSubtitle": "الشاحنة",
+      "clearItem": "مسح هذا البند",
+      "addLines": "إضافة أسطر إضافية",
+      "placeholderService": "بند الخدمة {{n}}",
+      "placeholderNotes": "ملاحظات..."
+    }
   }
 }

@@ -49,6 +49,10 @@ const OilChangeHistoryPage = React.lazy(
 );
 const FeeMappingsPage = React.lazy(() => import('@/pages/fee-mappings/fee-mappings'));
 const UsersPage = React.lazy(() => import('@/pages/users/users'));
+const ServiceInvoicesPage = React.lazy(() => import('@/pages/service-invoices/service-invoices'));
+const ServiceInvoiceNewPage = React.lazy(() => import('@/pages/service-invoices/service-invoice-new'));
+const ServiceInvoiceEditPage = React.lazy(() => import('@/pages/service-invoices/service-invoice-edit'));
+const ServiceInvoiceDetailsPage = React.lazy(() => import('@/pages/service-invoices/service-invoice-details'));
 
 const EtitPage = React.lazy(() => import('@/pages/etit/etit'));
 
@@ -163,6 +167,12 @@ export const router = createBrowserRouter([
           { path: 'oil-changes/new', element: <OilChangeNewPage /> },
           { path: 'oil-changes/:id/edit', element: <OilChangeEditPage /> },
           { path: 'oil-changes/car/:carId', element: <OilChangeHistoryPage /> },
+
+          // Service Invoices
+          { path: 'service-invoices', element: <ServiceInvoicesPage /> },
+          { path: 'service-invoices/new', element: <ServiceInvoiceNewPage /> },
+          { path: 'service-invoices/:id', element: <ServiceInvoiceDetailsPage /> },
+          { path: 'service-invoices/:id/edit', element: <ServiceInvoiceEditPage /> },
 
           // Placeholder domains
           { path: 'trucks', element: <TrucksPage /> },

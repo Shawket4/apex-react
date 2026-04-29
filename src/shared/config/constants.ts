@@ -31,6 +31,8 @@ export const QUERY_KEYS = {
   loanStats: ['loan-stats'] as const,
   fuelEvents: ['fuel-events'] as const,
   fuelEvent: (id: number | string) => ['fuel-events', String(id)] as const,
+  serviceInvoices: ['service-invoices'] as const,
+  serviceInvoice: (id: number | string) => ['service-invoices', String(id)] as const,
 } as const;
 
 export const FUEL_EFFICIENCY = {

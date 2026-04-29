@@ -75,7 +75,8 @@
     "speedViolations": "Speed Violations",
     "tablets": "Tablets",
     "feeMappings": "Fee Mappings",
-    "etit": "Live tracking"
+    "etit": "Live tracking",
+    "serviceInvoices": "Service Invoices"
   },
   "auth": {
     "loginTitle": "Welcome back",
@@ -1126,5 +1127,45 @@
       "description": "This will permanently delete {{name}}. They will no longer be able to sign in."
     },
     "empty": "No users found"
+  },
+  "serviceInvoices": {
+    "title": "Service Invoices",
+    "subtitle": "Track vehicle maintenance and inspection records",
+    "newInvoice": "New Invoice",
+    "searchPlaceholder": "Search service items (AI Hybrid)...",
+    "fields": {
+      "date": "Date",
+      "plateNumber": "Plate Number",
+      "driver": "Driver",
+      "meterReading": "Meter Reading",
+      "supervisor": "Supervisor",
+      "region": "Operating Region",
+      "matchCount": "Match Count",
+      "service": "Service Description",
+      "notes": "Notes",
+      "items": "Inspection Items"
+    },
+    "search": {
+      "semanticMatch": "Semantic Match",
+      "keywordMatch": "Keyword Match",
+      "hybridMatch": "Hybrid Match",
+      "score": "Score",
+      "distance": "Vector Distance"
+    },
+    "receipt": {
+      "title": "Service Receipt",
+      "subtitle": "Maintenance Record",
+      "billedTo": "Vehicle Info",
+      "details": "Invoice Details",
+      "summary": "Service Summary"
+    },
+    "form": {
+      "checklistTitle": "Service Inspection Checklist",
+      "truckSubtitle": "Truck",
+      "clearItem": "Clear this item",
+      "addLines": "Add more lines",
+      "placeholderService": "Service item {{n}}",
+      "placeholderNotes": "Notes..."
+    }
   }
 }

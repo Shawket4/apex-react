@@ -1,0 +1,70 @@
+import { z } from 'zod';
+import { carSchema } from '../car/schemas';
+
+export const inspectionItemSchema = z.object({
+  id: z.number().optional(),
+  service: z.string(),
+  notes: z.string().optional().default(''),
+  item_order: z.number(),
+  matched: z.boolean().optional(),
+  match_type: z.enum(['semantic', 'keyword', 'both']).optional(),
+  distance: z.number().optional(),
+});
+
+export type InspectionItem = z.infer<typeof inspectionItemSchema>;
+
+export const serviceInvoiceSchema = z.object({
+  id: z.number(),
+  car_id: z.number(),
+  plate_number: z.string(),
+  driver_name: z.string(),
+  date: z.string(), // YYYY-MM-DD
+  meter_reading: z.number(),
+  supervisor: z.string(),
+  operating_region: z.string(),
+  car: carSchema.optional(),
+  inspection_items: z.array(inspectionItemSchema).optional().default([]),
+  match_count: z.number().optional(),
+});
+
+export type ServiceInvoice = z.infer<typeof serviceInvoiceSchema>;
+
+export const serviceInvoiceRequestSchema = z.object({
+  car_id: z.number(),
+  driver_name: z.string().min(1, 'Driver name is required'),
+  date: z.string().min(1, 'Date is required'),
+  meter_reading: z.number().min(0, 'Meter reading must be positive'),
+  plate_number: z.string().min(1, 'Plate number is required'),
+  supervisor: z.string().min(1, 'Supervisor is required'),
+  operating_region: z.string().min(1, 'Operating region is required'),
+  inspection_items: z.array(
+    z.object({
+      service: z.string(),
+      notes: z.string().optional().default(''),
+    }),
+  ),
+});
+
+export type ServiceInvoiceRequest = z.infer<typeof serviceInvoiceRequestSchema>;
+
+export const serviceInvoiceFormSchema = serviceInvoiceRequestSchema;
+export type ServiceInvoiceFormValues = z.infer<typeof serviceInvoiceFormSchema>;
+
+export const serviceInvoicesResponseSchema = z.object({
+  data: z.array(serviceInvoiceSchema),
+  pagination: z.object({
+    total: z.number(),
+    page: z.number(),
+    limit: z.number(),
+    totalPages: z.number(),
+  }),
+});
+
+export const searchResponseSchema = z.object({
+  success: z.boolean(),
+  query: z.string(),
+  total_matches: z.number(),
+  invoice_count: z.number(),
+  results: z.array(serviceInvoiceSchema),
+  search_time: z.string(),
+});
