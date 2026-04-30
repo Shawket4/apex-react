@@ -3,7 +3,7 @@ import { Locate, Layers } from 'lucide-react';
 import { setOptions, importLibrary } from '@googlemaps/js-api-loader';
 import { Button } from '@/shared/ui/button';
 import { cn } from '@/shared/lib/cn';
-import { buildMarkerSvg, markerSize } from './marker-svg';
+import { buildMarkerSvg } from './marker-svg';
 import { getSharedMap, releaseSharedMap } from './map-pool';
 import type { MapMarker, MapViewProps } from './types';
 
@@ -178,7 +178,7 @@ function iconKey(m: MapMarker): string {
 
 interface MarkerEntry {
   id: string;
-  marker: google.maps.Marker;
+  marker: google.maps.marker.AdvancedMarkerElement;
   listeners: google.maps.MapsEventListener[];
   lastIconKey: string;
   spec: MapMarker;
@@ -316,7 +316,7 @@ export function GoogleMapView({
 
       for (const entry of markerEntriesRef.current.values()) {
         entry.listeners.forEach((l) => google.maps.event.removeListener(l));
-        entry.marker.setMap(null);
+        entry.marker.map = null;
       }
       markerEntriesRef.current.clear();
 
@@ -359,25 +359,26 @@ export function GoogleMapView({
     for (const [id, entry] of markerEntriesRef.current.entries()) {
       if (!currentIds.has(id)) {
         entry.listeners.forEach((l) => google.maps.event.removeListener(l));
-        entry.marker.setMap(null);
+        entry.marker.map = null;
         markerEntriesRef.current.delete(id);
       }
     }
 
     // 2. Add or update.
     for (const m of markers) {
-      const sz = markerSize(m.kind || 'pin');
-      const anchor = new google.maps.Point(sz.anchorX, sz.anchorY);
       const newIconKey = iconKey(m);
       let entry = markerEntriesRef.current.get(m.id);
 
       if (!entry) {
-        const marker = new google.maps.Marker({
+        const pinElement = document.createElement('div');
+        pinElement.innerHTML = buildMarkerContent(m);
+        
+        const marker = new google.maps.marker.AdvancedMarkerElement({
           position: { lat: m.lat, lng: m.lng },
           map,
           title: m.title,
-          draggable: !!m.draggable,
-          icon: { url: buildMarkerContent(m), anchor },
+          content: pinElement,
+          gmpDraggable: !!m.draggable,
         });
 
         const listeners: google.maps.MapsEventListener[] = [];
@@ -407,9 +408,10 @@ export function GoogleMapView({
               flyTokenRef.current.cancelled = true;
               if (flyTokenRef.current.rafId) cancelAnimationFrame(flyTokenRef.current.rafId);
             }
-            const pos = marker.getPosition();
+            const pos = marker.position;
             if (pos) {
-              flyTokenRef.current = smoothFlyTo(map, { lat: pos.lat(), lng: pos.lng() }, 18);
+              const p = pos as google.maps.LatLngLiteral;
+              flyTokenRef.current = smoothFlyTo(map, { lat: p.lat, lng: p.lng }, 18);
             }
           }),
         );
@@ -423,18 +425,18 @@ export function GoogleMapView({
           map.panTo({ lat: m.lat, lng: m.lng });
         }
       } else {
-        const cur = entry.marker.getPosition();
-        const moved = !cur || cur.lat() !== m.lat || cur.lng() !== m.lng;
+        const cur = entry.marker.position;
+        const moved = !cur || (cur as google.maps.LatLngLiteral).lat !== m.lat || (cur as google.maps.LatLngLiteral).lng !== m.lng;
         if (moved) {
-          entry.marker.setPosition({ lat: m.lat, lng: m.lng });
+          entry.marker.position = { lat: m.lat, lng: m.lng };
           if (PAN_FOLLOW_IDS.has(m.id)) {
-            // Zoom-preserving follow. The Maps API smooth-animates
-            // panTo internally when the delta is small.
             map.panTo({ lat: m.lat, lng: m.lng });
           }
         }
         if (entry.lastIconKey !== newIconKey) {
-          entry.marker.setIcon({ url: buildMarkerContent(m), anchor });
+          const pinElement = document.createElement('div');
+          pinElement.innerHTML = buildMarkerContent(m);
+          entry.marker.content = pinElement;
           entry.lastIconKey = newIconKey;
         }
         entry.spec = m;

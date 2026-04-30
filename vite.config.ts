@@ -156,9 +156,9 @@ export default defineConfig({
             return 'react-vendor';
           }
 
-          // Everything else (axios, clsx, cva, sonner, tailwind-merge,
-          // lucide-react, zustand, cmdk, next-themes) goes to the default
-          // vendor chunk. They're all small and used app-wide.
+          // Excel export
+          if (id.includes('exceljs')) return 'exceljs-vendor';
+
           return undefined;
         },
       },
