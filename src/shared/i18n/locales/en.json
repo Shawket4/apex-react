@@ -705,14 +705,16 @@
         "title": {
           "revenue": "Revenue over time",
           "volume": "Volume over time",
-          "trips": "Trips over time"
+          "trips": "Trips over time",
+          "distance": "Distance over time"
         },
         "description": "Daily aggregates for the active filter range.",
         "empty": "No daily data available",
         "metric": {
           "revenue": "Revenue",
           "volume": "Volume",
-          "trips": "Trips"
+          "trips": "Trips",
+          "distance": "Distance"
         },
         "projectedRevenue": "Projected monthly revenue",
         "projectedRevenueNote": "Based on {{avg}} daily average over {{days}} days (multiplied by {{monthDays}} days)",

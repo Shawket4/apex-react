@@ -35,7 +35,7 @@ import {
 } from '@/shared/lib/chart-theme';
 import type { DailyStat } from '@/entities/trip-statistics/schemas';
 
-type Metric = 'revenue' | 'volume' | 'trips';
+type Metric = 'revenue' | 'volume' | 'trips' | 'distance';
 
 interface TripsStatisticsTimelineProps {
   daily: DailyStat[];
@@ -87,7 +87,9 @@ export function TripsStatisticsTimeline({
             ? cd.total_revenue ?? 0
             : metric === 'volume'
               ? cd.total_volume ?? 0
-              : cd.total_trips ?? 0;
+              : metric === 'distance'
+                ? cd.total_distance ?? 0
+                : cd.total_trips ?? 0;
         totals.set(cd.company, (totals.get(cd.company) ?? 0) + v);
       }
     }
@@ -146,7 +148,9 @@ export function TripsStatisticsTimeline({
               ? cd.total_revenue ?? cd.total_with_vat ?? 0
               : metric === 'volume'
                 ? cd.total_volume ?? 0
-                : cd.total_trips ?? 0;
+                : metric === 'distance'
+                  ? cd.total_distance ?? 0
+                  : cd.total_trips ?? 0;
           
           if (!Number.isFinite(v)) v = 0;
 
@@ -183,6 +187,7 @@ export function TripsStatisticsTimeline({
   const formatValue = (v: number) => {
     if (metric === 'revenue') return formatCurrency(v);
     if (metric === 'volume') return `${formatNumber(v, 2)} L`;
+    if (metric === 'distance') return `${formatNumber(v, 1)} ${t('common.unit.km')}`;
     return formatNumber(v, 0);
   };
 
@@ -245,8 +250,8 @@ export function TripsStatisticsTimeline({
   }, [chartData, visibleSeries]);
 
   const metricOptions: Metric[] = hasFinancialAccess
-    ? ['revenue', 'volume', 'trips']
-    : ['volume', 'trips'];
+    ? ['revenue', 'volume', 'distance', 'trips']
+    : ['volume', 'distance', 'trips'];
 
   return (
     <ChartCard
