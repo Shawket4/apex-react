@@ -20,7 +20,9 @@ export function Layout() {
     <div className="flex h-dvh bg-background">
       {/* Desktop sidebar — fixed, collapsible, always viewport-height */}
       {isDesktop && (
-        <Sidebar collapsed={sidebarCollapsed} onToggleCollapse={toggleSidebar} />
+        <div className="print:hidden">
+          <Sidebar collapsed={sidebarCollapsed} onToggleCollapse={toggleSidebar} />
+        </div>
       )}
 
       {/* Mobile sidebar — slide-out Sheet */}
@@ -39,10 +41,12 @@ export function Layout() {
 
       {/* Main column — owns its own scroll so the sidebar stays pinned */}
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        <Header
-          onOpenMobileMenu={() => setMobileOpen(true)}
-          onOpenCommandPalette={() => setPaletteOpen(true)}
-        />
+        <div className="print:hidden">
+          <Header
+            onOpenMobileMenu={() => setMobileOpen(true)}
+            onOpenCommandPalette={() => setPaletteOpen(true)}
+          />
+        </div>
         <main className="flex-1 overflow-y-auto overflow-x-hidden">
           <Outlet />
         </main>

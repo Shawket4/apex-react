@@ -80,7 +80,7 @@ export function ServiceInvoiceDetails({
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Content (Receipt) */}
-        <div className="lg:col-span-2 space-y-6 print:col-span-3">
+        <div className="lg:col-span-2 space-y-6 print:col-span-3 print:w-full print:max-w-4xl print:mx-auto">
           {/* Quick Stats Grid */}
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4 print:gap-2">
             <StatCard
@@ -119,7 +119,7 @@ export function ServiceInvoiceDetails({
             />
           </div>
 
-          <Card className="border-2 border-muted shadow-lg print:shadow-none print:border-muted/50">
+          <Card className="border-2 border-muted shadow-lg print:shadow-none print:border-muted/50 print:border-2">
             <CardContent className="p-8">
               {/* Receipt Header */}
               <div className="text-center mb-10 border-b pb-8">
@@ -217,7 +217,7 @@ export function ServiceInvoiceDetails({
         </div>
 
         {/* Sidebar Info */}
-        <div className="space-y-6 print:col-span-3 lg:print:col-span-1 print:mt-6">
+        <div className="space-y-6 lg:col-span-1 print:hidden">
           <Card>
             <CardContent className="p-6">
               <h4 className="font-bold mb-4 uppercase tracking-wider text-xs text-muted-foreground">
