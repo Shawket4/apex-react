@@ -254,6 +254,7 @@ export function GoogleMapView({
           zoomControlOptions: { position: google.maps.ControlPosition.RIGHT_CENTER },
           gestureHandling: 'greedy',
           keyboardShortcuts: false,
+          mapId: (import.meta.env.VITE_GOOGLE_MAPS_MAP_ID as string | undefined) ?? 'DEMO_MAP_ID',
         });
         if (cancelled) {
           releaseSharedMap(handle.map);
@@ -383,7 +384,7 @@ export function GoogleMapView({
 
         const listeners: google.maps.MapsEventListener[] = [];
 
-        const clickListener = marker.addListener('click', () => {
+        const clickListener = marker.addListener('gmp-click', () => {
           onMarkerClickRef.current?.(m.id);
           const live = markerEntriesRef.current.get(m.id);
           if (!live || !live.spec.popupHtml || !infoWindowRef.current) return;
