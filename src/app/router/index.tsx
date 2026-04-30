@@ -41,6 +41,8 @@ const NotFoundPage = React.lazy(() => import('@/pages/error/not-found'));
 const TripsPage = React.lazy(() => import('@/pages/trips/trips'));
 const TripNewPage = React.lazy(() => import('@/pages/trips/trip-new'));
 const TripEditPage = React.lazy(() => import('@/pages/trips/trip-edit'));
+const RouteErrorPage = React.lazy(() => import('@/pages/error/route-error'));
+
 const OilChangesPage = React.lazy(() => import('@/pages/oil-changes/oil-changes'));
 const OilChangeNewPage = React.lazy(() => import('@/pages/oil-changes/oil-change-new'));
 const OilChangeEditPage = React.lazy(() => import('@/pages/oil-changes/oil-change-edit'));
@@ -123,6 +125,7 @@ export const router = createBrowserRouter([
   {
     path: '/login',
     element: <LoginPage />,
+    errorElement: <RouteErrorPage />,
   },
   {
     path: '/',
@@ -131,6 +134,7 @@ export const router = createBrowserRouter([
         <Layout />
       </ProtectedRoute>
     ),
+    errorElement: <RouteErrorPage />,
     children: [
       {
         element: <SuspendedRoute />,
@@ -158,9 +162,10 @@ export const router = createBrowserRouter([
           },
 
           // Trips
-          { path: '/trips', element: <TripsPage /> },
-          { path: '/trips/new', element: <TripNewPage /> },
-          { path: '/trips/multi-container/:parentId/edit', element: <TripEditPage /> },
+          { path: 'trips', element: <TripsPage /> },
+          { path: 'trips/new', element: <TripNewPage /> },
+          { path: 'trips/multi-container/:parentId/edit', element: <TripEditPage /> },
+          { path: 'trips/parent/:parentId/route-summary', element: <EtitPage /> },
 
           // Oil changes
           { path: 'oil-changes', element: <OilChangesPage /> },

@@ -686,7 +686,6 @@ function StandaloneRow({
         </td>
         <td className="px-4 py-3 align-middle text-end">
           <RowActions
-            editPath={`/trips/${trip.ID}`}
             onOpenReceipt={() => onOpenReceipt(trip.ID)}
             onOpenMap={() => onOpenMap(trip.ID)}
             onDelete={() => onDelete(trip.ID)}
