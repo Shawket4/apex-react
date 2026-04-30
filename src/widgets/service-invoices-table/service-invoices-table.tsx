@@ -29,6 +29,7 @@ interface ServiceInvoicesTableProps {
     totalPages: number;
     onPageChange: (page: number) => void;
   };
+  searchQuery?: string;
 }
 
 export function ServiceInvoicesTable({
@@ -37,6 +38,7 @@ export function ServiceInvoicesTable({
   onDelete,
   isSearchResults = false,
   pagination,
+  searchQuery,
 }: ServiceInvoicesTableProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -65,7 +67,7 @@ export function ServiceInvoicesTable({
       accessorKey: 'meter_reading',
       header: t('serviceInvoices.fields.meterReading'),
       cell: ({ row }: any) => (
-        <div className="text-right font-mono">{formatNumber(row.getValue('meter_reading'))} KM</div>
+        <div className="text-right font-mono">{formatNumber(row.getValue('meter_reading'))} {t('common.unit.km')}</div>
       ),
     },
     {
@@ -96,7 +98,12 @@ export function ServiceInvoicesTable({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => navigate(`/service-invoices/${invoice.ID}`, { state: { invoice } })}>
+                <DropdownMenuItem onClick={() => {
+                  const url = searchQuery 
+                    ? `/service-invoices/${invoice.ID}?query=${encodeURIComponent(searchQuery)}`
+                    : `/service-invoices/${invoice.ID}`;
+                  navigate(url, { state: { invoice } });
+                }}>
                   <Eye className="mr-2 h-4 w-4" />
                   {t('common.view')}
                 </DropdownMenuItem>

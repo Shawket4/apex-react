@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { 
   Plus, 
   Search, 
@@ -32,7 +32,17 @@ export default function ServiceInvoicesPage() {
   
   // States
   const [selectedCar, setSelectedCar] = React.useState<Car | null>(null);
-  const [searchQuery, setSearchQuery] = React.useState('');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const searchQuery = searchParams.get('q') || '';
+  
+  const setSearchQuery = (val: string) => {
+    setSearchParams(prev => {
+      if (val) prev.set('q', val);
+      else prev.delete('q');
+      return prev;
+    }, { replace: true });
+  };
+
   const [carPage, setCarPage] = React.useState(1);
   const [invoicePage, setInvoicePage] = React.useState(1);
   const [searchPage, setSearchPage] = React.useState(1);
@@ -163,6 +173,7 @@ export default function ServiceInvoicesPage() {
                   totalPages: searchData.pagination.totalPages,
                   onPageChange: setSearchPage,
                 } : undefined}
+                searchQuery={debouncedSearch}
               />
             </CardContent>
           </Card>

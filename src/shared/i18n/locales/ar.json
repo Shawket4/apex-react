@@ -50,7 +50,10 @@
     "to": "إلى",
     "goodMorning": "صباح الخير",
     "goodAfternoon": "مساء الخير",
-    "goodEvening": "مساء الخير"
+    "goodEvening": "مساء الخير",
+    "unit": {
+      "km": "كم"
+    }
   },
   "nav": {
     "overview": "نظرة عامة",
@@ -1150,6 +1153,13 @@
       "semanticMatch": "تطابق دلالي",
       "keywordMatch": "تطابق كلمة مفتاحية",
       "hybridMatch": "تطابق هجين",
+      "hybridMatchDescription": "يحتوي هذا السجل على عناصر تتعلق ببحثك باستخدام مطابقة الذكاء الاصطناعي والبحث بالكلمات المفتاحية.",
+      "aiInsight": "رؤية الذكاء الاصطناعي",
+      "vectorEmbeddings": "تضمينات المتجهات",
+      "exactKeyword": "كلمة مطابقة",
+      "matchPercent": "تطابق بنسبة {{percent}}%",
+      "keyword": "كلمة مفتاحية",
+      "hybrid": "هجين",
       "score": "الدرجة",
       "distance": "مسافة المتجه"
     },
@@ -1158,7 +1168,8 @@
       "subtitle": "سجل صيانة",
       "billedTo": "بيانات المركبة",
       "details": "تفاصيل الفاتورة",
-      "summary": "ملخص الخدمة"
+      "summary": "ملخص الخدمة",
+      "verificationNote": "هذا سجل صيانة معتمد. تم التحقق من جميع بنود الفحص من قبل المشرف المسؤول."
     },
     "form": {
       "checklistTitle": "قائمة فحص خدمة",

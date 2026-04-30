@@ -50,7 +50,10 @@
     "to": "To",
     "goodMorning": "Good morning",
     "goodAfternoon": "Good afternoon",
-    "goodEvening": "Good evening"
+    "goodEvening": "Good evening",
+    "unit": {
+      "km": "KM"
+    }
   },
   "nav": {
     "overview": "Overview",
@@ -1150,6 +1153,13 @@
       "semanticMatch": "Semantic Match",
       "keywordMatch": "Keyword Match",
       "hybridMatch": "Hybrid Match",
+      "hybridMatchDescription": "This record contains items that relate to your search query using AI semantic matching and keyword search.",
+      "aiInsight": "AI Insight",
+      "vectorEmbeddings": "Vector Embeddings",
+      "exactKeyword": "Exact Keyword",
+      "matchPercent": "{{percent}}% Match",
+      "keyword": "Keyword",
+      "hybrid": "Hybrid",
       "score": "Score",
       "distance": "Vector Distance"
     },
@@ -1158,7 +1168,8 @@
       "subtitle": "Maintenance Record",
       "billedTo": "Vehicle Info",
       "details": "Invoice Details",
-      "summary": "Service Summary"
+      "summary": "Service Summary",
+      "verificationNote": "This is a verified maintenance record. All inspection items were verified by the supervisor on duty."
     },
     "form": {
       "checklistTitle": "Service Inspection Checklist",

@@ -91,7 +91,7 @@ export function ServiceInvoiceDetails({
             />
             <StatCard
               label={t('serviceInvoices.fields.meterReading')}
-              value={`${formatNumber(invoice.meter_reading)} KM`}
+              value={`${formatNumber(invoice.meter_reading)} ${t('common.unit.km')}`}
               icon={Gauge}
               tone="success"
             />
@@ -172,20 +172,20 @@ export function ServiceInvoiceDetails({
                               {matchType === 'semantic' && (
                                 <div className="flex items-center gap-1.5 bg-primary/10 px-2 py-0.5 rounded-full text-[9px] font-black text-primary uppercase tracking-tighter border border-primary/20 shadow-sm print:bg-primary/5">
                                   <Sparkles className="h-2.5 w-2.5" />
-                                  <span>{Math.round((1 - (item.distance || 0)) * 100)}% Match</span>
+                                  <span>{t('serviceInvoices.search.matchPercent', { percent: Math.round((1 - (item.distance || 0)) * 100) })}</span>
                                 </div>
                               )}
                               {matchType === 'keyword' && (
                                 <div className="flex items-center gap-1.5 bg-blue-500/10 px-2 py-0.5 rounded-full text-[9px] font-black text-blue-500 uppercase tracking-tighter border border-blue-500/20 shadow-sm print:bg-blue-500/5">
                                   <Search className="h-2.5 w-2.5" />
-                                  <span>Keyword</span>
+                                  <span>{t('serviceInvoices.search.keyword')}</span>
                                 </div>
                               )}
                               {matchType === 'both' && (
                                 <div className="flex items-center gap-1 bg-indigo-500/10 px-2 py-0.5 rounded-full text-[9px] font-black text-indigo-500 uppercase tracking-tighter border border-indigo-500/20 shadow-sm print:bg-indigo-500/5">
                                   <Sparkles className="h-2.5 w-2.5" />
                                   <Search className="h-2.5 w-2.5" />
-                                  <span>Hybrid</span>
+                                  <span>{t('serviceInvoices.search.hybrid')}</span>
                                 </div>
                               )}
                             </div>
@@ -264,36 +264,36 @@ export function ServiceInvoiceDetails({
                       </Badge>
                     </div>
                     <p className="text-xs text-muted-foreground leading-relaxed">
-                      This record contains items that semantically relate to your search query.
+                      {t('serviceInvoices.search.hybridMatchDescription')}
                     </p>
                   </div>
 
-                  <div className="pt-4 border-t border-primary/10 flex flex-col gap-3">
-                    <div className="flex items-center gap-2 text-xs font-semibold text-primary">
-                      <TrendingUp className="h-3 w-3" />
-                      AI Insight
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div className="bg-background/50 rounded-lg p-2 border border-primary/10">
-                        <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground font-bold mb-1 uppercase">
-                          <Sparkles className="h-2.5 w-2.5 text-primary" />
-                          {t('serviceInvoices.search.semanticMatch')}
+                    <div className="flex flex-col gap-3 pt-4 border-t border-primary/10">
+                      <div className="flex items-center gap-2 text-xs font-semibold text-primary">
+                        <TrendingUp className="h-3 w-3" />
+                        {t('serviceInvoices.search.aiInsight')}
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="bg-background/50 rounded-lg p-2 border border-primary/10">
+                          <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground font-bold mb-1 uppercase">
+                            <Sparkles className="h-2.5 w-2.5 text-primary" />
+                            {t('serviceInvoices.search.semanticMatch')}
+                          </div>
+                          <div className="text-xs font-bold text-foreground">
+                            {t('serviceInvoices.search.vectorEmbeddings')}
+                          </div>
                         </div>
-                        <div className="text-xs font-bold text-foreground">
-                          Vector Embeddings
+                        <div className="bg-background/50 rounded-lg p-2 border border-primary/10">
+                          <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground font-bold mb-1 uppercase">
+                            <Search className="h-2.5 w-2.5 text-blue-500" />
+                            {t('serviceInvoices.search.keywordMatch')}
+                          </div>
+                          <div className="text-xs font-bold text-foreground">
+                            {t('serviceInvoices.search.exactKeyword')}
+                          </div>
                         </div>
                       </div>
-                      <div className="bg-background/50 rounded-lg p-2 border border-primary/10">
-                        <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground font-bold mb-1 uppercase">
-                          <Search className="h-2.5 w-2.5 text-blue-500" />
-                          {t('serviceInvoices.search.keywordMatch')}
-                        </div>
-                        <div className="text-xs font-bold text-foreground">
-                          Exact Keyword
-                        </div>
-                      </div>
                     </div>
-                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -308,7 +308,7 @@ export function ServiceInvoiceDetails({
                 <h4 className="font-bold text-sm">{t('common.details')}</h4>
               </div>
               <p className="text-xs text-muted-foreground leading-relaxed">
-                This is a verified maintenance record. All inspection items were verified by the supervisor on duty.
+                {t('serviceInvoices.receipt.verificationNote')}
               </p>
             </CardContent>
           </Card>
