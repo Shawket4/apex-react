@@ -3,7 +3,7 @@ import { Locate, Layers } from 'lucide-react';
 import { setOptions, importLibrary } from '@googlemaps/js-api-loader';
 import { Button } from '@/shared/ui/button';
 import { cn } from '@/shared/lib/cn';
-import { buildMarkerSvg } from './marker-svg';
+import { buildMarkerSvg, markerSize } from './marker-svg';
 import { getSharedMap, releaseSharedMap } from './map-pool';
 import type { MapMarker, MapViewProps } from './types';
 
@@ -178,7 +178,7 @@ function iconKey(m: MapMarker): string {
 
 interface MarkerEntry {
   id: string;
-  marker: google.maps.marker.AdvancedMarkerElement;
+  marker: google.maps.Marker;
   listeners: google.maps.MapsEventListener[];
   lastIconKey: string;
   spec: MapMarker;
@@ -254,7 +254,6 @@ export function GoogleMapView({
           zoomControlOptions: { position: google.maps.ControlPosition.RIGHT_CENTER },
           gestureHandling: 'greedy',
           keyboardShortcuts: false,
-          mapId: (import.meta.env.VITE_GOOGLE_MAPS_MAP_ID as string | undefined) ?? 'DEMO_MAP_ID',
         });
         if (cancelled) {
           releaseSharedMap(handle.map);
@@ -317,7 +316,7 @@ export function GoogleMapView({
 
       for (const entry of markerEntriesRef.current.values()) {
         entry.listeners.forEach((l) => google.maps.event.removeListener(l));
-        entry.marker.map = null;
+        entry.marker.setMap(null);
       }
       markerEntriesRef.current.clear();
 
@@ -360,31 +359,30 @@ export function GoogleMapView({
     for (const [id, entry] of markerEntriesRef.current.entries()) {
       if (!currentIds.has(id)) {
         entry.listeners.forEach((l) => google.maps.event.removeListener(l));
-        entry.marker.map = null;
+        entry.marker.setMap(null);
         markerEntriesRef.current.delete(id);
       }
     }
 
     // 2. Add or update.
     for (const m of markers) {
+      const sz = markerSize(m.kind || 'pin');
+      const anchor = new google.maps.Point(sz.anchorX, sz.anchorY);
       const newIconKey = iconKey(m);
       let entry = markerEntriesRef.current.get(m.id);
 
       if (!entry) {
-        const pinElement = document.createElement('div');
-        pinElement.innerHTML = buildMarkerContent(m);
-        
-        const marker = new google.maps.marker.AdvancedMarkerElement({
+        const marker = new google.maps.Marker({
           position: { lat: m.lat, lng: m.lng },
           map,
           title: m.title,
-          content: pinElement,
-          gmpDraggable: !!m.draggable,
+          draggable: !!m.draggable,
+          icon: { url: buildMarkerContent(m), anchor },
         });
 
         const listeners: google.maps.MapsEventListener[] = [];
 
-        const clickListener = marker.addListener('gmp-click', () => {
+        const clickListener = marker.addListener('click', () => {
           onMarkerClickRef.current?.(m.id);
           const live = markerEntriesRef.current.get(m.id);
           if (!live || !live.spec.popupHtml || !infoWindowRef.current) return;
@@ -409,10 +407,9 @@ export function GoogleMapView({
               flyTokenRef.current.cancelled = true;
               if (flyTokenRef.current.rafId) cancelAnimationFrame(flyTokenRef.current.rafId);
             }
-            const pos = marker.position;
+            const pos = marker.getPosition();
             if (pos) {
-              const p = pos as google.maps.LatLngLiteral;
-              flyTokenRef.current = smoothFlyTo(map, { lat: p.lat, lng: p.lng }, 18);
+              flyTokenRef.current = smoothFlyTo(map, { lat: pos.lat(), lng: pos.lng() }, 18);
             }
           }),
         );
@@ -426,18 +423,18 @@ export function GoogleMapView({
           map.panTo({ lat: m.lat, lng: m.lng });
         }
       } else {
-        const cur = entry.marker.position;
-        const moved = !cur || (cur as google.maps.LatLngLiteral).lat !== m.lat || (cur as google.maps.LatLngLiteral).lng !== m.lng;
+        const cur = entry.marker.getPosition();
+        const moved = !cur || cur.lat() !== m.lat || cur.lng() !== m.lng;
         if (moved) {
-          entry.marker.position = { lat: m.lat, lng: m.lng };
+          entry.marker.setPosition({ lat: m.lat, lng: m.lng });
           if (PAN_FOLLOW_IDS.has(m.id)) {
+            // Zoom-preserving follow. The Maps API smooth-animates
+            // panTo internally when the delta is small.
             map.panTo({ lat: m.lat, lng: m.lng });
           }
         }
         if (entry.lastIconKey !== newIconKey) {
-          const pinElement = document.createElement('div');
-          pinElement.innerHTML = buildMarkerContent(m);
-          entry.marker.content = pinElement;
+          entry.marker.setIcon({ url: buildMarkerContent(m), anchor });
           entry.lastIconKey = newIconKey;
         }
         entry.spec = m;
