@@ -90,7 +90,8 @@ export function ServiceInvoiceForm({
       const selectedCar = cars.find(c => c.ID === watchedCarId);
       if (selectedCar) {
         form.setValue('plate_number', selectedCar.car_no_plate);
-        if (selectedCar.driver_id) {
+        // Only auto-fill driver from car if we don't already have one, or if we are creating
+        if (!isEditMode && selectedCar.driver_id) {
           const matchingDriver = drivers.find(d => d.ID === selectedCar.driver_id);
           if (matchingDriver) {
             form.setValue('driver_id', matchingDriver.ID);
@@ -99,7 +100,20 @@ export function ServiceInvoiceForm({
         }
       }
     }
-  }, [watchedCarId, cars, drivers, form]);
+  }, [watchedCarId, cars, drivers, form, isEditMode]);
+
+  // Fallback for legacy backend records that don't return driver_id yet
+  React.useEffect(() => {
+    if (isEditMode && initialValues?.driver_name && drivers.length > 0) {
+      const currentDriverId = form.getValues('driver_id');
+      if (currentDriverId == null) {
+        const match = drivers.find(d => d.name === initialValues.driver_name);
+        if (match) {
+          form.setValue('driver_id', match.ID);
+        }
+      }
+    }
+  }, [isEditMode, initialValues?.driver_name, drivers.length, form]);
 
   const { fields, append } = useFieldArray({
     control: form.control,

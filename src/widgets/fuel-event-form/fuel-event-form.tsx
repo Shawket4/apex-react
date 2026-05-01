@@ -100,11 +100,17 @@ export function FuelEventForm({
 
   React.useEffect(() => {
     if (initialValues) {
-      form.reset(getDefaults(initialValues));
+      const defaults = getDefaults(initialValues);
+      // Fallback for legacy backend records that don't return driver_id yet
+      if (defaults.driver_id == null && defaults.driver_name && drivers.length > 0) {
+        const match = drivers.find(d => d.name === defaults.driver_name);
+        if (match) defaults.driver_id = match.ID;
+      }
+      form.reset(defaults);
       setDriverAutoAssigned(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialValues?.car_id, initialValues?.driver_name, initialValues?.date]);
+  }, [initialValues?.car_id, initialValues?.driver_name, initialValues?.date, drivers.length]);
 
   const carOptions = React.useMemo(
     () => cars.map((c) => ({ value: c.ID, label: c.car_no_plate })),

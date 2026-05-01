@@ -108,7 +108,12 @@ export function OilChangeForm({
 
   React.useEffect(() => {
     if (initialValues) {
-      form.reset(getDefaults(initialValues));
+      const defaults = getDefaults(initialValues);
+      if (defaults.driver_id == null && defaults.driver_name && drivers.length > 0) {
+        const match = drivers.find(d => d.name === defaults.driver_name);
+        if (match) defaults.driver_id = match.ID;
+      }
+      form.reset(defaults);
       setDriverAutoAssigned(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -117,6 +122,7 @@ export function OilChangeForm({
     initialValues?.driver_name,
     initialValues?.date,
     initialValues?.supervisor,
+    drivers.length
   ]);
 
   const carOptions = React.useMemo(
