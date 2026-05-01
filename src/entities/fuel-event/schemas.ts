@@ -36,7 +36,9 @@ export function normaliseMethod(m: string | null | undefined): FuelMethod {
  */
 export const fuelEventSchema = z.object({
   ID: z.number(),
+  car_id: z.number().optional().nullable(),
   car_no_plate: z.string(),
+  driver_id: z.number().optional().nullable(),
   driver_name: z.string().optional().nullable(),
   date: z.string(),
   time: z.string().optional().nullable(),
@@ -64,6 +66,7 @@ export const fuelEventsResponseSchema = z.array(fuelEventSchema);
 export const fuelEventFormSchema = z
   .object({
     car_id: z.number({ required_error: 'Please select a vehicle' }),
+    driver_id: z.number().optional().nullable(),
     driver_name: z
       .string({ required_error: 'Please select a driver' })
       .min(1, 'Please select a driver'),
@@ -92,6 +95,7 @@ export interface AddFuelEventPayload {
   price_per_liter: number;
   odometer_before: number;
   odometer_after: number;
+  driver_id: number | null;
   driver_name: string;
 }
 

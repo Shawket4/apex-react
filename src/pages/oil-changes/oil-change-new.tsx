@@ -32,6 +32,7 @@ export default function OilChangeNewPage() {
       car_id: values.car_id,
       date: values.date,
       super_visor: values.supervisor,
+      driver_id: values.driver_id ?? null,
       driver_name: values.driver_name,
       mileage: values.mileage,
       odometer_at_change: values.odometer_at_change,

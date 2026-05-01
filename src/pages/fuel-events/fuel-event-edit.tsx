@@ -32,6 +32,7 @@ export default function FuelEventEditPage() {
       price_per_liter: values.price_per_liter,
       odometer_before: values.odometer_before,
       odometer_after: values.odometer_after,
+      driver_id: values.driver_id ?? null,
       driver_name: values.driver_name,
     });
     navigate(`/fuel-events/${id}`);
@@ -42,6 +43,7 @@ export default function FuelEventEditPage() {
     const matchingCar = cars.find((c) => c.car_no_plate === event.car_no_plate);
     return {
       car_id: matchingCar?.ID,
+      driver_id: event.driver_id ?? null,
       driver_name: event.driver_name ?? '',
       date: toInputDate(event.date),
       liters: event.liters,

@@ -57,6 +57,7 @@ export const oilChangeSchema = z.object({
   ID: z.number(),
   car_no_plate: z.string(),
   super_visor: z.string().optional().default(''),
+  driver_id: z.number().optional().nullable(),
   driver_name: z.string().optional().default(''),
   date: z.string(),
   mileage: z.coerce.number(),
@@ -118,6 +119,7 @@ export const oilChangeFormSchema = z
   .object({
     car_id: z.number({ required_error: 'Please select a vehicle' }),
     date: zDateString,
+    driver_id: z.number().optional().nullable(),
     driver_name: z.string().min(1, 'Driver name is required'),
     supervisor: z.string().min(1, 'Supervisor is required'),
     odometer_at_change: zIntegerNonNegative,
@@ -145,6 +147,7 @@ export interface AddOilChangePayload {
   car_id: number;
   date: string;
   super_visor: string;
+  driver_id: number | null;
   driver_name: string;
   mileage: number;
   odometer_at_change: number;

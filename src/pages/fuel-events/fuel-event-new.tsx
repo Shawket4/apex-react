@@ -22,6 +22,7 @@ export default function FuelEventNewPage() {
       price_per_liter: values.price_per_liter,
       odometer_before: values.odometer_before,
       odometer_after: values.odometer_after,
+      driver_id: values.driver_id ?? null,
       driver_name: values.driver_name,
     });
     navigate('/fuel-events');

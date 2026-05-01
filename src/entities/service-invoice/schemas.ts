@@ -44,6 +44,7 @@ export const serviceInvoiceSchema = z.preprocess((val: any) => {
   ID: z.number(),
   car_id: z.number().optional(), // Make optional as it might be missing in search results
   plate_number: z.string(),
+  driver_id: z.number().optional().nullable(),
   driver_name: z.string(),
   date: z.string(),
   meter_reading: z.number(),
@@ -58,6 +59,7 @@ export type ServiceInvoice = z.infer<typeof serviceInvoiceSchema>;
 
 export const serviceInvoiceRequestSchema = z.object({
   car_id: z.number(),
+  driver_id: z.number().optional().nullable(),
   driver_name: z.string().min(1, 'Driver name is required'),
   date: z.string().min(1, 'Date is required'),
   meter_reading: z.number().min(0, 'Meter reading must be positive'),

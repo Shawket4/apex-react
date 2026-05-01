@@ -138,6 +138,8 @@ export function TripForm({ parentId }: TripFormProps) {
   const [driverId, setDriverId] = React.useState<number | null>(
     batchNavState?.driverId ?? null,
   );
+  const initialDriverNameRef = React.useRef<string | null>(null);
+  const previousCarIdRef = React.useRef<number | null>(null);
   const [date, setDate] = React.useState<string>(today());
   const [searchParams] = useSearchParams();
   const paramCompany = searchParams.get('company');
@@ -211,6 +213,8 @@ export function TripForm({ parentId }: TripFormProps) {
 
     setCarId(parent.car_id ?? null);
     setDriverId(parent.driver_id ?? null);
+    initialDriverNameRef.current = parent.driver_name || null;
+    previousCarIdRef.current = parent.car_id ?? null;
     setDate(parent.date ?? today());
     setCompany(parent.company ?? '');
     setTerminal(parent.terminal ?? '');
@@ -237,10 +241,15 @@ export function TripForm({ parentId }: TripFormProps) {
   React.useEffect(() => {
     if (batchNavState?.driverId) return;
     if (isEdit && !hydratedRef.current) return;
+    
+    // Only auto-fill if the car was actually changed or if we are creating a new trip
+    if (carId === previousCarIdRef.current) return;
+    previousCarIdRef.current = carId;
+
     if (!selectedCar?.driver_id) return;
     setDriverId(selectedCar.driver_id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedCar?.ID]);
+  }, [carId, selectedCar?.driver_id, isEdit, hydratedRef.current]);
 
   /* ---- Reset terminal/dropoffs when company changes -------------------- */
 
@@ -429,7 +438,11 @@ export function TripForm({ parentId }: TripFormProps) {
     if (!selectedCar) throw new Error('No car selected');
     const driverName =
       selectedDriver?.name ??
-      (driverId === UNREGISTERED_DRIVER_ID ? UNREGISTERED_DRIVER_NAME : '');
+      (driverId === (parentData?.parent_trip.driver_id ?? null)
+        ? parentData?.parent_trip.driver_name ?? ''
+        : driverId === UNREGISTERED_DRIVER_ID
+          ? UNREGISTERED_DRIVER_NAME
+          : '');
     return {
       parent_trip: {
         car_id: selectedCar.ID,

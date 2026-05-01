@@ -60,6 +60,7 @@ export function ServiceInvoiceForm({
     resolver: zodResolver(serviceInvoiceFormSchema),
     defaultValues: {
       car_id: car?.ID || initialValues?.car_id || 0,
+      driver_id: initialValues?.driver_id || null,
       driver_name: initialValues?.driver_name || '',
       date: initialValues?.date?.split('T')[0] || today(),
       meter_reading: initialValues?.meter_reading || 0,
@@ -78,7 +79,7 @@ export function ServiceInvoiceForm({
   );
 
   const driverOptions = React.useMemo(
-    () => drivers.map((d) => ({ value: d.name, label: d.name, description: d.mobile_number || undefined })),
+    () => drivers.map((d) => ({ value: d.ID, label: d.name, description: d.mobile_number || undefined })),
     [drivers],
   );
 
@@ -89,9 +90,16 @@ export function ServiceInvoiceForm({
       const selectedCar = cars.find(c => c.ID === watchedCarId);
       if (selectedCar) {
         form.setValue('plate_number', selectedCar.car_no_plate);
+        if (selectedCar.driver_id) {
+          const matchingDriver = drivers.find(d => d.ID === selectedCar.driver_id);
+          if (matchingDriver) {
+            form.setValue('driver_id', matchingDriver.ID);
+            form.setValue('driver_name', matchingDriver.name);
+          }
+        }
       }
     }
-  }, [watchedCarId, cars, form]);
+  }, [watchedCarId, cars, drivers, form]);
 
   const { fields, append } = useFieldArray({
     control: form.control,
@@ -171,7 +179,7 @@ export function ServiceInvoiceForm({
 
                 <FormField
                   control={form.control}
-                  name="driver_name"
+                  name="driver_id"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>{t('serviceInvoices.fields.driver')}</FormLabel>
@@ -179,9 +187,14 @@ export function ServiceInvoiceForm({
                         <SearchableSelect
                           options={driverOptions}
                           value={field.value}
-                          onChange={field.onChange}
+                          onChange={(v) => {
+                            field.onChange(v);
+                            const d = drivers.find(drv => drv.ID === Number(v));
+                            if (d) {
+                              form.setValue('driver_name', d.name);
+                            }
+                          }}
                           placeholder={t('fuelEvents.fields.selectDriver')}
-                          allowCustom
                         />
                       </FormControl>
                       <FormMessage />

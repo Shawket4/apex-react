@@ -37,6 +37,7 @@ export default function OilChangeEditPage() {
     return {
       car_id: car?.ID,
       date: record.date,
+      driver_id: record.driver_id ?? null,
       driver_name: record.driver_name,
       supervisor: record.super_visor,
       odometer_at_change: record.odometer_at_change,
@@ -53,6 +54,7 @@ export default function OilChangeEditPage() {
       car_id: values.car_id,
       date: values.date,
       super_visor: values.supervisor,
+      driver_id: values.driver_id ?? null,
       driver_name: values.driver_name,
       mileage: values.mileage,
       odometer_at_change: values.odometer_at_change,

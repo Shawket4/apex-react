@@ -41,6 +41,7 @@ import { OilChangeStatusPreview } from './oil-change-status-preview';
 export interface OilChangeFormInitialValues {
   car_id?: number;
   date?: string;
+  driver_id?: number | null;
   driver_name?: string;
   supervisor?: string;
   odometer_at_change?: number | string;
@@ -63,6 +64,7 @@ function getDefaults(initial?: OilChangeFormInitialValues): OilChangeFormValues 
   return {
     car_id: (initial?.car_id as number) ?? (undefined as unknown as number),
     date: initial?.date ?? today(),
+    driver_id: initial?.driver_id ?? null,
     driver_name: initial?.driver_name ?? '',
     supervisor: initial?.supervisor ?? '',
     odometer_at_change:
@@ -122,7 +124,12 @@ export function OilChangeForm({
     [cars],
   );
   const driverOptions = React.useMemo(
-    () => drivers.map((d) => ({ value: d.name, label: d.name })),
+    () =>
+      drivers.map((d) => ({
+        value: d.ID,
+        label: d.name,
+        description: d.mobile_number || undefined,
+      })),
     [drivers],
   );
 
@@ -143,9 +150,12 @@ export function OilChangeForm({
         : undefined;
 
     if (assignedDriver) {
+      form.setValue('driver_id', assignedDriver.ID);
       form.setValue('driver_name', assignedDriver.name, { shouldValidate: true });
       setDriverAutoAssigned(true);
     } else {
+      form.setValue('driver_id', null);
+      form.setValue('driver_name', '');
       setDriverAutoAssigned(false);
     }
   }, [watchedCarId, cars, drivers, form]);
@@ -199,16 +209,22 @@ export function OilChangeForm({
 
             <FormField
               control={form.control}
-              name="driver_name"
+              name="driver_id"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>{t('oilChanges.fields.driver')}</FormLabel>
                   <FormControl>
                     <SearchableSelect
                       options={driverOptions}
-                      value={field.value || null}
+                      value={field.value}
                       onChange={(v) => {
-                        field.onChange(v as string);
+                        field.onChange(v);
+                        const d = drivers.find((drv) => drv.ID === Number(v));
+                        if (d) {
+                          form.setValue('driver_name', d.name);
+                        } else {
+                          form.setValue('driver_name', '');
+                        }
                         setDriverAutoAssigned(false);
                       }}
                       placeholder={t('oilChanges.fields.selectDriver')}
@@ -224,6 +240,7 @@ export function OilChangeForm({
                       <button
                         type="button"
                         onClick={() => {
+                          form.setValue('driver_id', null);
                           form.setValue('driver_name', '', { shouldValidate: true });
                           setDriverAutoAssigned(false);
                         }}

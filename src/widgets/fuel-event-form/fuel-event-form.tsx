@@ -44,6 +44,7 @@ import { DEFAULT_PRICE_PER_LITER, FUEL_EFFICIENCY } from '@/shared/config/consta
 
 export interface FuelEventFormInitialValues {
   car_id?: number;
+  driver_id?: number | null;
   driver_name?: string;
   date?: string;
   liters?: number | string;
@@ -65,6 +66,7 @@ interface FuelEventFormProps {
 function getDefaults(initial?: FuelEventFormInitialValues): FuelEventFormValues {
   return {
     car_id: (initial?.car_id as number) ?? (undefined as unknown as number),
+    driver_id: initial?.driver_id ?? null,
     driver_name: initial?.driver_name ?? '',
     date: initial?.date ?? today(),
     liters: (initial?.liters as number) ?? (undefined as unknown as number),
@@ -110,7 +112,12 @@ export function FuelEventForm({
   );
 
   const driverOptions = React.useMemo(
-    () => drivers.map((d) => ({ value: d.name, label: d.name })),
+    () =>
+      drivers.map((d) => ({
+        value: d.ID,
+        label: d.name,
+        description: d.mobile_number || undefined,
+      })),
     [drivers],
   );
 
@@ -143,9 +150,12 @@ export function FuelEventForm({
         : undefined;
 
     if (assignedDriver) {
+      form.setValue('driver_id', assignedDriver.ID);
       form.setValue('driver_name', assignedDriver.name, { shouldValidate: true });
       setDriverAutoAssigned(true);
     } else {
+      form.setValue('driver_id', null);
+      form.setValue('driver_name', '');
       setDriverAutoAssigned(false);
     }
 
@@ -217,16 +227,22 @@ export function FuelEventForm({
 
             <FormField
               control={form.control}
-              name="driver_name"
+              name="driver_id"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>{t('fuelEvents.fields.driver')}</FormLabel>
                   <FormControl>
                     <SearchableSelect
                       options={driverOptions}
-                      value={field.value || null}
+                      value={field.value}
                       onChange={(v) => {
-                        field.onChange(v as string);
+                        field.onChange(v);
+                        const d = drivers.find((drv) => drv.ID === Number(v));
+                        if (d) {
+                          form.setValue('driver_name', d.name);
+                        } else {
+                          form.setValue('driver_name', '');
+                        }
                         setDriverAutoAssigned(false);
                       }}
                       placeholder={t('fuelEvents.fields.selectDriver')}
@@ -240,6 +256,7 @@ export function FuelEventForm({
                       <button
                         type="button"
                         onClick={() => {
+                          form.setValue('driver_id', null);
                           form.setValue('driver_name', '', { shouldValidate: true });
                           setDriverAutoAssigned(false);
                         }}
