@@ -14,22 +14,23 @@ export function setLogoutHandler(handler: LogoutHandler): void {
 const DEFAULT_TIMEOUT = 15_000;
 
 /**
- * In Tauri the WebView's origin differs from the API domain. We route API
- * calls through Vite's dev proxy so they appear same-origin — this allows
- * the Go backend's `jwt` cookie to be sent with every request.
+ * In Tauri dev mode the WebView's origin (localhost:5173) differs from the
+ * API domain. Vite's dev proxy routes requests same-origin so the Go
+ * backend's `jwt` cookie is included. `resolveBaseURL` strips the origin
+ * to a relative path (e.g. `/api/go`) so the proxy intercepts the request.
  *
- * `resolveBaseURL` converts an absolute API URL to a relative path when
- * running inside Tauri (e.g. `https://apextransport.ddns.net/api/go` →
- * `/api/go`), letting the Vite proxy forward the request.
+ * In production Tauri builds there is no proxy — requests go directly to
+ * the API using the full URL with Bearer-token auth.
  */
 function resolveBaseURL(configuredURL: string): string {
-  if (!window.__TAURI_INTERNALS__) return configuredURL;
-  try {
-    const url = new URL(configuredURL);
-    return url.pathname; // e.g. "/api/go"
-  } catch {
-    return configuredURL;
+  if (window.__TAURI_INTERNALS__ && import.meta.env.DEV) {
+    try {
+      return new URL(configuredURL).pathname; // e.g. "/api/go"
+    } catch {
+      return configuredURL;
+    }
   }
+  return configuredURL;
 }
 
 function createClient(baseURL: string): AxiosInstance {
@@ -52,7 +53,19 @@ function createClient(baseURL: string): AxiosInstance {
   });
 
   instance.interceptors.response.use(
-    (response) => response,
+    (response) => {
+      // The Vite dev proxy can return JSON bodies as raw strings when the
+      // Content-Type header is mangled in transit. Auto-parse to keep
+      // downstream Zod schemas happy.
+      if (typeof response.data === 'string') {
+        try {
+          response.data = JSON.parse(response.data);
+        } catch {
+          // Not JSON — leave as-is (e.g. plain-text error messages)
+        }
+      }
+      return response;
+    },
     (error) => {
       const apiError = toApiError(error);
 
