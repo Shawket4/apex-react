@@ -51,18 +51,8 @@ function createClient(baseURL: string): AxiosInstance {
     // Rust, bypassing Android WebView CORS and mixed-content issues.
     ...(isTauriProd && {
       adapter: async (config) => {
-        // Simple custom adapter wrapping tauriFetch
-        const url = new URL(
-          config.url || '',
-          config.baseURL || window.location.origin
-        );
-        if (config.params) {
-          Object.entries(config.params).forEach(([k, v]) => {
-            if (v !== undefined && v !== null) {
-              url.searchParams.append(k, String(v));
-            }
-          });
-        }
+        const fullUrl = axios.getUri(config);
+        const url = new URL(fullUrl, window.location.origin);
 
         const headers = new Headers();
         if (config.headers) {
@@ -86,14 +76,20 @@ function createClient(baseURL: string): AxiosInstance {
         const response = await tauriFetch(url.toString(), requestInit);
         
         let data: any;
-        const text = await response.text();
-        try {
-          data = JSON.parse(text);
-        } catch {
-          data = text;
+        if (config.responseType === 'arraybuffer') {
+          data = await response.arrayBuffer();
+        } else if (config.responseType === 'blob') {
+          data = await response.blob();
+        } else {
+          const text = await response.text();
+          try {
+            data = JSON.parse(text);
+          } catch {
+            data = text;
+          }
         }
 
-        return {
+        const axiosResponse = {
           data,
           status: response.status,
           statusText: response.statusText,
@@ -101,6 +97,20 @@ function createClient(baseURL: string): AxiosInstance {
           config,
           request: response,
         };
+
+        const validateStatus = config.validateStatus || ((status) => status >= 200 && status < 300);
+        
+        if (!validateStatus(response.status)) {
+          throw new axios.AxiosError(
+            `Request failed with status code ${response.status}`,
+            axios.AxiosError.ERR_BAD_REQUEST,
+            config,
+            response,
+            axiosResponse
+          );
+        }
+
+        return axiosResponse;
       },
     }),
   });
