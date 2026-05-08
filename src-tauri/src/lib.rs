@@ -17,6 +17,7 @@ fn get_app_version() -> String {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_http::init())
         .invoke_handler(tauri::generate_handler![ping, get_app_version])
         .run(tauri::generate_context!())
         .expect("error while running apex-fleet");

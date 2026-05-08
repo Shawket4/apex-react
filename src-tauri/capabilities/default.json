@@ -7,6 +7,12 @@
     "core:default",
     "core:window:default",
     "core:app:default",
-    "core:event:default"
+    "core:event:default",
+    {
+      "identifier": "http:default",
+      "allow": [
+        { "url": "https://apextransport.ddns.net/**" }
+      ]
+    }
   ]
 }

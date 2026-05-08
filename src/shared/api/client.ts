@@ -13,6 +13,10 @@ export function setLogoutHandler(handler: LogoutHandler): void {
 
 const DEFAULT_TIMEOUT = 15_000;
 
+import { fetch as tauriFetch } from '@tauri-apps/plugin-http';
+
+const isTauriProd = !!window.__TAURI_INTERNALS__ && !import.meta.env.DEV;
+
 /**
  * In Tauri dev mode the WebView's origin (localhost:5173) differs from the
  * API domain. Vite's dev proxy routes requests same-origin so the Go
@@ -20,7 +24,7 @@ const DEFAULT_TIMEOUT = 15_000;
  * to a relative path (e.g. `/api/go`) so the proxy intercepts the request.
  *
  * In production Tauri builds there is no proxy — requests go directly to
- * the API using the full URL with Bearer-token auth.
+ * the API using the full URL.
  */
 function resolveBaseURL(configuredURL: string): string {
   if (window.__TAURI_INTERNALS__ && import.meta.env.DEV) {
@@ -42,6 +46,63 @@ function createClient(baseURL: string): AxiosInstance {
       'Content-Type': 'application/json',
       Accept: 'application/json',
     },
+    // Use the native fetch adapter in Tauri production, but override the
+    // global fetch with Tauri's HTTP plugin. This routes requests through
+    // Rust, bypassing Android WebView CORS and mixed-content issues.
+    ...(isTauriProd && {
+      adapter: async (config) => {
+        // Simple custom adapter wrapping tauriFetch
+        const url = new URL(
+          config.url || '',
+          config.baseURL || window.location.origin
+        );
+        if (config.params) {
+          Object.entries(config.params).forEach(([k, v]) => {
+            if (v !== undefined && v !== null) {
+              url.searchParams.append(k, String(v));
+            }
+          });
+        }
+
+        const headers = new Headers();
+        if (config.headers) {
+          Object.entries(config.headers).forEach(([k, v]) => {
+            if (v !== undefined && v !== null) {
+              headers.set(k, String(v));
+            }
+          });
+        }
+
+        const requestInit: RequestInit = {
+          method: config.method?.toUpperCase() || 'GET',
+          headers,
+          body: config.data
+            ? typeof config.data === 'string'
+              ? config.data
+              : JSON.stringify(config.data)
+            : undefined,
+        };
+
+        const response = await tauriFetch(url.toString(), requestInit);
+        
+        let data: any;
+        const text = await response.text();
+        try {
+          data = JSON.parse(text);
+        } catch {
+          data = text;
+        }
+
+        return {
+          data,
+          status: response.status,
+          statusText: response.statusText,
+          headers: response.headers as any,
+          config,
+          request: response,
+        };
+      },
+    }),
   });
 
   instance.interceptors.request.use((config) => {
