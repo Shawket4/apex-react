@@ -255,6 +255,16 @@ export const containerInputSchema = z.object({
   tank_capacity: z.number().positive(),
   gas_type: z.string().default(''),
   receipt_no: z.string().min(1),
+  // Parent-level fields — included on each container for updates so the
+  // backend doesn't need to re-propagate from the parent record.
+  car_id: z.number().int().optional(),
+  driver_id: z.number().int().optional(),
+  car_no_plate: z.string().optional(),
+  driver_name: z.string().optional(),
+  transporter: z.string().optional(),
+  company: z.string().optional(),
+  terminal: z.string().optional(),
+  date: z.string().optional(),
 });
 export type ContainerInput = z.infer<typeof containerInputSchema>;
 

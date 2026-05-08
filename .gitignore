@@ -10,3 +10,15 @@ dist-ssr
 .env.local
 .env.*.local
 tsconfig.tsbuildinfo
+
+# Tauri
+src-tauri/target/
+src-tauri/gen/schemas/
+src-tauri/Cargo.lock
+
+# Android build artifacts (scaffold is tracked, outputs are not)
+src-tauri/gen/android/.gradle/
+src-tauri/gen/android/app/build/
+src-tauri/gen/android/buildSrc/build/
+src-tauri/gen/android/app/release.keystore
+src-tauri/gen/android/key.properties

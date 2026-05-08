@@ -13,9 +13,28 @@ export function setLogoutHandler(handler: LogoutHandler): void {
 
 const DEFAULT_TIMEOUT = 15_000;
 
+/**
+ * In Tauri the WebView's origin differs from the API domain. We route API
+ * calls through Vite's dev proxy so they appear same-origin — this allows
+ * the Go backend's `jwt` cookie to be sent with every request.
+ *
+ * `resolveBaseURL` converts an absolute API URL to a relative path when
+ * running inside Tauri (e.g. `https://apextransport.ddns.net/api/go` →
+ * `/api/go`), letting the Vite proxy forward the request.
+ */
+function resolveBaseURL(configuredURL: string): string {
+  if (!window.__TAURI_INTERNALS__) return configuredURL;
+  try {
+    const url = new URL(configuredURL);
+    return url.pathname; // e.g. "/api/go"
+  } catch {
+    return configuredURL;
+  }
+}
+
 function createClient(baseURL: string): AxiosInstance {
   const instance = axios.create({
-    baseURL,
+    baseURL: resolveBaseURL(baseURL),
     withCredentials: true,
     timeout: DEFAULT_TIMEOUT,
     headers: {

@@ -9,3 +9,8 @@ interface ImportMetaEnv {
 interface ImportMeta {
   readonly env: ImportMetaEnv;
 }
+
+interface Window {
+  /** Set by Tauri's runtime — present when running inside the desktop shell. */
+  __TAURI_INTERNALS__?: Record<string, unknown>;
+}

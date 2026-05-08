@@ -460,6 +460,16 @@ export function TripForm({ parentId }: TripFormProps) {
         drop_off_point: c.drop_off_point,
         tank_capacity: c.tank_capacity,
         gas_type: c.gas_type ?? '',
+        // Propagate parent-level fields so the backend doesn't need to infer
+        // them — critical for updates where the user changed company/terminal.
+        car_id: selectedCar.ID,
+        driver_id: driverId ?? 0,
+        car_no_plate: selectedCar.car_no_plate,
+        driver_name: driverName,
+        transporter: 'Apex',
+        company,
+        terminal,
+        date,
       })),
       update_containers: isEdit ? true : undefined,
       receipt_batch_id: batchNavState?.receiptBatchId,

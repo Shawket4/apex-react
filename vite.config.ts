@@ -4,6 +4,8 @@ import compression from 'vite-plugin-compression';
 import path from 'node:path';
 import { constants as zlibConstants } from 'node:zlib';
 
+const host = process.env.TAURI_DEV_HOST;
+
 export default defineConfig({
   plugins: [
     react(),
@@ -58,9 +60,42 @@ export default defineConfig({
     },
   },
 
+  // Tauri expects a fixed port; `clearScreen: false` keeps Tauri's own logs visible
+  clearScreen: false,
   server: {
     port: 5173,
-    host: true,
+    strictPort: true,
+    host: host || true,
+    hmr: host
+      ? {
+          protocol: 'ws',
+          host,
+          port: 5174,
+        }
+      : undefined,
+    watch: {
+      ignored: ['**/src-tauri/**'],
+    },
+    // Proxy API calls so they are same-origin from the WebView's perspective.
+    // This is critical for Tauri where the Go backend authenticates via the
+    // `jwt` cookie — cross-origin requests can't carry same-site cookies.
+    proxy: {
+      '/api/go': {
+        target: 'https://apextransport.ddns.net',
+        changeOrigin: true,
+        secure: true,
+      },
+      '/api/rust': {
+        target: 'https://apextransport.ddns.net',
+        changeOrigin: true,
+        secure: true,
+      },
+      '/api/etit': {
+        target: 'https://apextransport.ddns.net',
+        changeOrigin: true,
+        secure: true,
+      },
+    },
   },
 
   build: {
