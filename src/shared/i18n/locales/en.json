@@ -1181,5 +1181,48 @@
       "placeholderService": "Service item {{n}}",
       "placeholderNotes": "Notes..."
     }
+  },
+  "cars": {
+    "title": "Fleet Management",
+    "subtitle": "Manage vehicles and driver assignments",
+    "addCar": "Add Car",
+    "editCar": "Edit Car",
+    "registerNewCar": "Register New Car",
+    "noCars": "No cars found",
+    "noCarsDescription": "Try adjusting your search or add a new car.",
+    "searchPlaceholder": "Search by plate, type, or driver...",
+    "registeredSuccessfully": "Car registered successfully",
+    "updatedSuccessfully": "Car updated successfully",
+    "noDriver": "No Driver",
+    "fields": {
+      "plateNumber": "Plate Number",
+      "plateNumberPlaceholder": "e.g. أ ب ج ١٢٣٤",
+      "type": "Car Type",
+      "driver": "Driver",
+      "capacity": "Capacity",
+      "selectDriver": "Select a driver...",
+      "licenseExpiry": "Car License Expiry",
+      "calibrationExpiry": "Calibration Expiry",
+      "tankLicenseExpiry": "Tank License Expiry"
+    },
+    "sections": {
+      "vehicleInfo": "Vehicle Information",
+      "driverAssignment": "Driver Assignment",
+      "compartments": "Tank Compartments",
+      "addCompartment": "Add Compartment",
+      "compartmentIndex": "Comp {{index}}",
+      "licenses": "Licenses & Dates"
+    },
+    "status": {
+      "expired": "Expired Docs",
+      "expiring": "Expiring Soon",
+      "valid": "Valid"
+    },
+    "stats": {
+      "total": "Total Cars",
+      "assigned": "Assigned",
+      "expiring": "Expiring Soon",
+      "expired": "Expired"
+    }
   }
 }

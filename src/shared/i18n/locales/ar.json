@@ -1181,5 +1181,48 @@
       "placeholderService": "بند الخدمة {{n}}",
       "placeholderNotes": "ملاحظات..."
     }
+  },
+  "cars": {
+    "title": "إدارة الأسطول",
+    "subtitle": "إدارة المركبات وتعيينات السائقين",
+    "addCar": "إضافة سيارة",
+    "editCar": "تعديل سيارة",
+    "registerNewCar": "تسجيل سيارة جديدة",
+    "noCars": "لم يتم العثور على سيارات",
+    "noCarsDescription": "حاول تعديل البحث أو إضافة سيارة جديدة.",
+    "searchPlaceholder": "البحث باللوحة، النوع، أو السائق...",
+    "registeredSuccessfully": "تم تسجيل السيارة بنجاح",
+    "updatedSuccessfully": "تم تحديث السيارة بنجاح",
+    "noDriver": "بدون سائق",
+    "fields": {
+      "plateNumber": "رقم اللوحة",
+      "plateNumberPlaceholder": "مثال: أ ب ج ١٢٣٤",
+      "type": "نوع السيارة",
+      "driver": "السائق",
+      "capacity": "السعة",
+      "selectDriver": "اختر سائقاً...",
+      "licenseExpiry": "انتهاء رخصة السيارة",
+      "calibrationExpiry": "انتهاء المعايرة",
+      "tankLicenseExpiry": "انتهاء رخصة التنك"
+    },
+    "sections": {
+      "vehicleInfo": "معلومات المركبة",
+      "driverAssignment": "تعيين السائق",
+      "compartments": "عيون التنك",
+      "addCompartment": "إضافة عين",
+      "compartmentIndex": "عين {{index}}",
+      "licenses": "الرخص والتواريخ"
+    },
+    "status": {
+      "expired": "مستندات منتهية",
+      "expiring": "تنتهي قريباً",
+      "valid": "ساري"
+    },
+    "stats": {
+      "total": "إجمالي السيارات",
+      "assigned": "تم التعيين",
+      "expiring": "تنتهي قريباً",
+      "expired": "منتهي"
+    }
   }
 }

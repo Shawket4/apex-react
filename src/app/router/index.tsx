@@ -28,6 +28,7 @@ const FuelEventDetailsPage = React.lazy(
   () => import('@/pages/fuel-events/fuel-event-details'),
 );
 const DriversListPage = React.lazy(() => import('@/pages/drivers/drivers'));
+const CarsPage = React.lazy(() => import('@/pages/cars/cars'));
 const DriverDetailPage = React.lazy(() => import('@/pages/driver-detail/driver-detail'));
 const DriverExpensesPage = React.lazy(
   () => import('@/pages/driver-expenses/driver-expenses'),
@@ -62,7 +63,6 @@ const EtitPage = React.lazy(() => import('@/pages/etit/etit'));
 // browser fetches it once and React picks the right component per route.
 const placeholderLoader = () => import('@/pages/placeholder/placeholder');
 const TrucksPage = lazyNamed(placeholderLoader, 'TrucksPage');
-const CarsPage = lazyNamed(placeholderLoader, 'CarsPage');
 const TiresPage = lazyNamed(placeholderLoader, 'TiresPage');
 const PayrollPage = lazyNamed(placeholderLoader, 'PayrollPage');
 const VendorsPage = lazyNamed(placeholderLoader, 'VendorsPage');
