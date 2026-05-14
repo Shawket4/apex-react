@@ -256,7 +256,11 @@ export function CarForm({
                 <FormItem>
                   <FormLabel>{t('cars.fields.licenseExpiry')}</FormLabel>
                   <FormControl>
-                    <DatePicker value={field.value} onChange={field.onChange} />
+                    <DatePicker 
+                      value={field.value} 
+                      onChange={field.onChange} 
+                      max="2099-12-31" 
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -269,7 +273,11 @@ export function CarForm({
                 <FormItem>
                   <FormLabel>{t('cars.fields.calibrationExpiry')}</FormLabel>
                   <FormControl>
-                    <DatePicker value={field.value} onChange={field.onChange} />
+                    <DatePicker 
+                      value={field.value} 
+                      onChange={field.onChange} 
+                      max="2099-12-31" 
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -283,7 +291,11 @@ export function CarForm({
                   <FormItem>
                     <FormLabel>{t('cars.fields.tankLicenseExpiry')}</FormLabel>
                     <FormControl>
-                      <DatePicker value={field.value} onChange={field.onChange} />
+                      <DatePicker 
+                      value={field.value} 
+                      onChange={field.onChange} 
+                      max="2099-12-31" 
+                    />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

@@ -264,6 +264,7 @@ export function DocumentsTab({ driver }: DocumentsTabProps) {
                     <DatePicker
                       value={dates[doc.dateField as keyof typeof dates] || ''}
                       onChange={(v) => handleDateChange(doc.dateField as string, v)}
+                      max="2099-12-31"
                     />
                   ) : (
                     <p className="text-sm font-medium">
