@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { cn } from '@/shared/lib/cn';
+import { resolveAnimationPath } from '@/shared/lib/animations';
 
 const LazyDotLottieReact = React.lazy(() =>
   import('@lottiefiles/dotlottie-react').then((module) => ({
@@ -38,7 +39,7 @@ export function EmptyState({
       {lottieSrc ? (
         <div style={{ width: lottieWidth, height: lottieHeight }} className="flex items-center justify-center shrink-0">
           <React.Suspense fallback={<div className="h-full w-full bg-transparent" />}>
-            <LazyDotLottieReact src={lottieSrc} loop autoplay />
+            <LazyDotLottieReact src={resolveAnimationPath(lottieSrc)} loop autoplay />
           </React.Suspense>
         </div>
       ) : icon && (

@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
+import { resolveAnimationPath } from '@/shared/lib/animations';
 import { Loader2 } from 'lucide-react';
 import {
   Dialog,
@@ -58,7 +59,7 @@ export function ConfirmDialog({
             <div className="flex h-20 w-20 items-center justify-center shrink-0">
               <React.Suspense fallback={<div className="h-full w-full bg-transparent" />}>
                 <LazyDotLottieReact
-                  src={activeLottieSrc}
+                  src={resolveAnimationPath(activeLottieSrc)}
                   loop
                   autoplay
                 />

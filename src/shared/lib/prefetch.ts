@@ -1,12 +1,4 @@
-const ANIMATION_ASSETS = [
-  '/animations/coins.lottie',
-  '/animations/construction.lottie',
-  '/animations/location_radar.lottie',
-  '/animations/no_results.json',
-  '/animations/receipt.lottie',
-  '/animations/success.lottie',
-  '/animations/warning.lottie',
-];
+import { PREFETCH_URLS } from './animations';
 
 /**
  * Prefetches all Lottie animations and lazy-loaded Lottie JS bundle chunk in the background.
@@ -17,7 +9,7 @@ export function prefetchAnimations() {
 
   const runPrefetch = () => {
     // 1. Prefetch the Lottie assets and let the browser store them in HTTP Cache
-    ANIMATION_ASSETS.forEach((asset) => {
+    PREFETCH_URLS.forEach((asset) => {
       fetch(asset, { cache: 'force-cache' }).catch((err) => {
         console.warn(`Failed to prefetch animation asset: ${asset}`, err);
       });

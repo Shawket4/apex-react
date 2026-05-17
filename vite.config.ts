@@ -7,6 +7,7 @@ import { constants as zlibConstants } from 'node:zlib';
 const host = process.env.TAURI_DEV_HOST;
 
 export default defineConfig({
+  assetsInclude: ['**/*.lottie'],
   plugins: [
     react(),
 

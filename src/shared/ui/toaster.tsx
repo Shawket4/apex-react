@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useTheme } from 'next-themes';
 import { Toaster as Sonner, toast as sonnerToast } from 'sonner';
+import { resolveAnimationPath } from '@/shared/lib/animations';
 
 const LazyDotLottieReact = React.lazy(() =>
   import('@lottiefiles/dotlottie-react').then((module) => ({
@@ -32,14 +33,14 @@ export function Toaster(props: ToasterProps) {
         success: (
           <React.Suspense fallback={<div className="h-5 w-5 bg-transparent" />}>
             <div className="h-10 w-10 shrink-0 flex items-center justify-center -ms-2 me-3 drop-shadow-md">
-              <LazyDotLottieReact src="/animations/success.lottie" loop autoplay />
+              <LazyDotLottieReact src={resolveAnimationPath('/animations/success.lottie')} loop autoplay />
             </div>
           </React.Suspense>
         ),
         error: (
           <React.Suspense fallback={<div className="h-5 w-5 bg-transparent" />}>
             <div className="h-10 w-10 shrink-0 flex items-center justify-center -ms-2 me-3 drop-shadow-md">
-              <LazyDotLottieReact src="/animations/warning.lottie" loop autoplay />
+              <LazyDotLottieReact src={resolveAnimationPath('/animations/warning.lottie')} loop autoplay />
             </div>
           </React.Suspense>
         ),
