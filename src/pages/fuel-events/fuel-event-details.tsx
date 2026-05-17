@@ -85,7 +85,9 @@ export default function FuelEventDetailsPage() {
     return (
       <PageShell title={t('common.notFound')} icon={<Fuel className="h-5 w-5" />}>
         <EmptyState
-          icon={<AlertTriangle className="h-5 w-5" />}
+          lottieSrc="/animations/warning.lottie"
+          lottieWidth={100}
+          lottieHeight={100}
           title={t('fuelEvents.loadFailed')}
           action={
             <Button variant="outline" onClick={() => navigate('/fuel-events')}>

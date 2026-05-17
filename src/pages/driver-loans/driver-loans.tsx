@@ -152,7 +152,9 @@ export default function DriverLoansPage() {
         </div>
       ) : loans.length === 0 ? (
         <EmptyState
-          icon={<CreditCard className="h-5 w-5" />}
+          lottieSrc="/animations/coins.lottie"
+          lottieWidth={120}
+          lottieHeight={120}
           title={t('driverLoans.noLoans')}
           description={t('driverLoans.noLoansDescription')}
           action={

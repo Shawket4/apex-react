@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { ChevronLeft, ChevronRight, ImageOff, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -9,6 +9,7 @@ import {
   DialogTitle,
 } from '@/shared/ui/dialog';
 import { Button } from '@/shared/ui/button';
+import { EmptyState } from '@/shared/ui/empty-state';
 import { Skeleton } from '@/shared/ui/skeleton';
 import { useParentContainers } from '@/entities/trip/queries';
 import { type ReceiptImage } from '@/entities/trip/schemas';
@@ -89,9 +90,14 @@ export function TripReceiptBatchDialog({
               ))}
             </div>
           ) : images.length === 0 ? (
-            <div className="flex flex-col items-center justify-center gap-2 py-12 text-center text-sm text-muted-foreground">
-              <ImageOff className="h-8 w-8" />
-              {t('trips.receiptBatch.noImages')}
+            <div className="flex flex-col items-center justify-center gap-2 py-4 text-center">
+              <EmptyState
+                lottieSrc="/animations/receipt.lottie"
+                lottieWidth={140}
+                lottieHeight={140}
+                title={t('trips.receiptBatch.noImages')}
+                className="border-0 bg-transparent py-4 shadow-none"
+              />
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">

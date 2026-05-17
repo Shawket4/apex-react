@@ -126,7 +126,9 @@ export default function DashboardPage() {
               </div>
             ) : recentEvents.length === 0 ? (
               <EmptyState
-                icon={<Fuel className="h-5 w-5" />}
+                lottieSrc="/animations/no_results.json"
+                lottieWidth={100}
+                lottieHeight={100}
                 title={t('fuelEvents.noEvents')}
                 description={t('fuelEvents.noEventsDescription')}
                 className="m-6"

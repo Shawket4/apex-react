@@ -153,7 +153,9 @@ export default function DriverExpensesPage() {
         </div>
       ) : expenses.length === 0 ? (
         <EmptyState
-          icon={<Receipt className="h-5 w-5" />}
+          lottieSrc="/animations/coins.lottie"
+          lottieWidth={120}
+          lottieHeight={120}
           title={t('driverExpenses.noExpenses')}
           description={t('driverExpenses.noExpensesDescription')}
           action={

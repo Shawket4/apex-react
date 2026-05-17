@@ -19,6 +19,7 @@ import { useTranslation } from 'react-i18next';
 import { cn } from '@/shared/lib/cn';
 import { Button } from './button';
 import { Skeleton } from './skeleton';
+import { EmptyState } from './empty-state';
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -247,8 +248,18 @@ export function DataTable<TData, TValue>({
                 })
               ) : (
                 <tr>
-                  <td colSpan={columns.length} className="h-48 text-center text-muted-foreground">
-                    {emptyState ?? t('common.noResults')}
+                  <td colSpan={columns.length} className="p-0">
+                    {typeof emptyState === 'string' || !emptyState ? (
+                      <EmptyState
+                        lottieSrc="/animations/no_results.json"
+                        lottieWidth={100}
+                        lottieHeight={100}
+                        title={emptyState ?? t('common.noResults')}
+                        className="border-0 bg-transparent py-12 shadow-none"
+                      />
+                    ) : (
+                      emptyState
+                    )}
                   </td>
                 </tr>
               )}

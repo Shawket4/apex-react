@@ -1,20 +1,32 @@
 import * as React from 'react';
 import { cn } from '@/shared/lib/cn';
 
+const LazyDotLottieReact = React.lazy(() =>
+  import('@lottiefiles/dotlottie-react').then((module) => ({
+    default: module.DotLottieReact,
+  }))
+);
+
 interface EmptyStateProps {
   icon?: React.ReactNode;
+  lottieSrc?: string;
   title: React.ReactNode;
   description?: React.ReactNode;
   action?: React.ReactNode;
   className?: string;
+  lottieWidth?: number | string;
+  lottieHeight?: number | string;
 }
 
 export function EmptyState({
   icon,
+  lottieSrc,
   title,
   description,
   action,
   className,
+  lottieWidth = 120,
+  lottieHeight = 120,
 }: EmptyStateProps) {
   return (
     <div
@@ -23,7 +35,13 @@ export function EmptyState({
         className,
       )}
     >
-      {icon && (
+      {lottieSrc ? (
+        <div style={{ width: lottieWidth, height: lottieHeight }} className="flex items-center justify-center shrink-0">
+          <React.Suspense fallback={<div className="h-full w-full bg-transparent" />}>
+            <LazyDotLottieReact src={lottieSrc} loop autoplay />
+          </React.Suspense>
+        </div>
+      ) : icon && (
         <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
           {icon}
         </div>

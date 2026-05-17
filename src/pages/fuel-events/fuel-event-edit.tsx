@@ -67,6 +67,9 @@ export default function FuelEventEditPage() {
       <div className="mx-auto w-full max-w-3xl">
         {isError ? (
           <EmptyState
+            lottieSrc="/animations/warning.lottie"
+            lottieWidth={100}
+            lottieHeight={100}
             title={t('fuelEvents.loadFailed')}
             action={
               <Button variant="outline" onClick={() => navigate('/fuel-events')}>

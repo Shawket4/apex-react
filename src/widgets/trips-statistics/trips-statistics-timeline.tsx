@@ -10,7 +10,6 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { LineChart as ChartIcon } from 'lucide-react';
 import { ChartCard } from '@/shared/ui/chart-card';
 import { EmptyState } from '@/shared/ui/empty-state';
 import {
@@ -278,7 +277,9 @@ export function TripsStatisticsTimeline({
       {chartData.length === 0 ? (
         <div className="px-3 py-10">
           <EmptyState
-            icon={<ChartIcon className="h-5 w-5" />}
+            lottieSrc="/animations/no_results.json"
+            lottieWidth={100}
+            lottieHeight={100}
             title={t('trips.statistics.timeline.empty')}
           />
         </div>

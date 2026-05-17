@@ -100,7 +100,9 @@ export default function DriverDetailPage() {
     return (
       <PageShell title={t('common.notFound')} icon={<Users className="h-5 w-5" />}>
         <EmptyState
-          icon={<AlertTriangle className="h-5 w-5" />}
+          lottieSrc="/animations/warning.lottie"
+          lottieWidth={100}
+          lottieHeight={100}
           title={t('common.notFound')}
           action={
             <Button variant="outline" onClick={() => navigate('/drivers')}>

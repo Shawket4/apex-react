@@ -2,6 +2,12 @@ import * as React from 'react';
 import { useTheme } from 'next-themes';
 import { Toaster as Sonner, toast as sonnerToast } from 'sonner';
 
+const LazyDotLottieReact = React.lazy(() =>
+  import('@lottiefiles/dotlottie-react').then((module) => ({
+    default: module.DotLottieReact,
+  }))
+);
+
 type ToasterProps = React.ComponentProps<typeof Sonner>;
 
 export function Toaster(props: ToasterProps) {
@@ -21,6 +27,22 @@ export function Toaster(props: ToasterProps) {
           actionButton: 'group-[.toast]:bg-primary group-[.toast]:text-primary-foreground',
           cancelButton: 'group-[.toast]:bg-muted group-[.toast]:text-muted-foreground',
         },
+      }}
+      icons={{
+        success: (
+          <React.Suspense fallback={<div className="h-5 w-5 bg-transparent" />}>
+            <div className="h-10 w-10 shrink-0 flex items-center justify-center -ms-2 me-3 drop-shadow-md">
+              <LazyDotLottieReact src="/animations/success.lottie" loop autoplay />
+            </div>
+          </React.Suspense>
+        ),
+        error: (
+          <React.Suspense fallback={<div className="h-5 w-5 bg-transparent" />}>
+            <div className="h-10 w-10 shrink-0 flex items-center justify-center -ms-2 me-3 drop-shadow-md">
+              <LazyDotLottieReact src="/animations/warning.lottie" loop autoplay />
+            </div>
+          </React.Suspense>
+        ),
       }}
       {...props}
     />
@@ -42,8 +64,16 @@ export const toast = (
   options?: any,
 ) => {
   if (typeof message === 'object' && message !== null && 'title' in message) {
-    const { title, description, variant, ...rest } = message as ToastPayload;
+    let { title, description, variant, ...rest } = message as ToastPayload;
     
+    // Auto-infer success if no variant is specified but title suggests it
+    if (!variant && typeof title === 'string') {
+      const lower = title.toLowerCase();
+      if (lower.includes('success') || lower.includes('saved') || lower.includes('created') || lower.includes('deleted')) {
+        variant = 'success';
+      }
+    }
+
     // Map variants to sonner methods
     const method = 
       variant === 'destructive' ? sonnerToast.error :

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Gauge, Pause, Play, RotateCcw } from 'lucide-react';
 import { cn } from '@/shared/lib/cn';
 import { Button } from '@/shared/ui/button';
+import { EmptyState } from '@/shared/ui/empty-state';
 import { formatCairo, formatCairoClock } from '@/entities/etit-vehicle/cairo';
 import {
   activeStop,
@@ -233,11 +234,17 @@ export function EtitPlaybackPlayer({
     return (
       <div
         className={cn(
-          'rounded-lg border border-dashed bg-muted/20 p-4 text-center text-xs text-muted-foreground',
+          'rounded-lg border border-dashed bg-muted/20 p-4 text-center',
           className,
         )}
       >
-        {t('etit.player.empty')}
+        <EmptyState
+          lottieSrc="/animations/no_results.json"
+          lottieWidth={70}
+          lottieHeight={70}
+          title={t('etit.player.empty')}
+          className="border-0 bg-transparent py-2 shadow-none"
+        />
       </div>
     );
   }

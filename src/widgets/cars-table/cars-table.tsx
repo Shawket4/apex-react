@@ -244,7 +244,9 @@ export function CarsTable({ onAddCar, onEditCar }: CarsTableProps) {
         loading={isLoading}
         emptyState={
           <EmptyState
-            icon={<CarIcon className="h-6 w-6" />}
+            lottieSrc="/animations/no_results.json"
+            lottieWidth={100}
+            lottieHeight={100}
             title={t('cars.noCars')}
             description={t('cars.noCarsDescription')}
             action={

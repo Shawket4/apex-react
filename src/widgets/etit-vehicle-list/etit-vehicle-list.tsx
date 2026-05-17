@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Crosshair, Eye, EyeOff, Truck, Wifi, WifiOff } from 'lucide-react';
+import { Crosshair, Eye, EyeOff, Wifi, WifiOff } from 'lucide-react';
 import { cn } from '@/shared/lib/cn';
 import { Button } from '@/shared/ui/button';
 import { ScrollArea } from '@/shared/ui/scroll-area';
@@ -335,7 +335,9 @@ function EtitVehicleListBase({
         ) : filtered.length === 0 ? (
           <div className="p-4">
             <EmptyState
-              icon={<Truck className="h-5 w-5" />}
+              lottieSrc="/animations/location_radar.lottie"
+              lottieWidth={100}
+              lottieHeight={100}
               title={t('etit.list.empty.title')}
               description={
                 debouncedSearch

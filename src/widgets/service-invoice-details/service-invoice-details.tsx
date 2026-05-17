@@ -19,6 +19,7 @@ import { Button } from '@/shared/ui/button';
 import { Card, CardContent } from '@/shared/ui/card';
 import { Badge } from '@/shared/ui/badge';
 import { StatCard } from '@/shared/ui/stat-card';
+import { EmptyState } from '@/shared/ui/empty-state';
 import { cn } from '@/shared/lib/cn';
 import { formatNumber } from '@/shared/lib/format';
 
@@ -206,8 +207,14 @@ export function ServiceInvoiceDetails({
                     );
                   })}
                   {!invoice.inspection_items?.length && (
-                    <div className="p-12 text-center text-muted-foreground italic">
-                      {t('common.noResults')}
+                    <div className="p-6">
+                      <EmptyState
+                        lottieSrc="/animations/receipt.lottie"
+                        lottieWidth={100}
+                        lottieHeight={100}
+                        title={t('common.noResults')}
+                        className="border-0 bg-transparent py-4 shadow-none"
+                      />
                     </div>
                   )}
                 </div>

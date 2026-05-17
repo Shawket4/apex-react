@@ -87,7 +87,9 @@ export default function OilChangeEditPage() {
     >
       {isError ? (
         <EmptyState
-          icon={<Droplets className="h-5 w-5" />}
+          lottieSrc="/animations/warning.lottie"
+          lottieWidth={100}
+          lottieHeight={100}
           title={t('oilChanges.edit.loadFailed')}
           description={extractErrorMessage(error)}
           action={

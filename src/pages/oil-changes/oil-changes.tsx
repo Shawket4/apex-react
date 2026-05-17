@@ -185,7 +185,9 @@ export default function OilChangesPage() {
     >
       {isError ? (
         <EmptyState
-          icon={<Droplets className="h-5 w-5" />}
+          lottieSrc="/animations/warning.lottie"
+          lottieWidth={100}
+          lottieHeight={100}
           title={t('errors.generic')}
           action={
             <Button onClick={() => void refetch()} variant="outline">
@@ -195,7 +197,9 @@ export default function OilChangesPage() {
         />
       ) : showEmptyState ? (
         <EmptyState
-          icon={<Droplets className="h-5 w-5" />}
+          lottieSrc="/animations/construction.lottie"
+          lottieWidth={120}
+          lottieHeight={120}
           title={t('oilChanges.empty.title')}
           description={t('oilChanges.empty.description')}
           action={

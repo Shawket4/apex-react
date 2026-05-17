@@ -7,6 +7,7 @@ import { Toaster } from '@/shared/ui/toaster';
 import { setLogoutHandler } from '@/shared/api/client';
 import { useAuthStore, syncLegacyStorage } from '@/shared/auth/store';
 import { STORAGE_KEYS } from '@/shared/config/constants';
+import { prefetchAnimations } from '@/shared/lib/prefetch';
 
 interface ProvidersProps {
   children: React.ReactNode;
@@ -26,6 +27,7 @@ export function Providers({ children }: ProvidersProps) {
     // axios interceptor finds the JWT under `jwt` on first request.
     syncLegacyStorage();
     useAuthStore.getState().markInitialized();
+    prefetchAnimations();
   }, []);
 
   return (

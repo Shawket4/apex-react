@@ -158,7 +158,9 @@ export function DriversTable({ onAddDriver }: DriversTableProps) {
         onRowClick={(row) => navigate(`/drivers/${row.ID}`)}
         emptyState={
           <EmptyState
-            icon={<Users className="h-6 w-6" />}
+            lottieSrc="/animations/no_results.json"
+            lottieWidth={100}
+            lottieHeight={100}
             title={t('drivers.noDrivers')}
             description={t('drivers.noDriversDescription')}
             action={

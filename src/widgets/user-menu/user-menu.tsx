@@ -13,6 +13,7 @@ import {
 import { useAuthStore } from '@/shared/auth/store';
 import { useLogout } from '@/entities/auth/queries';
 import { PERMISSION_LEVELS } from '@/shared/config/constants';
+import { cn } from '@/shared/lib/cn';
 
 function initials(name?: string): string {
   if (!name) return 'U';
@@ -48,25 +49,31 @@ export function UserMenu({ collapsed = false }: UserMenuProps) {
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
-          className="h-auto w-full justify-start gap-2 px-2 py-2"
+          className={cn(
+            "h-auto justify-start gap-2 px-2 py-2 transition-all duration-200 ease-out",
+            collapsed ? "w-9 mx-auto px-0 justify-center" : "w-full"
+          )}
           aria-label={t('common.profile')}
         >
-          <Avatar className="h-8 w-8">
+          <Avatar className="h-8 w-8 shrink-0">
             <AvatarFallback className="bg-primary/10 text-primary">
               {initials(user.name)}
             </AvatarFallback>
           </Avatar>
-          {!collapsed && (
-            <>
-              <div className="flex-1 min-w-0 text-start">
-                <p className="truncate text-sm font-medium leading-tight">{user.name}</p>
-                <p className="truncate text-xs text-muted-foreground">
-                  {roleLabel(user.permission)}
-                </p>
-              </div>
-              <ChevronsUpDown className="h-4 w-4 text-muted-foreground" />
-            </>
-          )}
+          <div
+            className={cn(
+              'flex-grow flex items-center justify-between text-start transition-all duration-200 ease-out overflow-hidden',
+              collapsed ? 'max-w-0 opacity-0 pointer-events-none invisible' : 'max-w-40 opacity-100'
+            )}
+          >
+            <div className="flex-grow min-w-0">
+              <p className="truncate text-sm font-medium leading-tight">{user.name}</p>
+              <p className="truncate text-xs text-muted-foreground">
+                {roleLabel(user.permission)}
+              </p>
+            </div>
+            <ChevronsUpDown className="h-4 w-4 text-muted-foreground shrink-0 ml-1" />
+          </div>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">

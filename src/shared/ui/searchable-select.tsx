@@ -13,6 +13,7 @@ import {
   CommandList,
 } from './command';
 import { Popover, PopoverContent, PopoverTrigger } from './popover';
+import { EmptyState } from './empty-state';
 import type { SelectOption } from '@/shared/types';
 
 interface SearchableSelectProps<T extends string | number> {
@@ -140,7 +141,15 @@ export function SearchableSelect<T extends string | number>({
             onValueChange={setSearch}
           />
           <CommandList>
-            <CommandEmpty>{emptyText ?? t('common.noResults')}</CommandEmpty>
+            <CommandEmpty className="p-0">
+              <EmptyState
+                lottieSrc="/animations/no_results.json"
+                lottieWidth={70}
+                lottieHeight={70}
+                title={emptyText ?? t('common.noResults')}
+                className="border-0 bg-transparent py-4 shadow-none"
+              />
+            </CommandEmpty>
             <CommandGroup>
               {allowCustom && search.trim() && !hasExactMatch && (
                 <CommandItem

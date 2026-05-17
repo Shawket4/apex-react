@@ -10,7 +10,6 @@ import {
   ExternalLink,
   Loader2,
   MapPin,
-  MapPinOff,
   Navigation,
   RefreshCw,
   Ruler,
@@ -26,6 +25,7 @@ import {
 import { Button } from '@/shared/ui/button';
 import { Skeleton } from '@/shared/ui/skeleton';
 import { Separator } from '@/shared/ui/separator';
+import { EmptyState } from '@/shared/ui/empty-state';
 import { useTripDetails } from '@/entities/trip/queries';
 import { decodePolyline } from '@/entities/trip-summary/api';
 import { format, formatNumber } from '@/shared/lib/format';
@@ -263,12 +263,13 @@ export function TripLocationDialog({
             ) : (
               !isLoading && !isError && (
                 <div className="flex h-full items-center justify-center">
-                  <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                    <MapPinOff className="h-8 w-8 opacity-20" />
-                    <span className="text-xs font-medium">
-                      {t('trips.dialog.map.noCoordinates')}
-                    </span>
-                  </div>
+                  <EmptyState
+                    lottieSrc="/animations/location_radar.lottie"
+                    lottieWidth={100}
+                    lottieHeight={100}
+                    title={t('trips.dialog.map.noCoordinates')}
+                    className="border-0 bg-transparent py-4 shadow-none"
+                  />
                 </div>
               )
             )}

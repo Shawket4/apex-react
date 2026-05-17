@@ -14,7 +14,6 @@ import {
   Plus,
   Trash2,
   User,
-  Wrench,
 } from 'lucide-react';
 import type { ColumnDef } from '@tanstack/react-table';
 import { PageShell } from '@/shared/ui/page-shell';
@@ -302,7 +301,9 @@ export default function OilChangeHistoryPage() {
     >
       {isError ? (
         <EmptyState
-          icon={<Droplets className="h-5 w-5" />}
+          lottieSrc="/animations/warning.lottie"
+          lottieWidth={100}
+          lottieHeight={100}
           title={t('errors.generic')}
           action={
             <Button onClick={() => void refetch()} variant="outline">
@@ -321,7 +322,9 @@ export default function OilChangeHistoryPage() {
         </>
       ) : history.length === 0 ? (
         <EmptyState
-          icon={<Wrench className="h-5 w-5" />}
+          lottieSrc="/animations/construction.lottie"
+          lottieWidth={120}
+          lottieHeight={120}
           title={t('oilChanges.history.empty.title', { plate: carNoPlate })}
           description={t('oilChanges.history.empty.description')}
           action={

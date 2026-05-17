@@ -20,6 +20,7 @@ import {
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { ScrollArea } from '@/shared/ui/scroll-area';
+import { EmptyState } from '@/shared/ui/empty-state';
 import { useDropOffs } from '@/entities/mapping/queries';
 import type { MappingDetail } from '@/entities/mapping/schemas';
 import { normalize } from '@/shared/lib/normalize';
@@ -156,11 +157,16 @@ export function DropOffPickerModal({
                 <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
               </div>
             ) : pageItems.length === 0 ? (
-              <div className="flex flex-col items-center justify-center gap-2 py-12 text-sm text-muted-foreground">
-                <MapPin className="h-6 w-6" />
-                {search
-                  ? t('trips.form.dropOffPicker.noMatches')
-                  : t('trips.form.dropOffPicker.empty')}
+              <div className="flex h-full items-center justify-center">
+                <EmptyState
+                  lottieSrc="/animations/no_results.json"
+                  lottieWidth={80}
+                  lottieHeight={80}
+                  title={search
+                    ? t('trips.form.dropOffPicker.noMatches')
+                    : t('trips.form.dropOffPicker.empty')}
+                  className="border-0 bg-transparent py-4 shadow-none"
+                />
               </div>
             ) : (
               <ul className="divide-y">

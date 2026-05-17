@@ -20,9 +20,7 @@ export function Layout() {
     <div className="flex h-dvh bg-background">
       {/* Desktop sidebar — fixed, collapsible, always viewport-height */}
       {isDesktop && (
-        <div className="print:hidden">
-          <Sidebar collapsed={sidebarCollapsed} onToggleCollapse={toggleSidebar} />
-        </div>
+        <Sidebar collapsed={sidebarCollapsed} onToggleCollapse={toggleSidebar} />
       )}
 
       {/* Mobile sidebar — slide-out Sheet */}

@@ -2,7 +2,6 @@ import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from '@/shared/ui/toaster';
 import {
-  BarChart3,
   Car as CarIcon,
   Download,
   LayoutDashboard,
@@ -101,7 +100,9 @@ export function TripsStatistics({ filters }: TripsStatisticsProps) {
       <Card>
         <CardContent className="p-6">
           <EmptyState
-            icon={<BarChart3 className="h-6 w-6" />}
+            lottieSrc="/animations/warning.lottie"
+            lottieWidth={100}
+            lottieHeight={100}
             title={t('trips.statistics.errorTitle')}
             description={extractErrorMessage(
               error,
@@ -131,7 +132,9 @@ export function TripsStatistics({ filters }: TripsStatisticsProps) {
       <Card>
         <CardContent className="p-6">
           <EmptyState
-            icon={<BarChart3 className="h-6 w-6" />}
+            lottieSrc="/animations/no_results.json"
+            lottieWidth={100}
+            lottieHeight={100}
             title={t('trips.statistics.empty.title')}
             description={t('trips.statistics.empty.description')}
           />

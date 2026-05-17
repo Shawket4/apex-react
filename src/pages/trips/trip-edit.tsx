@@ -19,6 +19,9 @@ export default function TripEditPage() {
         icon={<Edit3 className="h-5 w-5" />}
       >
         <EmptyState
+          lottieSrc="/animations/warning.lottie"
+          lottieWidth={100}
+          lottieHeight={100}
           title={t('errors.invalidId')}
           action={
             <Button onClick={() => navigate('/trips')}>

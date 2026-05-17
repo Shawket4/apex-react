@@ -172,7 +172,9 @@ export function TripsTable({
   if (!loading && items.length === 0) {
     return (
       <EmptyState
-        icon={<FileText className="h-5 w-5" />}
+        lottieSrc="/animations/no_results.json"
+        lottieWidth={100}
+        lottieHeight={100}
         title={t('trips.empty.title')}
         description={t('trips.empty.description')}
         action={emptyAction}

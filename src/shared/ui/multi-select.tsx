@@ -4,6 +4,7 @@ import { Check, ChevronDown, X } from 'lucide-react';
 import { cn } from '@/shared/lib/cn';
 import { Button } from './button';
 import { Popover, PopoverContent, PopoverTrigger } from './popover';
+import { EmptyState } from './empty-state';
 
 export interface MultiSelectOption<T extends string = string> {
   value: T;
@@ -197,8 +198,14 @@ export function MultiSelect<T extends string = string>({
           </div>
         )}
         {options.length === 0 ? (
-          <div className="px-2 py-4 text-center text-xs text-muted-foreground">
-            {emptyState ?? t('common.noOptions')}
+          <div className="p-0">
+            <EmptyState
+              lottieSrc="/animations/no_results.json"
+              lottieWidth={70}
+              lottieHeight={70}
+              title={emptyState ?? t('common.noOptions')}
+              className="border-0 bg-transparent py-4 shadow-none"
+            />
           </div>
         ) : (
           <ul className="space-y-0.5">

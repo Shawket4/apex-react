@@ -524,7 +524,9 @@ export default function TripsPage() {
         <TabsContent value="list" className="mt-3 md:mt-4">
           {isError ? (
             <EmptyState
-              icon={<Truck className="h-5 w-5" />}
+              lottieSrc="/animations/warning.lottie"
+              lottieWidth={100}
+              lottieHeight={100}
               title={t('errors.generic')}
               action={
                 <Button onClick={() => void refetch()} variant="outline">

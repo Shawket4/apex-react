@@ -152,7 +152,7 @@ export function Sidebar({ collapsed, onToggleCollapse, onNavigate, className }: 
     <aside
       data-collapsed={collapsed}
       className={cn(
-        'group/sidebar flex h-full shrink-0 flex-col border-e bg-card transition-[width] duration-200 print:hidden',
+        'group/sidebar flex h-full shrink-0 flex-col border-e bg-card transition-[width] duration-200 ease-out print:hidden',
         collapsed ? 'w-[72px]' : 'w-64',
         className,
       )}
@@ -160,19 +160,22 @@ export function Sidebar({ collapsed, onToggleCollapse, onNavigate, className }: 
       {/* Brand */}
       <div
         className={cn(
-          'flex h-16 shrink-0 items-center gap-2 border-b px-4',
-          collapsed && 'justify-center px-2',
+          'flex h-16 shrink-0 items-center gap-2 border-b transition-all duration-200 ease-out',
+          collapsed ? 'justify-center px-2' : 'px-4 gap-3',
         )}
       >
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground">
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground transition-all duration-200">
           <Truck className="h-4 w-4" />
         </div>
-        {!collapsed && (
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-semibold leading-tight">{t('common.appName')}</p>
-            <p className="truncate text-xs text-muted-foreground">{t('common.tagline')}</p>
-          </div>
-        )}
+        <div
+          className={cn(
+            'min-w-0 flex-grow transition-all duration-200 ease-out overflow-hidden origin-left',
+            collapsed ? 'max-w-0 opacity-0 pointer-events-none invisible' : 'max-w-40 opacity-100 ml-2'
+          )}
+        >
+          <p className="truncate text-sm font-semibold leading-tight">{t('common.appName')}</p>
+          <p className="truncate text-xs text-muted-foreground">{t('common.tagline')}</p>
+        </div>
       </div>
 
       {/* Nav */}
@@ -180,14 +183,16 @@ export function Sidebar({ collapsed, onToggleCollapse, onNavigate, className }: 
         <nav className="flex flex-col gap-4 p-3">
           {visibleSections.map((section) => (
             <div key={section.titleKey} className="space-y-1">
-              {!collapsed && (
-                <h3 className="px-2 pt-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  {t(section.titleKey)}
-                </h3>
-              )}
-              {collapsed && section !== visibleSections[0] && (
-                <div className="mx-2 my-1 border-t" />
-              )}
+              <h3 className={cn(
+                "px-2 pt-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground transition-all duration-200 ease-out overflow-hidden origin-left",
+                collapsed ? "max-h-0 opacity-0 my-0 py-0" : "max-h-8 opacity-100",
+              )}>
+                {t(section.titleKey)}
+              </h3>
+              <div className={cn(
+                "mx-2 transition-all duration-200 ease-out",
+                collapsed && section !== visibleSections[0] ? "my-2 border-t opacity-100" : "my-0 border-t-0 h-0 opacity-0 pointer-events-none"
+              )} />
               <ul className="space-y-0.5">
                 {section.items.map((item) => {
                   const active = pathname === item.to || pathname.startsWith(item.to + '/');
@@ -198,16 +203,21 @@ export function Sidebar({ collapsed, onToggleCollapse, onNavigate, className }: 
                         to={item.to}
                         onClick={onNavigate}
                         className={cn(
-                          'flex items-center gap-3 rounded-md px-2 py-2 text-sm font-medium transition-colors',
+                          'flex items-center rounded-md text-sm font-medium transition-all duration-200 ease-out',
                           active
                             ? 'bg-primary/10 text-primary'
                             : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
-                          collapsed && 'justify-center',
+                          collapsed ? 'h-9 w-9 mx-auto justify-center px-0 gap-0' : 'h-9 px-3 gap-3 w-full',
                         )}
                         title={collapsed ? t(item.labelKey) : undefined}
                       >
-                        <Icon className="h-4 w-4 shrink-0" />
-                        {!collapsed && <span className="truncate">{t(item.labelKey)}</span>}
+                        <Icon className="h-4 w-4 shrink-0 transition-transform duration-200" />
+                        <span className={cn(
+                          'truncate transition-all duration-200 ease-out origin-left',
+                          collapsed ? 'max-w-0 opacity-0 pointer-events-none invisible' : 'max-w-40 opacity-100',
+                        )}>
+                          {t(item.labelKey)}
+                        </span>
                       </NavLink>
                     </li>
                   );
@@ -219,45 +229,34 @@ export function Sidebar({ collapsed, onToggleCollapse, onNavigate, className }: 
       </ScrollArea>
 
       {/* Footer — always locked to the bottom because the aside has bounded height */}
-      <div className="shrink-0 border-t">
-        {!collapsed ? (
-          <>
-            <div className="flex items-center justify-between px-3 py-2">
-              <div className="flex items-center gap-1">
-                <ThemeToggle />
-                <LanguageToggle />
-              </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={onToggleCollapse}
-                className="hidden md:inline-flex"
-                aria-label="Collapse sidebar"
-              >
-                <ChevronLeft className="h-4 w-4 rtl:rotate-180" />
-              </Button>
+      <div className="shrink-0 border-t p-2">
+        <div className="space-y-2">
+          {/* User Menu */}
+          <UserMenu collapsed={collapsed} />
+
+          {/* Controls (ThemeToggle, LanguageToggle, and Collapse/Expand Button) */}
+          <div className={cn(
+            "flex items-center transition-all duration-200 ease-out",
+            collapsed ? "flex-col gap-2 pt-1" : "justify-between px-1"
+          )}>
+            <div className={cn("flex gap-1", collapsed ? "flex-col" : "items-center")}>
+              <ThemeToggle />
+              <LanguageToggle />
             </div>
-            <div className="p-2 pt-0">
-              <UserMenu />
-            </div>
-          </>
-        ) : (
-          <div className="flex flex-col items-center gap-1 p-2">
-            <UserMenu collapsed />
-            <div className="my-1 w-full border-t" />
-            <ThemeToggle />
-            <LanguageToggle />
             <Button
               variant="ghost"
               size="icon"
               onClick={onToggleCollapse}
-              className="hidden md:inline-flex"
-              aria-label="Expand sidebar"
+              className="hidden md:inline-flex h-8 w-8 shrink-0 transition-transform duration-200"
+              aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
             >
-              <ChevronLeft className="h-4 w-4 rotate-180 rtl:rotate-0" />
+              <ChevronLeft className={cn(
+                "h-4 w-4 transition-transform duration-200",
+                collapsed ? "rotate-180 rtl:rotate-0" : "rtl:rotate-180"
+              )} />
             </Button>
           </div>
-        )}
+        </div>
       </div>
     </aside>
   );

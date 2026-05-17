@@ -23,6 +23,7 @@ import {
   CommandList,
   CommandSeparator,
 } from '@/shared/ui/command';
+import { EmptyState } from '@/shared/ui/empty-state';
 import { Badge } from '@/shared/ui/badge';
 import { NAV_SECTIONS } from '@/widgets/sidebar/sidebar';
 import { PERMISSION_LEVELS } from '@/shared/config/constants';
@@ -268,8 +269,14 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
       />
 
       <CommandList className="max-h-[400px] overflow-y-auto">
-        <CommandEmpty className="py-10 text-center text-sm text-muted-foreground">
-          {t('common.noResults')}
+        <CommandEmpty className="p-0">
+          <EmptyState
+            lottieSrc="/animations/no_results.json"
+            lottieWidth={110}
+            lottieHeight={110}
+            title={t('common.noResults')}
+            className="border-0 bg-transparent py-6 shadow-none"
+          />
         </CommandEmpty>
 
         {/* ── ROOT PAGE ── */}

@@ -185,3 +185,26 @@
   /* Hide standard browser elements */
   header, footer, nav { display: none !important; }
 }
+
+/* Prevent iOS auto-zoom on input focus by ensuring font-size is at least 16px on mobile viewports */
+@media screen and (max-width: 768px) {
+  input,
+  select,
+  textarea,
+  [cmdk-input],
+  input[type="text"],
+  input[type="number"],
+  input[type="search"],
+  input[type="email"],
+  input[type="password"],
+  input[type="tel"],
+  input[type="url"],
+  .text-sm input,
+  .text-sm textarea,
+  .text-sm select,
+  .text-xs input,
+  .text-xs textarea,
+  .text-xs select {
+    font-size: 16px !important;
+  }
+}

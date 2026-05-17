@@ -477,7 +477,9 @@ export default function FuelEventsPage() {
       {/* Table / empty state */}
       {isError ? (
         <EmptyState
-          icon={<Fuel className="h-5 w-5" />}
+          lottieSrc="/animations/warning.lottie"
+          lottieWidth={100}
+          lottieHeight={100}
           title={t('errors.generic')}
           action={
             <Button onClick={() => void refetch()} variant="outline">
@@ -487,7 +489,9 @@ export default function FuelEventsPage() {
         />
       ) : !isLoading && searched.length === 0 ? (
         <EmptyState
-          icon={<Fuel className="h-5 w-5" />}
+          lottieSrc="/animations/no_results.json"
+          lottieWidth={100}
+          lottieHeight={100}
           title={t('fuelEvents.noEvents')}
           description={t('fuelEvents.noEventsDescription')}
           action={

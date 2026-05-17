@@ -74,7 +74,7 @@ function createClient(baseURL: string): AxiosInstance {
         };
 
         const response = await tauriFetch(url.toString(), requestInit);
-        
+
         let data: any;
         if (config.responseType === 'arraybuffer') {
           data = await response.arrayBuffer();
@@ -99,7 +99,7 @@ function createClient(baseURL: string): AxiosInstance {
         };
 
         const validateStatus = config.validateStatus || ((status) => status >= 200 && status < 300);
-        
+
         if (!validateStatus(response.status)) {
           throw new axios.AxiosError(
             `Request failed with status code ${response.status}`,

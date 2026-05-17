@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from '@/shared/ui/toaster';
+import { EmptyState } from '@/shared/ui/empty-state';
 import {
   Archive,
   Building2,
@@ -141,7 +142,7 @@ export function TripReceiptDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-hidden md:max-w-2xl">
+      <DialogContent className="flex flex-col max-h-[90dvh] overflow-hidden md:max-w-2xl">
         <DialogHeader>
           <DialogTitle>{t('trips.receipt.dialogTitle')}</DialogTitle>
           <DialogDescription>
@@ -149,7 +150,7 @@ export function TripReceiptDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 overflow-y-auto pr-1">
+        <div className="flex-1 overflow-y-auto pr-1 min-h-0 space-y-4 max-h-[55vh] md:max-h-[65vh]">
           {/* Trip context */}
           {isLoading ? (
             <div className="space-y-2 rounded-md border bg-muted/30 p-3">
@@ -187,9 +188,13 @@ export function TripReceiptDialog({
                 <Skeleton className="h-16 w-full" />
               </div>
             ) : steps.length === 0 ? (
-              <p className="rounded-md border border-dashed bg-muted/30 px-3 py-6 text-center text-xs text-muted-foreground">
-                {t('trips.expanded.noReceiptSteps')}
-              </p>
+              <EmptyState
+                lottieSrc="/animations/receipt.lottie"
+                lottieWidth={100}
+                lottieHeight={100}
+                title={t('trips.expanded.noReceiptSteps')}
+                className="py-8 bg-transparent border-dashed"
+              />
             ) : (
               <ol className="space-y-2">
                 {[...steps]

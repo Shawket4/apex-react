@@ -5,7 +5,6 @@ import { Card, CardContent } from '@/shared/ui/card';
 import { Button } from '@/shared/ui/button';
 import { DataTable } from '@/shared/ui/data-table';
 import { EmptyState } from '@/shared/ui/empty-state';
-import { Route as RouteIcon } from 'lucide-react';
 import { formatNumber, formatCurrency } from '@/shared/lib/format';
 import { cn } from '@/shared/lib/cn';
 import type {
@@ -57,7 +56,9 @@ export function TripsStatisticsRoutes({
       <Card>
         <CardContent className="p-6">
           <EmptyState
-            icon={<RouteIcon className="h-6 w-6" />}
+            lottieSrc="/animations/no_results.json"
+            lottieWidth={100}
+            lottieHeight={100}
             title={t('trips.statistics.routes.empty')}
           />
         </CardContent>

@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/shared/ui/button';
 import { Sheet, SheetContent } from '@/shared/ui/sheet';
+import { EmptyState } from '@/shared/ui/empty-state';
 import { useIsDesktop } from '@/shared/hooks/use-media-query';
 import { extractErrorMessage } from '@/shared/api/errors';
 import { cn } from '@/shared/lib/cn';
@@ -674,17 +675,15 @@ export function EtitPage() {
           {/* Loading overlay */}
           {(historyQuery.isLoading || summaryQuery.isLoading) && (
             <div className="absolute inset-0 z-[2000] flex flex-col items-center justify-center bg-background/60 backdrop-blur-md transition-all animate-in fade-in duration-500">
-              <div className="relative flex flex-col items-center gap-5 p-10 rounded-3xl bg-card/40 shadow-2xl ring-1 ring-white/10 border border-white/5">
-                <div className="relative">
-                  <div className="h-20 w-20 animate-spin rounded-full border-4 border-primary/10 border-t-primary shadow-[0_0_30px_rgba(59,130,246,0.2)]" />
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <Radar className="h-8 w-8 text-primary animate-pulse" />
-                  </div>
-                </div>
-                <div className="flex flex-col items-center gap-2">
-                  <span className="text-xs font-black tracking-[0.3em] uppercase text-foreground/90">{t('etit.loadingHistory')}</span>
-                  <span className="text-[9px] font-bold text-muted-foreground/40 uppercase tracking-widest animate-pulse">Synchronizing Track</span>
-                </div>
+              <div className="relative flex flex-col items-center gap-2 p-6 rounded-3xl bg-card/40 shadow-2xl ring-1 ring-white/10 border border-white/5">
+                <EmptyState
+                  lottieSrc="/animations/location_radar.lottie"
+                  lottieWidth={140}
+                  lottieHeight={140}
+                  title={t('etit.loadingHistory')}
+                  description="Synchronizing Track"
+                  className="bg-transparent border-0 shadow-none py-0"
+                />
               </div>
             </div>
           )}
