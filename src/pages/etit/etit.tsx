@@ -123,6 +123,7 @@ export function EtitPage() {
   const containerRef = React.useRef<HTMLDivElement>(null);
 
   const [mobileListOpen, setMobileListOpen] = React.useState(false);
+  const [datePickerOpen, setDatePickerOpen] = React.useState(false);
   const [mobileTab, setMobileTab] = React.useState<MobileTab>('controls');
 
   /* ---- Server data ---- */
@@ -396,13 +397,14 @@ export function EtitPage() {
     />
   );
 
-  const handleDatePickerOpenChange = React.useCallback(
-    (open: boolean) => {
-      // Dismiss the vehicle drawer so the date sheet is not trapped beside it.
-      if (open && !isDesktop) setMobileListOpen(false);
-    },
-    [isDesktop],
-  );
+  const handleDatePickerOpenChange = React.useCallback((open: boolean) => {
+    setDatePickerOpen(open);
+  }, []);
+
+  const handleMobileListOpenChange = React.useCallback((open: boolean) => {
+    setMobileListOpen(open);
+    if (!open) setDatePickerOpen(false);
+  }, []);
 
   const vehicleSelector = activeVehicle && (
     <EtitVehicleHistorySelector
@@ -548,7 +550,12 @@ export function EtitPage() {
 
         {/* Mobile drawer */}
         {!isDesktop && (
-          <Sheet open={mobileListOpen} onOpenChange={setMobileListOpen}>
+          <Sheet
+            open={mobileListOpen}
+            onOpenChange={handleMobileListOpenChange}
+            // Let the nested date sheet receive taps without dismissing this drawer.
+            modal={!datePickerOpen}
+          >
             <SheetContent
               side="left"
               className={cn(

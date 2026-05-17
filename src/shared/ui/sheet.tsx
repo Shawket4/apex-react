@@ -45,15 +45,23 @@ interface SheetContentProps
   extends React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>,
     VariantProps<typeof sheetVariants> {
   hideCloseButton?: boolean;
+  /** Renders overlay + panel above default sheets (nested pickers). */
+  stacked?: boolean;
 }
+
+const STACKED_Z = 'z-[10050]';
 
 const SheetContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   SheetContentProps
->(({ side = 'right', className, children, hideCloseButton = false, ...props }, ref) => (
+>(({ side = 'right', className, children, hideCloseButton = false, stacked = false, ...props }, ref) => (
   <SheetPortal>
-    <SheetOverlay />
-    <DialogPrimitive.Content ref={ref} className={cn(sheetVariants({ side }), className)} {...props}>
+    <SheetOverlay className={stacked ? STACKED_Z : undefined} />
+    <DialogPrimitive.Content
+      ref={ref}
+      className={cn(sheetVariants({ side }), stacked && STACKED_Z, className)}
+      {...props}
+    >
       {children}
       {!hideCloseButton && (
         <DialogPrimitive.Close className="absolute end-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none">

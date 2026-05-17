@@ -386,7 +386,10 @@ export function EtitDateTimeRange({
                   <button
                     type="button"
                     disabled={disabled}
-                    onClick={() => !disabled && setSideDate(viewYear, viewMonth, d)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (!disabled) setSideDate(viewYear, viewMonth, d);
+                    }}
                     className={cn(
                       'flex h-9 w-9 items-center justify-center rounded-full text-xs font-medium transition-colors sm:h-8 sm:w-8',
                       disabled && 'cursor-not-allowed text-muted-foreground/30',
@@ -581,10 +584,10 @@ export function EtitDateTimeRange({
         <SheetTrigger asChild>{triggerNode}</SheetTrigger>
         <SheetContent
           side="bottom"
+          stacked
           hideCloseButton
           // dvh handles the iOS URL-bar collapse better than vh.
-          // z-index must sit above the vehicle list sheet (z-[9999]).
-          className="z-[10050] flex max-h-[92dvh] w-full flex-col gap-0 rounded-t-2xl p-0 sm:max-w-lg sm:mx-auto"
+          className="flex max-h-[92dvh] w-full flex-col gap-0 rounded-t-2xl p-0 sm:max-w-lg sm:mx-auto"
         >
           {/* Drag handle + title (sticky top) */}
           <div className="shrink-0 px-4 pb-2 pt-3">
