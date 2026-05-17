@@ -22,7 +22,7 @@
       }
     ],
     "security": {
-      "csp": "default-src 'self' tauri: ipc: https://ipc.localhost; img-src 'self' data: https: tauri: asset: https://asset.localhost blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; script-src 'self' https://maps.googleapis.com; connect-src 'self' tauri: ipc: https://ipc.localhost https://apextransport.ddns.net https://maps.googleapis.com https://*.tile.openstreetmap.org; worker-src 'self' blob:"
+      "csp": "default-src 'self' tauri: ipc: https://ipc.localhost; img-src 'self' data: https: tauri: asset: https://asset.localhost blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://maps.googleapis.com https://maps.gstatic.com https://*.googleapis.com; connect-src 'self' tauri: ipc: https://ipc.localhost https://apextransport.ddns.net https://maps.googleapis.com https://*.googleapis.com https://*.gstatic.com https://*.tile.openstreetmap.org; worker-src 'self' blob:"
     }
   },
   "bundle": {

@@ -242,6 +242,13 @@ export function GoogleMapView({
 
     const init = async () => {
       try {
+        // Guarantee google.maps is loaded before constructing the map options object,
+        // which evaluates namespaces like MapTypeId and ControlPosition synchronously.
+        await Promise.all([
+          importLibrary('maps'),
+          importLibrary('marker'),
+        ]);
+
         const isDark = document.documentElement.classList.contains('dark');
         const handle = await getSharedMap(containerRef.current!, {
           center: { lat: centerFallback[0], lng: centerFallback[1] },

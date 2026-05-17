@@ -3,6 +3,12 @@ import { cn } from '@/shared/lib/cn';
 import { isGoogleMapsConfigured } from '@/shared/lib/maps/google-provider';
 import type { MapProvider, MapViewProps } from '@/shared/lib/maps/types';
 
+declare global {
+  interface Window {
+    gm_authFailure?: () => void;
+  }
+}
+
 /* -------------------------------------------------------------------------- */
 /* Lazy provider components                                                    */
 /*                                                                             */
@@ -40,19 +46,41 @@ const LeafletMapView = React.lazy(() =>
 interface MapShellProps extends MapViewProps {}
 
 export function MapView({
-  fallbackTimeoutMs = 3000,
+  fallbackTimeoutMs = 8000,
   onProviderChange,
   className,
   ...rest
 }: MapShellProps) {
   // Decide initial provider synchronously based on env
-  const [provider, setProvider] = React.useState<MapProvider>(() =>
-    isGoogleMapsConfigured() ? 'google' : 'leaflet',
-  );
+  const [provider, setProvider] = React.useState<MapProvider>(() => {
+    const configured = isGoogleMapsConfigured();
+    const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string | undefined;
+    console.log('[MapView] Initializing map view.', {
+      isGoogleMapsConfigured: configured,
+      apiKeyLength: apiKey?.length || 0,
+      apiKeyPreview: apiKey ? `${apiKey.substring(0, 8)}...` : 'none',
+      fallbackTimeoutMs,
+    });
+    return configured ? 'google' : 'leaflet';
+  });
   const [forcedFallback, setForcedFallback] = React.useState(false);
+
+  // Listen for Google Maps authentication or referer failures globally.
+  // This triggers an immediate, seamless fallback to Leaflet if the key is restricted/invalid.
+  React.useEffect(() => {
+    window.gm_authFailure = () => {
+      console.warn('[MapView] Google Maps global auth/referer failure detected — falling back to Leaflet');
+      setProvider('leaflet');
+      setForcedFallback(true);
+    };
+    return () => {
+      window.gm_authFailure = undefined;
+    };
+  }, []);
 
   // Notify consumer of provider choice
   React.useEffect(() => {
+    console.log('[MapView] Map provider set to:', provider, { forcedFallback });
     onProviderChange?.(provider);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [provider]);
@@ -75,12 +103,11 @@ export function MapView({
       // dimension > 0, we assume Google failed silently (e.g. invalid key,
       // blocked network) and fall back. The "rendered something" check
       // looks for a Google-injected canvas/img/div with non-zero size.
+      // We only accept `.gm-style` (fully loaded map) and exclude
+      // `.gm-err-container` (error popup container) so that errors also fallback.
       const node = containerRef.current;
       if (!node) return;
-      const rendered = node.querySelector(
-        // Google Maps injects gm-style class on its outer div once ready
-        '.gm-style, .gm-err-container',
-      );
+      const rendered = node.querySelector('.gm-style');
       if (!rendered) {
         console.warn(
           '[MapView] Google Maps did not render within',
@@ -106,9 +133,9 @@ export function MapView({
   return (
     <div ref={containerRef} className={cn('relative h-full w-full', className)}>
       <ProviderErrorBoundary
-        onError={() => {
+        onError={(err) => {
           if (provider === 'google') {
-            console.warn('[MapView] Google provider threw — falling back to Leaflet');
+            console.error('[MapView] Google provider threw an error — falling back to Leaflet:', err);
             setProvider('leaflet');
             setForcedFallback(true);
           }

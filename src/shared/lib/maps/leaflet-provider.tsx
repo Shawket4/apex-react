@@ -196,10 +196,7 @@ export function LeafletMapView({
     injectLeafletStyles();
 
     const initMap = async () => {
-      const [L] = await Promise.all([
-        import('leaflet').then((m) => m.default ?? m),
-        import('leaflet/dist/leaflet.css').catch(() => undefined),
-      ]);
+      const L = await import('leaflet').then((m) => m.default ?? m);
       if (cancelled || !containerRef.current) return;
 
       LRef.current = L;

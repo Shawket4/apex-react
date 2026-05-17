@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { RouterProvider } from 'react-router-dom';
 
 import './index.css';
+import 'leaflet/dist/leaflet.css';
 import '@/shared/i18n';
 
 import { Providers } from './providers';
