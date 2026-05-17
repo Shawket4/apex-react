@@ -15,6 +15,7 @@ interface EtitVehicleHistorySelectorProps {
   onClearHistory?: () => void;
   isHistoryLoaded?: boolean;
   loading?: boolean;
+  onDatePickerOpenChange?: (open: boolean) => void;
   className?: string;
 }
 
@@ -27,6 +28,7 @@ export function EtitVehicleHistorySelector({
   onClearHistory,
   isHistoryLoaded,
   loading,
+  onDatePickerOpenChange,
   className,
 }: EtitVehicleHistorySelectorProps) {
   const { t } = useTranslation();
@@ -96,7 +98,11 @@ export function EtitVehicleHistorySelector({
           <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider px-1">
             {t('etit.range.period')}
           </label>
-          <EtitDateTimeRange value={range} onChange={onRangeChange} />
+          <EtitDateTimeRange
+            value={range}
+            onChange={onRangeChange}
+            onOpenChange={onDatePickerOpenChange}
+          />
         </div>
 
         <Button

@@ -396,6 +396,14 @@ export function EtitPage() {
     />
   );
 
+  const handleDatePickerOpenChange = React.useCallback(
+    (open: boolean) => {
+      // Dismiss the vehicle drawer so the date sheet is not trapped beside it.
+      if (open && !isDesktop) setMobileListOpen(false);
+    },
+    [isDesktop],
+  );
+
   const vehicleSelector = activeVehicle && (
     <EtitVehicleHistorySelector
       vehicle={activeVehicle}
@@ -409,6 +417,7 @@ export function EtitPage() {
       onClearHistory={clearHistory}
       isHistoryLoaded={!!loadedRange}
       loading={historyQuery.isLoading || summaryQuery.isLoading}
+      onDatePickerOpenChange={handleDatePickerOpenChange}
       className="h-full w-full"
     />
   );
@@ -540,7 +549,13 @@ export function EtitPage() {
         {/* Mobile drawer */}
         {!isDesktop && (
           <Sheet open={mobileListOpen} onOpenChange={setMobileListOpen}>
-            <SheetContent side="left" className="w-[min(320px,85vw)] p-0">
+            <SheetContent
+              side="left"
+              className={cn(
+                'p-0',
+                activeId ? 'w-full max-w-md' : 'w-[min(320px,85vw)]',
+              )}
+            >
               {activeId ? (
                 vehicleSelector
               ) : (

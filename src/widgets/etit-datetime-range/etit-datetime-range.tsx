@@ -126,6 +126,8 @@ export interface EtitDateTimeRangeProps {
   className?: string;
   /** Optional max date in Cairo-time — defaults to "now". */
   maxDate?: Date;
+  /** Fired when the picker overlay opens or closes (popover / sheet). */
+  onOpenChange?: (open: boolean) => void;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -137,11 +139,20 @@ export function EtitDateTimeRange({
   onChange,
   className,
   maxDate,
+  onOpenChange,
 }: EtitDateTimeRangeProps) {
   const { t, i18n } = useTranslation();
   const locale = i18n.language.startsWith('ar') ? 'ar-EG' : 'en-GB';
   const [open, setOpen] = React.useState(false);
   const isDesktop = useIsDesktop();
+
+  const setPickerOpen = React.useCallback(
+    (next: boolean) => {
+      setOpen(next);
+      onOpenChange?.(next);
+    },
+    [onOpenChange],
+  );
 
   // Working copy — applied only on click of "Apply".
   const [draft, setDraft] = React.useState(value);
@@ -208,13 +219,13 @@ export function EtitDateTimeRange({
     const r = p.build();
     setDraft(r);
     onChange(r);
-    setOpen(false);
+    setPickerOpen(false);
   };
 
   const apply = () => {
     if (draft.from.getTime() > draft.to.getTime()) return;
     onChange(draft);
-    setOpen(false);
+    setPickerOpen(false);
   };
 
   /* -- Calendar grid math -- */
@@ -514,7 +525,7 @@ export function EtitDateTimeRange({
           variant="ghost"
           size="sm"
           className="h-9 text-xs sm:h-8"
-          onClick={() => setOpen(false)}
+          onClick={() => setPickerOpen(false)}
         >
           {t('common.cancel')}
         </Button>
@@ -537,15 +548,15 @@ export function EtitDateTimeRange({
   if (isDesktop) {
     return (
       <div className={cn('flex flex-col gap-2', className)}>
-        <Popover open={open} onOpenChange={setOpen}>
+        <Popover open={open} onOpenChange={setPickerOpen}>
           <PopoverTrigger asChild>{triggerNode}</PopoverTrigger>
           <PopoverContent
             // Bound height to viewport; let the inner div handle the scroll
             // so the footer (Apply/Cancel) is always visible.
-            className="z-[1200] flex max-h-[min(720px,calc(100vh-100px))] w-[420px] flex-col overflow-hidden p-0 shadow-2xl"
+            className="z-[10050] flex max-h-[min(720px,calc(100vh-100px))] w-[min(420px,calc(100vw-24px))] flex-col overflow-hidden p-0 shadow-2xl"
             align="start"
-            side="right"
-            sideOffset={12}
+            side="bottom"
+            sideOffset={8}
             collisionPadding={12}
           >
             <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 pb-4 pt-4">
@@ -566,12 +577,14 @@ export function EtitDateTimeRange({
 
   return (
     <div className={cn('flex flex-col gap-2', className)}>
-      <Sheet open={open} onOpenChange={setOpen}>
+      <Sheet open={open} onOpenChange={setPickerOpen}>
         <SheetTrigger asChild>{triggerNode}</SheetTrigger>
         <SheetContent
           side="bottom"
+          hideCloseButton
           // dvh handles the iOS URL-bar collapse better than vh.
-          className="z-[1200] flex max-h-[88dvh] flex-col gap-0 rounded-t-2xl p-0"
+          // z-index must sit above the vehicle list sheet (z-[9999]).
+          className="z-[10050] flex max-h-[92dvh] w-full flex-col gap-0 rounded-t-2xl p-0 sm:max-w-lg sm:mx-auto"
         >
           {/* Drag handle + title (sticky top) */}
           <div className="shrink-0 px-4 pb-2 pt-3">
