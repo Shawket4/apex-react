@@ -68,7 +68,7 @@ const PayrollPage = lazyNamed(placeholderLoader, 'PayrollPage');
 const VendorsPage = lazyNamed(placeholderLoader, 'VendorsPage');
 const FleetExpensesPage = lazyNamed(placeholderLoader, 'FleetExpensesPage');
 const LogsPage = lazyNamed(placeholderLoader, 'LogsPage');
-const SettingsPage = lazyNamed(placeholderLoader, 'SettingsPage');
+const SettingsPage = React.lazy(() => import('@/pages/settings/settings'));
 const TabletsPage = lazyNamed(placeholderLoader, 'TabletsPage');
 const SpeedViolationsPage = lazyNamed(placeholderLoader, 'SpeedViolationsPage');
 

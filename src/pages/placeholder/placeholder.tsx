@@ -42,6 +42,5 @@ export const VendorsPage = () => <Placeholder titleKey="nav.vendors" />;
 export const FleetExpensesPage = () => <Placeholder titleKey="nav.fleetExpenses" />;
 export const UsersPage = () => <Placeholder titleKey="nav.users" />;
 export const LogsPage = () => <Placeholder titleKey="nav.logs" />;
-export const SettingsPage = () => <Placeholder titleKey="nav.settings" />;
 export const TabletsPage = () => <Placeholder titleKey="nav.tablets" />;
 export const SpeedViolationsPage = () => <Placeholder titleKey="nav.speedViolations" />;

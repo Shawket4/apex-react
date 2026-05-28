@@ -52,6 +52,9 @@
     "goodMorning": "Good morning",
     "goodAfternoon": "Good afternoon",
     "goodEvening": "Good evening",
+    "goBack": "Go Back",
+    "home": "Home",
+    "refreshNow": "Refresh Now",
     "unit": {
       "km": "KM"
     }
@@ -205,6 +208,19 @@
     "language": "Language"
   },
   "errors": {
+    "unexpected": {
+      "title": "Unexpected Error",
+      "message": "An unexpected error occurred. Please try again."
+    },
+    "404": {
+      "title": "Page Not Found",
+      "message": "The page you are looking for doesn't exist or has been moved."
+    },
+    "chunkLoad": {
+      "title": "Application Update",
+      "message": "A new version of the application is available. Please refresh the page to continue.",
+      "hint": "This usually happens after a new deployment."
+    },
     "generic": "Something went wrong. Please try again.",
     "pageNotFoundTitle": "Page not found",
     "pageNotFoundDescription": "The page you're looking for doesn't exist or has been moved.",
