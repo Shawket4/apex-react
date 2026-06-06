@@ -7,8 +7,8 @@ export const zoneSchema = z.object({
   lng: z.number(),
   radius_m: z.number(),
   active: z.boolean(),
-  created_at: z.string(),
-  updated_at: z.string(),
+  created_at: z.string().optional(),
+  updated_at: z.string().optional(),
 });
 
 export type Zone = z.infer<typeof zoneSchema>;
