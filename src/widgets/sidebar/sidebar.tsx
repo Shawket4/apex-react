@@ -22,6 +22,7 @@ import {
   Banknote,
   Radar,
   Wrench,
+  MapPin,
   type LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/shared/lib/cn';
@@ -56,6 +57,7 @@ export const NAV_SECTIONS: NavSection[] = [
     { to: '/fuel-events', labelKey: 'nav.fuelEvents', icon: Fuel },
     { to: '/trips', labelKey: 'nav.trips', icon: Route },
     { to: '/etit', labelKey: 'nav.etit', icon: Radar },
+    { to: '/zones', labelKey: 'nav.zones', icon: MapPin },
     { to: '/oil-changes', labelKey: 'nav.oilChanges', icon: Droplets },
     { to: '/service-invoices', labelKey: 'nav.serviceInvoices', icon: Wrench },
   ],

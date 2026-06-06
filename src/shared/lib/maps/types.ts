@@ -47,8 +47,18 @@ export interface MapMarker {
 export type MarkerDragHandler = (id: string, lat: number, lng: number) => void;
 export type MapClickHandler = (lat: number, lng: number) => void;
 
+export interface MapCircle {
+  id: string;
+  lat: number;
+  lng: number;
+  radius_m: number;
+  color?: string;
+  fillOpacity?: number;
+}
+
 export interface MapViewProps {
   markers?: MapMarker[];
+  circles?: MapCircle[];
   /**
    * Decoded polyline as `[lat, lng]` pairs. Pass `[]` (or omit) for no
    * route. Providers draw a multi-line stack (halo + casing + core) for

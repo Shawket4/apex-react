@@ -153,6 +153,7 @@ const PAN_FOLLOW_IDS = new Set(['playback-current']);
 
 export function LeafletMapView({
   markers = [],
+  circles = [],
   route = [],
   suppressRoute = false,
   centerFallback = DEFAULT_MAP_CENTER,
@@ -171,6 +172,7 @@ export function LeafletMapView({
   const mapRef = React.useRef<LeafletMap | null>(null);
   const tileLayerRef = React.useRef<LeafletLayer | null>(null);
   const markerEntriesRef = React.useRef<Map<string, MarkerEntry>>(new Map());
+  const circleEntriesRef = React.useRef<Map<string, import('leaflet').Circle>>(new Map());
   const polylinesRef = React.useRef<LeafletPolyline[]>([]);
   const themeObserverRef = React.useRef<MutationObserver | null>(null);
   const lastFingerprintRef = React.useRef<string>('');
@@ -265,6 +267,8 @@ export function LeafletMapView({
       }
       markerEntriesRef.current.forEach((e) => e.marker.remove());
       markerEntriesRef.current.clear();
+      circleEntriesRef.current.forEach((c) => c.remove());
+      circleEntriesRef.current.clear();
       polylinesRef.current.forEach((p) => p.remove());
       polylinesRef.current = [];
       if (mapRef.current) {
@@ -390,13 +394,50 @@ export function LeafletMapView({
       }
     }
 
+    // sync circles
+    const currentCircleIds = new Set(circles.map((c) => c.id));
+    for (const [id, circle] of circleEntriesRef.current.entries()) {
+      if (!currentCircleIds.has(id)) {
+        circle.remove();
+        circleEntriesRef.current.delete(id);
+      }
+    }
+    for (const c of circles) {
+      let circle = circleEntriesRef.current.get(c.id);
+      if (!circle) {
+        circle = L.circle([c.lat, c.lng], {
+          radius: c.radius_m,
+          color: c.color || '#3b82f6',
+          fillOpacity: c.fillOpacity ?? 0.2,
+          weight: 2,
+        }).addTo(map);
+        circleEntriesRef.current.set(c.id, circle);
+      } else {
+        circle.setLatLng([c.lat, c.lng]);
+        circle.setRadius(c.radius_m);
+        circle.setStyle({
+          color: c.color || '#3b82f6',
+          fillOpacity: c.fillOpacity ?? 0.2,
+        });
+      }
+    }
+
     if (route.length > 0 && !suppressRoute) {
       boundsPoints.push(...route);
     }
 
-    const fp = boundsFingerprint(markers, suppressRoute ? [] : route);
+    const cIds = circles.map(c => c.id).sort().join(',');
+    const cCoords = circles.map(c => `${c.lat.toFixed(6)},${c.lng.toFixed(6)},${c.radius_m}`).join('|');
+    const fp = boundsFingerprint(markers, suppressRoute ? [] : route) + `|${cIds}|${cCoords}`;
     const fingerprintChanged = fp !== lastFingerprintRef.current;
     lastFingerprintRef.current = fp;
+
+    circles.forEach((c) => {
+      const latOffset = c.radius_m / 111320;
+      const lngOffset = c.radius_m / (40075000 * Math.cos((c.lat * Math.PI) / 180) / 360);
+      boundsPoints.push([c.lat + latOffset, c.lng + lngOffset]);
+      boundsPoints.push([c.lat - latOffset, c.lng - lngOffset]);
+    });
 
     const shouldAutoFit = liveUpdates ? fingerprintChanged && boundsPoints.length > 0 : boundsPoints.length > 0;
 
@@ -407,7 +448,7 @@ export function LeafletMapView({
         map.fitBounds(L.latLngBounds(boundsPoints), { padding: [40, 40] });
       }
     }
-  }, [mapReady, markers, route, suppressRoute, liveUpdates]);
+  }, [mapReady, markers, circles, route, suppressRoute, liveUpdates]);
 
   /* ---- Fit-bounds button ---------------------------------------------- */
 
@@ -419,6 +460,12 @@ export function LeafletMapView({
     if (route.length > 0 && !suppressRoute) points.push(...route);
     markers.forEach((m) => {
       if (m.affectsBounds !== false) points.push([m.lat, m.lng]);
+    });
+    circles.forEach((c) => {
+      const latOffset = c.radius_m / 111320;
+      const lngOffset = c.radius_m / (40075000 * Math.cos((c.lat * Math.PI) / 180) / 360);
+      points.push([c.lat + latOffset, c.lng + lngOffset]);
+      points.push([c.lat - latOffset, c.lng - lngOffset]);
     });
     if (points.length > 1) {
       map.fitBounds(L.latLngBounds(points), { padding: [40, 40] });

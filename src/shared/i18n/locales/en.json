@@ -84,7 +84,8 @@
     "tablets": "Tablets",
     "feeMappings": "Fee Mappings",
     "etit": "Live tracking",
-    "serviceInvoices": "Service Invoices"
+    "serviceInvoices": "Service Invoices",
+    "zones": "Dead Zones"
   },
   "auth": {
     "loginTitle": "Welcome back",
@@ -208,13 +209,13 @@
     "language": "Language"
   },
   "errors": {
-    "unexpected": {
-      "title": "Unexpected Error",
-      "message": "An unexpected error occurred. Please try again."
-    },
     "404": {
       "title": "Page Not Found",
       "message": "The page you are looking for doesn't exist or has been moved."
+    },
+    "unexpected": {
+      "title": "Unexpected Error",
+      "message": "An unexpected error occurred. Please try again."
     },
     "chunkLoad": {
       "title": "Application Update",
@@ -1240,6 +1241,42 @@
       "assigned": "Assigned",
       "expiring": "Expiring Soon",
       "expired": "Expired"
+    }
+  },
+  "zones": {
+    "title": "Dead Zones",
+    "description": "Manage map zones and run dead-zone scans.",
+    "newZone": "New Zone",
+    "scanNow": "Run scan now",
+    "fields": {
+      "name": "Zone Name",
+      "namePlaceholder": "e.g. Headquarters",
+      "lat": "Latitude",
+      "lng": "Longitude",
+      "radius": "Radius (meters)",
+      "active": "Active",
+      "status": "Status",
+      "mapPicker": "Pick on Map",
+      "mapHelper": "Click on the map or drag the marker to set the location."
+    },
+    "dialog": {
+      "createTitle": "Create Zone",
+      "editTitle": "Edit Zone"
+    },
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive"
+    },
+    "toast": {
+      "createSuccess": "Zone created successfully",
+      "createError": "Failed to create zone",
+      "updateSuccess": "Zone updated successfully",
+      "updateError": "Failed to update zone",
+      "deleteSuccess": "Zone deleted successfully",
+      "deleteError": "Failed to delete zone",
+      "scanSuccess": "Scan complete",
+      "scanError": "Failed to run scan",
+      "scanSummary": "{{violations}} violations found, {{alerts}} alerts sent"
     }
   }
 }

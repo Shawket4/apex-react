@@ -193,6 +193,7 @@ const PAN_FOLLOW_IDS = new Set(['playback-current']);
 
 export function GoogleMapView({
   markers = [],
+  circles = [],
   route = [],
   centerFallback = [30.0444, 31.2357],
   onMapClick,
@@ -209,6 +210,7 @@ export function GoogleMapView({
   const infoWindowRef = React.useRef<google.maps.InfoWindow | null>(null);
 
   const markerEntriesRef = React.useRef<Map<string, MarkerEntry>>(new Map());
+  const circleEntriesRef = React.useRef<Map<string, google.maps.Circle>>(new Map());
   const polylinesRef = React.useRef<google.maps.Polyline[]>([]);
   const mapListenersRef = React.useRef<google.maps.MapsEventListener[]>([]);
   const themeObserverRef = React.useRef<MutationObserver | null>(null);
@@ -326,6 +328,11 @@ export function GoogleMapView({
         entry.marker.setMap(null);
       }
       markerEntriesRef.current.clear();
+
+      for (const circle of circleEntriesRef.current.values()) {
+        circle.setMap(null);
+      }
+      circleEntriesRef.current.clear();
 
       polylinesRef.current.forEach((p) => p.setMap(null));
       polylinesRef.current = [];
@@ -448,7 +455,40 @@ export function GoogleMapView({
       }
     }
 
-    // 3. Sync route polyline.
+    // 3. Sync circles.
+    const currentCircleIds = new Set(circles.map((c) => c.id));
+    for (const [id, circle] of circleEntriesRef.current.entries()) {
+      if (!currentCircleIds.has(id)) {
+        circle.setMap(null);
+        circleEntriesRef.current.delete(id);
+      }
+    }
+    for (const c of circles) {
+      let circle = circleEntriesRef.current.get(c.id);
+      if (!circle) {
+        circle = new google.maps.Circle({
+          map,
+          center: { lat: c.lat, lng: c.lng },
+          radius: c.radius_m,
+          fillColor: c.color || '#3b82f6',
+          fillOpacity: c.fillOpacity ?? 0.2,
+          strokeColor: c.color || '#3b82f6',
+          strokeOpacity: 0.8,
+          strokeWeight: 2,
+        });
+        circleEntriesRef.current.set(c.id, circle);
+      } else {
+        circle.setCenter({ lat: c.lat, lng: c.lng });
+        circle.setRadius(c.radius_m);
+        circle.setOptions({
+          fillColor: c.color || '#3b82f6',
+          fillOpacity: c.fillOpacity ?? 0.2,
+          strokeColor: c.color || '#3b82f6',
+        });
+      }
+    }
+
+    // 4. Sync route polyline.
     polylinesRef.current.forEach((p) => p.setMap(null));
     polylinesRef.current = [];
     if (route.length > 1 && !suppressRoute) {
@@ -463,7 +503,7 @@ export function GoogleMapView({
         }),
       );
     }
-  }, [mapReady, markers, route]);
+  }, [mapReady, markers, circles, route]);
 
   /* -------- fitBounds — fires only when the route IDENTITY changes ----- */
   /*                                                                       */
@@ -484,11 +524,13 @@ export function GoogleMapView({
       .map((m) => m.id)
       .sort()
       .join(',');
+    const cIds = circles.map(c => c.id).sort().join(',');
     const rLen = route.length;
     const rStart = rLen > 0 ? route[0].join(',') : '';
     const rEnd = rLen > 0 ? route[rLen - 1].join(',') : '';
     const mCoords = boundsMarkers.map(m => `${m.lat.toFixed(6)},${m.lng.toFixed(6)}`).join('|');
-    const signature = `${mIds}|${mCoords}|${rLen}|${rStart}|${rEnd}|${suppressRoute ? 1 : 0}`;
+    const cCoords = circles.map(c => `${c.lat.toFixed(6)},${c.lng.toFixed(6)},${c.radius_m}`).join('|');
+    const signature = `${mIds}|${mCoords}|${cIds}|${cCoords}|${rLen}|${rStart}|${rEnd}|${suppressRoute ? 1 : 0}`;
 
     if (signature === lastRouteSignatureRef.current) return;
     lastRouteSignatureRef.current = signature;
@@ -506,16 +548,25 @@ export function GoogleMapView({
       });
     }
 
+    circles.forEach((c) => {
+      // Rough approximation for extending bounds to circle edges
+      const latOffset = c.radius_m / 111320;
+      const lngOffset = c.radius_m / (40075000 * Math.cos((c.lat * Math.PI) / 180) / 360);
+      bounds.extend({ lat: c.lat + latOffset, lng: c.lng + lngOffset });
+      bounds.extend({ lat: c.lat - latOffset, lng: c.lng - lngOffset });
+      hasPoints = true;
+    });
+
     if (!hasPoints) return;
 
-    if (rLen === 0 && boundsMarkers.length === 1) {
+    if (rLen === 0 && boundsMarkers.length === 1 && circles.length === 0) {
       const m = boundsMarkers[0];
       map.setZoom(18);
       map.panTo({ lat: m.lat, lng: m.lng });
     } else {
       map.fitBounds(bounds, { top: 80, bottom: 80, left: 60, right: 60 });
     }
-  }, [mapReady, markers, route, suppressRoute]);
+  }, [mapReady, markers, circles, route, suppressRoute]);
 
   /* -------- Sentinel-driven flyTo (manual focus button) ---------------- */
   /*                                                                       */
@@ -559,8 +610,14 @@ export function GoogleMapView({
     markers.forEach((m) => {
       if (m.affectsBounds) bounds.extend({ lat: m.lat, lng: m.lng });
     });
+    circles.forEach((c) => {
+      const latOffset = c.radius_m / 111320;
+      const lngOffset = c.radius_m / (40075000 * Math.cos((c.lat * Math.PI) / 180) / 360);
+      bounds.extend({ lat: c.lat + latOffset, lng: c.lng + lngOffset });
+      bounds.extend({ lat: c.lat - latOffset, lng: c.lng - lngOffset });
+    });
     if (!bounds.isEmpty()) {
-      if (markers.filter(m => m.affectsBounds).length === 1) {
+      if (markers.filter(m => m.affectsBounds).length === 1 && circles.length === 0) {
         const m = markers.find(m => m.affectsBounds)!;
         map.setZoom(18);
         map.panTo({ lat: m.lat, lng: m.lng });
