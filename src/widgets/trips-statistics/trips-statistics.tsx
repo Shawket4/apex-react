@@ -206,6 +206,7 @@ export function TripsStatistics({ filters }: TripsStatisticsProps) {
           <TripsStatisticsCompanies
             companies={data.data}
             hasFinancialAccess={data.hasFinancialAccess}
+            filters={filters}
           />
         </TabsContent>
 

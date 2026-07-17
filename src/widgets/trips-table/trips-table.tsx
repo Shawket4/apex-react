@@ -532,15 +532,31 @@ function TripGroupCard({
                   <span className="absolute -end-1 -top-1 h-3.5 w-3.5 rounded-full border-2 border-card bg-warning shadow-[0_0_8px_rgba(var(--warning),0.6)]" />
                 )}
               </div>
-              <div>
-                <div className="text-sm font-black tracking-tight text-foreground">
-                  {t('trips.row.multiContainer', { id: parentId })}
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-black tabular-nums tracking-tight text-foreground">
+                    {parentTrip?.car_no_plate || first.car_no_plate}
+                  </span>
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-primary/70 shrink-0">
+                    {t('trips.row.containersCount', { count: containers.length })}
+                  </span>
                 </div>
                 <div className="mt-1 flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">
-                  <span className="text-primary/70">{t('trips.row.containersCount', { count: containers.length })}</span>
+                  <span className="flex items-center gap-1 shrink-0">
+                    <CalendarIcon className="h-3 w-3" />
+                    {format(parentTrip?.date || first.date, 'MMM d, yyyy')}
+                  </span>
                   <span className="opacity-40">·</span>
-                  <span className="text-foreground/60">{first.company}</span>
+                  <span className="truncate max-w-[120px] text-foreground/60">{first.company}</span>
                 </div>
+                {(parentTrip?.driver_name || first.driver_name) && (
+                  <div className="mt-1 flex items-center gap-1 text-[10px] font-bold text-muted-foreground/70">
+                    <User className="h-3 w-3 text-primary/60" />
+                    <span className="truncate max-w-[160px]">
+                      {parentTrip?.driver_name || first.driver_name}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
             <div className="flex items-center gap-3">

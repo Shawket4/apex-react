@@ -9,8 +9,10 @@ import {
 } from 'recharts';
 import {
   Building2,
+  Calendar as CalendarIcon,
   Car as CarIcon,
   ChevronRight,
+  Loader2,
   Route as RouteIcon,
 } from 'lucide-react';
 import type { ColumnDef, Row } from '@tanstack/react-table';
@@ -18,7 +20,7 @@ import { CollapsibleSection } from '@/shared/ui/collapsible-section';
 import { ChartCard } from '@/shared/ui/chart-card';
 import { DataTable } from '@/shared/ui/data-table';
 import { Badge } from '@/shared/ui/badge';
-import { formatNumber, formatCurrency } from '@/shared/lib/format';
+import { formatNumber, formatCurrency, fmtDate } from '@/shared/lib/format';
 import { cn } from '@/shared/lib/cn';
 import {
   CHART_SERIES_COLORS,
@@ -29,11 +31,15 @@ import type {
   CompanyStat,
   GroupStat,
   RouteStat,
+  TripStatisticsParams,
 } from '@/entities/trip-statistics/schemas';
+import { useAllTripsInRange } from '@/entities/trip/queries';
+import type { Trip } from '@/entities/trip/schemas';
 
 interface TripsStatisticsCompaniesProps {
   companies: CompanyStat[];
   hasFinancialAccess: boolean;
+  filters: TripStatisticsParams;
 }
 
 /**
@@ -58,6 +64,7 @@ interface TripsStatisticsCompaniesProps {
 export function TripsStatisticsCompanies({
   companies,
   hasFinancialAccess,
+  filters,
 }: TripsStatisticsCompaniesProps) {
   const { t } = useTranslation();
 
@@ -83,6 +90,7 @@ export function TripsStatisticsCompanies({
           key={company.company}
           company={company}
           hasFinancialAccess={hasFinancialAccess}
+          filters={filters}
           defaultOpen={idx < 3}
         />
       ))}
@@ -139,10 +147,12 @@ function matchRoutesToGroup(
 function CompanyCard({
   company,
   hasFinancialAccess,
+  filters,
   defaultOpen,
 }: {
   company: CompanyStat;
   hasFinancialAccess: boolean;
+  filters: TripStatisticsParams;
   defaultOpen: boolean;
 }) {
   const { t } = useTranslation();
@@ -194,6 +204,8 @@ function CompanyCard({
         <CompanyGroupTable
           groups={company.details ?? []}
           routes={company.route_details ?? []}
+          company={company.company}
+          filters={filters}
           hasFinancialAccess={hasFinancialAccess}
         />
       </div>
@@ -315,10 +327,14 @@ function CompanyPie({
 function CompanyGroupTable({
   groups,
   routes,
+  company,
+  filters,
   hasFinancialAccess,
 }: {
   groups: GroupStat[];
   routes: RouteStat[];
+  company: string;
+  filters: TripStatisticsParams;
   hasFinancialAccess: boolean;
 }) {
   const { t } = useTranslation();
@@ -552,10 +568,12 @@ function CompanyGroupTable({
       <RoutesSubTable
         group={row.original}
         routes={matchRoutesToGroup(row.original, routes)}
+        company={company}
+        filters={filters}
         hasFinancialAccess={hasFinancialAccess}
       />
     ),
-    [routes, hasFinancialAccess],
+    [routes, company, filters, hasFinancialAccess],
   );
 
   if (groups.length === 0) {
@@ -589,10 +607,14 @@ function CompanyGroupTable({
 function RoutesSubTable({
   group,
   routes,
+  company,
+  filters,
   hasFinancialAccess,
 }: {
   group: GroupStat;
   routes: RouteStat[];
+  company: string;
+  filters: TripStatisticsParams;
   hasFinancialAccess: boolean;
 }) {
   const { t } = useTranslation();
@@ -709,8 +731,11 @@ function RoutesSubTable({
                       colSpan={hasFinancialAccess ? 6 : 4}
                       className="p-0"
                     >
-                      <CarsSubTable
+                      <RouteBreakdownPanel
+                        route={route}
                         cars={cars}
+                        company={company}
+                        filters={filters}
                         hasFinancialAccess={hasFinancialAccess}
                       />
                     </td>
@@ -719,6 +744,287 @@ function RoutesSubTable({
               </React.Fragment>
             );
           })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/* Route breakdown panel (level 3) — per-vehicle / per-day toggle              */
+/* -------------------------------------------------------------------------- */
+
+function RouteBreakdownPanel({
+  route,
+  cars,
+  company,
+  filters,
+  hasFinancialAccess,
+}: {
+  route: RouteStat;
+  cars: CarStat[];
+  company: string;
+  filters: TripStatisticsParams;
+  hasFinancialAccess: boolean;
+}) {
+  const { t } = useTranslation();
+  const [view, setView] = React.useState<'vehicle' | 'day'>('vehicle');
+
+  const toggleButton = (
+    value: 'vehicle' | 'day',
+    icon: React.ReactNode,
+    label: string,
+  ) => (
+    <button
+      type="button"
+      onClick={() => setView(value)}
+      className={cn(
+        'inline-flex items-center gap-1 rounded px-2 py-0.5 text-[10px] font-medium transition-colors',
+        view === value
+          ? 'bg-primary text-primary-foreground'
+          : 'text-muted-foreground hover:bg-muted/60',
+      )}
+    >
+      {icon}
+      {label}
+    </button>
+  );
+
+  return (
+    <div>
+      <div className="flex justify-end px-3 pt-2">
+        <div className="inline-flex items-center gap-0.5 rounded-md border border-border/50 bg-muted/30 p-0.5">
+          {toggleButton(
+            'vehicle',
+            <CarIcon className="h-3 w-3" />,
+            t('trips.statistics.companies.perVehicle'),
+          )}
+          {toggleButton(
+            'day',
+            <CalendarIcon className="h-3 w-3" />,
+            t('trips.statistics.companies.perDay'),
+          )}
+        </div>
+      </div>
+      {view === 'vehicle' ? (
+        <CarsSubTable cars={cars} hasFinancialAccess={hasFinancialAccess} />
+      ) : (
+        <DaysSubTable
+          route={route}
+          company={company}
+          filters={filters}
+          hasFinancialAccess={hasFinancialAccess}
+        />
+      )}
+    </div>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/* Trip ↔ route matching (for the per-day view)                                */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The statistics service only aggregates routes per vehicle, so the per-day
+ * view is derived client-side from raw trips. Trips are matched to a route
+ * with the same heuristics spirit as `matchRoutesToGroup`:
+ *   1. terminal + drop_off_point (terminal-dropoff routes)
+ *   2. terminal only (terminal routes)
+ *   3. per-trip fee equals the route fee (Watanya fee-tier routes)
+ *   4. route named after the drop-off point / terminal (fallback)
+ */
+function matchTripsToRoute(
+  route: RouteStat,
+  trips: Trip[],
+  company: string,
+): Trip[] {
+  const pool = company ? trips.filter((t) => t.company === company) : trips;
+
+  if (route.terminal && route.drop_off_point) {
+    return pool.filter(
+      (t) =>
+        t.terminal === route.terminal &&
+        t.drop_off_point === route.drop_off_point,
+    );
+  }
+
+  if (route.terminal) {
+    return pool.filter((t) => t.terminal === route.terminal);
+  }
+
+  if (route.fee != null && route.fee > 0) {
+    const byFee = pool.filter((t) => (t.fee || 0) === route.fee);
+    if (byFee.length > 0) return byFee;
+  }
+
+  return pool.filter(
+    (t) =>
+      t.drop_off_point === route.route_name ||
+      t.terminal === route.route_name,
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/* Days sub-table (level 3, per-day view) — inset under a route row            */
+/* -------------------------------------------------------------------------- */
+
+interface DayRow {
+  date: string;
+  trips: number;
+  volume: number;
+  distance: number;
+  revenue: number;
+  carCount: number;
+}
+
+function DaysSubTable({
+  route,
+  company,
+  filters,
+  hasFinancialAccess,
+}: {
+  route: RouteStat;
+  company: string;
+  filters: TripStatisticsParams;
+  hasFinancialAccess: boolean;
+}) {
+  const { t } = useTranslation();
+  const {
+    data: trips,
+    isLoading,
+    isError,
+  } = useAllTripsInRange({
+    company: filters.company ?? '',
+    startDate: filters.startDate ?? '',
+    endDate: filters.endDate ?? '',
+  });
+
+  const days = React.useMemo<DayRow[]>(() => {
+    if (!trips) return [];
+    const matched = matchTripsToRoute(route, trips, company);
+
+    const byDate = new Map<
+      string,
+      Omit<DayRow, 'date' | 'carCount'> & { cars: Set<string> }
+    >();
+    for (const trip of matched) {
+      const date = (trip.date || '').slice(0, 10);
+      if (!date) continue;
+      const day =
+        byDate.get(date) ??
+        { trips: 0, volume: 0, distance: 0, revenue: 0, cars: new Set<string>() };
+      day.trips += 1;
+      day.volume += trip.tank_capacity || 0;
+      day.distance += trip.mileage || trip.distance || 0;
+      day.revenue += trip.revenue || trip.fee || 0;
+      day.cars.add(trip.car_no_plate);
+      byDate.set(date, day);
+    }
+
+    return [...byDate.entries()]
+      .map(([date, { cars, ...rest }]) => ({
+        date,
+        ...rest,
+        carCount: cars.size,
+      }))
+      .sort((a, b) => b.date.localeCompare(a.date));
+  }, [trips, route, company]);
+
+  if (isLoading) {
+    return (
+      <div className="border-l-2 border-success/40 ms-4 my-2 flex items-center gap-2 p-2.5 text-[11px] text-muted-foreground">
+        <Loader2 className="h-3 w-3 animate-spin" />
+        {t('common.loading')}
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="border-l-2 border-destructive/40 ms-4 my-2 p-2.5 text-[11px] text-muted-foreground italic">
+        {t('trips.statistics.companies.dailyLoadError')}
+      </div>
+    );
+  }
+
+  if (days.length === 0) {
+    return (
+      <div className="border-l-2 border-success/40 ms-4 my-2 p-2.5 text-[11px] text-muted-foreground italic">
+        {t('trips.statistics.companies.noDaysForRoute')}
+      </div>
+    );
+  }
+
+  return (
+    <div className="border-l-2 border-success/40 ms-4 my-2 me-2">
+      <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+        <CalendarIcon className="h-3 w-3" />
+        {t('trips.statistics.companies.daysForRoute', { count: days.length })}
+      </div>
+      <table className="w-full text-[11px] sm:text-xs">
+        <thead className="bg-muted/20 text-[9px] sm:text-[10px] uppercase tracking-wider text-muted-foreground">
+          <tr>
+            <th className="px-3 py-1.5 text-start font-medium">
+              {t('trips.statistics.companies.date')}
+            </th>
+            <th className="px-3 py-1.5 text-end font-medium">
+              {t('trips.statistics.excel.cols.trips')}
+            </th>
+            <th className="px-3 py-1.5 text-end font-medium">
+              <span className="hidden sm:inline">
+                {t('trips.statistics.carTable.liters')}
+              </span>
+              <span className="sm:hidden">L</span>
+            </th>
+            <th className="px-3 py-1.5 text-end font-medium hidden md:table-cell">
+              {t('trips.statistics.carTable.distance')}
+            </th>
+            <th className="px-3 py-1.5 text-end font-medium">
+              <span className="hidden sm:inline">
+                {t('trips.statistics.companies.vehiclesCol')}
+              </span>
+              <span className="sm:hidden">
+                <CarIcon className="h-3 w-3 inline" />
+              </span>
+            </th>
+            {hasFinancialAccess && (
+              <th className="px-3 py-1.5 text-end font-medium">
+                <span className="hidden lg:inline">
+                  {t('trips.statistics.excel.cols.totalAmount')}
+                </span>
+                <span className="lg:hidden">Total</span>
+              </th>
+            )}
+          </tr>
+        </thead>
+        <tbody>
+          {days.map((day) => (
+            <tr
+              key={day.date}
+              className="border-t border-border/30 hover:bg-muted/30"
+            >
+              <td className="px-3 py-1.5 font-medium tabular-nums">
+                {fmtDate(day.date)}
+              </td>
+              <td className="px-3 py-1.5 text-end tabular-nums">
+                {formatNumber(day.trips, 0)}
+              </td>
+              <td className="px-3 py-1.5 text-end tabular-nums">
+                {formatNumber(day.volume, 2)}
+              </td>
+              <td className="px-3 py-1.5 text-end tabular-nums hidden md:table-cell">
+                {formatNumber(day.distance, 2)}
+              </td>
+              <td className="px-3 py-1.5 text-end tabular-nums text-muted-foreground">
+                {day.carCount}
+              </td>
+              {hasFinancialAccess && (
+                <td className="px-3 py-1.5 text-end tabular-nums font-semibold">
+                  {formatCurrency(day.revenue)}
+                </td>
+              )}
+            </tr>
+          ))}
         </tbody>
       </table>
     </div>

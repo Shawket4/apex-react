@@ -22,6 +22,8 @@ export const tripKeys = {
   all: ['trips'] as const,
   lists: () => [...tripKeys.all, 'list'] as const,
   list: (params: TripListParams) => [...tripKeys.lists(), params] as const,
+  allInRange: (params: { company: string; startDate: string; endDate: string }) =>
+    [...tripKeys.all, 'all-in-range', params] as const,
   details: () => [...tripKeys.all, 'details'] as const,
   detail: (id: number) => [...tripKeys.details(), id] as const,
   parents: () => [...tripKeys.all, 'parent'] as const,
@@ -42,6 +44,30 @@ export function useTrips(
     placeholderData: keepPreviousData, // smooth pagination / filter changes
     staleTime: 30_000,
     ...options,
+  });
+}
+
+/**
+ * Fetch every trip matching the given company / date-range filters in one
+ * call (backend caps at 10,000 rows). Used by the statistics per-day
+ * drill-down, which aggregates raw trips client-side. Cached per filter set,
+ * so all expanded routes under the same filters share a single fetch.
+ */
+export function useAllTripsInRange(
+  params: { company: string; startDate: string; endDate: string },
+  options?: { enabled?: boolean },
+) {
+  return useQuery({
+    queryKey: tripKeys.allInRange(params),
+    queryFn: () =>
+      tripApi.listAll({
+        ...params,
+        search: '',
+        missingData: '',
+        receiptStatus: '',
+      }),
+    staleTime: 60_000,
+    enabled: options?.enabled ?? true,
   });
 }
 

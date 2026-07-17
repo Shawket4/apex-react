@@ -757,7 +757,14 @@
         "routesInGroup": "Routes ({{count}})",
         "noRoutesForGroup": "No routes match the group \"{{group}}\"",
         "carsForRoute": "Vehicles ({{count}})",
-        "noCarsForRoute": "No vehicle activity recorded on this route"
+        "noCarsForRoute": "No vehicle activity recorded on this route",
+        "perVehicle": "Per vehicle",
+        "perDay": "Per day",
+        "daysForRoute": "Days ({{count}})",
+        "noDaysForRoute": "No daily activity recorded on this route",
+        "dailyLoadError": "Couldn't load the daily breakdown",
+        "date": "Date",
+        "vehiclesCol": "Vehicles"
       },
       "routes": {
         "title": "Top routes",
