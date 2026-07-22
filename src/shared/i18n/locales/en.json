@@ -1299,5 +1299,24 @@
       "scanError": "Failed to run scan",
       "scanSummary": "{{violations}} violations found, {{alerts}} alerts sent"
     }
+  },
+  "tiresStock": {
+    "title": "Tire & Oil Stock",
+    "subtitle": "Shipments — the authoritative ledger the maintenance system mirrors and debits",
+    "tires": "New tires",
+    "oil": "Oil",
+    "brand": "Brand",
+    "model": "Model",
+    "size": "Size",
+    "qty": "On hand",
+    "addQty": "Quantity to add",
+    "oilType": "Oil type",
+    "liters": "Liters",
+    "addLiters": "Liters to add",
+    "addShipment": "Add tire shipment",
+    "addOil": "Add oil",
+    "added": "Recorded — balance updated",
+    "empty": "No stock recorded yet",
+    "validation": "Enter a brand/type and a quantity above zero"
   }
 }

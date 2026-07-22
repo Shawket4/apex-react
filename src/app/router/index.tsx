@@ -64,7 +64,7 @@ const ZonesPage = React.lazy(() => import('@/pages/zones/zones'));
 // browser fetches it once and React picks the right component per route.
 const placeholderLoader = () => import('@/pages/placeholder/placeholder');
 const TrucksPage = lazyNamed(placeholderLoader, 'TrucksPage');
-const TiresPage = lazyNamed(placeholderLoader, 'TiresPage');
+const TiresPage = lazyNamed(() => import('@/pages/tires/tires'), 'TiresPage');
 const PayrollPage = lazyNamed(placeholderLoader, 'PayrollPage');
 const VendorsPage = lazyNamed(placeholderLoader, 'VendorsPage');
 const FleetExpensesPage = lazyNamed(placeholderLoader, 'FleetExpensesPage');
@@ -183,7 +183,14 @@ export const router = createBrowserRouter([
           // Placeholder domains
           { path: 'trucks', element: <TrucksPage /> },
           { path: 'cars', element: <CarsPage /> },
-          { path: 'tires', element: <TiresPage /> },
+          {
+            path: 'tires',
+            element: (
+              <ProtectedRoute minPermissionLevel={PERMISSION_LEVELS.ADMIN}>
+                <TiresPage />
+              </ProtectedRoute>
+            ),
+          },
           { path: 'tablets', element: <TabletsPage /> },
           { path: 'speed-violations', element: <SpeedViolationsPage /> },
           { path: 'drivers', element: <DriversListPage /> },
