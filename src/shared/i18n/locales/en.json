@@ -206,7 +206,21 @@
     "themeLight": "Light",
     "themeDark": "Dark",
     "themeSystem": "System",
-    "language": "Language"
+    "language": "Language",
+    "whatsappTitle": "WhatsApp Gateway",
+    "whatsappDescription": "Delivers PetroApp fuel alerts and Falcon notifications.",
+    "whatsappConnected": "Connected",
+    "whatsappDisconnected": "Disconnected",
+    "whatsappLoggedOut": "Logged out",
+    "whatsappUnreachable": "Unreachable",
+    "whatsappReconnect": "Reconnect",
+    "whatsappShowQr": "Show QR code",
+    "whatsappQrTitle": "Link WhatsApp",
+    "whatsappQrDescription": "Scan with your phone: WhatsApp → Settings → Linked devices → Link a device. The code refreshes automatically.",
+    "whatsappLinked": "WhatsApp linked successfully",
+    "whatsappReconnected": "WhatsApp gateway reconnected",
+    "whatsappReconnectFailed": "Gateway is still not connected",
+    "whatsappServiceError": "Failed to reach the WhatsApp service"
   },
   "errors": {
     "404": {

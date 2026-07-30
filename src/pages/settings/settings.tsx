@@ -20,6 +20,7 @@ import {
 } from '@/shared/ui/form';
 import { usePermissions } from '@/shared/hooks/use-permissions';
 import { apiPost } from '@/shared/api/client';
+import { WhatsAppGatewayCard } from '@/widgets/whatsapp-gateway-card';
 
 const tokenSchema = z.object({
   token: z.string().min(1, 'Token is required'),
@@ -30,7 +31,7 @@ type TokenFormValues = z.infer<typeof tokenSchema>;
 
 export default function SettingsPage() {
   const { t } = useTranslation();
-  const { isManager } = usePermissions();
+  const { isManager, isAdmin } = usePermissions();
 
   const form = useForm<TokenFormValues>({
     resolver: zodResolver(tokenSchema),
@@ -106,6 +107,7 @@ export default function SettingsPage() {
             </CardContent>
           </Card>
         )}
+        {isAdmin && <WhatsAppGatewayCard />}
       </div>
     </PageShell>
   );

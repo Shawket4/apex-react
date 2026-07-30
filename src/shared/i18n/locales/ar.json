@@ -206,7 +206,21 @@
     "themeLight": "فاتح",
     "themeDark": "داكن",
     "themeSystem": "النظام",
-    "language": "اللغة"
+    "language": "اللغة",
+    "whatsappTitle": "بوابة واتساب",
+    "whatsappDescription": "ترسل تنبيهات وقود PetroApp وإشعارات Falcon.",
+    "whatsappConnected": "متصل",
+    "whatsappDisconnected": "غير متصل",
+    "whatsappLoggedOut": "تم تسجيل الخروج",
+    "whatsappUnreachable": "الخدمة غير متاحة",
+    "whatsappReconnect": "إعادة الاتصال",
+    "whatsappShowQr": "عرض رمز QR",
+    "whatsappQrTitle": "ربط واتساب",
+    "whatsappQrDescription": "امسح الرمز من هاتفك: واتساب ← الإعدادات ← الأجهزة المرتبطة ← ربط جهاز. يتم تحديث الرمز تلقائيًا.",
+    "whatsappLinked": "تم ربط واتساب بنجاح",
+    "whatsappReconnected": "تمت إعادة الاتصال ببوابة واتساب",
+    "whatsappReconnectFailed": "البوابة ما زالت غير متصلة",
+    "whatsappServiceError": "تعذر الوصول إلى خدمة واتساب"
   },
   "errors": {
     "404": {
