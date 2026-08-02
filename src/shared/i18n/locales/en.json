@@ -655,7 +655,11 @@
       "capacity": {
         "hint": "Vehicle tank capacity is {{capacity}} L. The sum of containers should match.",
         "match": "Capacity matches",
-        "mismatch": "Capacity mismatch"
+        "mismatch": "Capacity mismatch",
+        "overrideWarning": "Capacity mismatch — admin override available",
+        "overrideTitle": "Capacity mismatch",
+        "overrideBody": "Total container capacity is {{total}} L but the truck's registered capacity is {{capacity}} L ({{delta}} L difference). Save anyway?",
+        "overrideConfirm": "Save anyway"
       },
       "batchBanner": {
         "title": "Creating from receipt batch",

@@ -50,6 +50,8 @@ import type { MappingDetail } from '@/entities/mapping/schemas';
 import { extractErrorMessage } from '@/shared/api/errors';
 import { today, formatNumber, formatCurrency } from '@/shared/lib/format';
 import { cn } from '@/shared/lib/cn';
+import { useAuthStore } from '@/shared/auth/store';
+import { ConfirmDialog } from '@/shared/ui/confirm-dialog';
 
 import {
   DropOffPickerModal,
@@ -287,6 +289,21 @@ export function TripForm({ parentId }: TripFormProps) {
   const capacityValid =
     carCapacity === 0 || Math.abs(capacityDelta) <= CAPACITY_TOLERANCE;
 
+  // Level-4 admins may save a trip whose container capacities don't sum to
+  // the truck's registered capacity — after confirming a warning dialog.
+  // The backend enforces the same rule, so this is UX, not the security gate.
+  const permission = useAuthStore((s) => s.user?.permission ?? 0);
+  const canOverrideCapacity = permission >= 4;
+  const capacityBlocked = !capacityValid && !canOverrideCapacity;
+
+  const [capacityConfirmOpen, setCapacityConfirmOpen] = React.useState(false);
+  // Ref (not state) so submit() sees the acceptance synchronously when
+  // re-invoked from the dialog's onConfirm.
+  const capacityAcceptedRef = React.useRef(false);
+  React.useEffect(() => {
+    capacityAcceptedRef.current = false;
+  }, [capacityDelta, selectedCar?.ID]);
+
   /* -------------------------------------------------------------------------- */
   /* Receipt validators — min-length (hard) + in-form duplicates (soft warn)   */
   /* -------------------------------------------------------------------------- */
@@ -484,12 +501,18 @@ export function TripForm({ parentId }: TripFormProps) {
       return;
     }
     if (!capacityValid) {
-      toast.error(
-        t('trips.form.validation.capacityMismatch', {
-          delta: formatNumber(capacityDelta, 1),
-        }),
-      );
-      return;
+      if (!canOverrideCapacity) {
+        toast.error(
+          t('trips.form.validation.capacityMismatch', {
+            delta: formatNumber(capacityDelta, 1),
+          }),
+        );
+        return;
+      }
+      if (!capacityAcceptedRef.current) {
+        setCapacityConfirmOpen(true);
+        return;
+      }
     }
 
     try {
@@ -738,6 +761,7 @@ export function TripForm({ parentId }: TripFormProps) {
               total={totalContainerCapacity}
               delta={capacityDelta}
               valid={capacityValid}
+              adminOverride={canOverrideCapacity}
             />
           )}
 
@@ -775,7 +799,7 @@ export function TripForm({ parentId }: TripFormProps) {
         </Button>
         <Button
           onClick={() => void submit(false)}
-          disabled={!isValid || !capacityValid || isPending}
+          disabled={!isValid || capacityBlocked || isPending}
         >
           {isPending ? (
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -816,6 +840,27 @@ export function TripForm({ parentId }: TripFormProps) {
         }
         loading={isPending}
       />
+
+      {/* Capacity-mismatch admin override */}
+      <ConfirmDialog
+        open={capacityConfirmOpen}
+        onOpenChange={setCapacityConfirmOpen}
+        variant="default"
+        lottieSrc="/animations/warning.lottie"
+        title={t('trips.form.capacity.overrideTitle')}
+        description={t('trips.form.capacity.overrideBody', {
+          total: formatNumber(totalContainerCapacity, 1),
+          capacity: formatNumber(carCapacity, 0),
+          delta: formatNumber(capacityDelta, 1),
+        })}
+        confirmLabel={t('trips.form.capacity.overrideConfirm')}
+        loading={isPending}
+        onConfirm={() => {
+          capacityAcceptedRef.current = true;
+          setCapacityConfirmOpen(false);
+          void submit(false);
+        }}
+      />
     </div>
   );
 }
@@ -829,6 +874,7 @@ interface CapacityBannerProps {
   total: number;
   delta: number;
   valid: boolean;
+  adminOverride: boolean;
 }
 
 function CapacityBanner({
@@ -836,6 +882,7 @@ function CapacityBanner({
   total,
   delta,
   valid,
+  adminOverride,
 }: CapacityBannerProps) {
   const { t } = useTranslation();
 
@@ -867,7 +914,9 @@ function CapacityBanner({
         <div className="font-medium">
           {valid
             ? t('trips.form.capacity.match')
-            : t('trips.form.capacity.mismatch')}
+            : adminOverride
+              ? t('trips.form.capacity.overrideWarning')
+              : t('trips.form.capacity.mismatch')}
         </div>
         <div className="text-foreground/80">
           <span className="tabular-nums">
