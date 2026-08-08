@@ -33,6 +33,16 @@ export const QUERY_KEYS = {
   fuelEvent: (id: number | string) => ['fuel-events', String(id)] as const,
   serviceInvoices: ['service-invoices'] as const,
   serviceInvoice: (id: number | string) => ['service-invoices', String(id)] as const,
+
+  /**
+   * Fleet expenses read from apex-rust's `banksms.transactions`, never from the
+   * legacy public.fleet_expenses table. Filters are part of the key so changing
+   * a date range refetches instead of showing another range's cached totals.
+   */
+  transactions: ['transactions'] as const,
+  transaction: (id: number | string) => ['transactions', String(id)] as const,
+  transactionList: (filters: unknown) => ['transactions', 'list', filters] as const,
+  transactionStats: (filters: unknown) => ['transactions', 'stats', filters] as const,
 } as const;
 
 export const FUEL_EFFICIENCY = {

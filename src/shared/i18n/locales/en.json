@@ -57,7 +57,9 @@
     "refreshNow": "Refresh Now",
     "unit": {
       "km": "KM"
-    }
+    },
+    "refresh": "Refresh",
+    "none": "None"
   },
   "nav": {
     "overview": "Overview",
@@ -1322,5 +1324,73 @@
     "added": "Recorded — balance updated",
     "empty": "No stock recorded yet",
     "validation": "Enter a brand/type and a quantity above zero"
+  },
+  "fleetExpenses": {
+    "title": "Fleet Expenses",
+    "subtitle": "Every expense and bank transaction across the fleet",
+    "formSubtitle": "Amounts, dates and categories are stored to the cent",
+    "addExpense": "Add expense",
+    "editExpense": "Edit expense",
+    "searchPlaceholder": "Search description, counterparty or reference...",
+    "noExpenses": "No expenses in this range",
+    "noExpensesDescription": "Try widening the date range, or add an expense manually.",
+    "recordedSuccessfully": "Expense recorded",
+    "updatedSuccessfully": "Expense updated",
+    "deletedSuccessfully": "Expense deleted",
+    "deleteConfirmTitle": "Delete this expense?",
+    "deleteConfirmDescription": "This removes the {{amount}} entry from reports. Parsed bank messages are kept, so it can be restored by an administrator.",
+    "deleteFailed": "Failed to delete expense",
+    "saveFailed": "Failed to save expense",
+    "loadFailed": "Failed to load expense",
+    "versionConflict": "Someone else changed this expense while you were editing. Reload and try again.",
+    "edited": "Edited",
+    "originalReading": "Original bank message",
+    "parsedByTemplate": "Matched template: {{template}}",
+    "toggleGrouping": "Toggle monthly grouping",
+    "allTypes": "All types",
+    "allCompanies": "All companies",
+    "allMethods": "All methods",
+    "allSources": "All sources",
+    "breakdownTitle": "Breakdown",
+    "breakdownDimension": "Dimension",
+    "breakdownKey": "Value",
+    "stats": {
+      "total": "Total",
+      "outflow": "Money out",
+      "avgPerDay": "Average per day",
+      "fees": "IPN fees",
+      "feesHint": "Derived from fee-inclusive amounts",
+      "count": "Records",
+      "records": "{{count}} records",
+      "daysCovered": "{{count}} days"
+    },
+    "charts": {
+      "daily": "Daily spend",
+      "dailyHint": "Grouped by day, Cairo time",
+      "byType": "By type",
+      "byCar": "Top vehicles",
+      "byCompany": "By company",
+      "bySource": "By source"
+    },
+    "sources": {
+      "import": "Imported",
+      "whatsapp": "Bank SMS",
+      "manual": "Manual",
+      "(none)": "Unassigned"
+    },
+    "fields": {
+      "amount": "Amount",
+      "fee": "IPN fee",
+      "date": "Date",
+      "expenseType": "Type",
+      "car": "Vehicle",
+      "company": "Company",
+      "paymentMethod": "Payment method",
+      "paidBy": "Paid by",
+      "counterparty": "Counterparty",
+      "description": "Description",
+      "reference": "Reference",
+      "source": "Source"
+    }
   }
 }

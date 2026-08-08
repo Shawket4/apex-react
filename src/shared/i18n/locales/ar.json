@@ -57,7 +57,9 @@
     "refreshNow": "تحديث الآن",
     "unit": {
       "km": "كم"
-    }
+    },
+    "refresh": "تحديث",
+    "none": "بدون"
   },
   "nav": {
     "overview": "نظرة عامة",
@@ -1322,5 +1324,73 @@
     "added": "اتسجلت — الرصيد اتحدث",
     "empty": "مفيش مخزون مسجل لسه",
     "validation": "اكتب الماركة/النوع وكمية أكبر من صفر"
+  },
+  "fleetExpenses": {
+    "title": "مصروفات الأسطول",
+    "subtitle": "كل المصروفات والمعاملات البنكية للأسطول",
+    "formSubtitle": "يتم حفظ المبالغ والتواريخ والفئات بدقة",
+    "addExpense": "إضافة مصروف",
+    "editExpense": "تعديل المصروف",
+    "searchPlaceholder": "ابحث في الوصف أو الطرف الآخر أو الرقم المرجعي...",
+    "noExpenses": "لا توجد مصروفات في هذه الفترة",
+    "noExpensesDescription": "جرّب توسيع نطاق التاريخ، أو أضف مصروفًا يدويًا.",
+    "recordedSuccessfully": "تم تسجيل المصروف",
+    "updatedSuccessfully": "تم تحديث المصروف",
+    "deletedSuccessfully": "تم حذف المصروف",
+    "deleteConfirmTitle": "حذف هذا المصروف؟",
+    "deleteConfirmDescription": "سيتم استبعاد مبلغ {{amount}} من التقارير. تُحفظ رسائل البنك الأصلية، ويمكن للمسؤول استرجاعه.",
+    "deleteFailed": "تعذر حذف المصروف",
+    "saveFailed": "تعذر حفظ المصروف",
+    "loadFailed": "تعذر تحميل المصروف",
+    "versionConflict": "قام شخص آخر بتعديل هذا المصروف أثناء تحريرك له. أعد التحميل وحاول مجددًا.",
+    "edited": "معدّل",
+    "originalReading": "رسالة البنك الأصلية",
+    "parsedByTemplate": "القالب المطابق: {{template}}",
+    "toggleGrouping": "تبديل التجميع الشهري",
+    "allTypes": "كل الأنواع",
+    "allCompanies": "كل الشركات",
+    "allMethods": "كل طرق الدفع",
+    "allSources": "كل المصادر",
+    "breakdownTitle": "التفصيل",
+    "breakdownDimension": "البُعد",
+    "breakdownKey": "القيمة",
+    "stats": {
+      "total": "الإجمالي",
+      "outflow": "المصروف",
+      "avgPerDay": "المتوسط اليومي",
+      "fees": "رسوم الشبكة اللحظية",
+      "feesHint": "مشتقة من المبالغ الشاملة للرسوم",
+      "count": "السجلات",
+      "records": "{{count}} سجل",
+      "daysCovered": "{{count}} يوم"
+    },
+    "charts": {
+      "daily": "الإنفاق اليومي",
+      "dailyHint": "مجمّع يوميًا بتوقيت القاهرة",
+      "byType": "حسب النوع",
+      "byCar": "أعلى المركبات",
+      "byCompany": "حسب الشركة",
+      "bySource": "حسب المصدر"
+    },
+    "sources": {
+      "import": "مستورد",
+      "whatsapp": "رسالة بنك",
+      "manual": "يدوي",
+      "(none)": "غير محدد"
+    },
+    "fields": {
+      "amount": "المبلغ",
+      "fee": "رسوم الشبكة",
+      "date": "التاريخ",
+      "expenseType": "النوع",
+      "car": "المركبة",
+      "company": "الشركة",
+      "paymentMethod": "طريقة الدفع",
+      "paidBy": "دفعها",
+      "counterparty": "الطرف الآخر",
+      "description": "الوصف",
+      "reference": "الرقم المرجعي",
+      "source": "المصدر"
+    }
   }
 }

@@ -22,6 +22,15 @@ const lazyNamed = <K extends string>(
 // Default-exported pages
 const DashboardPage = React.lazy(() => import('@/pages/dashboard/dashboard'));
 const FuelEventsPage = React.lazy(() => import('@/pages/fuel-events/fuel-events'));
+const FleetExpensesPage = React.lazy(
+  () => import('@/pages/fleet-expenses/fleet-expenses'),
+);
+const FleetExpenseNewPage = React.lazy(
+  () => import('@/pages/fleet-expenses/fleet-expense-new'),
+);
+const FleetExpenseEditPage = React.lazy(
+  () => import('@/pages/fleet-expenses/fleet-expense-edit'),
+);
 const FuelEventNewPage = React.lazy(() => import('@/pages/fuel-events/fuel-event-new'));
 const FuelEventEditPage = React.lazy(() => import('@/pages/fuel-events/fuel-event-edit'));
 const FuelEventDetailsPage = React.lazy(
@@ -67,7 +76,6 @@ const TrucksPage = lazyNamed(placeholderLoader, 'TrucksPage');
 const TiresPage = lazyNamed(() => import('@/pages/tires/tires'), 'TiresPage');
 const PayrollPage = lazyNamed(placeholderLoader, 'PayrollPage');
 const VendorsPage = lazyNamed(placeholderLoader, 'VendorsPage');
-const FleetExpensesPage = lazyNamed(placeholderLoader, 'FleetExpensesPage');
 const LogsPage = lazyNamed(placeholderLoader, 'LogsPage');
 const SettingsPage = React.lazy(() => import('@/pages/settings/settings'));
 const TabletsPage = lazyNamed(placeholderLoader, 'TabletsPage');
@@ -222,11 +230,29 @@ export const router = createBrowserRouter([
             ),
           },
           { path: 'vendors', element: <VendorsPage /> },
+          // Fleet expenses — reads banksms.transactions; the legacy
+          // fleet_expenses table is never touched.
           {
             path: 'fleet-expenses',
             element: (
               <ProtectedRoute minPermissionLevel={PERMISSION_LEVELS.ADMIN}>
                 <FleetExpensesPage />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: 'fleet-expenses/new',
+            element: (
+              <ProtectedRoute minPermissionLevel={PERMISSION_LEVELS.ADMIN}>
+                <FleetExpenseNewPage />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: 'fleet-expenses/:id/edit',
+            element: (
+              <ProtectedRoute minPermissionLevel={PERMISSION_LEVELS.ADMIN}>
+                <FleetExpenseEditPage />
               </ProtectedRoute>
             ),
           },
