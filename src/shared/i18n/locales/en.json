@@ -1401,11 +1401,8 @@
       "source": "Source"
     },
     "principal": "Principal",
-    "verified": "Verified",
     "readOnlySource": "Read-only — owned by another system",
     "readOnlyExplain": "This row comes from the fuel or loans system and is shown here for reporting only. Edit it in its own module.",
-    "verifyTitle": "Mark as verified",
-    "verifyHint": "Confirms the amount and details match the bank message.",
     "includeFuel": "Fuel events",
     "includeLoans": "Driver loans",
     "party": {
@@ -1419,9 +1416,8 @@
       "employeeCreated": "Employee added",
       "createFailed": "Could not add the employee",
       "willPost": "Verifying this will register it as a loan for that person.",
-      "requiredBeforeVerify": "Select a person before verifying — this category registers a loan."
-    },
-    "verifyPostsHint": "Confirms the details and registers this as a loan against the selected person."
+      "postsNow": "This will be registered as a loan for the selected person."
+    }
   },
   "review": {
     "title": "Review queue",

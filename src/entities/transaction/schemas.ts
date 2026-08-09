@@ -62,7 +62,6 @@ export const transactionSchema = z.object({
   confidence: z.number(),
   parse_method: z.string().nullable().optional(),
   category: z.string().nullable().optional(),
-  verified: z.boolean(),
 
   description: z.string().nullable().optional(),
   payment_method: z.string().nullable().optional(),
@@ -157,7 +156,6 @@ export interface TransactionFilters {
   direction?: string;
   min_amount?: string;
   max_amount?: string;
-  verified?: boolean;
   q?: string;
 }
 

@@ -6,7 +6,6 @@ import {
   Receipt,
   MessageSquare,
   PenLine,
-  CheckCircle2,
   ChevronDown,
   Fuel,
   HandCoins,
@@ -193,14 +192,6 @@ function RowFlags({ row }: { row: Transaction }) {
   return (
     <>
       {row.has_overrides && <EditedIndicator row={row} />}
-      {row.verified && (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-emerald-500" />
-          </TooltipTrigger>
-          <TooltipContent>{t('fleetExpenses.verified')}</TooltipContent>
-        </Tooltip>
-      )}
       {row.editable === false && (
         <Tooltip>
           <TooltipTrigger asChild>

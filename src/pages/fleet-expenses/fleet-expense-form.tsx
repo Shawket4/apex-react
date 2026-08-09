@@ -11,7 +11,6 @@ import { Input } from '@/shared/ui/input';
 import { Label } from '@/shared/ui/label';
 import { Textarea } from '@/shared/ui/textarea';
 import { Card, CardContent } from '@/shared/ui/card';
-import { Switch } from '@/shared/ui/switch';
 import { PartyPicker } from '@/widgets/fleet-expenses-table/party-picker';
 import { useVehicles } from '@/entities/transaction/vehicles';
 import {
@@ -23,7 +22,6 @@ import {
 import { Skeleton } from '@/shared/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select';
 import { formatCurrency, fmtDate, toDateOnly } from '@/shared/lib/format';
-import { cn } from '@/shared/lib/cn';
 
 import {
   useCreateTransaction,
@@ -212,43 +210,17 @@ export default function FleetExpenseFormPage({ mode }: { mode: 'create' | 'edit'
         </Card>
       )}
 
-      {/* Verification is the "complete it" action the ntfy push asks for, so it
-          sits above the form rather than buried at the bottom. */}
-      {mode === 'edit' && row && row.editable !== false && (
-        <Card>
-          <CardContent className="flex flex-wrap items-center justify-between gap-3 py-4">
-            {/* min-w-0 lets the text block shrink below its content width;
-                without it the label pushes the card past a 375px viewport. */}
-            <div className="flex min-w-0 flex-1 items-start gap-2">
-              <CheckCircle2
-                className={cn(
-                  'mt-0.5 h-5 w-5 shrink-0',
-                  row.verified ? 'text-emerald-500' : 'text-muted-foreground',
-                )}
-              />
-              <div className="min-w-0">
-                <p className="text-sm font-medium">{t('fleetExpenses.verifyTitle')}</p>
-                <p className="text-xs text-muted-foreground">
-                  {partyMissing
-                    ? t('fleetExpenses.party.requiredBeforeVerify')
-                    : willPost
-                      ? t('fleetExpenses.verifyPostsHint')
-                      : t('fleetExpenses.verifyHint')}
-                </p>
-              </div>
-            </div>
-            <Switch
-              className="shrink-0"
-              disabled={partyMissing}
-              checked={row.verified}
-              onCheckedChange={(checked) =>
-                updateMutation.mutate({
-                  id: row.id,
-                  version: row.version,
-                  values: { verified: checked },
-                })
-              }
-            />
+
+      {/* A posting category now takes effect as soon as a person is chosen.
+          There used to be a "mark as verified" switch here gating that, but a
+          tier-1 template match already establishes the parse is right -- the
+          pattern either matched the bank's message or it did not -- so the
+          click confirmed nothing the parser had not already determined. */}
+      {mode === 'edit' && willPost && !partyMissing && (
+        <Card className="border-emerald-500/30 bg-emerald-500/5">
+          <CardContent className="flex items-start gap-2 py-3 text-sm">
+            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" />
+            <span>{t('fleetExpenses.party.postsNow')}</span>
           </CardContent>
         </Card>
       )}

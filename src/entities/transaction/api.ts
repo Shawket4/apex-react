@@ -110,7 +110,6 @@ export async function updateTransaction(
   id: number,
   version: number,
   values: Partial<ExpenseFormValues> & {
-    verified?: boolean;
     /** null clears the party; undefined leaves it alone. */
     driver_id?: number | null;
     employee_id?: number | null;

@@ -86,7 +86,6 @@ export function useUpdateTransaction() {
       id: number;
       version: number;
       values: Partial<ExpenseFormValues> & {
-        verified?: boolean;
         driver_id?: number | null;
         employee_id?: number | null;
         car_id?: number | null;
