@@ -43,6 +43,9 @@ export const QUERY_KEYS = {
   transaction: (id: number | string) => ['transactions', String(id)] as const,
   transactionList: (filters: unknown) => ['transactions', 'list', filters] as const,
   transactionStats: (filters: unknown) => ['transactions', 'stats', filters] as const,
+  /** Raw WhatsApp messages: review queue, ignored audit, reclassification. */
+  rawMessages: ['raw-messages'] as const,
+  tags: ['tags'] as const,
 } as const;
 
 export const FUEL_EFFICIENCY = {

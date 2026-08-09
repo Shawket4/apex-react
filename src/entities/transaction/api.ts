@@ -33,7 +33,7 @@ function toParams(filters: TransactionFilters): Record<string, string> {
 /* ─── List (cursor-paginated) ─── */
 export async function getTransactions(
   filters: TransactionFilters,
-  cursor?: number | null,
+  cursor?: string | null,
   limit = 100,
 ): Promise<TransactionPage> {
   const response = await apiClientRust.get(BASE, {
@@ -54,7 +54,7 @@ export async function getAllTransactions(
   maxPages = 25,
 ): Promise<Transaction[]> {
   const all: Transaction[] = [];
-  let cursor: number | null | undefined = undefined;
+  let cursor: string | null | undefined = undefined;
 
   for (let page = 0; page < maxPages; page += 1) {
     const result: TransactionPage = await getTransactions(filters, cursor, 200);

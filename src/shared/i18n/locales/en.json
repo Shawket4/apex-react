@@ -87,7 +87,8 @@
     "feeMappings": "Fee Mappings",
     "etit": "Live tracking",
     "serviceInvoices": "Service Invoices",
-    "zones": "Dead Zones"
+    "zones": "Dead Zones",
+    "expensesReview": "Review queue"
   },
   "auth": {
     "loginTitle": "Welcome back",
@@ -1376,7 +1377,9 @@
       "import": "Imported",
       "whatsapp": "Bank SMS",
       "manual": "Manual",
-      "(none)": "Unassigned"
+      "(none)": "Unassigned",
+      "fuel_event": "Fuel",
+      "loan": "Loan"
     },
     "fields": {
       "amount": "Amount",
@@ -1391,6 +1394,68 @@
       "description": "Description",
       "reference": "Reference",
       "source": "Source"
+    },
+    "principal": "Principal",
+    "verified": "Verified",
+    "readOnlySource": "Read-only — owned by another system",
+    "readOnlyExplain": "This row comes from the fuel or loans system and is shown here for reporting only. Edit it in its own module.",
+    "verifyTitle": "Mark as verified",
+    "verifyHint": "Confirms the amount and details match the bank message.",
+    "includeFuel": "Fuel events",
+    "includeLoans": "Driver loans",
+    "notes": {
+      "title": "Notes",
+      "add": "Add note",
+      "placeholder": "Add context — what was this for?",
+      "empty": "No notes yet.",
+      "added": "Note added",
+      "updated": "Note updated",
+      "deleted": "Note deleted",
+      "failed": "Could not save the note",
+      "unknownAuthor": "Unknown"
+    }
+  },
+  "review": {
+    "title": "Review queue",
+    "subtitle": "Bank messages that need a human decision",
+    "backToExpenses": "Expenses",
+    "score": "score",
+    "fromMe": "sent by us",
+    "emptyBody": "(no text — media message)",
+    "seenTimes": "seen {{count}}x",
+    "markedAsNoise": "Marked as noise. Future messages like it are ignored automatically.",
+    "markedAsTransaction": "Queued for parsing as a transaction.",
+    "reparsed": "Re-parsed.",
+    "actionFailed": "Action failed",
+    "tabs": {
+      "queue": "Needs review",
+      "ignored": "Ignored"
+    },
+    "stats": {
+      "queue": "In queue",
+      "recurring": "Recurring formats",
+      "recurringHint": "Seen more than once — likely a changed bank format",
+      "ignored": "Ignored",
+      "ignoredHint": "Rejected by the triage gate"
+    },
+    "empty": {
+      "queue": "Nothing to review",
+      "queueHint": "Every bank message parsed cleanly.",
+      "ignored": "Nothing ignored yet",
+      "ignoredHint": "Messages the triage gate rejects appear here for auditing."
+    },
+    "actions": {
+      "isTransaction": "It's a transaction",
+      "isNoise": "It's not a transaction",
+      "reparse": "Re-parse"
+    },
+    "status": {
+      "pending": "Pending",
+      "parsed": "Parsed",
+      "partial": "Partial",
+      "unmatched": "Unmatched",
+      "ignored": "Ignored",
+      "error": "Error"
     }
   }
 }

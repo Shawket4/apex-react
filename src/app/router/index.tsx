@@ -31,6 +31,9 @@ const FleetExpenseNewPage = React.lazy(
 const FleetExpenseEditPage = React.lazy(
   () => import('@/pages/fleet-expenses/fleet-expense-edit'),
 );
+const FleetExpensesReviewPage = React.lazy(
+  () => import('@/pages/fleet-expenses/fleet-expenses-review'),
+);
 const FuelEventNewPage = React.lazy(() => import('@/pages/fuel-events/fuel-event-new'));
 const FuelEventEditPage = React.lazy(() => import('@/pages/fuel-events/fuel-event-edit'));
 const FuelEventDetailsPage = React.lazy(
@@ -237,6 +240,14 @@ export const router = createBrowserRouter([
             element: (
               <ProtectedRoute minPermissionLevel={PERMISSION_LEVELS.ADMIN}>
                 <FleetExpensesPage />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: 'fleet-expenses/review',
+            element: (
+              <ProtectedRoute minPermissionLevel={PERMISSION_LEVELS.ADMIN}>
+                <FleetExpensesReviewPage />
               </ProtectedRoute>
             ),
           },

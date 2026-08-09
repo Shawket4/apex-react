@@ -9,7 +9,13 @@ import { z } from 'zod';
 /* -------------------------------------------------------------------------- */
 
 /** Where a row came from. Replaces the old fleet_expense/fuel_event/loan split. */
-export const TRANSACTION_SOURCES = ['whatsapp', 'import', 'manual'] as const;
+export const TRANSACTION_SOURCES = [
+  'whatsapp',
+  'import',
+  'manual',
+  'fuel_event',
+  'loan',
+] as const;
 export type TransactionSource = (typeof TRANSACTION_SOURCES)[number];
 
 export const TRANSACTION_DIRECTIONS = ['in', 'out'] as const;
@@ -70,6 +76,12 @@ export const transactionSchema = z.object({
 
   /** True when a user has corrected at least one parsed field. */
   has_overrides: z.boolean().optional().default(false),
+  /**
+   * False for fuel events and driver loans. Those are read from `public` and
+   * owned by the PetroApp sync and FalconGo respectively, so the UI must not
+   * offer an edit that the next sync would silently discard.
+   */
+  editable: z.boolean().optional().default(true),
   parsed: parsedViewSchema.optional().default({}),
 
   created_by: z.string().nullable().optional(),
@@ -81,7 +93,12 @@ export type Transaction = z.infer<typeof transactionSchema>;
 
 export const transactionPageSchema = z.object({
   data: z.array(transactionSchema),
-  next_cursor: z.number().nullable().optional(),
+  /**
+   * Opaque composite token — "<occurred_at_millis>:<id>". Composite because the
+   * list unions three sources whose ids come from independent sequences, so a
+   * bare id cannot order or resume the page.
+   */
+  next_cursor: z.string().nullable().optional(),
 });
 
 export type TransactionPage = z.infer<typeof transactionPageSchema>;
@@ -121,6 +138,9 @@ export type TransactionStatistics = z.infer<typeof statisticsSchema>;
 /* -------------------------------------------------------------------------- */
 
 export interface TransactionFilters {
+  /** Read-only unions, matching the legacy costs view. Omitted means included. */
+  include_fuel?: string;
+  include_loans?: string;
   from?: string;
   to?: string;
   category?: string;

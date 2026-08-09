@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, Receipt, Save } from 'lucide-react';
+import { ArrowLeft, Receipt, Save, CheckCircle2, Lock } from 'lucide-react';
 
 import { PageShell } from '@/shared/ui/page-shell';
 import { Button } from '@/shared/ui/button';
@@ -11,9 +11,12 @@ import { Input } from '@/shared/ui/input';
 import { Label } from '@/shared/ui/label';
 import { Textarea } from '@/shared/ui/textarea';
 import { Card, CardContent } from '@/shared/ui/card';
+import { Switch } from '@/shared/ui/switch';
+import { TransactionNotes } from '@/widgets/fleet-expenses-table/transaction-notes';
 import { Skeleton } from '@/shared/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select';
 import { formatCurrency, fmtDate, toDateOnly } from '@/shared/lib/format';
+import { cn } from '@/shared/lib/cn';
 
 import {
   useCreateTransaction,
@@ -152,6 +155,53 @@ export default function FleetExpenseFormPage({ mode }: { mode: 'create' | 'edit'
         </Card>
       )}
 
+      {/* Fuel events and loans are owned by other pipelines; an edit here would
+          be discarded by their next sync. */}
+      {mode === 'edit' && row?.editable === false && (
+        <Card className="border-muted">
+          <CardContent className="flex items-start gap-2 py-3 text-sm text-muted-foreground">
+            <Lock className="mt-0.5 h-4 w-4 shrink-0" />
+            <span>{t('fleetExpenses.readOnlyExplain')}</span>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Verification is the "complete it" action the ntfy push asks for, so it
+          sits above the form rather than buried at the bottom. */}
+      {mode === 'edit' && row && row.editable !== false && (
+        <Card>
+          <CardContent className="flex flex-wrap items-center justify-between gap-3 py-4">
+            {/* min-w-0 lets the text block shrink below its content width;
+                without it the label pushes the card past a 375px viewport. */}
+            <div className="flex min-w-0 flex-1 items-start gap-2">
+              <CheckCircle2
+                className={cn(
+                  'mt-0.5 h-5 w-5 shrink-0',
+                  row.verified ? 'text-emerald-500' : 'text-muted-foreground',
+                )}
+              />
+              <div className="min-w-0">
+                <p className="text-sm font-medium">{t('fleetExpenses.verifyTitle')}</p>
+                <p className="text-xs text-muted-foreground">
+                  {t('fleetExpenses.verifyHint')}
+                </p>
+              </div>
+            </div>
+            <Switch
+              className="shrink-0"
+              checked={row.verified}
+              onCheckedChange={(checked) =>
+                updateMutation.mutate({
+                  id: row.id,
+                  version: row.version,
+                  values: { verified: checked },
+                })
+              }
+            />
+          </CardContent>
+        </Card>
+      )}
+
       <form onSubmit={onSubmit} className="space-y-6">
         <Card>
           <CardContent className="grid gap-4 py-6 sm:grid-cols-2">
@@ -231,16 +281,24 @@ export default function FleetExpenseFormPage({ mode }: { mode: 'create' | 'edit'
           </CardContent>
         </Card>
 
-        <div className="flex justify-end gap-2">
-          <Button type="button" variant="outline" onClick={() => navigate('/fleet-expenses')}>
+        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => navigate('/fleet-expenses')}
+            className="w-full sm:w-auto"
+          >
             {t('common.cancel')}
           </Button>
-          <Button type="submit" disabled={saving}>
+          <Button type="submit" disabled={saving} className="w-full sm:w-auto">
             <Save className="h-4 w-4" />
             {saving ? t('common.saving') : t('common.save')}
           </Button>
         </div>
       </form>
+
+      {/* Where the ntfy deep link lands: "tap to add a note or correct it". */}
+      {mode === 'edit' && id && <TransactionNotes transactionId={id} canEdit />}
     </PageShell>
   );
 }

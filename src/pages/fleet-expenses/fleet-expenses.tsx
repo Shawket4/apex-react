@@ -12,6 +12,9 @@ import {
   LayoutGrid,
   List,
   RefreshCw,
+  Inbox,
+  Fuel,
+  HandCoins,
 } from 'lucide-react';
 import {
   Area,
@@ -33,6 +36,8 @@ import { StatCard } from '@/shared/ui/stat-card';
 import { ChartCard } from '@/shared/ui/chart-card';
 import { EmptyState } from '@/shared/ui/empty-state';
 import { Skeleton } from '@/shared/ui/skeleton';
+import { Switch } from '@/shared/ui/switch';
+import { Label } from '@/shared/ui/label';
 import { DateRangePicker } from '@/shared/ui/date-range-picker';
 import { ConfirmDialog } from '@/shared/ui/confirm-dialog';
 import { RankedList } from '@/shared/ui/ranked-list';
@@ -41,6 +46,7 @@ import { cn } from '@/shared/lib/cn';
 import { formatCurrency, firstDayOfMonth, localDateISO } from '@/shared/lib/format';
 import { formatCompactCurrency } from '@/shared/lib/format-number';
 import { useDebounce } from '@/shared/hooks/use-debounce';
+import { useReviewQueue } from '@/entities/raw-message/queries';
 import { usePermissions } from '@/shared/hooks/use-permissions';
 
 import {
@@ -108,6 +114,13 @@ export default function FleetExpensesPage() {
   const [source, setSource] = React.useState(() => searchParams.get('source') ?? ALL);
   const [search, setSearch] = React.useState(() => searchParams.get('q') ?? '');
   const [grouped, setGrouped] = React.useState(true);
+  // Default on, matching the legacy costs view which unioned all three sources.
+  const [includeFuel, setIncludeFuel] = React.useState(
+    () => searchParams.get('include_fuel') !== 'false',
+  );
+  const [includeLoans, setIncludeLoans] = React.useState(
+    () => searchParams.get('include_loans') !== 'false',
+  );
 
   const debouncedSearch = useDebounce(search, 250);
 
@@ -125,8 +138,13 @@ export default function FleetExpensesPage() {
       payment_method: paymentMethod === ALL ? undefined : paymentMethod,
       source: source === ALL ? undefined : source,
       q: debouncedSearch || undefined,
+      include_fuel: includeFuel ? undefined : 'false',
+      include_loans: includeLoans ? undefined : 'false',
     }),
-    [from, to, category, company, paymentMethod, source, debouncedSearch],
+    [
+      from, to, category, company, paymentMethod, source, debouncedSearch,
+      includeFuel, includeLoans,
+    ],
   );
 
   // Keep the URL shareable — a filtered view can be sent to someone else.
@@ -139,12 +157,18 @@ export default function FleetExpensesPage() {
     if (paymentMethod !== ALL) next.set('payment_method', paymentMethod);
     if (source !== ALL) next.set('source', source);
     if (debouncedSearch) next.set('q', debouncedSearch);
+    if (!includeFuel) next.set('include_fuel', 'false');
+    if (!includeLoans) next.set('include_loans', 'false');
     setSearchParams(next, { replace: true });
-  }, [from, to, category, company, paymentMethod, source, debouncedSearch, setSearchParams]);
+  }, [
+    from, to, category, company, paymentMethod, source, debouncedSearch,
+    includeFuel, includeLoans, setSearchParams,
+  ]);
 
   const rowsQuery = useTransactions(filters);
   const statsQuery = useTransactionStatistics(filters);
   const deleteMutation = useDeleteTransaction();
+  const reviewQueue = useReviewQueue();
 
   const [pendingDelete, setPendingDelete] = React.useState<Transaction | null>(null);
 
@@ -201,17 +225,30 @@ export default function FleetExpensesPage() {
             <Download className="h-4 w-4" />
             <span className="hidden sm:inline">{t('common.export')}</span>
           </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate('/fleet-expenses/review')}
+          >
+            <Inbox className="h-4 w-4" />
+            <span className="hidden sm:inline">{t('review.title')}</span>
+            {reviewQueue.data?.length ? (
+              <span className="ms-1 rounded-full bg-amber-500/20 px-1.5 text-xs text-amber-600 dark:text-amber-400">
+                {reviewQueue.data.length}
+              </span>
+            ) : null}
+          </Button>
           {canManageExpenses && (
             <Button size="sm" onClick={() => navigate('/fleet-expenses/new')}>
               <Plus className="h-4 w-4" />
-              {t('fleetExpenses.addExpense')}
+              <span className="hidden sm:inline">{t('fleetExpenses.addExpense')}</span>
             </Button>
           )}
         </div>
       }
     >
       {/* ── Stats ─────────────────────────────────────────────────────────── */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <StatCard
           label={t('fleetExpenses.stats.total')}
           value={{
@@ -257,7 +294,8 @@ export default function FleetExpensesPage() {
       </div>
 
       {/* ── Filters ───────────────────────────────────────────────────────── */}
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="space-y-3">
+        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
         <DateRangePicker
           from={from}
           to={to}
@@ -312,9 +350,31 @@ export default function FleetExpensesPage() {
           size="icon"
           onClick={() => setGrouped((g) => !g)}
           aria-label={t('fleetExpenses.toggleGrouping')}
+          className="shrink-0"
         >
           {grouped ? <LayoutGrid className="h-4 w-4" /> : <List className="h-4 w-4" />}
         </Button>
+        </div>
+
+        {/* Source toggles, matching the legacy include_fuel / include_loans
+            flags. Kept visually distinct from the filters above because they
+            change WHICH LEDGERS are summed, not just which rows are shown. */}
+        <div className="flex flex-wrap items-center gap-4 rounded-lg border bg-muted/30 px-3 py-2">
+          <div className="flex items-center gap-2">
+            <Fuel className="h-4 w-4 text-amber-500" />
+            <Label htmlFor="include-fuel" className="cursor-pointer text-sm">
+              {t('fleetExpenses.includeFuel')}
+            </Label>
+            <Switch id="include-fuel" checked={includeFuel} onCheckedChange={setIncludeFuel} />
+          </div>
+          <div className="flex items-center gap-2">
+            <HandCoins className="h-4 w-4 text-sky-500" />
+            <Label htmlFor="include-loans" className="cursor-pointer text-sm">
+              {t('fleetExpenses.includeLoans')}
+            </Label>
+            <Switch id="include-loans" checked={includeLoans} onCheckedChange={setIncludeLoans} />
+          </div>
+        </div>
       </div>
 
       {/* ── Charts ────────────────────────────────────────────────────────── */}
@@ -387,7 +447,7 @@ export default function FleetExpensesPage() {
 
       {/* ── Breakdowns ────────────────────────────────────────────────────── */}
       {!isLoading && stats && rows.length > 0 && (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <BreakdownCard
             title={t('fleetExpenses.charts.byCar')}
             items={stats.by_car}
