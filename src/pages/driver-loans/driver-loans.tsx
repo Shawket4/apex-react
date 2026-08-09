@@ -74,10 +74,24 @@ export default function DriverLoansPage() {
   const canManage = atLeast(PERMISSION_LEVELS.MANAGER);
 
   const { data: driver } = useDriver(driverId);
-  const { data: loans = [], isLoading } = useDriverLoans(driverId);
+  // Advances, loans and salary portions all subtract the same amount, so a
+  // single total hides what the money actually was. Splitting them here is the
+  // whole point of the kind column.
+  const [kindFilter, setKindFilter] = React.useState<'all' | 'advance' | 'loan' | 'salary'>('all');
+  const { data: allLoans = [], isLoading } = useDriverLoans(driverId);
+  const loans = React.useMemo(
+    () => (kindFilter === 'all' ? allLoans : allLoans.filter((l) => l.kind === kindFilter)),
+    [allLoans, kindFilter],
+  );
+  const kindCounts = React.useMemo(() => {
+    const c = { all: allLoans.length, advance: 0, loan: 0, salary: 0 };
+    for (const l of allLoans) c[l.kind] = (c[l.kind] ?? 0) + 1;
+    return c;
+  }, [allLoans]);
   const deleteMutation = useDeleteDriverLoan(driverId ?? 0);
 
   const [deleteTarget, setDeleteTarget] = React.useState<DriverLoan | null>(null);
+
 
   const stats = React.useMemo(() => computeStats(loans), [loans]);
   const grouped = React.useMemo(() => groupByYearMonth(loans), [loans]);
@@ -112,6 +126,22 @@ export default function DriverLoansPage() {
         </>
       }
     >
+      {/* Split by kind. Rendered even when a kind is empty so the categories
+          themselves are discoverable rather than appearing only once used. */}
+      <div className="flex flex-wrap gap-2">
+        {(['all', 'advance', 'loan', 'salary'] as const).map((k) => (
+          <Button
+            key={k}
+            size="sm"
+            variant={kindFilter === k ? 'default' : 'outline'}
+            onClick={() => setKindFilter(k)}
+          >
+            {t(`driverLoans.kinds.${k}`)}
+            <span className="ms-1.5 text-xs opacity-70">{kindCounts[k] ?? 0}</span>
+          </Button>
+        ))}
+      </div>
+
       {/* Stats */}
       {loans.length > 0 && (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
