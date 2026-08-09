@@ -76,7 +76,6 @@
     "cars": "Cars",
     "tires": "Tires",
     "drivers": "Drivers",
-    "payroll": "Payroll",
     "vendors": "Vendors",
     "fleetExpenses": "Fleet Expenses",
     "users": "Users",
@@ -1403,17 +1402,6 @@
     "verifyHint": "Confirms the amount and details match the bank message.",
     "includeFuel": "Fuel events",
     "includeLoans": "Driver loans",
-    "notes": {
-      "title": "Notes",
-      "add": "Add note",
-      "placeholder": "Add context — what was this for?",
-      "empty": "No notes yet.",
-      "added": "Note added",
-      "updated": "Note updated",
-      "deleted": "Note deleted",
-      "failed": "Could not save the note",
-      "unknownAuthor": "Unknown"
-    },
     "party": {
       "label": "Person",
       "placeholder": "Select a driver or employee",

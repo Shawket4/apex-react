@@ -47,21 +47,7 @@ export const rawMessagesSchema = z.array(rawMessageSchema);
 /** What a human decided a misclassified message actually is. */
 export type ReclassifyAs = 'transaction' | 'noise';
 
-/* -------------------------------------------------------------------------- */
-/* Notes — the "complete the message" half of the workflow                     */
-/* -------------------------------------------------------------------------- */
 
-export const noteSchema = z.object({
-  id: z.number(),
-  transaction_id: z.number(),
-  body: z.string(),
-  author: z.string().nullable().optional(),
-  created_at: z.string(),
-  updated_at: z.string(),
-});
-
-export type Note = z.infer<typeof noteSchema>;
-export const notesSchema = z.array(noteSchema);
 
 /* -------------------------------------------------------------------------- */
 /* Tags                                                                        */

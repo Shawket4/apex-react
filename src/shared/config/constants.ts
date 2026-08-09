@@ -48,6 +48,7 @@ export const QUERY_KEYS = {
   tags: ['tags'] as const,
   categories: ['categories'] as const,
   parties: ['parties'] as const,
+  vehicles: ['vehicles'] as const,
 } as const;
 
 export const FUEL_EFFICIENCY = {

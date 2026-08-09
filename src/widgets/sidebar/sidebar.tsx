@@ -10,7 +10,6 @@ import {
   Car,
   CircleDot,
   Users,
-  Wallet,
   Building2,
   Receipt,
   ShieldCheck,
@@ -81,12 +80,6 @@ export const NAV_SECTIONS: NavSection[] = [
     titleKey: 'nav.personnel',
     items: [
       { to: '/drivers', labelKey: 'nav.drivers', icon: Users },
-      {
-        to: '/payroll',
-        labelKey: 'nav.payroll',
-        icon: Wallet,
-        minPermission: PERMISSION_LEVELS.MANAGER,
-      },
     ],
   },
   {

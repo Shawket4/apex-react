@@ -62,7 +62,8 @@ export function useTransactionHistory(id: number | undefined) {
 export function useCreateTransaction() {
   const { t } = useTranslation();
   return useMutation({
-    mutationFn: (values: ExpenseFormValues) => createTransaction(values),
+    mutationFn: (values: ExpenseFormValues & { car_id?: number | null }) =>
+      createTransaction(values),
     onSuccess: () => {
       invalidateAll();
       toast.success(t('fleetExpenses.recordedSuccessfully'));
@@ -88,6 +89,7 @@ export function useUpdateTransaction() {
         verified?: boolean;
         driver_id?: number | null;
         employee_id?: number | null;
+        car_id?: number | null;
       };
     }) => updateTransaction(id, version, values),
     onSuccess: () => {

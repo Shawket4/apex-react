@@ -13,13 +13,13 @@ import { Textarea } from '@/shared/ui/textarea';
 import { Card, CardContent } from '@/shared/ui/card';
 import { Switch } from '@/shared/ui/switch';
 import { PartyPicker } from '@/widgets/fleet-expenses-table/party-picker';
+import { useVehicles } from '@/entities/transaction/vehicles';
 import {
   useCategories,
   requiresParty,
   posts,
   type Category,
 } from '@/entities/transaction/categories';
-import { TransactionNotes } from '@/widgets/fleet-expenses-table/transaction-notes';
 import { Skeleton } from '@/shared/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select';
 import { formatCurrency, fmtDate, toDateOnly } from '@/shared/lib/format';
@@ -53,6 +53,7 @@ export default function FleetExpenseFormPage({ mode }: { mode: 'create' | 'edit'
 
   const existing = useTransaction(mode === 'edit' ? id : undefined);
   const categories = useCategories();
+  const vehicles = useVehicles();
 
   // Party lives outside react-hook-form: it is two ids with a mutual-exclusion
   // rule, and modelling that as form fields buys nothing.
@@ -65,6 +66,8 @@ export default function FleetExpenseFormPage({ mode }: { mode: 'create' | 'edit'
   // watch() after reset() proved unreliable -- the category of every edited row
   // silently rendered as unset. Explicit state is one less thing to reason about.
   const [category, setCategory] = React.useState('');
+  // Vehicle is stored by id; the plate shown is derived from it.
+  const [carId, setCarId] = React.useState<number | null>(null);
   const createMutation = useCreateTransaction();
   const updateMutation = useUpdateTransaction();
 
@@ -104,6 +107,7 @@ export default function FleetExpenseFormPage({ mode }: { mode: 'create' | 'edit'
       counterparty: row.counterparty ?? '',
     });
     setCategory(row.category ?? '');
+    setCarId(row.car_id ?? null);
     setParty({
       driver_id: row.driver_id ?? null,
       employee_id: row.employee_id ?? null,
@@ -112,7 +116,7 @@ export default function FleetExpenseFormPage({ mode }: { mode: 'create' | 'edit'
 
   const onSubmit = form.handleSubmit((values) => {
     if (mode === 'create') {
-      createMutation.mutate({ ...values, category }, {
+      createMutation.mutate({ ...values, category, car_id: carId }, {
         onSuccess: () => navigate('/fleet-expenses'),
       });
       return;
@@ -129,6 +133,7 @@ export default function FleetExpenseFormPage({ mode }: { mode: 'create' | 'edit'
         values: {
           ...values,
           category,
+          car_id: carId,
           driver_id: party.driver_id,
           employee_id: party.employee_id,
         },
@@ -329,11 +334,20 @@ export default function FleetExpenseFormPage({ mode }: { mode: 'create' | 'edit'
               />
             </Field>
 
-            <Field
-              label={t('fleetExpenses.fields.car')}
-              error={form.formState.errors.car_no_plate}
-            >
-              <Input {...form.register('car_no_plate')} placeholder="ف ج م 8567" />
+            <Field label={t('fleetExpenses.fields.car')}>
+              {vehicles.isLoading ? (
+                <Skeleton className="h-10 w-full" />
+              ) : (
+                <ControlledSelect
+                  value={carId == null ? '' : String(carId)}
+                  onChange={(v) => setCarId(v === '' ? null : Number(v))}
+                  options={(vehicles.data ?? []).map((v) => String(v.id))}
+                  labels={Object.fromEntries(
+                    (vehicles.data ?? []).map((v) => [String(v.id), v.plate]),
+                  )}
+                  placeholder={t('fleetExpenses.fields.car')}
+                />
+              )}
             </Field>
 
             <Field label={t('fleetExpenses.fields.paidBy')} error={form.formState.errors.paid_by}>
@@ -373,9 +387,6 @@ export default function FleetExpenseFormPage({ mode }: { mode: 'create' | 'edit'
           </Button>
         </div>
       </form>
-
-      {/* Where the ntfy deep link lands: "tap to add a note or correct it". */}
-      {mode === 'edit' && id && <TransactionNotes transactionId={id} canEdit />}
     </PageShell>
   );
 }

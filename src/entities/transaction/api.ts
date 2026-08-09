@@ -83,7 +83,9 @@ export async function getTransactionStatistics(
 }
 
 /* ─── Create ─── */
-export async function createTransaction(values: ExpenseFormValues): Promise<Transaction> {
+export async function createTransaction(
+  values: ExpenseFormValues & { car_id?: number | null },
+): Promise<Transaction> {
   const response = await apiClientRust.post(BASE, {
     ...values,
     // Amount goes back as a string: the backend parses it into a Decimal, and
@@ -112,6 +114,7 @@ export async function updateTransaction(
     /** null clears the party; undefined leaves it alone. */
     driver_id?: number | null;
     employee_id?: number | null;
+    car_id?: number | null;
   },
 ): Promise<Transaction> {
   const payload: Record<string, unknown> = { ...values };

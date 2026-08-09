@@ -77,7 +77,6 @@ const ZonesPage = React.lazy(() => import('@/pages/zones/zones'));
 const placeholderLoader = () => import('@/pages/placeholder/placeholder');
 const TrucksPage = lazyNamed(placeholderLoader, 'TrucksPage');
 const TiresPage = lazyNamed(() => import('@/pages/tires/tires'), 'TiresPage');
-const PayrollPage = lazyNamed(placeholderLoader, 'PayrollPage');
 const VendorsPage = lazyNamed(placeholderLoader, 'VendorsPage');
 const LogsPage = lazyNamed(placeholderLoader, 'LogsPage');
 const SettingsPage = React.lazy(() => import('@/pages/settings/settings'));
@@ -221,14 +220,6 @@ export const router = createBrowserRouter([
             element: (
               <ProtectedRoute minPermissionLevel={PERMISSION_LEVELS.MANAGER}>
                 <AddDriverLoanPage />
-              </ProtectedRoute>
-            ),
-          },
-          {
-            path: 'payroll',
-            element: (
-              <ProtectedRoute minPermissionLevel={PERMISSION_LEVELS.MANAGER}>
-                <PayrollPage />
               </ProtectedRoute>
             ),
           },

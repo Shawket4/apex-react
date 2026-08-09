@@ -1,16 +1,12 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import {
-  addNote,
-  deleteNote,
   getIgnored,
-  getNotes,
   getRawMessages,
   getReviewQueue,
   getTags,
   reclassify,
   reparseOne,
-  updateNote,
 } from './api';
 import type { ReclassifyAs } from './schemas';
 import { QUERY_KEYS } from '@/shared/config/constants';
@@ -77,58 +73,6 @@ export function useReparseOne() {
   });
 }
 
-/* ─── Notes ─── */
-export function useNotes(transactionId: number | undefined) {
-  return useQuery({
-    queryKey: transactionId
-      ? [...QUERY_KEYS.transaction(transactionId), 'notes']
-      : ['transactions', 'none', 'notes'],
-    queryFn: () => getNotes(transactionId!),
-    enabled: !!transactionId,
-  });
-}
-
-function invalidateNotes(transactionId: number): void {
-  void queryClient.invalidateQueries({
-    queryKey: [...QUERY_KEYS.transaction(transactionId), 'notes'],
-  });
-}
-
-export function useAddNote(transactionId: number) {
-  const { t } = useTranslation();
-  return useMutation({
-    mutationFn: (body: string) => addNote(transactionId, body),
-    onSuccess: () => {
-      invalidateNotes(transactionId);
-      toast.success(t('fleetExpenses.notes.added'));
-    },
-    onError: (e) => toast.error(extractErrorMessage(e, t('fleetExpenses.notes.failed'))),
-  });
-}
-
-export function useUpdateNote(transactionId: number) {
-  const { t } = useTranslation();
-  return useMutation({
-    mutationFn: ({ id, body }: { id: number; body: string }) => updateNote(id, body),
-    onSuccess: () => {
-      invalidateNotes(transactionId);
-      toast.success(t('fleetExpenses.notes.updated'));
-    },
-    onError: (e) => toast.error(extractErrorMessage(e, t('fleetExpenses.notes.failed'))),
-  });
-}
-
-export function useDeleteNote(transactionId: number) {
-  const { t } = useTranslation();
-  return useMutation({
-    mutationFn: (id: number) => deleteNote(id),
-    onSuccess: () => {
-      invalidateNotes(transactionId);
-      toast.success(t('fleetExpenses.notes.deleted'));
-    },
-    onError: (e) => toast.error(extractErrorMessage(e, t('fleetExpenses.notes.failed'))),
-  });
-}
 
 /* ─── Tags ─── */
 export function useTags() {

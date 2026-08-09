@@ -1,10 +1,7 @@
 import { apiClientRust } from '@/shared/api/client';
 import {
-  notesSchema,
-  noteSchema,
   rawMessagesSchema,
   tagsSchema,
-  type Note,
   type RawMessage,
   type ReclassifyAs,
   type Tag,
@@ -51,28 +48,6 @@ export async function reclassify(id: number, as_: ReclassifyAs): Promise<void> {
 
 export async function reparseOne(id: number): Promise<void> {
   await apiClientRust.post(`/api/v1/raw/${id}/reparse`);
-}
-
-/* -------------------------------------------------------------------------- */
-/* Notes                                                                       */
-/* -------------------------------------------------------------------------- */
-
-export async function getNotes(transactionId: number): Promise<Note[]> {
-  const res = await apiClientRust.get(`/api/v1/transactions/${transactionId}/notes`);
-  return notesSchema.parse(res.data ?? []);
-}
-
-export async function addNote(transactionId: number, body: string): Promise<Note> {
-  const res = await apiClientRust.post(`/api/v1/transactions/${transactionId}/notes`, { body });
-  return noteSchema.parse(res.data);
-}
-
-export async function updateNote(id: number, body: string): Promise<void> {
-  await apiClientRust.patch(`/api/v1/notes/${id}`, { body });
-}
-
-export async function deleteNote(id: number): Promise<void> {
-  await apiClientRust.delete(`/api/v1/notes/${id}`);
 }
 
 /* -------------------------------------------------------------------------- */
