@@ -82,6 +82,9 @@ export const transactionSchema = z.object({
    * offer an edit that the next sync would silently discard.
    */
   editable: z.boolean().optional().default(true),
+  /** Who the transaction is about. Ids, never names — see PartyPicker. */
+  driver_id: z.number().nullable().optional(),
+  employee_id: z.number().nullable().optional(),
   parsed: parsedViewSchema.optional().default({}),
 
   created_by: z.string().nullable().optional(),

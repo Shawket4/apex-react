@@ -82,6 +82,26 @@ const CHART_COLORS = [
 
 const ALL = '__all__';
 
+/**
+ * Recharts styles its tooltip inline and defaults to a white surface with dark
+ * text. In dark mode that made the label row (the date) black-on-dark and
+ * unreadable. Driving it from the theme's CSS variables makes it correct in both
+ * themes instead of correct in one and broken in the other.
+ */
+const TOOLTIP_STYLES = {
+  contentStyle: {
+    fontSize: 12,
+    borderRadius: 8,
+    background: 'hsl(var(--popover))',
+    border: '1px solid hsl(var(--border))',
+    color: 'hsl(var(--popover-foreground))',
+    boxShadow: '0 4px 12px rgb(0 0 0 / 0.15)',
+  },
+  labelStyle: { color: 'hsl(var(--popover-foreground))', fontWeight: 600 },
+  itemStyle: { color: 'hsl(var(--popover-foreground))' },
+  cursor: { fill: 'hsl(var(--muted))', fillOpacity: 0.3 },
+} as const;
+
 function monthStartISO(): string {
   const d = firstDayOfMonth();
   return localDateISO(d.getFullYear(), d.getMonth(), d.getDate());
@@ -407,7 +427,7 @@ export default function FleetExpensesPage() {
                 <RechartsTooltip
                   formatter={(v: number) => formatCurrency(v)}
                   labelFormatter={(l: string) => l}
-                  contentStyle={{ fontSize: 12, borderRadius: 8 }}
+                  {...TOOLTIP_STYLES}
                 />
                 <Area
                   type="monotone"
@@ -437,7 +457,7 @@ export default function FleetExpensesPage() {
                 </Pie>
                 <RechartsTooltip
                   formatter={(v: number) => formatCurrency(v)}
-                  contentStyle={{ fontSize: 12, borderRadius: 8 }}
+                  {...TOOLTIP_STYLES}
                 />
               </PieChart>
             </ResponsiveContainer>

@@ -1413,7 +1413,21 @@
       "deleted": "Note deleted",
       "failed": "Could not save the note",
       "unknownAuthor": "Unknown"
-    }
+    },
+    "party": {
+      "label": "Person",
+      "placeholder": "Select a driver or employee",
+      "search": "Search or type a new name...",
+      "noMatch": "No match",
+      "create": "Add \"{{name}}\" as a new employee",
+      "drivers": "Drivers",
+      "employees": "Employees",
+      "employeeCreated": "Employee added",
+      "createFailed": "Could not add the employee",
+      "willPost": "Verifying this will register it as a loan for that person.",
+      "requiredBeforeVerify": "Select a person before verifying — this category registers a loan."
+    },
+    "verifyPostsHint": "Confirms the details and registers this as a loan against the selected person."
   },
   "review": {
     "title": "Review queue",

@@ -12,6 +12,13 @@ import { Label } from '@/shared/ui/label';
 import { Textarea } from '@/shared/ui/textarea';
 import { Card, CardContent } from '@/shared/ui/card';
 import { Switch } from '@/shared/ui/switch';
+import { PartyPicker } from '@/widgets/fleet-expenses-table/party-picker';
+import {
+  useCategories,
+  requiresParty,
+  posts,
+  type Category,
+} from '@/entities/transaction/categories';
 import { TransactionNotes } from '@/widgets/fleet-expenses-table/transaction-notes';
 import { Skeleton } from '@/shared/ui/skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select';
@@ -25,7 +32,6 @@ import {
 } from '@/entities/transaction/queries';
 import {
   COMPANIES,
-  EXPENSE_TYPES,
   PAYMENT_METHODS,
   expenseFormSchema,
   type ExpenseFormValues,
@@ -46,6 +52,19 @@ export default function FleetExpenseFormPage({ mode }: { mode: 'create' | 'edit'
   const id = params.id ? Number(params.id) : undefined;
 
   const existing = useTransaction(mode === 'edit' ? id : undefined);
+  const categories = useCategories();
+
+  // Party lives outside react-hook-form: it is two ids with a mutual-exclusion
+  // rule, and modelling that as form fields buys nothing.
+  const [party, setParty] = React.useState<{ driver_id: number | null; employee_id: number | null }>(
+    { driver_id: null, employee_id: null },
+  );
+
+  // Category and party are held outside react-hook-form. Both are select-driven
+  // values that were never registered as inputs, and reading them back through
+  // watch() after reset() proved unreliable -- the category of every edited row
+  // silently rendered as unset. Explicit state is one less thing to reason about.
+  const [category, setCategory] = React.useState('');
   const createMutation = useCreateTransaction();
   const updateMutation = useUpdateTransaction();
 
@@ -84,11 +103,16 @@ export default function FleetExpenseFormPage({ mode }: { mode: 'create' | 'edit'
       paid_by: row.paid_by ?? '',
       counterparty: row.counterparty ?? '',
     });
+    setCategory(row.category ?? '');
+    setParty({
+      driver_id: row.driver_id ?? null,
+      employee_id: row.employee_id ?? null,
+    });
   }, [existing.data, mode, form]);
 
   const onSubmit = form.handleSubmit((values) => {
     if (mode === 'create') {
-      createMutation.mutate(values, {
+      createMutation.mutate({ ...values, category }, {
         onSuccess: () => navigate('/fleet-expenses'),
       });
       return;
@@ -99,13 +123,30 @@ export default function FleetExpenseFormPage({ mode }: { mode: 'create' | 'edit'
       // The version is the optimistic-concurrency token. Sending the one we
       // loaded means a concurrent edit is rejected with 409 rather than
       // silently overwritten.
-      { id, version: existing.data.version, values },
+      {
+        id,
+        version: existing.data.version,
+        values: {
+          ...values,
+          category,
+          driver_id: party.driver_id,
+          employee_id: party.employee_id,
+        },
+      },
       { onSuccess: () => navigate('/fleet-expenses') },
     );
   });
 
   const saving = createMutation.isPending || updateMutation.isPending;
   const row = existing.data;
+
+  const selectedCategory: Category | undefined = React.useMemo(
+    () => categories.data?.find((c) => c.key === category),
+    [categories.data, category],
+  );
+  const needsParty = requiresParty(selectedCategory);
+  const willPost = posts(selectedCategory);
+  const partyMissing = needsParty && !party.driver_id && !party.employee_id;
 
   if (mode === 'edit' && existing.isLoading) {
     return (
@@ -183,12 +224,17 @@ export default function FleetExpenseFormPage({ mode }: { mode: 'create' | 'edit'
               <div className="min-w-0">
                 <p className="text-sm font-medium">{t('fleetExpenses.verifyTitle')}</p>
                 <p className="text-xs text-muted-foreground">
-                  {t('fleetExpenses.verifyHint')}
+                  {partyMissing
+                    ? t('fleetExpenses.party.requiredBeforeVerify')
+                    : willPost
+                      ? t('fleetExpenses.verifyPostsHint')
+                      : t('fleetExpenses.verifyHint')}
                 </p>
               </div>
             </div>
             <Switch
               className="shrink-0"
+              disabled={partyMissing}
               checked={row.verified}
               onCheckedChange={(checked) =>
                 updateMutation.mutate({
@@ -223,13 +269,44 @@ export default function FleetExpenseFormPage({ mode }: { mode: 'create' | 'edit'
               label={t('fleetExpenses.fields.expenseType')}
               error={form.formState.errors.category}
             >
-              <ControlledSelect
-                value={form.watch('category') ?? ''}
-                onChange={(v) => form.setValue('category', v, { shouldDirty: true })}
-                options={EXPENSE_TYPES}
-                placeholder={t('fleetExpenses.fields.expenseType')}
-              />
+              {/*
+                Rendered only once the options exist. A Radix Select whose value
+                is set by form.reset() before its items have loaded has nothing
+                to match against and falls back to the unset option, which
+                silently blanked the category of every row being edited.
+              */}
+              {categories.isLoading ? (
+                <Skeleton className="h-10 w-full" />
+              ) : (
+                <ControlledSelect
+                  value={category}
+                  onChange={setCategory}
+                  options={(categories.data ?? []).map((c) => c.key)}
+                  labels={Object.fromEntries(
+                    (categories.data ?? []).map((c) => [c.key, c.label]),
+                  )}
+                  placeholder={t('fleetExpenses.fields.expenseType')}
+                />
+              )}
             </Field>
+
+            {/* Rendered from the category's own requirements, so adding a
+                category that needs a person is a row in the database rather
+                than a change here. */}
+            {needsParty && (
+              <Field label={t('fleetExpenses.party.label')}>
+                <PartyPicker
+                  value={party}
+                  onChange={setParty}
+                  required={(selectedCategory?.required_party ?? 'either') as never}
+                />
+                {willPost && (
+                  <p className="text-xs text-muted-foreground">
+                    {t('fleetExpenses.party.willPost')}
+                  </p>
+                )}
+              </Field>
+            )}
 
             <Field
               label={t('fleetExpenses.fields.paymentMethod')}
@@ -334,26 +411,49 @@ function ControlledSelect({
   onChange,
   options,
   placeholder,
+  labels,
 }: {
   value: string;
   onChange: (v: string) => void;
   options: readonly string[];
   placeholder: string;
+  /** Display text per option value. Falls back to the value itself. */
+  labels?: Record<string, string>;
 }) {
   const { t } = useTranslation();
   return (
     <Select
       value={value === '' ? UNSET : value}
-      onValueChange={(v) => onChange(v === UNSET ? '' : v)}
+      onValueChange={(v) => {
+        // Radix emits an empty string when its controlled value matches none of
+        // its MOUNTED items -- and items only mount once the menu is opened. So
+        // a value restored from the server triggers a spurious "" before the
+        // user has touched anything, which previously wiped it.
+        //
+        // An empty string is never a real selection here: the unset choice is
+        // the UNSET sentinel. Ignoring "" is therefore safe and is what keeps a
+        // restored category from being silently cleared.
+        if (v === '') return;
+        onChange(v === UNSET ? '' : v);
+      }}
     >
       <SelectTrigger>
-        <SelectValue placeholder={placeholder} />
+        {/*
+          The display text is rendered explicitly rather than left to Radix.
+          Radix resolves a SelectValue from its registered SelectItems, and those
+          only mount when the dropdown is opened -- so a value restored from the
+          server before the user ever opens the menu had nothing to resolve
+          against and the trigger showed the unset label instead.
+        */}
+        <SelectValue placeholder={placeholder}>
+          {value === '' ? t('common.none') : (labels?.[value] ?? value)}
+        </SelectValue>
       </SelectTrigger>
       <SelectContent>
         <SelectItem value={UNSET}>{t('common.none')}</SelectItem>
         {options.map((option) => (
           <SelectItem key={option} value={option}>
-            {option}
+            {labels?.[option] ?? option}
           </SelectItem>
         ))}
       </SelectContent>

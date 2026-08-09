@@ -84,7 +84,11 @@ export function useUpdateTransaction() {
     }: {
       id: number;
       version: number;
-      values: Partial<ExpenseFormValues> & { verified?: boolean };
+      values: Partial<ExpenseFormValues> & {
+        verified?: boolean;
+        driver_id?: number | null;
+        employee_id?: number | null;
+      };
     }) => updateTransaction(id, version, values),
     onSuccess: () => {
       invalidateAll();

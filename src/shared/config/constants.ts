@@ -46,6 +46,8 @@ export const QUERY_KEYS = {
   /** Raw WhatsApp messages: review queue, ignored audit, reclassification. */
   rawMessages: ['raw-messages'] as const,
   tags: ['tags'] as const,
+  categories: ['categories'] as const,
+  parties: ['parties'] as const,
 } as const;
 
 export const FUEL_EFFICIENCY = {

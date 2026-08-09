@@ -107,7 +107,12 @@ export async function createTransaction(values: ExpenseFormValues): Promise<Tran
 export async function updateTransaction(
   id: number,
   version: number,
-  values: Partial<ExpenseFormValues> & { verified?: boolean },
+  values: Partial<ExpenseFormValues> & {
+    verified?: boolean;
+    /** null clears the party; undefined leaves it alone. */
+    driver_id?: number | null;
+    employee_id?: number | null;
+  },
 ): Promise<Transaction> {
   const payload: Record<string, unknown> = { ...values };
   if (values.amount !== undefined) payload.amount = String(values.amount);
