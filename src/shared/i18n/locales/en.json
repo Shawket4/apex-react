@@ -59,7 +59,8 @@
       "km": "KM"
     },
     "refresh": "Refresh",
-    "none": "None"
+    "none": "None",
+    "loadMore": "Load more"
   },
   "nav": {
     "overview": "Overview",
@@ -1417,7 +1418,8 @@
       "createFailed": "Could not add the employee",
       "willPost": "Verifying this will register it as a loan for that person.",
       "postsNow": "This will be registered as a loan for the selected person."
-    }
+    },
+    "showingCount": "Showing {{shown}} of {{total}}"
   },
   "review": {
     "title": "Review queue",

@@ -1,9 +1,9 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import {
+  getTransactions,
   createTransaction,
   deleteTransaction,
-  getAllTransactions,
   getTransaction,
   getTransactionHistory,
   getTransactionStatistics,
@@ -20,13 +20,31 @@ function invalidateAll(): void {
   void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.transactions });
 }
 
-/* ─── List ─── */
-export function useTransactions(filters: TransactionFilters) {
-  return useQuery({
+/* ─── List (paged) ─── */
+
+/** Rows fetched per request. The API caps a page at 200. */
+const PAGE_SIZE = 100;
+
+/**
+ * Cursor-paged list.
+ *
+ * Replaces an eager walk that pulled up to 25 pages (5,000 rows) on every
+ * filter change and rendered all of them. That was slow on wide date ranges
+ * and, worse, silently truncated: past 5,000 rows the table simply stopped,
+ * with nothing to say so.
+ *
+ * The charts and breakdowns are unaffected because they come from
+ * /transactions/statistics, which aggregates server-side over the whole
+ * filtered set. So totals stay correct no matter how many pages are loaded --
+ * only the visible rows are incremental.
+ */
+export function useTransactionsPaged(filters: TransactionFilters) {
+  return useInfiniteQuery({
     queryKey: QUERY_KEYS.transactionList(filters),
-    queryFn: () => getAllTransactions(filters),
-    // The expenses view re-queries on every filter change; a short window keeps
-    // date-range toggling responsive without serving visibly stale money.
+    queryFn: ({ pageParam }) =>
+      getTransactions(filters, pageParam as string | undefined, PAGE_SIZE),
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (last) => last.next_cursor ?? undefined,
     staleTime: 30_000,
   });
 }

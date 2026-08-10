@@ -50,7 +50,7 @@ import { useReviewQueue } from '@/entities/raw-message/queries';
 import { usePermissions } from '@/shared/hooks/use-permissions';
 
 import {
-  useTransactions,
+  useTransactionsPaged,
   useTransactionStatistics,
   useDeleteTransaction,
 } from '@/entities/transaction/queries';
@@ -64,6 +64,7 @@ import {
 } from '@/entities/transaction/schemas';
 import { FleetExpensesTable } from '@/widgets/fleet-expenses-table/fleet-expenses-table';
 import { exportFleetExpenses } from '@/widgets/fleet-expenses-table/fleet-expenses-excel';
+import { getAllTransactions } from '@/entities/transaction/api';
 
 /* -------------------------------------------------------------------------- */
 /* Defaults                                                                    */
@@ -185,14 +186,19 @@ export default function FleetExpensesPage() {
     includeFuel, includeLoans, setSearchParams,
   ]);
 
-  const rowsQuery = useTransactions(filters);
+  const rowsQuery = useTransactionsPaged(filters);
   const statsQuery = useTransactionStatistics(filters);
   const deleteMutation = useDeleteTransaction();
   const reviewQueue = useReviewQueue();
 
   const [pendingDelete, setPendingDelete] = React.useState<Transaction | null>(null);
 
-  const rows = rowsQuery.data ?? [];
+  // Flatten the loaded pages. Totals come from the statistics endpoint, so
+  // they describe the whole filtered set regardless of how much is on screen.
+  const rows = React.useMemo(
+    () => rowsQuery.data?.pages.flatMap((p) => p.data) ?? [],
+    [rowsQuery.data],
+  );
   const stats = statsQuery.data;
 
   const dailySeries = React.useMemo(
@@ -213,14 +219,18 @@ export default function FleetExpensesPage() {
 
   const isLoading = rowsQuery.isLoading || statsQuery.isLoading;
 
-  const handleExport = React.useCallback(() => {
+  const handleExport = React.useCallback(async () => {
+    // Export the full filtered set, not just the pages loaded so far -- a
+    // spreadsheet that silently stops at whatever the user happened to scroll
+    // past is worse than no export.
+    const all = await getAllTransactions(filters);
     void exportFleetExpenses({
-      rows,
+      rows: all,
       statistics: stats,
       t,
       meta: `${from ?? ''} → ${to ?? ''}`,
     });
-  }, [rows, stats, t, from, to]);
+  }, [filters, stats, t, from, to]);
 
   return (
     <PageShell
@@ -509,13 +519,37 @@ export default function FleetExpensesPage() {
           }
         />
       ) : (
-        <FleetExpensesTable
-          rows={rows}
-          grouped={grouped}
-          canEdit={canManageExpenses}
-          onEdit={(row) => navigate(`/fleet-expenses/${row.id}/edit`)}
-          onDelete={setPendingDelete}
-        />
+        <>
+          <FleetExpensesTable
+            rows={rows}
+            grouped={grouped}
+            canEdit={canManageExpenses}
+            onEdit={(row) => navigate(`/fleet-expenses/${row.id}/edit`)}
+            onDelete={setPendingDelete}
+          />
+
+          {/* Shows how much of the filtered set is on screen, so a partial view
+              is never mistaken for the whole thing. */}
+          <div className="flex flex-col items-center gap-2 py-2">
+            <p className="text-xs text-muted-foreground">
+              {t('fleetExpenses.showingCount', {
+                shown: rows.length,
+                total: stats?.expense_count ?? rows.length,
+              })}
+            </p>
+            {rowsQuery.hasNextPage && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => void rowsQuery.fetchNextPage()}
+                disabled={rowsQuery.isFetchingNextPage}
+                className="w-full sm:w-auto"
+              >
+                {rowsQuery.isFetchingNextPage ? t('common.loading') : t('common.loadMore')}
+              </Button>
+            )}
+          </div>
+        </>
       )}
 
       <ConfirmDialog
