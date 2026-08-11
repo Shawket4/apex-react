@@ -60,7 +60,9 @@
     },
     "refresh": "Refresh",
     "none": "None",
-    "loadMore": "Load more"
+    "loadMore": "Load more",
+    "yes": "Yes",
+    "no": "No"
   },
   "nav": {
     "overview": "Overview",
@@ -564,7 +566,9 @@
       "failed": "Failed to export trips",
       "watanyaNeedsDates": "Please pick a date range first",
       "watanyaSuccess": "Watanya report downloaded",
-      "watanyaFailed": "Failed to download Watanya report"
+      "watanyaFailed": "Failed to download Watanya report",
+      "summarySheet": "Summary",
+      "totals": "TOTALS"
     },
     "stats": {
       "totalTrips": "Total trips",

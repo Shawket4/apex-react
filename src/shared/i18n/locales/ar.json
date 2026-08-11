@@ -60,7 +60,9 @@
     },
     "refresh": "تحديث",
     "none": "بدون",
-    "loadMore": "تحميل المزيد"
+    "loadMore": "تحميل المزيد",
+    "yes": "نعم",
+    "no": "لا"
   },
   "nav": {
     "overview": "نظرة عامة",
@@ -564,7 +566,9 @@
       "failed": "فشل تصدير الرحلات",
       "watanyaNeedsDates": "يرجى اختيار نطاق تاريخ أولاً",
       "watanyaSuccess": "تم تنزيل تقرير وطنية",
-      "watanyaFailed": "فشل تنزيل تقرير وطنية"
+      "watanyaFailed": "فشل تنزيل تقرير وطنية",
+      "summarySheet": "ملخص",
+      "totals": "الإجمالي"
     },
     "stats": {
       "totalTrips": "إجمالي الرحلات",

@@ -151,10 +151,21 @@ export function useUpdateMultiContainerTrip() {
  * `mutateAsync` rather than living permanently in the cache — the result set
  * can be huge and is only needed at click time.
  */
+/**
+ * Server-side Excel export. Returns the finished workbook.
+ *
+ * Replaces the previous hook, which fetched every row (capped at 10,000) so the
+ * browser could build the file itself.
+ */
 export function useExportTrips() {
   return useMutation({
-    mutationFn: (params: Omit<TripListParams, 'page' | 'limit'>) =>
-      tripApi.listAll(params),
+    mutationFn: ({
+      params,
+      labels,
+    }: {
+      params: Omit<TripListParams, 'page' | 'limit'>;
+      labels: Record<string, string>;
+    }) => tripApi.exportExcel(params, labels),
   });
 }
 

@@ -176,4 +176,47 @@ export const tripApi = {
 
     return { blob, filename };
   },
+
+  /**
+   * Server-rendered trips export.
+   *
+   * The workbook is built in Go and returned as the response body. Two reasons
+   * it is not built here any more: the client had to cap the fetch at 10,000
+   * rows, so a wide filter silently produced a partial spreadsheet; and building
+   * it in the browser meant downloading every row only to write it back out.
+   *
+   * Filters go on the query string so they match the list endpoints exactly.
+   * The translated labels go in the body -- the server has no i18n bundle, and
+   * a second set of English strings there would drift from these.
+   */
+  async exportExcel(
+    params: Omit<TripListParams, 'page' | 'limit'>,
+    labels: Record<string, string>,
+  ): Promise<{ blob: Blob; filename: string }> {
+    const query: Record<string, string> = {};
+    if (params.search) query.search = params.search;
+    if (params.missingData) query.missing_data = params.missingData;
+    if (params.receiptStatus) query.receipt_status = params.receiptStatus;
+    if (params.company) query.company = params.company;
+    if (params.startDate) query.start_date = params.startDate;
+    if (params.endDate) query.end_date = params.endDate;
+
+    const response = await apiClient.post('/api/trips/export', labels, {
+      params: query,
+      responseType: 'blob',
+    });
+
+    const blob = new Blob([response.data as BlobPart], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+
+    let filename = 'trips.xlsx';
+    const disposition = response.headers?.['content-disposition'];
+    if (typeof disposition === 'string') {
+      const match = disposition.match(/filename="?([^";]+)"?/i);
+      if (match?.[1]) filename = match[1];
+    }
+
+    return { blob, filename };
+  },
 };

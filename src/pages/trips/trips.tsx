@@ -58,7 +58,6 @@ import {
   serializeMissing,
   serializeReceiptStatus,
 } from '@/widgets/trips-table/trips-filters';
-import { exportTrips } from '@/widgets/trips-table/trips-excel';
 import { TripReceiptDialog } from '@/widgets/trip-receipt-dialog/trip-receipt-dialog';
 import { TripLocationDialog } from '@/widgets/trip-location-dialog/trip-location-dialog';
 import { TripReceiptBatchDialog } from '@/widgets/trip-receipt-batch-dialog/trip-receipt-batch-dialog';
@@ -313,21 +312,60 @@ export default function TripsPage() {
   const handleExportExcel = async () => {
     setIsExporting(true);
     try {
-      const allTrips = await exportTripsAll.mutateAsync({
-        search: debouncedSearch,
-        company,
-        startDate: from ? toDateOnly(from) : '',
-        endDate: to ? toDateOnly(to) : '',
-        missingData,
-        receiptStatus,
+      // The server renders the workbook; the client only names the columns.
+      // Sending the translated labels keeps both languages working without the
+      // Go side carrying its own copy of the strings.
+      const { blob, filename } = await exportTripsAll.mutateAsync({
+        params: {
+          search: debouncedSearch,
+          company,
+          startDate: from ? toDateOnly(from) : '',
+          endDate: to ? toDateOnly(to) : '',
+          missingData,
+          receiptStatus,
+        },
+        labels: {
+          title: t('trips.title'),
+          subtitle: t('trips.subtitle'),
+          sheet: t('trips.title'),
+          summary: t('trips.export.summarySheet'),
+          receipt_no: t('trips.fields.receiptNo'),
+          date: t('trips.fields.date'),
+          company: t('trips.fields.company'),
+          terminal: t('trips.fields.terminal'),
+          drop_off_point: t('trips.fields.dropOffPoint'),
+          vehicle: t('trips.fields.vehicle'),
+          driver: t('trips.fields.driver'),
+          tank_capacity: t('trips.fields.tankCapacity'),
+          distance: t('trips.fields.distance'),
+          fee: t('trips.fields.fee'),
+          in_garage: t('trips.fields.inGarage'),
+          in_office: t('trips.fields.inOffice'),
+          stamped: t('trips.fields.stamped'),
+          garage_received_by: t('trips.fields.garageReceivedBy'),
+          garage_date: t('trips.fields.garageDate'),
+          office_received_by: t('trips.fields.officeReceivedBy'),
+          office_date: t('trips.fields.officeDate'),
+          total_trips: t('trips.stats.totalTrips'),
+          total_volume: t('trips.stats.totalVolume'),
+          total_distance: t('trips.stats.totalDistance'),
+          total_fees: t('trips.stats.totalFees'),
+          stamped_count: t('trips.stats.stamped'),
+          totals: t('trips.export.totals'),
+          yes: t('common.yes'),
+          no: t('common.no'),
+        },
       });
-      if (allTrips.length === 0) {
-        toast.error(t('trips.export.empty'));
-        return;
-      }
-      await exportTrips({ trips: allTrips, t });
+      saveAs(blob, filename);
     } catch (err) {
-      toast.error(extractErrorMessage(err, t('trips.export.failed')));
+      // A 404 means the filters matched nothing -- say that rather than
+      // reporting a failure, because nothing actually went wrong.
+      const status = (err as { response?: { status?: number } })?.response?.status;
+      if (status === 404) {
+        toast.error(t('trips.export.empty'));
+      } else {
+        toast.error(extractErrorMessage(err, t('trips.export.failed')));
+      }
     } finally {
       setIsExporting(false);
     }
