@@ -94,14 +94,14 @@ export default function FleetExpensesMessagesPage() {
     >
       {/* ── Chips + search ────────────────────────────────────────────────── */}
       <div className="space-y-3">
-        <div className="flex gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none]">
+        <div className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] md:mx-0 md:px-0">
           {MESSAGE_STATUSES.map((s) => (
             <button
               key={s}
               type="button"
               onClick={() => setStatus(s)}
               className={cn(
-                'min-h-8 shrink-0 rounded-full border px-3 py-1 text-xs font-semibold transition-colors',
+                'min-h-11 shrink-0 whitespace-nowrap rounded-full border px-3.5 py-1 text-xs font-semibold transition-colors lg:min-h-8 lg:px-3',
                 status === s
                   ? 'border-foreground bg-foreground text-background'
                   : 'bg-card text-muted-foreground hover:bg-accent',
@@ -115,7 +115,7 @@ export default function FleetExpensesMessagesPage() {
             onClick={() => setIncludeMedia((v) => !v)}
             aria-pressed={includeMedia}
             className={cn(
-              'min-h-8 shrink-0 rounded-full border border-dashed px-3 py-1 text-xs font-semibold transition-colors',
+              'min-h-11 shrink-0 whitespace-nowrap rounded-full border border-dashed px-3.5 py-1 text-xs font-semibold transition-colors lg:min-h-8 lg:px-3',
               includeMedia
                 ? 'border-foreground bg-foreground text-background'
                 : 'bg-card text-muted-foreground hover:bg-accent',
@@ -259,7 +259,7 @@ function MessageCard({
         <div className="mt-2.5">
           <Button
             variant="secondary"
-            className="w-full sm:w-auto"
+            className="min-h-11 w-full sm:min-h-9 sm:w-auto"
             onClick={() =>
               navigate(`/fleet-expenses/new?raw_message_id=${message.id}`, {
                 state: { from: 'messages' },

@@ -37,7 +37,7 @@ const PAGE_SIZE = 100;
  * /transactions/statistics, which aggregates server-side over the whole
  * filtered set, so a partially-loaded list still shows correct numbers.
  */
-export function useTransactionsPaged(filters: TransactionFilters) {
+export function useTransactionsPaged(filters: TransactionFilters, enabled = true) {
   return useInfiniteQuery({
     queryKey: QUERY_KEYS.transactionList(filters),
     queryFn: ({ pageParam }) =>
@@ -45,6 +45,8 @@ export function useTransactionsPaged(filters: TransactionFilters) {
     initialPageParam: undefined as string | undefined,
     getNextPageParam: (last) => last.next_cursor ?? undefined,
     staleTime: 30_000,
+    // The cash-in review list only fetches once its pocket is opened.
+    enabled,
   });
 }
 

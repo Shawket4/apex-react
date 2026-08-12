@@ -97,6 +97,7 @@ export default function AddDriverLoanPage() {
                       <Button
                         key={k}
                         type="button"
+                        className="min-h-11 sm:min-h-9"
                         variant={field.value === k ? 'default' : 'outline'}
                         onClick={() => field.onChange(k)}
                       >
@@ -180,12 +181,22 @@ export default function AddDriverLoanPage() {
             )}
           />
 
-          {/* Actions */}
-          <div className="flex justify-end gap-3 border-t pt-4">
-            <Button type="button" variant="outline" onClick={goBack} disabled={addMutation.isPending}>
+          {/* Actions — full-width and stacked on phones, inline from sm up. */}
+          <div className="flex flex-col-reverse gap-2 border-t pt-4 pb-[env(safe-area-inset-bottom)] sm:flex-row sm:justify-end sm:gap-3">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={goBack}
+              disabled={addMutation.isPending}
+              className="min-h-11 w-full sm:min-h-9 sm:w-auto"
+            >
               {t('common.cancel')}
             </Button>
-            <Button type="submit" disabled={addMutation.isPending}>
+            <Button
+              type="submit"
+              disabled={addMutation.isPending}
+              className="min-h-11 w-full sm:min-h-9 sm:w-auto"
+            >
               {addMutation.isPending ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (

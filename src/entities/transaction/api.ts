@@ -57,7 +57,8 @@ export async function exportTransactions(
   filters: TransactionFilters,
 ): Promise<{ blob: Blob; filename: string }> {
   const response = await apiClientRust.get(`${BASE}/export`, {
-    params: toParams(filters),
+    // The workbook mirrors the ledger, and the ledger is cash-out only.
+    params: { ...toParams(filters), direction: 'out' },
     responseType: 'blob',
     // A wide range takes longer than an API call; don't trip the 15s default.
     timeout: 60_000,

@@ -222,6 +222,7 @@ export default function DriverLoansPage() {
           <Button
             key={k}
             size="sm"
+            className="min-h-10 lg:min-h-8"
             variant={kindFilter === k ? 'default' : 'outline'}
             onClick={() => setKindFilter(k)}
           >
@@ -368,7 +369,7 @@ export default function DriverLoansPage() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="h-8 w-8 shrink-0 text-destructive hover:text-destructive"
+                              className="h-10 w-10 shrink-0 text-destructive hover:text-destructive lg:h-8 lg:w-8"
                               onClick={() => setDeleteTarget(loan)}
                             >
                               <Trash2 className="h-4 w-4" />

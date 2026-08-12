@@ -88,6 +88,45 @@ export function useParties() {
   });
 }
 
+/* -------------------------------------------------------------------------- */
+/* Party suggestion — GET /api/v1/parties/suggest                              */
+/*                                                                            */
+/* An exact-match history lookup: "this counterparty text was attributed to    */
+/* this person N times before". Null when the text has never been attributed.  */
+/* The suggestion is only ever a PRE-SELECTION the user sees and confirms —    */
+/* nothing saves without an explicit tap.                                      */
+/* -------------------------------------------------------------------------- */
+
+export const partySuggestionSchema = z
+  .object({
+    driver_id: z.number().nullable(),
+    employee_id: z.number().nullable(),
+    name: z.string(),
+    kind: z.enum(['driver', 'employee']),
+    times: z.number(),
+  })
+  .nullable();
+
+export type PartySuggestion = z.infer<typeof partySuggestionSchema>;
+
+export function usePartySuggestion(counterparty: string | null | undefined) {
+  const trimmed = (counterparty ?? '').trim();
+  return useQuery({
+    queryKey: [...QUERY_KEYS.parties, 'suggest', trimmed],
+    queryFn: async () => {
+      const res = await apiClientRust.get('/api/v1/parties/suggest', {
+        params: { counterparty: trimmed },
+      });
+      // Empty responses (204/'' ) and JSON null both mean "no history".
+      return partySuggestionSchema.parse(res.data || null);
+    },
+    enabled: trimmed.length > 0,
+    staleTime: 60_000,
+    // No retry storm on a best-effort hint — the picker is the fallback.
+    retry: false,
+  });
+}
+
 /**
  * Create an employee.
  *

@@ -1382,7 +1382,6 @@
     },
     "stats": {
       "spent": "Spent",
-      "received": "Received",
       "fees": "IPN fees",
       "feesHint": "Derived from fee-inclusive amounts",
       "uncategorized": "Uncategorized",
@@ -1431,7 +1430,6 @@
       "in": "In"
     },
     "principal": "Principal",
-    "receivedPill": "received",
     "readOnlySource": "Read-only — owned by another system",
     "readOnlyExplain": "This row comes from the fuel or loans system and is shown here for reporting only. Edit it in its own module.",
     "includeFuel": "Fuel events",
@@ -1470,7 +1468,23 @@
       "employees": "Employees",
       "employeeCreated": "Employee added",
       "createFailed": "Could not add the employee",
-      "postsNow": "Saving registers this as an advance/loan for the selected person."
+      "postsNow": "Saving registers this as an advance/loan for the selected person.",
+      "matchedTimes_one": "Matched {{count}} previous time",
+      "matchedTimes_other": "Matched {{count}} previous times",
+      "someoneElse": "Someone else"
+    },
+    "cashIn": {
+      "strip_one": "{{count}} incoming transfer to review",
+      "strip_other": "{{count}} incoming transfers to review",
+      "title": "Cash in — needs review",
+      "subtitle": "Incoming transfers are not spending. Reclassify each one, or remove it from the ledger.",
+      "markOut": "It was cash out",
+      "ignore": "Ignore",
+      "ignoreConfirmTitle": "Remove this transfer?",
+      "ignoreConfirmDescription": "Incoming transfer of {{amount}}, not spending — remove it from the ledger?",
+      "ignoreConfirm": "Remove",
+      "empty": "Nothing left to review",
+      "emptyHint": "Every incoming transfer in this range has been handled."
     },
     "showingCount": "Showing {{shown}} of {{total}}"
   },

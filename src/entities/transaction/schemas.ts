@@ -94,7 +94,6 @@ export const byDateSchema = z.object({
   /** Africa/Cairo calendar day, 'YYYY-MM-DD'. */
   date: z.string(),
   out: z.string(),
-  in: z.string(),
   count: z.number(),
 });
 export type ByDate = z.infer<typeof byDateSchema>;
@@ -120,12 +119,23 @@ export const byPartySchema = z.object({
 });
 export type ByParty = z.infer<typeof byPartySchema>;
 
+/** The cash-in review pocket: incoming transfers awaiting a human verdict. */
+export const pendingInSchema = z.object({
+  count: z.number(),
+  total: z.string(),
+});
+export type PendingIn = z.infer<typeof pendingInSchema>;
+
+/**
+ * Analytics are CASH-OUT ONLY by contract: there is no total_in, no net, and
+ * by_date carries no inflow column. Incoming transfers surface exclusively
+ * through `pending_in`, which exists to be reviewed away, not reported on.
+ */
 export const statisticsSchema = z.object({
   count: z.number(),
-  total_in: z.string(),
   total_out: z.string(),
-  net: z.string(),
   total_fees: z.string(),
+  pending_in: pendingInSchema.default({ count: 0, total: '0' }),
   by_date: z.array(byDateSchema).default([]),
   by_category: z.array(byCategorySchema).default([]),
   by_party: z.array(byPartySchema).default([]),
@@ -146,6 +156,8 @@ export interface TransactionFilters {
   payment_method?: string;
   q?: string;
   source?: string;
+  /** 'out' for the ledger, 'in' for the cash-in review pocket. */
+  direction?: TransactionDirection;
   /** Omitted means included (server default true). */
   include_fuel?: string;
   include_loans?: string;

@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from 'next-themes';
 import {
+  ArrowDownLeft,
   ChevronLeft,
   ChevronRight,
   Download,
@@ -13,7 +14,6 @@ import {
   RefreshCw,
   Search,
   TrendingDown,
-  TrendingUp,
   Wallet,
 } from 'lucide-react';
 import {
@@ -51,10 +51,11 @@ import {
   cairoToday,
   cairoYearRange,
   formatCairoDate,
+  formatCairoDayShort,
   formatCairoMonth,
 } from '@/shared/lib/cairo';
 import { themedTooltipProps, themedAxisTickProps } from '@/shared/lib/chart-theme';
-import { formatCompactCurrency } from '@/shared/lib/format-number';
+import { formatCompactNumber } from '@/shared/lib/format-number';
 import { useDebounce } from '@/shared/hooks/use-debounce';
 import { usePermissions } from '@/shared/hooks/use-permissions';
 
@@ -73,6 +74,7 @@ import {
 } from '@/entities/transaction/schemas';
 import { categoryLabel, useCategories } from '@/entities/transaction/categories';
 import { LedgerList } from '@/widgets/fleet-expenses-table/ledger-list';
+import { CashInReview } from '@/widgets/fleet-expenses-table/cash-in-review';
 
 /* -------------------------------------------------------------------------- */
 /* Range presets — all boundaries are CAIRO calendar days (D6)                 */
@@ -152,6 +154,8 @@ export default function FleetExpensesPage() {
    *  since the wire contract has no server filter for a null category. */
   const [uncatOnly, setUncatOnly] = React.useState(() => searchParams.get('uncat') === '1');
   const [customMode, setCustomMode] = React.useState(false);
+  /** The cash-in review pocket — sheet on phones, inline section on desktop. */
+  const [cashInOpen, setCashInOpen] = React.useState(false);
 
   const debouncedSearch = useDebounce(search, 250);
 
@@ -196,7 +200,16 @@ export default function FleetExpensesPage() {
     includeFuel, includeLoans, uncatOnly, setSearchParams,
   ]);
 
-  const rowsQuery = useTransactionsPaged(filters);
+  // The LEDGER is cash-out only; incoming transfers live in the review
+  // pocket until someone reclassifies or removes them. Statistics keep the
+  // base filters — the new wire shape is already out-only and carries the
+  // pending_in counter for the pocket badge.
+  const listFilters = React.useMemo(
+    () => ({ ...filters, direction: 'out' as const }),
+    [filters],
+  );
+
+  const rowsQuery = useTransactionsPaged(listFilters);
   const statsQuery = useTransactionStatistics(filters);
   const categories = useCategories();
   const exportMutation = useExportTransactions();
@@ -222,6 +235,14 @@ export default function FleetExpensesPage() {
     () => (stats?.by_category ?? []).find((b) => b.key === null)?.count ?? 0,
     [stats],
   );
+
+  const pendingIn = stats?.pending_in ?? { count: 0, total: '0' };
+
+  /** Tile placeholder while /statistics is in flight. */
+  const statSkeleton = {
+    full: <Skeleton className="h-5 w-24" />,
+    compact: <Skeleton className="h-5 w-16" />,
+  };
 
   /* ── Which preset is active, and which month the strip shows ── */
   const activePreset: PresetKey = React.useMemo(() => {
@@ -261,7 +282,9 @@ export default function FleetExpensesPage() {
   const dailySeries = React.useMemo(
     () =>
       (stats?.by_date ?? []).map((b) => ({
-        day: b.date.slice(8).replace(/^0/, ''),
+        /** The Cairo day key itself — ticks and tooltips format the REAL
+         *  date from it, never a bare index or day-of-month number. */
+        date: b.date,
         value: Number(b.out),
         out: b.out,
         count: b.count,
@@ -420,34 +443,34 @@ export default function FleetExpensesPage() {
         )}
       </div>
 
-      {/* ── Summary strip ─────────────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+      {/* ── Summary strip — cash-out only; inflows never make a tile ─────── */}
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
         <StatCard
           label={t('fleetExpenses.stats.spent')}
-          value={{
-            full: `${formatMoney(stats?.total_out)} EGP`,
-            // Compact tile figure only — approximate by design.
-            compact: formatCompactCurrency(Number(stats?.total_out ?? 0)),
-          }}
+          value={
+            statsQuery.isLoading
+              ? statSkeleton
+              : {
+                  full: `${formatMoney(stats?.total_out)} EGP`,
+                  // Compact tile figure only — approximate by design. No
+                  // currency suffix: it truncates inside a narrow tile.
+                  compact: formatCompactNumber(Number(stats?.total_out ?? 0)),
+                }
+          }
           subvalue={t('fleetExpenses.stats.records', { count: stats?.count ?? 0 })}
           icon={TrendingDown}
           tone="primary"
         />
         <StatCard
-          label={t('fleetExpenses.stats.received')}
-          value={{
-            full: `${formatMoney(stats?.total_in)} EGP`,
-            compact: formatCompactCurrency(Number(stats?.total_in ?? 0)),
-          }}
-          icon={TrendingUp}
-          tone="success"
-        />
-        <StatCard
           label={t('fleetExpenses.stats.fees')}
-          value={{
-            full: `${formatMoney(stats?.total_fees)} EGP`,
-            compact: formatCompactCurrency(Number(stats?.total_fees ?? 0)),
-          }}
+          value={
+            statsQuery.isLoading
+              ? statSkeleton
+              : {
+                  full: `${formatMoney(stats?.total_fees)} EGP`,
+                  compact: formatCompactNumber(Number(stats?.total_fees ?? 0)),
+                }
+          }
           subvalue={t('fleetExpenses.stats.feesHint')}
           icon={Wallet}
         />
@@ -462,7 +485,7 @@ export default function FleetExpensesPage() {
             setCategory('');
           }}
           className={cn(
-            'rounded-xl text-start outline-none transition-shadow focus-visible:ring-2 focus-visible:ring-ring',
+            'col-span-2 rounded-xl text-start outline-none transition-shadow focus-visible:ring-2 focus-visible:ring-ring lg:col-span-1',
             uncatOnly && 'ring-2 ring-warning',
           )}
           aria-pressed={uncatOnly}
@@ -482,7 +505,39 @@ export default function FleetExpensesPage() {
         </button>
       </div>
 
+      {/* ── Cash in — needs review. A quiet amber pocket that only exists
+            while there is something in it. ─────────────────────────────────── */}
+      {pendingIn.count > 0 && (
+        <button
+          type="button"
+          onClick={() => setCashInOpen((v) => !v)}
+          aria-expanded={cashInOpen}
+          className="flex min-h-11 w-full items-center gap-3 rounded-xl border border-warning/40 bg-warning/10 px-3.5 py-2.5 text-start outline-none transition-colors hover:bg-warning/15 focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <ArrowDownLeft className="h-4 w-4 shrink-0 text-warning" />
+          <span className="min-w-0 flex-1 text-sm font-medium">
+            {t('fleetExpenses.cashIn.strip', { count: pendingIn.count })}
+            <span className="ms-2 tabular-nums text-muted-foreground" dir="ltr">
+              + {formatMoney(pendingIn.total)} EGP
+            </span>
+          </span>
+          <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground rtl:rotate-180" />
+        </button>
+      )}
+      <CashInReview
+        open={cashInOpen}
+        onOpenChange={setCashInOpen}
+        filters={filters}
+        canEdit={canManageExpenses}
+      />
+
       {/* ── Charts (D10: daily spend + category donut survive) ───────────── */}
+      {isLoading && (
+        <div className="grid gap-4 lg:grid-cols-3">
+          <Skeleton className="h-60 w-full rounded-xl lg:col-span-2" />
+          <Skeleton className="h-60 w-full rounded-xl" />
+        </div>
+      )}
       {!isLoading && stats && stats.count > 0 && (
         <div className="grid gap-4 lg:grid-cols-3">
           <ChartCard
@@ -501,16 +556,28 @@ export default function FleetExpensesPage() {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted" vertical={false} />
-                <XAxis dataKey="day" tick={themedAxisTickProps} tickLine={false} axisLine={false} />
+                {/* Real short dates on the axis — "9 Aug" (locale-aware), not
+                    a 1, 2, 3… index. minTickGap thins them on narrow phones. */}
+                <XAxis
+                  dataKey="date"
+                  tick={themedAxisTickProps}
+                  tickLine={false}
+                  axisLine={false}
+                  minTickGap={24}
+                  tickFormatter={(d: string) => formatCairoDayShort(d, i18n.language)}
+                />
                 <YAxis
                   tick={themedAxisTickProps}
                   tickLine={false}
                   axisLine={false}
-                  tickFormatter={(v: number) => formatCompactCurrency(v)}
-                  width={70}
+                  tickFormatter={(v: number) => formatCompactNumber(v)}
+                  width={48}
                 />
                 <RechartsTooltip
                   {...themedTooltipProps}
+                  labelFormatter={(label: unknown) =>
+                    formatCairoDate(String(label), i18n.language)
+                  }
                   formatter={(...args: unknown[]) => {
                     // Exact figure from the server's decimal string, not the
                     // chart's float.
@@ -642,8 +709,8 @@ export default function FleetExpensesPage() {
 
       {/* ── Filters ───────────────────────────────────────────────────────── */}
       <div className="space-y-3">
-        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
-          <div className="relative min-w-48 flex-1">
+        <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
+          <div className="relative min-w-0 flex-1 lg:max-w-md">
             <Search className="pointer-events-none absolute start-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               value={search}
@@ -654,49 +721,53 @@ export default function FleetExpensesPage() {
             />
           </div>
 
-          <NativeSelect
-            className="w-36"
-            value={source}
-            onChange={(e) => setSource(e.target.value)}
-            aria-label={t('fleetExpenses.fields.source')}
-          >
-            <option value={ALL}>{t('fleetExpenses.allSources')}</option>
-            {TRANSACTION_SOURCES.map((s) => (
-              <option key={s} value={s}>
-                {t(`fleetExpenses.sources.${s}`, s)}
-              </option>
-            ))}
-          </NativeSelect>
-          <NativeSelect
-            className="w-36"
-            value={company}
-            onChange={(e) => setCompany(e.target.value)}
-            aria-label={t('fleetExpenses.fields.company')}
-          >
-            <option value={ALL}>{t('fleetExpenses.allCompanies')}</option>
-            {COMPANIES.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </NativeSelect>
-          <NativeSelect
-            className="w-36"
-            value={paymentMethod}
-            onChange={(e) => setPaymentMethod(e.target.value)}
-            aria-label={t('fleetExpenses.fields.paymentMethod')}
-          >
-            <option value={ALL}>{t('fleetExpenses.allMethods')}</option>
-            {PAYMENT_METHODS.map((m) => (
-              <option key={m} value={m}>
-                {m}
-              </option>
-            ))}
-          </NativeSelect>
+          {/* On phones the selects ride a horizontal scroll row instead of
+              stacking three-deep; on desktop they sit inline and wrap. */}
+          <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] md:mx-0 md:px-0 lg:flex-wrap lg:overflow-visible lg:pb-0">
+            <NativeSelect
+              className="w-36 shrink-0"
+              value={source}
+              onChange={(e) => setSource(e.target.value)}
+              aria-label={t('fleetExpenses.fields.source')}
+            >
+              <option value={ALL}>{t('fleetExpenses.allSources')}</option>
+              {TRANSACTION_SOURCES.map((s) => (
+                <option key={s} value={s}>
+                  {t(`fleetExpenses.sources.${s}`, s)}
+                </option>
+              ))}
+            </NativeSelect>
+            <NativeSelect
+              className="w-36 shrink-0"
+              value={company}
+              onChange={(e) => setCompany(e.target.value)}
+              aria-label={t('fleetExpenses.fields.company')}
+            >
+              <option value={ALL}>{t('fleetExpenses.allCompanies')}</option>
+              {COMPANIES.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </NativeSelect>
+            <NativeSelect
+              className="w-36 shrink-0"
+              value={paymentMethod}
+              onChange={(e) => setPaymentMethod(e.target.value)}
+              aria-label={t('fleetExpenses.fields.paymentMethod')}
+            >
+              <option value={ALL}>{t('fleetExpenses.allMethods')}</option>
+              {PAYMENT_METHODS.map((m) => (
+                <option key={m} value={m}>
+                  {m}
+                </option>
+              ))}
+            </NativeSelect>
+          </div>
         </div>
 
         {/* Category chips — one tap, horizontally scrollable on phones. */}
-        <div className="flex gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none]">
+        <div className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] md:mx-0 md:px-0">
           <FilterChip
             active={!category && !uncatOnly}
             onClick={() => {
@@ -773,11 +844,11 @@ export default function FleetExpensesPage() {
       )}
 
       {/* Quiet link into Messages — replaces the amber queue badge. */}
-      <div className="border-b bg-card px-3 py-2.5 text-xs text-muted-foreground">
+      <div className="rounded-lg border bg-card px-3 py-2.5 text-xs text-muted-foreground">
         {t('fleetExpenses.ignoredMessages')}{' '}
         <Link
           to="/fleet-expenses/messages"
-          className="font-semibold text-primary hover:underline"
+          className="inline-block py-1 font-semibold text-primary hover:underline"
         >
           {t('fleetExpenses.reviewLink')} ›
         </Link>
@@ -826,7 +897,9 @@ function FilterChip({
       type="button"
       onClick={onClick}
       className={cn(
-        'min-h-8 shrink-0 rounded-full border px-3 py-1 text-xs font-semibold transition-colors',
+        // 44px minimum tap height on touch widths; compact again with a
+        // pointer at lg and up.
+        'min-h-11 shrink-0 whitespace-nowrap rounded-full border px-3.5 py-1 text-xs font-semibold transition-colors lg:min-h-8 lg:px-3',
         active
           ? 'border-foreground bg-foreground text-background'
           : 'bg-card text-muted-foreground hover:bg-accent',

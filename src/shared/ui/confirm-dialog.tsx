@@ -28,6 +28,8 @@ interface ConfirmDialogProps {
   loading?: boolean;
   onConfirm: () => void | Promise<void>;
   lottieSrc?: string;
+  /** Render above bottom sheets (needed when confirming from inside one). */
+  stacked?: boolean;
 }
 
 export function ConfirmDialog({
@@ -41,6 +43,7 @@ export function ConfirmDialog({
   loading = false,
   onConfirm,
   lottieSrc,
+  stacked = false,
 }: ConfirmDialogProps) {
   const { t } = useTranslation();
 
@@ -53,7 +56,7 @@ export function ConfirmDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[400px] text-center p-6 gap-6">
+      <DialogContent stacked={stacked} className="max-w-[400px] text-center p-6 gap-6">
         <div className="flex flex-col items-center gap-4">
           {activeLottieSrc && (
             <div className="flex h-20 w-20 items-center justify-center shrink-0">

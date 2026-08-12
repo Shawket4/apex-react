@@ -23,7 +23,8 @@ import {
   formatCairoDate,
   formatCairoDateTime,
 } from '@/shared/lib/cairo';
-import { PartyPicker, type PartyValue } from '@/widgets/fleet-expenses-table/party-picker';
+import { SmartPartyField, type PartyValue } from '@/widgets/fleet-expenses-table/party-picker';
+import { useDebounce } from '@/shared/hooks/use-debounce';
 import { useVehicles } from '@/entities/transaction/vehicles';
 import {
   categoryLabel,
@@ -157,6 +158,13 @@ export default function FleetExpenseFormPage({ mode }: { mode: 'create' | 'edit'
   const needsParty = requiresParty(selectedCategory);
   const willPost = posts(selectedCategory);
   const hasParty = !!party.driver_id || !!party.employee_id;
+
+  // The history suggestion keys off the counterparty text. Debounced so
+  // typing in the field doesn't fire a lookup per keystroke, and disabled
+  // entirely when the row already names a person — no second-guessing.
+  const suggestCounterparty = useDebounce(form.watch('counterparty') ?? '', 300);
+  const suggestParty =
+    mode === 'create' || !(existing.data?.driver_id || existing.data?.employee_id);
 
   React.useEffect(() => {
     if (hasParty || !needsParty) setPartyMissing(false);
@@ -323,7 +331,7 @@ export default function FleetExpenseFormPage({ mode }: { mode: 'create' | 'edit'
         {/* ── The form ── */}
         <form onSubmit={onSubmit} className="space-y-4 lg:order-1 lg:col-span-2">
           <Card>
-            <CardContent className="grid gap-4 py-6 sm:grid-cols-2">
+            <CardContent className="grid gap-4 px-4 py-5 sm:grid-cols-2 sm:px-6 sm:py-6">
               <div className="grid grid-cols-[1fr_5rem] gap-2">
                 <Field
                   label={t('fleetExpenses.fields.amount')}
@@ -346,8 +354,11 @@ export default function FleetExpenseFormPage({ mode }: { mode: 'create' | 'edit'
                 </Field>
               </div>
 
+              {/* Direction stays editable — flipping to "out" here is the same
+                  reclassification the cash-in pocket offers. Creation defaults
+                  to 'out'; promotions force it. */}
               <Field label={t('fleetExpenses.fields.direction')}>
-                <div className="flex h-9 overflow-hidden rounded-md border">
+                <div className="flex h-11 overflow-hidden rounded-md border sm:h-9">
                   {(['out', 'in'] as const).map((d) => (
                     <button
                       key={d}
@@ -406,7 +417,9 @@ export default function FleetExpenseFormPage({ mode }: { mode: 'create' | 'edit'
                   change here. */}
               {needsParty && (
                 <Field label={t('fleetExpenses.toWhom')}>
-                  <PartyPicker
+                  <SmartPartyField
+                    counterparty={suggestCounterparty}
+                    suggest={suggestParty}
                     value={party}
                     onChange={setParty}
                     disabled={readOnly}
@@ -549,12 +562,31 @@ export default function FleetExpenseFormPage({ mode }: { mode: 'create' | 'edit'
           </Card>
 
           {!readOnly && (
-            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            /* On phones the actions pin to the bottom of the viewport (with
+               iOS safe-area padding) so Save never scrolls out of reach; from
+               sm up they sit statically under the card as before. */
+            <div className="sticky bottom-0 z-10 -mx-4 flex flex-wrap gap-2 border-t bg-background p-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:static sm:z-auto sm:mx-0 sm:flex-nowrap sm:justify-end sm:border-0 sm:bg-transparent sm:p-0">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={finish}
+                className="order-1 min-h-11 flex-1 sm:order-2 sm:min-h-9 sm:flex-none"
+              >
+                {t('common.cancel')}
+              </Button>
+              <Button
+                type="submit"
+                disabled={saving}
+                className="order-2 min-h-11 flex-1 sm:order-3 sm:min-h-9 sm:flex-none"
+              >
+                <Save className="h-4 w-4" />
+                {saving ? t('common.saving') : t('common.save')}
+              </Button>
               {mode === 'edit' && row && (
                 <Button
                   type="button"
                   variant="ghost"
-                  className="w-full text-destructive hover:text-destructive sm:me-auto sm:w-auto"
+                  className="order-3 min-h-10 w-full text-destructive hover:text-destructive sm:order-1 sm:me-auto sm:min-h-9 sm:w-auto"
                   onClick={() => setConfirmDelete(true)}
                   disabled={saving || deleteMutation.isPending}
                 >
@@ -562,13 +594,6 @@ export default function FleetExpenseFormPage({ mode }: { mode: 'create' | 'edit'
                   {t('common.delete')}
                 </Button>
               )}
-              <Button type="button" variant="outline" onClick={finish} className="w-full sm:w-auto">
-                {t('common.cancel')}
-              </Button>
-              <Button type="submit" disabled={saving} className="w-full sm:w-auto">
-                <Save className="h-4 w-4" />
-                {saving ? t('common.saving') : t('common.save')}
-              </Button>
             </div>
           )}
         </form>

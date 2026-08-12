@@ -159,6 +159,16 @@ export function formatCairoDay(dayKeyOrInstant: string, language?: string): stri
   }).format(new Date(instant));
 }
 
+/** "9 Aug" — compact axis ticks from a 'YYYY-MM-DD' day key (or instant). */
+export function formatCairoDayShort(dayKeyOrInstant: string, language?: string): string {
+  const instant = /^\d{4}-\d{2}-\d{2}$/.test(dayKeyOrInstant)
+    ? cairoInstantFromInputs(dayKeyOrInstant, '12:00')
+    : dayKeyOrInstant;
+  return getFmt(localeOf(language), { day: 'numeric', month: 'short' }).format(
+    new Date(instant),
+  );
+}
+
 /** "19:52" — Cairo wall-clock time of an instant. */
 export function formatCairoTime(instant: string | Date, language?: string): string {
   return getFmt(localeOf(language), {

@@ -20,7 +20,7 @@ import {
 } from '@/entities/transaction/categories';
 import { useUpdateTransaction } from '@/entities/transaction/queries';
 import type { ByDate, Transaction } from '@/entities/transaction/schemas';
-import { PartyPicker, type PartyValue } from './party-picker';
+import { SmartPartyField, type PartyValue } from './party-picker';
 
 /* -------------------------------------------------------------------------- */
 /* Day grouping                                                                */
@@ -136,22 +136,20 @@ export function LedgerList({ rows, dayTotals, canEdit }: LedgerListProps) {
 
   return (
     <div>
-      {groups.map((group) => {
+      {groups.map((group, index) => {
         const total = dayTotals.get(group.key);
         return (
-          <section key={group.key}>
+          // Keyed with the index too: the API orders rows occurred_at DESC so
+          // a day never repeats, but a duplicate React key would silently
+          // drop rows if that ordering ever hiccuped.
+          <section key={`${group.key}-${index}`}>
             {/* Sticky day header — top-0 because the app bar is outside the
                 scroll root. bg required: content scrolls beneath it. */}
             <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-y bg-background px-3 py-1.5 text-xs font-semibold text-muted-foreground">
               <span>{formatCairoDay(group.key, i18n.language)}</span>
               {total && (
                 <span className="tabular-nums" dir="ltr">
-                  {total.in !== '0' && total.in !== '0.0000' && (
-                    <span className="me-3 text-emerald-600 dark:text-emerald-400">
-                      + {formatMoney(total.in)}
-                    </span>
-                  )}
-                  <span>− {formatMoney(total.out)}</span>
+                  − {formatMoney(total.out)}
                 </span>
               )}
             </div>
@@ -197,7 +195,7 @@ export function LedgerList({ rows, dayTotals, canEdit }: LedgerListProps) {
       <Sheet open={!!flow} onOpenChange={(open) => !open && setFlow(null)}>
         <SheetContent
           side="bottom"
-          className="mx-auto max-h-[80dvh] max-w-lg overflow-y-auto rounded-t-2xl p-4 pb-6"
+          className="mx-auto max-h-[80dvh] max-w-lg overflow-y-auto rounded-t-2xl p-4 pb-[max(1.5rem,env(safe-area-inset-bottom))]"
         >
           {flow?.step === 'category' && (
             <div className="space-y-3">
@@ -227,7 +225,11 @@ export function LedgerList({ rows, dayTotals, canEdit }: LedgerListProps) {
                 title={t('fleetExpenses.toWhom')}
                 subtitle={`${categoryLabel(flow.category, i18n.language)} · ${formatMoney(flow.row.amount)}`}
               />
-              <PartyPicker
+              {/* History-aware: an exact counterparty match pre-selects the
+                  person as a visible card; "Someone else" restores the picker.
+                  Advancing becomes: pick category → see person → save. */}
+              <SmartPartyField
+                counterparty={flow.row.counterparty}
                 value={party}
                 onChange={setParty}
                 required={(flow.category.required_party || 'either') as PartyKind}
@@ -240,14 +242,14 @@ export function LedgerList({ rows, dayTotals, canEdit }: LedgerListProps) {
               <div className="flex gap-2">
                 <Button
                   variant="outline"
-                  className="flex-1"
+                  className="min-h-11 flex-1 sm:min-h-9"
                   onClick={() => setFlow(null)}
                   disabled={update.isPending}
                 >
                   {t('common.cancel')}
                 </Button>
                 <Button
-                  className="flex-1"
+                  className="min-h-11 flex-1 sm:min-h-9"
                   onClick={saveWithParty}
                   disabled={update.isPending || (!party.driver_id && !party.employee_id)}
                 >
@@ -419,11 +421,6 @@ function TxnCard({
       <Amount row={row} className="text-sm" />
 
       <div className="col-span-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
-        {row.direction === 'in' && (
-          <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 font-medium text-emerald-600 dark:text-emerald-400">
-            {t('fleetExpenses.receivedPill')}
-          </span>
-        )}
         {row.reference && (
           <span className="font-mono text-[11px] [overflow-wrap:anywhere]">{row.reference}</span>
         )}
@@ -439,7 +436,7 @@ function TxnCard({
               e.stopPropagation();
               onAddCategory();
             }}
-            className="min-h-8 rounded-full border border-dashed border-primary/50 px-2.5 py-0.5 text-xs font-semibold text-primary"
+            className="min-h-9 rounded-full border border-dashed border-primary/50 px-3 py-0.5 text-xs font-semibold text-primary lg:min-h-8 lg:px-2.5"
           >
             + {t('fleetExpenses.addCategory')}
           </button>
@@ -527,11 +524,6 @@ function TxnRow({
       </td>
       <td className="w-24 px-3 py-2.5">
         <div className="flex items-center gap-1.5">
-          {row.direction === 'in' && (
-            <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-600 dark:text-emerald-400">
-              {t('fleetExpenses.receivedPill')}
-            </span>
-          )}
           <RowFlags row={row} />
         </div>
       </td>

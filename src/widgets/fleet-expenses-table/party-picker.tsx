@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Check, ChevronsUpDown, UserPlus, User, Truck } from 'lucide-react';
+import { Check, CheckCircle2, ChevronsUpDown, UserPlus, User, Truck } from 'lucide-react';
 
 import { Button } from '@/shared/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/shared/ui/popover';
@@ -12,11 +12,13 @@ import {
   CommandItem,
   CommandList,
 } from '@/shared/ui/command';
+import { Skeleton } from '@/shared/ui/skeleton';
 import { cn } from '@/shared/lib/cn';
 import {
   findExistingParty,
   useCreateEmployee,
   useParties,
+  usePartySuggestion,
   type Party,
   type PartyKind,
 } from '@/entities/transaction/categories';
@@ -192,6 +194,107 @@ export function PartyPicker({
         </Command>
       </PopoverContent>
     </Popover>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/* SmartPartyField — the "to whom?" field with an exact-match history hint     */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * When the transaction's counterparty text was attributed to the same person
+ * before, /parties/suggest returns them and this renders a PRE-SELECTED
+ * suggestion card instead of the empty picker: the primary flow is just
+ * confirming (saving uses the suggested ids), and "Someone else" swaps in the
+ * normal PartyPicker (which keeps its create-employee footer).
+ *
+ * The suggestion never saves silently: the card is on screen the whole time
+ * and saving still takes the form's explicit save tap. A suggestion whose kind
+ * the category refuses (e.g. an employee for a drivers-only advance) is
+ * treated as no suggestion at all.
+ */
+export function SmartPartyField({
+  counterparty,
+  value,
+  onChange,
+  required,
+  disabled,
+  suggest = true,
+}: {
+  /** The transaction's counterparty text — the lookup key. */
+  counterparty?: string | null;
+  value: PartyValue;
+  onChange: (v: PartyValue) => void;
+  required: PartyKind;
+  disabled?: boolean;
+  /** Pass false when the row already names a person — no second-guessing. */
+  suggest?: boolean;
+}) {
+  const { t } = useTranslation();
+  const [manual, setManual] = React.useState(false);
+
+  const trimmed = (counterparty ?? '').trim();
+  const active = suggest && !manual && !disabled && trimmed.length > 0;
+  const suggestionQuery = usePartySuggestion(active ? trimmed : '');
+
+  const raw = suggestionQuery.data ?? null;
+  const suggestion =
+    raw && (required === 'either' || required === 'none' || raw.kind === required)
+      ? raw
+      : null;
+
+  // Pre-select the suggested ids the moment the card shows. Visible, not
+  // silent: the card names the person, and saving is still the user's tap.
+  const valueEmpty = !value.driver_id && !value.employee_id;
+  React.useEffect(() => {
+    if (!active || !suggestion || !valueEmpty) return;
+    onChange({
+      driver_id: suggestion.driver_id ?? null,
+      employee_id: suggestion.employee_id ?? null,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active, suggestion?.driver_id, suggestion?.employee_id]);
+
+  if (active && suggestionQuery.isLoading) {
+    return <Skeleton className="h-[74px] w-full rounded-lg" />;
+  }
+
+  if (active && suggestion) {
+    const Icon = suggestion.kind === 'driver' ? Truck : User;
+    return (
+      <div className="rounded-lg border bg-muted/30 p-3">
+        <div className="flex items-center gap-3">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <Icon className="h-5 w-5" />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-sm font-semibold" dir="auto">
+              {suggestion.name}
+            </span>
+            <span className="block text-xs text-muted-foreground">
+              {t('fleetExpenses.party.matchedTimes', { count: suggestion.times })}
+            </span>
+          </span>
+          <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-500" />
+        </div>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className="mt-2.5 min-h-10 w-full sm:min-h-8 sm:w-auto"
+          onClick={() => {
+            setManual(true);
+            onChange({ driver_id: null, employee_id: null });
+          }}
+        >
+          {t('fleetExpenses.party.someoneElse')}
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <PartyPicker value={value} onChange={onChange} required={required} disabled={disabled} />
   );
 }
 
