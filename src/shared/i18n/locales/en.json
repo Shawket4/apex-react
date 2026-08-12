@@ -360,8 +360,8 @@
     "financial": {
       "expenses": "Expenses",
       "expensesDescription": "Track and manage driver expenses",
-      "loans": "Loans",
-      "loansDescription": "View and manage driver loan records",
+      "loans": "Payouts",
+      "loansDescription": "Driver payouts — loans and advances",
       "salaries": "Salaries",
       "salariesDescription": "View salary records and create payroll"
     }
@@ -395,25 +395,27 @@
     }
   },
   "driverLoans": {
-    "title": "Loans",
-    "addLoan": "Add loan",
-    "noLoans": "No loans yet",
-    "noLoansDescription": "This driver doesn't have any recorded loans.",
-    "addedSuccessfully": "Loan registered successfully",
-    "deletedSuccessfully": "Loan deleted",
-    "saveFailed": "Failed to save loan",
-    "deleteFailed": "Failed to delete loan",
-    "deleteConfirmTitle": "Delete loan?",
-    "deleteConfirmDescription": "Are you sure you want to delete this loan of {{amount}}? This cannot be undone.",
+    "title": "Payouts",
+    "addLoan": "Add payout",
+    "noLoans": "No payouts yet",
+    "noLoansDescription": "This driver doesn't have any recorded payouts.",
+    "addedSuccessfully": "Payout registered successfully",
+    "deletedSuccessfully": "Payout deleted",
+    "saveFailed": "Failed to save payout",
+    "deleteFailed": "Failed to delete payout",
+    "deleteConfirmTitle": "Delete payout?",
+    "deleteConfirmDescription": "Are you sure you want to delete this payout of {{amount}}? This cannot be undone.",
     "paid": "Paid",
+    "export": "Export to Excel",
     "fields": {
       "amount": "Amount",
+      "kind": "Type",
       "date": "Date",
       "method": "Payment method",
       "methodPlaceholder": "e.g. Bank Transfer, Cash..."
     },
     "stats": {
-      "total": "Total loans",
+      "total": "Total payouts",
       "totalAmount": "Total amount",
       "average": "Average",
       "paidCount": "Paid",
@@ -423,6 +425,11 @@
       "all": "All",
       "advance": "Advances",
       "loan": "Loans",
+      "salary": "Salary portion"
+    },
+    "kindSingular": {
+      "advance": "Advance",
+      "loan": "Loan",
       "salary": "Salary portion"
     }
   },

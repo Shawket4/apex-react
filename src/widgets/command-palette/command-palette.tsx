@@ -404,7 +404,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                 }
               >
                 <CommandItem
-                  value="add new loan create"
+                  value="add new payout loan advance create"
                   onSelect={() =>
                     go(`/drivers/${page.driver.ID}/loans/new`)
                   }
@@ -458,7 +458,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
             {/* ② View — loans, expenses, overview */}
             <CommandGroup heading="View">
               <CommandItem
-                value="loans view list credit"
+                value="payouts loans advances view list credit"
                 onSelect={() =>
                   go(`/drivers/${page.driver.ID}/loans`)
                 }

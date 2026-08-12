@@ -360,8 +360,8 @@
     "financial": {
       "expenses": "المصروفات",
       "expensesDescription": "تتبع وإدارة مصروفات السائق",
-      "loans": "السلف",
-      "loansDescription": "عرض وإدارة سجلات سلف السائق",
+      "loans": "الصرفيات",
+      "loansDescription": "صرفيات السائق — سلف وقروض",
       "salaries": "الرواتب",
       "salariesDescription": "عرض سجلات الرواتب وإنشاء كشوف المرتبات"
     }
@@ -395,25 +395,27 @@
     }
   },
   "driverLoans": {
-    "title": "السلف",
-    "addLoan": "إضافة سلفة",
-    "noLoans": "لا توجد سلف بعد",
-    "noLoansDescription": "هذا السائق ليس لديه أي سلف مسجلة.",
-    "addedSuccessfully": "تم تسجيل السلفة بنجاح",
-    "deletedSuccessfully": "تم حذف السلفة",
-    "saveFailed": "فشل حفظ السلفة",
-    "deleteFailed": "فشل حذف السلفة",
-    "deleteConfirmTitle": "حذف السلفة؟",
-    "deleteConfirmDescription": "هل أنت متأكد من حذف هذه السلفة بقيمة {{amount}}؟ لا يمكن التراجع عن هذا الإجراء.",
+    "title": "الصرفيات",
+    "addLoan": "إضافة صرفية",
+    "noLoans": "لا توجد صرفيات بعد",
+    "noLoansDescription": "هذا السائق ليس لديه أي صرفيات مسجلة.",
+    "addedSuccessfully": "تم تسجيل الصرفية بنجاح",
+    "deletedSuccessfully": "تم حذف الصرفية",
+    "saveFailed": "فشل حفظ الصرفية",
+    "deleteFailed": "فشل حذف الصرفية",
+    "deleteConfirmTitle": "حذف الصرفية؟",
+    "deleteConfirmDescription": "هل أنت متأكد من حذف هذه الصرفية بقيمة {{amount}}؟ لا يمكن التراجع عن هذا الإجراء.",
     "paid": "مدفوع",
+    "export": "تصدير إلى Excel",
     "fields": {
       "amount": "المبلغ",
+      "kind": "النوع",
       "date": "التاريخ",
       "method": "طريقة الدفع",
       "methodPlaceholder": "مثال: تحويل بنكي، نقدي..."
     },
     "stats": {
-      "total": "إجمالي السلف",
+      "total": "إجمالي الصرفيات",
       "totalAmount": "إجمالي المبلغ",
       "average": "المتوسط",
       "paidCount": "المدفوع",
@@ -423,6 +425,11 @@
       "all": "الكل",
       "advance": "السلف",
       "loan": "القروض",
+      "salary": "جزء من الراتب"
+    },
+    "kindSingular": {
+      "advance": "سلفة",
+      "loan": "قرض",
       "salary": "جزء من الراتب"
     }
   },

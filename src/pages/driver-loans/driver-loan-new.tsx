@@ -41,6 +41,7 @@ export default function AddDriverLoanPage() {
     resolver: zodResolver(loanFormSchema),
     defaultValues: {
       amount: '' as unknown as number,
+      kind: 'advance',
       date: today(),
       method: '',
     },
@@ -54,6 +55,7 @@ export default function AddDriverLoanPage() {
           date: values.date,
           amount: values.amount,
           method: values.method,
+          kind: values.kind,
         },
       },
       {
@@ -80,6 +82,34 @@ export default function AddDriverLoanPage() {
     >
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="mx-auto max-w-2xl space-y-6">
+          {/* Type — advance and loan subtract identically; they differ in what
+              they mean, so the choice is an explicit toggle, defaulting to
+              advance to match the backend's own default. */}
+          <FormField
+            control={form.control}
+            name="kind"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('driverLoans.fields.kind')} *</FormLabel>
+                <FormControl>
+                  <div className="grid max-w-xs grid-cols-2 gap-2">
+                    {(['advance', 'loan'] as const).map((k) => (
+                      <Button
+                        key={k}
+                        type="button"
+                        variant={field.value === k ? 'default' : 'outline'}
+                        onClick={() => field.onChange(k)}
+                      >
+                        {t(`driverLoans.kindSingular.${k}`)}
+                      </Button>
+                    ))}
+                  </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
           <div className="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
             {/* Amount */}
             <FormField

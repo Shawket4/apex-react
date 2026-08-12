@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import {
   ArrowLeft,
   CreditCard,
+  FileSpreadsheet,
   Plus,
   Trash2,
   DollarSign,
@@ -47,6 +48,60 @@ function groupByYearMonth(loans: DriverLoan[]) {
   return groups;
 }
 
+/**
+ * Client-side export of the rows already on screen. The whole payout history
+ * of one driver is at most a few hundred rows, so there is nothing to page
+ * and no server round-trip to justify.
+ */
+async function exportPayoutsExcel(opts: {
+  fileName: string;
+  sheetName: string;
+  driverName: string;
+  headers: { date: string; kind: string; amount: string; method: string; paid: string };
+  paidLabels: { yes: string; no: string };
+  kindLabel: (kind: DriverLoan['kind']) => string;
+  rows: DriverLoan[];
+  rtl: boolean;
+}) {
+  const [{ default: ExcelJS }, { saveAs }] = await Promise.all([
+    import('exceljs'),
+    import('file-saver'),
+  ]);
+
+  const wb = new ExcelJS.Workbook();
+  const ws = wb.addWorksheet(opts.sheetName, {
+    views: [{ rightToLeft: opts.rtl }],
+  });
+
+  ws.columns = [
+    { header: opts.headers.date, key: 'date', width: 14 },
+    { header: opts.headers.kind, key: 'kind', width: 16 },
+    { header: opts.headers.amount, key: 'amount', width: 14 },
+    { header: opts.headers.method, key: 'method', width: 22 },
+    { header: opts.headers.paid, key: 'paid', width: 10 },
+  ];
+  ws.getRow(1).font = { bold: true };
+
+  for (const l of opts.rows) {
+    ws.addRow({
+      date: l.date,
+      kind: opts.kindLabel(l.kind),
+      amount: l.amount,
+      method: l.method || '',
+      paid: l.is_paid ? opts.paidLabels.yes : opts.paidLabels.no,
+    });
+  }
+  ws.getColumn('amount').numFmt = '#,##0.00';
+
+  const buffer = await wb.xlsx.writeBuffer();
+  saveAs(
+    new Blob([buffer], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    }),
+    opts.fileName,
+  );
+}
+
 function computeStats(loans: DriverLoan[]) {
   const total = loans.length;
   const totalAmount = loans.reduce((s, l) => s + l.amount, 0);
@@ -69,9 +124,10 @@ export default function DriverLoansPage() {
   const { id } = useParams<{ id: string }>();
   const driverId = id ? Number(id) : undefined;
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { atLeast } = usePermissions();
   const canManage = atLeast(PERMISSION_LEVELS.MANAGER);
+  const [exporting, setExporting] = React.useState(false);
 
   const { data: driver } = useDriver(driverId);
   // Advances, loans and salary portions all subtract the same amount, so a
@@ -117,6 +173,39 @@ export default function DriverLoansPage() {
               {t('common.viewOnly')}
             </Badge>
           )}
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={loans.length === 0 || exporting}
+            onClick={async () => {
+              setExporting(true);
+              try {
+                // Exports what the active kind chip shows, not always everything —
+                // the visible list and the file must agree.
+                await exportPayoutsExcel({
+                  fileName: `payouts_${(driver?.name ?? 'driver').replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 10)}.xlsx`,
+                  sheetName: t('driverLoans.title'),
+                  driverName: driver?.name ?? '',
+                  headers: {
+                    date: t('driverLoans.fields.date'),
+                    kind: t('driverLoans.fields.kind'),
+                    amount: t('driverLoans.fields.amount'),
+                    method: t('driverLoans.fields.method'),
+                    paid: t('driverLoans.paid'),
+                  },
+                  paidLabels: { yes: t('common.yes'), no: t('common.no') },
+                  kindLabel: (kind) => t(`driverLoans.kindSingular.${kind}`),
+                  rows: loans,
+                  rtl: i18n.dir() === 'rtl',
+                });
+              } finally {
+                setExporting(false);
+              }
+            }}
+          >
+            <FileSpreadsheet className="h-4 w-4" />
+            <span className="hidden sm:inline">{t('driverLoans.export')}</span>
+          </Button>
           {canManage && (
             <Button size="sm" onClick={() => navigate(`/drivers/${id}/loans/new`)}>
               <Plus className="h-4 w-4" />
