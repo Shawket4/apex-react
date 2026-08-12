@@ -1,20 +1,20 @@
 import * as React from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useTheme } from 'next-themes';
 import {
-  Plus,
-  Receipt,
-  Wallet,
-  Activity,
-  TrendingDown,
+  ChevronLeft,
+  ChevronRight,
   Download,
-  Search,
-  LayoutGrid,
-  List,
-  RefreshCw,
-  Inbox,
   Fuel,
   HandCoins,
+  Plus,
+  Receipt,
+  RefreshCw,
+  Search,
+  TrendingDown,
+  TrendingUp,
+  Wallet,
 } from 'lucide-react';
 import {
   Area,
@@ -38,123 +38,128 @@ import { EmptyState } from '@/shared/ui/empty-state';
 import { Skeleton } from '@/shared/ui/skeleton';
 import { Switch } from '@/shared/ui/switch';
 import { Label } from '@/shared/ui/label';
+import { NativeSelect } from '@/shared/ui/native-select';
 import { DateRangePicker } from '@/shared/ui/date-range-picker';
-import { ConfirmDialog } from '@/shared/ui/confirm-dialog';
-import { RankedList } from '@/shared/ui/ranked-list';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select';
 import { cn } from '@/shared/lib/cn';
-import { formatCurrency, firstDayOfMonth, localDateISO } from '@/shared/lib/format';
+import { formatMoney, addMoneyStrings } from '@/shared/lib/money';
+import { localParts } from '@/shared/lib/format';
+import {
+  cairoDayRange,
+  cairoInstant,
+  cairoMonthRange,
+  cairoParts,
+  cairoToday,
+  cairoYearRange,
+  formatCairoDate,
+  formatCairoMonth,
+} from '@/shared/lib/cairo';
+import { themedTooltipProps, themedAxisTickProps } from '@/shared/lib/chart-theme';
 import { formatCompactCurrency } from '@/shared/lib/format-number';
 import { useDebounce } from '@/shared/hooks/use-debounce';
-import { useReviewQueue } from '@/entities/raw-message/queries';
 import { usePermissions } from '@/shared/hooks/use-permissions';
 
 import {
+  useExportTransactions,
   useTransactionsPaged,
   useTransactionStatistics,
-  useDeleteTransaction,
 } from '@/entities/transaction/queries';
 import {
   COMPANIES,
-  EXPENSE_TYPES,
   PAYMENT_METHODS,
   TRANSACTION_SOURCES,
-  type Transaction,
+  type ByCategory,
+  type ByDate,
   type TransactionFilters,
 } from '@/entities/transaction/schemas';
-import { FleetExpensesTable } from '@/widgets/fleet-expenses-table/fleet-expenses-table';
-import { exportFleetExpenses } from '@/widgets/fleet-expenses-table/fleet-expenses-excel';
-import { getAllTransactions } from '@/entities/transaction/api';
+import { categoryLabel, useCategories } from '@/entities/transaction/categories';
+import { LedgerList } from '@/widgets/fleet-expenses-table/ledger-list';
 
 /* -------------------------------------------------------------------------- */
-/* Defaults                                                                    */
+/* Range presets — all boundaries are CAIRO calendar days (D6)                 */
 /* -------------------------------------------------------------------------- */
 
-const CHART_COLORS = [
-  '#3B82F6',
-  '#F59E0B',
-  '#8B5CF6',
-  '#10B981',
-  '#EF4444',
-  '#EC4899',
-  '#6366F1',
-  '#14B8A6',
+type PresetKey = 'thisMonth' | 'lastMonth' | 'last3Months' | 'thisYear' | 'all' | 'custom';
+
+function presetRange(key: Exclude<PresetKey, 'custom'>): [string | null, string | null] {
+  const today = cairoToday();
+  switch (key) {
+    case 'thisMonth':
+      return cairoMonthRange(today.y, today.m);
+    case 'lastMonth':
+      return cairoMonthRange(today.y, today.m - 1);
+    case 'last3Months': {
+      const [from] = cairoMonthRange(today.y, today.m - 2);
+      const [, to] = cairoMonthRange(today.y, today.m);
+      return [from, to];
+    }
+    case 'thisYear':
+      return cairoYearRange(today.y);
+    case 'all':
+      return [null, null];
+  }
+}
+
+const PRESET_OPTIONS: Array<Exclude<PresetKey, 'custom'>> = [
+  'thisMonth',
+  'lastMonth',
+  'last3Months',
+  'thisYear',
+  'all',
 ];
 
 const ALL = '__all__';
-
-/**
- * Recharts styles its tooltip inline and defaults to a white surface with dark
- * text. In dark mode that made the label row (the date) black-on-dark and
- * unreadable. Driving it from the theme's CSS variables makes it correct in both
- * themes instead of correct in one and broken in the other.
- */
-const TOOLTIP_STYLES = {
-  contentStyle: {
-    fontSize: 12,
-    borderRadius: 8,
-    background: 'hsl(var(--popover))',
-    border: '1px solid hsl(var(--border))',
-    color: 'hsl(var(--popover-foreground))',
-    boxShadow: '0 4px 12px rgb(0 0 0 / 0.15)',
-  },
-  labelStyle: { color: 'hsl(var(--popover-foreground))', fontWeight: 600 },
-  itemStyle: { color: 'hsl(var(--popover-foreground))' },
-  cursor: { fill: 'hsl(var(--muted))', fillOpacity: 0.3 },
-} as const;
-
-function monthStartISO(): string {
-  const d = firstDayOfMonth();
-  return localDateISO(d.getFullYear(), d.getMonth(), d.getDate());
-}
-function todayISO(): string {
-  const d = new Date();
-  return localDateISO(d.getFullYear(), d.getMonth(), d.getDate(), true);
-}
 
 /* -------------------------------------------------------------------------- */
 /* Page                                                                        */
 /* -------------------------------------------------------------------------- */
 
 export default function FleetExpensesPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const { resolvedTheme } = useTheme();
   const { canManageExpenses } = usePermissions();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const [from, setFrom] = React.useState<string | null>(
-    () => searchParams.get('from') ?? monthStartISO(),
-  );
-  const [to, setTo] = React.useState<string | null>(() => searchParams.get('to') ?? todayISO());
+  /* ── Range: month picker by default, presets + custom as the escape hatch.
+        from/to URL params stay honored so shared links keep working. ── */
+  const defaultRange = React.useMemo(() => {
+    const today = cairoToday();
+    return cairoMonthRange(today.y, today.m);
+  }, []);
 
-  const [category, setCategory] = React.useState(() => searchParams.get('category') ?? ALL);
+  const [range, setRange] = React.useState<{ from: string | null; to: string | null }>(() => {
+    if (searchParams.get('range') === 'all') return { from: null, to: null };
+    return {
+      from: searchParams.get('from') ?? defaultRange[0],
+      to: searchParams.get('to') ?? defaultRange[1],
+    };
+  });
+
+  const [category, setCategory] = React.useState(() => searchParams.get('category') ?? '');
   const [company, setCompany] = React.useState(() => searchParams.get('company') ?? ALL);
   const [paymentMethod, setPaymentMethod] = React.useState(
     () => searchParams.get('payment_method') ?? ALL,
   );
   const [source, setSource] = React.useState(() => searchParams.get('source') ?? ALL);
   const [search, setSearch] = React.useState(() => searchParams.get('q') ?? '');
-  const [grouped, setGrouped] = React.useState(true);
-  // Default on, matching the legacy costs view which unioned all three sources.
   const [includeFuel, setIncludeFuel] = React.useState(
     () => searchParams.get('include_fuel') !== 'false',
   );
   const [includeLoans, setIncludeLoans] = React.useState(
     () => searchParams.get('include_loans') !== 'false',
   );
+  /** The uncategorized-tile filter — a client-side view over loaded rows,
+   *  since the wire contract has no server filter for a null category. */
+  const [uncatOnly, setUncatOnly] = React.useState(() => searchParams.get('uncat') === '1');
+  const [customMode, setCustomMode] = React.useState(false);
 
   const debouncedSearch = useDebounce(search, 250);
 
-  /**
-   * Server-side filters. `q` is included so the backend does the text search
-   * across counterparty, description and reference — filtering only the current
-   * page client-side would silently hide matches on later pages.
-   */
   const filters: TransactionFilters = React.useMemo(
     () => ({
-      from: from ?? undefined,
-      to: to ?? undefined,
-      category: category === ALL ? undefined : category,
+      from: range.from ?? undefined,
+      to: range.to ?? undefined,
+      category: category || undefined,
       company: company === ALL ? undefined : company,
       payment_method: paymentMethod === ALL ? undefined : paymentMethod,
       source: source === ALL ? undefined : source,
@@ -163,7 +168,7 @@ export default function FleetExpensesPage() {
       include_loans: includeLoans ? undefined : 'false',
     }),
     [
-      from, to, category, company, paymentMethod, source, debouncedSearch,
+      range, category, company, paymentMethod, source, debouncedSearch,
       includeFuel, includeLoans,
     ],
   );
@@ -171,66 +176,143 @@ export default function FleetExpensesPage() {
   // Keep the URL shareable — a filtered view can be sent to someone else.
   React.useEffect(() => {
     const next = new URLSearchParams();
-    if (from) next.set('from', from);
-    if (to) next.set('to', to);
-    if (category !== ALL) next.set('category', category);
+    if (range.from && range.to) {
+      next.set('from', range.from);
+      next.set('to', range.to);
+    } else {
+      next.set('range', 'all');
+    }
+    if (category) next.set('category', category);
     if (company !== ALL) next.set('company', company);
     if (paymentMethod !== ALL) next.set('payment_method', paymentMethod);
     if (source !== ALL) next.set('source', source);
     if (debouncedSearch) next.set('q', debouncedSearch);
     if (!includeFuel) next.set('include_fuel', 'false');
     if (!includeLoans) next.set('include_loans', 'false');
+    if (uncatOnly) next.set('uncat', '1');
     setSearchParams(next, { replace: true });
   }, [
-    from, to, category, company, paymentMethod, source, debouncedSearch,
-    includeFuel, includeLoans, setSearchParams,
+    range, category, company, paymentMethod, source, debouncedSearch,
+    includeFuel, includeLoans, uncatOnly, setSearchParams,
   ]);
 
   const rowsQuery = useTransactionsPaged(filters);
   const statsQuery = useTransactionStatistics(filters);
-  const deleteMutation = useDeleteTransaction();
-  const reviewQueue = useReviewQueue();
+  const categories = useCategories();
+  const exportMutation = useExportTransactions();
 
-  const [pendingDelete, setPendingDelete] = React.useState<Transaction | null>(null);
-
-  // Flatten the loaded pages. Totals come from the statistics endpoint, so
-  // they describe the whole filtered set regardless of how much is on screen.
   const rows = React.useMemo(
     () => rowsQuery.data?.pages.flatMap((p) => p.data) ?? [],
     [rowsQuery.data],
   );
   const stats = statsQuery.data;
 
+  const visibleRows = React.useMemo(
+    () => (uncatOnly ? rows.filter((r) => !r.category) : rows),
+    [rows, uncatOnly],
+  );
+
+  const dayTotals = React.useMemo(() => {
+    const map = new Map<string, ByDate>();
+    for (const b of stats?.by_date ?? []) map.set(b.date, b);
+    return map;
+  }, [stats]);
+
+  const uncatCount = React.useMemo(
+    () => (stats?.by_category ?? []).find((b) => b.key === null)?.count ?? 0,
+    [stats],
+  );
+
+  /* ── Which preset is active, and which month the strip shows ── */
+  const activePreset: PresetKey = React.useMemo(() => {
+    for (const key of PRESET_OPTIONS) {
+      const [f, to] = presetRange(key);
+      if (f === range.from && to === range.to) return key;
+      if (key === 'all' && !range.from && !range.to) return 'all';
+    }
+    return 'custom';
+  }, [range]);
+
+  const stripMonth = React.useMemo(() => {
+    if (!range.from) return null;
+    const p = cairoParts(range.from);
+    const [f, to] = cairoMonthRange(p.y, p.m);
+    return f === range.from && to === range.to ? { y: p.y, m: p.m } : null;
+  }, [range]);
+
+  const shiftMonth = (delta: number) => {
+    const base = stripMonth ?? (range.from ? cairoParts(range.from) : cairoToday());
+    const [from, to] = cairoMonthRange(base.y, base.m + delta);
+    setRange({ from, to });
+    setCustomMode(false);
+  };
+
+  const rangeLabel = stripMonth
+    ? formatCairoMonth(stripMonth.y, stripMonth.m, i18n.language)
+    : !range.from
+      ? t('fleetExpenses.range.all')
+      : `${formatCairoDate(range.from, i18n.language)} – ${
+          range.to ? formatCairoDate(range.to, i18n.language) : ''
+        }`;
+
+  /* ── Charts. Numbers below are chart GEOMETRY only (pixels are approximate
+        by nature); every figure a human reads goes through formatMoney on the
+        original decimal string. ── */
   const dailySeries = React.useMemo(
     () =>
       (stats?.by_date ?? []).map((b) => ({
-        date: b.key,
-        label: b.key.slice(5),
-        amount: b.total_amount,
+        day: b.date.slice(8).replace(/^0/, ''),
+        value: Number(b.out),
+        out: b.out,
         count: b.count,
       })),
     [stats],
   );
 
-  const typeSeries = React.useMemo(
-    () => (stats?.by_type ?? []).slice(0, 6).map((b) => ({ name: b.key, value: b.total_amount })),
-    [stats],
-  );
+  const donut = React.useMemo(() => {
+    const accents =
+      resolvedTheme === 'dark' ? ['#3987e5', '#d95926'] : ['#2a78d6', '#eb6834'];
+    const gray = resolvedTheme === 'dark' ? '#6C7A71' : '#8A968F';
+
+    const categorized = (stats?.by_category ?? [])
+      .filter((b): b is ByCategory & { key: string } => b.key !== null && b.out !== '0')
+      .sort((a, b) => Number(b.out) - Number(a.out));
+    const top = categorized.slice(0, 2);
+    const rest = categorized.slice(2);
+
+    const labelOf = (b: ByCategory) =>
+      (i18n.language.startsWith('ar') && b.label_ar) || b.label || b.key || '';
+
+    const slices = top.map((b, i) => ({
+      name: labelOf(b),
+      amount: b.out,
+      value: Number(b.out),
+      color: accents[i],
+    }));
+    if (rest.length) {
+      const amount = addMoneyStrings(rest.map((r) => r.out));
+      slices.push({
+        name: t('fleetExpenses.charts.other'),
+        amount,
+        value: Number(amount),
+        color: gray,
+      });
+    }
+    return slices.filter((s) => s.value > 0);
+  }, [stats, resolvedTheme, i18n.language, t]);
+
+  const byCategoryList = React.useMemo(() => {
+    const list = (stats?.by_category ?? []).slice();
+    // Uncategorized last; the rest by spend, biggest first (ordering only).
+    return list.sort((a, b) => {
+      if (a.key === null) return 1;
+      if (b.key === null) return -1;
+      return Number(b.out) - Number(a.out);
+    });
+  }, [stats]);
 
   const isLoading = rowsQuery.isLoading || statsQuery.isLoading;
-
-  const handleExport = React.useCallback(async () => {
-    // Export the full filtered set, not just the pages loaded so far -- a
-    // spreadsheet that silently stops at whatever the user happened to scroll
-    // past is worse than no export.
-    const all = await getAllTransactions(filters);
-    void exportFleetExpenses({
-      rows: all,
-      statistics: stats,
-      t,
-      meta: `${from ?? ''} → ${to ?? ''}`,
-    });
-  }, [filters, stats, t, from, to]);
+  const hasRows = visibleRows.length > 0;
 
   return (
     <PageShell
@@ -251,25 +333,21 @@ export default function FleetExpensesPage() {
             <RefreshCw className={cn('h-4 w-4', isLoading && 'animate-spin')} />
             <span className="hidden sm:inline">{t('common.refresh')}</span>
           </Button>
-          <Button variant="outline" size="sm" onClick={handleExport} disabled={!rows.length}>
-            <Download className="h-4 w-4" />
-            <span className="hidden sm:inline">{t('common.export')}</span>
-          </Button>
+          {/* Server-rendered XLSX over the CURRENT filters — whole set, uncapped. */}
           <Button
             variant="outline"
             size="sm"
-            onClick={() => navigate('/fleet-expenses/review')}
+            onClick={() => exportMutation.mutate(filters)}
+            disabled={exportMutation.isPending}
           >
-            <Inbox className="h-4 w-4" />
-            <span className="hidden sm:inline">{t('review.title')}</span>
-            {reviewQueue.data?.length ? (
-              <span className="ms-1 rounded-full bg-amber-500/20 px-1.5 text-xs text-amber-600 dark:text-amber-400">
-                {reviewQueue.data.length}
-              </span>
-            ) : null}
+            <Download className={cn('h-4 w-4', exportMutation.isPending && 'animate-pulse')} />
+            <span className="hidden sm:inline">{t('common.export')}</span>
           </Button>
           {canManageExpenses && (
-            <Button size="sm" onClick={() => navigate('/fleet-expenses/new')}>
+            <Button
+              size="sm"
+              onClick={() => navigate('/fleet-expenses/new', { state: { from: 'ledger' } })}
+            >
               <Plus className="h-4 w-4" />
               <span className="hidden sm:inline">{t('fleetExpenses.addExpense')}</span>
             </Button>
@@ -277,118 +355,372 @@ export default function FleetExpensesPage() {
         </div>
       }
     >
-      {/* ── Stats ─────────────────────────────────────────────────────────── */}
+      {/* ── Month strip + range escape hatch ─────────────────────────────── */}
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="flex items-center gap-1 rounded-lg border bg-card px-1 py-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => shiftMonth(-1)}
+            aria-label={t('fleetExpenses.range.previousMonth')}
+          >
+            <ChevronLeft className="h-4 w-4 rtl:rotate-180" />
+          </Button>
+          <span className="min-w-28 px-1 text-center text-sm font-semibold">{rangeLabel}</span>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={() => shiftMonth(1)}
+            aria-label={t('fleetExpenses.range.nextMonth')}
+          >
+            <ChevronRight className="h-4 w-4 rtl:rotate-180" />
+          </Button>
+        </div>
+
+        <NativeSelect
+          className="w-40"
+          value={customMode ? 'custom' : activePreset}
+          aria-label={t('fleetExpenses.range.label')}
+          onChange={(e) => {
+            const key = e.target.value as PresetKey;
+            if (key === 'custom') {
+              setCustomMode(true);
+              return;
+            }
+            setCustomMode(false);
+            const [from, to] = presetRange(key);
+            setRange({ from, to });
+          }}
+        >
+          {PRESET_OPTIONS.map((key) => (
+            <option key={key} value={key}>
+              {t(`fleetExpenses.range.${key}`)}
+            </option>
+          ))}
+          <option value="custom">{t('fleetExpenses.range.custom')}</option>
+        </NativeSelect>
+
+        {(customMode || activePreset === 'custom') && (
+          <DateRangePicker
+            from={range.from}
+            to={range.to}
+            onChange={(from, to) => {
+              // The picker hands back browser-local day boundaries; re-anchor
+              // the picked calendar days to CAIRO before they hit the API.
+              const f = from ? localParts(from) : null;
+              const tp = to ? localParts(to) : null;
+              setRange({
+                from: f ? cairoInstant(f.y, f.m, f.d) : null,
+                to: tp ? cairoDayRange(tp.y, tp.m, tp.d)[1] : null,
+              });
+            }}
+          />
+        )}
+      </div>
+
+      {/* ── Summary strip ─────────────────────────────────────────────────── */}
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <StatCard
-          label={t('fleetExpenses.stats.total')}
+          label={t('fleetExpenses.stats.spent')}
           value={{
-            full: formatCurrency(stats?.total_amount ?? 0),
-            compact: formatCompactCurrency(stats?.total_amount ?? 0),
+            full: `${formatMoney(stats?.total_out)} EGP`,
+            // Compact tile figure only — approximate by design.
+            compact: formatCompactCurrency(Number(stats?.total_out ?? 0)),
           }}
-          subvalue={t('fleetExpenses.stats.records', { count: stats?.expense_count ?? 0 })}
-          icon={Wallet}
+          subvalue={t('fleetExpenses.stats.records', { count: stats?.count ?? 0 })}
+          icon={TrendingDown}
           tone="primary"
         />
         <StatCard
-          label={t('fleetExpenses.stats.outflow')}
+          label={t('fleetExpenses.stats.received')}
           value={{
-            full: formatCurrency(stats?.total_out ?? 0),
-            compact: formatCompactCurrency(stats?.total_out ?? 0),
+            full: `${formatMoney(stats?.total_in)} EGP`,
+            compact: formatCompactCurrency(Number(stats?.total_in ?? 0)),
           }}
-          icon={TrendingDown}
-          tone="destructive"
-        />
-        <StatCard
-          label={t('fleetExpenses.stats.avgPerDay')}
-          value={{
-            full: formatCurrency(
-              stats && stats.by_date.length ? stats.total_amount / stats.by_date.length : 0,
-            ),
-            compact: formatCompactCurrency(
-              stats && stats.by_date.length ? stats.total_amount / stats.by_date.length : 0,
-            ),
-          }}
-          subvalue={t('fleetExpenses.stats.daysCovered', { count: stats?.by_date.length ?? 0 })}
-          icon={Activity}
+          icon={TrendingUp}
+          tone="success"
         />
         <StatCard
           label={t('fleetExpenses.stats.fees')}
           value={{
-            full: formatCurrency(stats?.total_fees ?? 0),
-            compact: formatCompactCurrency(stats?.total_fees ?? 0),
+            full: `${formatMoney(stats?.total_fees)} EGP`,
+            compact: formatCompactCurrency(Number(stats?.total_fees ?? 0)),
           }}
           subvalue={t('fleetExpenses.stats.feesHint')}
-          icon={Receipt}
-          tone="warning"
+          icon={Wallet}
         />
+        {/* The uncategorized tile IS the filter — one tap turns the backlog
+            into a workable queue. */}
+        <button
+          type="button"
+          onClick={() => {
+            // The uncategorized view and a category chip are mutually
+            // exclusive — combining them is always an empty list.
+            setUncatOnly((v) => !v);
+            setCategory('');
+          }}
+          className={cn(
+            'rounded-xl text-start outline-none transition-shadow focus-visible:ring-2 focus-visible:ring-ring',
+            uncatOnly && 'ring-2 ring-warning',
+          )}
+          aria-pressed={uncatOnly}
+        >
+          <StatCard
+            label={t('fleetExpenses.stats.uncategorized')}
+            value={t('fleetExpenses.stats.rowsArrow', { count: uncatCount })}
+            subvalue={
+              uncatOnly
+                ? t('fleetExpenses.stats.showingUncategorized')
+                : t('fleetExpenses.stats.tapToFilter')
+            }
+            icon={Receipt}
+            tone={uncatCount > 0 ? 'warning' : 'default'}
+            className="h-full"
+          />
+        </button>
       </div>
+
+      {/* ── Charts (D10: daily spend + category donut survive) ───────────── */}
+      {!isLoading && stats && stats.count > 0 && (
+        <div className="grid gap-4 lg:grid-cols-3">
+          <ChartCard
+            title={t('fleetExpenses.charts.daily')}
+            description={t('fleetExpenses.charts.dailyHint')}
+            className="lg:col-span-2"
+            height={240}
+            padded={false}
+          >
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={dailySeries} margin={{ top: 12, right: 16, bottom: 8, left: 8 }}>
+                <defs>
+                  <linearGradient id="dailySpendFill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
+                    <stop offset="100%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" vertical={false} />
+                <XAxis dataKey="day" tick={themedAxisTickProps} tickLine={false} axisLine={false} />
+                <YAxis
+                  tick={themedAxisTickProps}
+                  tickLine={false}
+                  axisLine={false}
+                  tickFormatter={(v: number) => formatCompactCurrency(v)}
+                  width={70}
+                />
+                <RechartsTooltip
+                  {...themedTooltipProps}
+                  formatter={(...args: unknown[]) => {
+                    // Exact figure from the server's decimal string, not the
+                    // chart's float.
+                    const item = args[2] as { payload?: { out?: string } } | undefined;
+                    return [
+                      `${formatMoney(item?.payload?.out)} EGP`,
+                      t('fleetExpenses.stats.spent'),
+                    ];
+                  }}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="value"
+                  stroke="hsl(var(--primary))"
+                  strokeWidth={2}
+                  fill="url(#dailySpendFill)"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </ChartCard>
+
+          <ChartCard title={t('fleetExpenses.charts.byCategory')} height="auto">
+            {donut.length === 0 ? (
+              <p className="py-6 text-center text-sm text-muted-foreground">
+                {t('fleetExpenses.charts.nothingCategorized')}
+              </p>
+            ) : (
+              <div className="flex items-center gap-4">
+                <PieChart width={120} height={120}>
+                  <Pie
+                    data={donut}
+                    dataKey="value"
+                    nameKey="name"
+                    innerRadius={34}
+                    outerRadius={56}
+                    paddingAngle={2}
+                    stroke="none"
+                  >
+                    {donut.map((slice) => (
+                      <Cell key={slice.name} fill={slice.color} />
+                    ))}
+                  </Pie>
+                </PieChart>
+                <ul className="min-w-0 flex-1 space-y-1.5 text-sm">
+                  {donut.map((slice) => (
+                    <li key={slice.name} className="flex items-center justify-between gap-2">
+                      <span className="flex min-w-0 items-center gap-2">
+                        <i
+                          className="h-2 w-2 shrink-0 rounded-sm"
+                          style={{ background: slice.color }}
+                        />
+                        <span className="truncate" dir="auto">
+                          {slice.name}
+                        </span>
+                      </span>
+                      <span className="tabular-nums font-medium">{formatMoney(slice.amount)}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {uncatCount > 0 && (
+              <p className="mt-3 text-xs text-warning">
+                {t('fleetExpenses.charts.uncategorizedNote', { count: uncatCount })}
+              </p>
+            )}
+          </ChartCard>
+        </div>
+      )}
+
+      {/* ── Breakdowns: by-category list + advances-by-person rollup ─────── */}
+      {!isLoading && stats && stats.count > 0 && (
+        <div className="grid gap-4 sm:grid-cols-2">
+          {byCategoryList.length > 0 && (
+            <ChartCard title={t('fleetExpenses.charts.byCategoryList')} height="auto">
+              <ul className="divide-y text-sm">
+                {byCategoryList.map((b) => (
+                  <li
+                    key={b.key ?? '(none)'}
+                    className="flex items-center justify-between gap-3 py-1.5"
+                  >
+                    <span
+                      className={cn('min-w-0 truncate', b.key === null && 'text-muted-foreground')}
+                      dir="auto"
+                    >
+                      {b.key === null
+                        ? t('fleetExpenses.uncategorized')
+                        : (i18n.language.startsWith('ar') && b.label_ar) || b.label || b.key}
+                    </span>
+                    <span className="flex shrink-0 items-center gap-3">
+                      <span className="text-xs text-muted-foreground">×{b.count}</span>
+                      <span className="tabular-nums font-medium">{formatMoney(b.out)}</span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </ChartCard>
+          )}
+
+          {(stats.by_party.length > 0) && (
+            <ChartCard title={t('fleetExpenses.charts.advancesByPerson')} height="auto">
+              <ul className="divide-y text-sm">
+                {stats.by_party.map((p) => (
+                  <li
+                    key={`${p.driver_id ?? 'e'}-${p.employee_id ?? 'd'}-${p.kind ?? ''}`}
+                    className="flex items-center justify-between gap-3 py-1.5"
+                  >
+                    <span className="flex min-w-0 items-center gap-2">
+                      <span className="truncate font-medium" dir="auto">
+                        {p.name}
+                      </span>
+                      {p.kind && (
+                        <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
+                          {t(`fleetExpenses.loanKind.${p.kind}`, p.kind)}
+                        </span>
+                      )}
+                    </span>
+                    <span className="flex shrink-0 items-center gap-3">
+                      <span className="text-xs text-muted-foreground">×{p.count}</span>
+                      <span className="tabular-nums font-medium">{formatMoney(p.total)}</span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </ChartCard>
+          )}
+        </div>
+      )}
 
       {/* ── Filters ───────────────────────────────────────────────────────── */}
       <div className="space-y-3">
         <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
-        <DateRangePicker
-          from={from}
-          to={to}
-          onChange={(nextFrom, nextTo) => {
-            setFrom(nextFrom);
-            setTo(nextTo);
-          }}
-        />
+          <div className="relative min-w-48 flex-1">
+            <Search className="pointer-events-none absolute start-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder={t('fleetExpenses.searchPlaceholder')}
+              className="ps-9"
+              dir="auto"
+            />
+          </div>
 
-        <div className="relative min-w-[12rem] flex-1">
-          <Search className="pointer-events-none absolute start-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder={t('fleetExpenses.searchPlaceholder')}
-            className="ps-9"
-          />
+          <NativeSelect
+            className="w-36"
+            value={source}
+            onChange={(e) => setSource(e.target.value)}
+            aria-label={t('fleetExpenses.fields.source')}
+          >
+            <option value={ALL}>{t('fleetExpenses.allSources')}</option>
+            {TRANSACTION_SOURCES.map((s) => (
+              <option key={s} value={s}>
+                {t(`fleetExpenses.sources.${s}`, s)}
+              </option>
+            ))}
+          </NativeSelect>
+          <NativeSelect
+            className="w-36"
+            value={company}
+            onChange={(e) => setCompany(e.target.value)}
+            aria-label={t('fleetExpenses.fields.company')}
+          >
+            <option value={ALL}>{t('fleetExpenses.allCompanies')}</option>
+            {COMPANIES.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </NativeSelect>
+          <NativeSelect
+            className="w-36"
+            value={paymentMethod}
+            onChange={(e) => setPaymentMethod(e.target.value)}
+            aria-label={t('fleetExpenses.fields.paymentMethod')}
+          >
+            <option value={ALL}>{t('fleetExpenses.allMethods')}</option>
+            {PAYMENT_METHODS.map((m) => (
+              <option key={m} value={m}>
+                {m}
+              </option>
+            ))}
+          </NativeSelect>
         </div>
 
-        <FilterSelect
-          value={category}
-          onChange={setCategory}
-          placeholder={t('fleetExpenses.fields.expenseType')}
-          options={EXPENSE_TYPES}
-          allLabel={t('fleetExpenses.allTypes')}
-        />
-        <FilterSelect
-          value={company}
-          onChange={setCompany}
-          placeholder={t('fleetExpenses.fields.company')}
-          options={COMPANIES}
-          allLabel={t('fleetExpenses.allCompanies')}
-        />
-        <FilterSelect
-          value={paymentMethod}
-          onChange={setPaymentMethod}
-          placeholder={t('fleetExpenses.fields.paymentMethod')}
-          options={PAYMENT_METHODS}
-          allLabel={t('fleetExpenses.allMethods')}
-        />
-        <FilterSelect
-          value={source}
-          onChange={setSource}
-          placeholder={t('fleetExpenses.fields.source')}
-          options={TRANSACTION_SOURCES}
-          allLabel={t('fleetExpenses.allSources')}
-          translateOptions="fleetExpenses.sources"
-        />
-
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={() => setGrouped((g) => !g)}
-          aria-label={t('fleetExpenses.toggleGrouping')}
-          className="shrink-0"
-        >
-          {grouped ? <LayoutGrid className="h-4 w-4" /> : <List className="h-4 w-4" />}
-        </Button>
+        {/* Category chips — one tap, horizontally scrollable on phones. */}
+        <div className="flex gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none]">
+          <FilterChip
+            active={!category && !uncatOnly}
+            onClick={() => {
+              setCategory('');
+              setUncatOnly(false);
+            }}
+          >
+            {t('fleetExpenses.allCategories')}
+          </FilterChip>
+          {(categories.data ?? []).map((c) => (
+            <FilterChip
+              key={c.key}
+              active={category === c.key}
+              onClick={() => {
+                setCategory(category === c.key ? '' : c.key);
+                setUncatOnly(false);
+              }}
+            >
+              {categoryLabel(c, i18n.language)}
+            </FilterChip>
+          ))}
         </div>
 
-        {/* Source toggles, matching the legacy include_fuel / include_loans
-            flags. Kept visually distinct from the filters above because they
-            change WHICH LEDGERS are summed, not just which rows are shown. */}
+        {/* Source toggles: they change WHICH LEDGERS are summed (D4). */}
         <div className="flex flex-wrap items-center gap-4 rounded-lg border bg-muted/30 px-3 py-2">
           <div className="flex items-center gap-2">
             <Fuel className="h-4 w-4 text-amber-500" />
@@ -407,111 +739,29 @@ export default function FleetExpensesPage() {
         </div>
       </div>
 
-      {/* ── Charts ────────────────────────────────────────────────────────── */}
-      {!isLoading && rows.length > 0 && (
-        <div className="grid gap-4 lg:grid-cols-3">
-          <ChartCard
-            title={t('fleetExpenses.charts.daily')}
-            description={t('fleetExpenses.charts.dailyHint')}
-            className="lg:col-span-2"
-            height={280}
-            padded={false}
-          >
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={dailySeries} margin={{ top: 12, right: 16, bottom: 8, left: 8 }}>
-                <defs>
-                  <linearGradient id="expenseFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#3B82F6" stopOpacity={0.35} />
-                    <stop offset="100%" stopColor="#3B82F6" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" vertical={false} />
-                <XAxis dataKey="label" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
-                <YAxis
-                  tick={{ fontSize: 11 }}
-                  tickLine={false}
-                  axisLine={false}
-                  tickFormatter={(v: number) => formatCompactCurrency(v)}
-                  width={64}
-                />
-                <RechartsTooltip
-                  formatter={(v: number) => formatCurrency(v)}
-                  labelFormatter={(l: string) => l}
-                  {...TOOLTIP_STYLES}
-                />
-                <Area
-                  type="monotone"
-                  dataKey="amount"
-                  stroke="#3B82F6"
-                  strokeWidth={2}
-                  fill="url(#expenseFill)"
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </ChartCard>
-
-          <ChartCard title={t('fleetExpenses.charts.byType')} height={280}>
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={typeSeries}
-                  dataKey="value"
-                  nameKey="name"
-                  innerRadius={50}
-                  outerRadius={85}
-                  paddingAngle={2}
-                >
-                  {typeSeries.map((_, i) => (
-                    <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />
-                  ))}
-                </Pie>
-                <RechartsTooltip
-                  formatter={(v: number) => formatCurrency(v)}
-                  {...TOOLTIP_STYLES}
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          </ChartCard>
-        </div>
-      )}
-
-      {/* ── Breakdowns ────────────────────────────────────────────────────── */}
-      {!isLoading && stats && rows.length > 0 && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <BreakdownCard
-            title={t('fleetExpenses.charts.byCar')}
-            items={stats.by_car}
-            total={stats.total_amount}
-          />
-          <BreakdownCard
-            title={t('fleetExpenses.charts.byCompany')}
-            items={stats.by_company}
-            total={stats.total_amount}
-          />
-          <BreakdownCard
-            title={t('fleetExpenses.charts.bySource')}
-            items={stats.by_source}
-            total={stats.total_amount}
-            translatePrefix="fleetExpenses.sources"
-          />
-        </div>
-      )}
-
-      {/* ── Table ─────────────────────────────────────────────────────────── */}
+      {/* ── The ledger ────────────────────────────────────────────────────── */}
       {isLoading ? (
         <div className="space-y-2">
           {Array.from({ length: 6 }).map((_, i) => (
-            <Skeleton key={i} className="h-12 w-full" />
+            <Skeleton key={i} className="h-14 w-full" />
           ))}
         </div>
-      ) : rows.length === 0 ? (
+      ) : !hasRows ? (
         <EmptyState
           icon={<Receipt className="h-8 w-8" />}
-          title={t('fleetExpenses.noExpenses')}
-          description={t('fleetExpenses.noExpensesDescription')}
+          title={
+            uncatOnly ? t('fleetExpenses.noUncategorized') : t('fleetExpenses.noExpenses')
+          }
+          description={
+            uncatOnly
+              ? t('fleetExpenses.noUncategorizedDescription')
+              : t('fleetExpenses.noExpensesDescription')
+          }
           action={
-            canManageExpenses ? (
-              <Button onClick={() => navigate('/fleet-expenses/new')}>
+            canManageExpenses && !uncatOnly ? (
+              <Button
+                onClick={() => navigate('/fleet-expenses/new', { state: { from: 'ledger' } })}
+              >
                 <Plus className="h-4 w-4" />
                 {t('fleetExpenses.addExpense')}
               </Button>
@@ -519,56 +769,41 @@ export default function FleetExpensesPage() {
           }
         />
       ) : (
-        <>
-          <FleetExpensesTable
-            rows={rows}
-            grouped={grouped}
-            canEdit={canManageExpenses}
-            onEdit={(row) => navigate(`/fleet-expenses/${row.id}/edit`)}
-            onDelete={setPendingDelete}
-          />
-
-          {/* Shows how much of the filtered set is on screen, so a partial view
-              is never mistaken for the whole thing. */}
-          <div className="flex flex-col items-center gap-2 py-2">
-            <p className="text-xs text-muted-foreground">
-              {t('fleetExpenses.showingCount', {
-                shown: rows.length,
-                total: stats?.expense_count ?? rows.length,
-              })}
-            </p>
-            {rowsQuery.hasNextPage && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => void rowsQuery.fetchNextPage()}
-                disabled={rowsQuery.isFetchingNextPage}
-                className="w-full sm:w-auto"
-              >
-                {rowsQuery.isFetchingNextPage ? t('common.loading') : t('common.loadMore')}
-              </Button>
-            )}
-          </div>
-        </>
+        <LedgerList rows={visibleRows} dayTotals={dayTotals} canEdit={canManageExpenses} />
       )}
 
-      <ConfirmDialog
-        open={!!pendingDelete}
-        onOpenChange={(open) => !open && setPendingDelete(null)}
-        title={t('fleetExpenses.deleteConfirmTitle')}
-        description={t('fleetExpenses.deleteConfirmDescription', {
-          amount: formatCurrency(pendingDelete?.amount ?? 0),
-        })}
-        confirmLabel={t('common.delete')}
-        variant="destructive"
-        onConfirm={() => {
-          if (!pendingDelete) return;
-          deleteMutation.mutate(
-            { id: pendingDelete.id, version: pendingDelete.version },
-            { onSettled: () => setPendingDelete(null) },
-          );
-        }}
-      />
+      {/* Quiet link into Messages — replaces the amber queue badge. */}
+      <div className="border-b bg-card px-3 py-2.5 text-xs text-muted-foreground">
+        {t('fleetExpenses.ignoredMessages')}{' '}
+        <Link
+          to="/fleet-expenses/messages"
+          className="font-semibold text-primary hover:underline"
+        >
+          {t('fleetExpenses.reviewLink')} ›
+        </Link>
+      </div>
+
+      {!isLoading && hasRows && (
+        <div className="flex flex-col items-center gap-2 py-1">
+          <p className="text-xs text-muted-foreground">
+            {t('fleetExpenses.showingCount', {
+              shown: visibleRows.length,
+              total: stats?.count ?? rows.length,
+            })}
+          </p>
+          {rowsQuery.hasNextPage && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => void rowsQuery.fetchNextPage()}
+              disabled={rowsQuery.isFetchingNextPage}
+              className="w-full sm:w-auto"
+            >
+              {rowsQuery.isFetchingNextPage ? t('common.loading') : t('common.loadMore')}
+            </Button>
+          )}
+        </div>
+      )}
     </PageShell>
   );
 }
@@ -577,66 +812,27 @@ export default function FleetExpensesPage() {
 /* Bits                                                                        */
 /* -------------------------------------------------------------------------- */
 
-function FilterSelect({
-  value,
-  onChange,
-  placeholder,
-  options,
-  allLabel,
-  translateOptions,
+function FilterChip({
+  active,
+  onClick,
+  children,
 }: {
-  value: string;
-  onChange: (v: string) => void;
-  placeholder: string;
-  options: readonly string[];
-  allLabel: string;
-  translateOptions?: string;
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
 }) {
-  const { t } = useTranslation();
   return (
-    <Select value={value} onValueChange={onChange}>
-      <SelectTrigger className="w-auto min-w-[9rem]">
-        <SelectValue placeholder={placeholder} />
-      </SelectTrigger>
-      <SelectContent>
-        <SelectItem value={ALL}>{allLabel}</SelectItem>
-        {options.map((option) => (
-          <SelectItem key={option} value={option}>
-            {translateOptions ? t(`${translateOptions}.${option}`, option) : option}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
-  );
-}
-
-function BreakdownCard({
-  title,
-  items,
-  total,
-  translatePrefix,
-}: {
-  title: string;
-  items: Array<{ key: string; count: number; total_amount: number }>;
-  total: number;
-  translatePrefix?: string;
-}) {
-  const { t } = useTranslation();
-  if (!items.length) return null;
-
-  return (
-    <ChartCard title={title} height="auto">
-      <RankedList
-        items={items.slice(0, 6).map((item) => ({
-          id: item.key,
-          label: translatePrefix ? t(`${translatePrefix}.${item.key}`, item.key) : item.key,
-          value: item.total_amount,
-          valueLabel: formatCurrency(item.total_amount),
-          countLabel: `×${item.count}`,
-          sublabel:
-            total > 0 ? `${((item.total_amount / total) * 100).toFixed(1)}%` : undefined,
-        }))}
-      />
-    </ChartCard>
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        'min-h-8 shrink-0 rounded-full border px-3 py-1 text-xs font-semibold transition-colors',
+        active
+          ? 'border-foreground bg-foreground text-background'
+          : 'bg-card text-muted-foreground hover:bg-accent',
+      )}
+    >
+      {children}
+    </button>
   );
 }

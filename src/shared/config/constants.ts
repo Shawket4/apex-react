@@ -43,9 +43,10 @@ export const QUERY_KEYS = {
   transaction: (id: number | string) => ['transactions', String(id)] as const,
   transactionList: (filters: unknown) => ['transactions', 'list', filters] as const,
   transactionStats: (filters: unknown) => ['transactions', 'stats', filters] as const,
-  /** Raw WhatsApp messages: review queue, ignored audit, reclassification. */
-  rawMessages: ['raw-messages'] as const,
-  tags: ['tags'] as const,
+  /** WhatsApp messages with the parser's verdict: ignored/suppressed/matched. */
+  messages: ['messages'] as const,
+  message: (id: number | string) => ['messages', String(id)] as const,
+  messageList: (filters: unknown) => ['messages', 'list', filters] as const,
   categories: ['categories'] as const,
   parties: ['parties'] as const,
   vehicles: ['vehicles'] as const,

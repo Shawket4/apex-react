@@ -1,23 +1,17 @@
 import { apiClientRust } from '@/shared/api/client';
+import { cairoInstantFromInputs } from '@/shared/lib/cairo';
 import {
   statisticsSchema,
   transactionPageSchema,
   transactionSchema,
-  type ExpenseFormValues,
   type Transaction,
   type TransactionFilters,
+  type TransactionFormValues,
   type TransactionPage,
   type TransactionStatistics,
+  type TransactionWriteExtras,
 } from './schemas';
 
-/**
- * All calls hit apex-rust's `banksms` API under /api/v1/transactions.
- *
- * The legacy `/api/v1/fleet-expenses` endpoints are deliberately NOT used and
- * must not be reintroduced here: they read public.fleet_expenses, which this
- * module replaces. Those rows now live in banksms.transactions as
- * `source: 'import'`.
- */
 const BASE = '/api/v1/transactions';
 
 /** Drop empty strings so they don't become `?category=` and match nothing. */
@@ -30,7 +24,7 @@ function toParams(filters: TransactionFilters): Record<string, string> {
   return params;
 }
 
-/* ─── List (cursor-paginated) ─── */
+/* ─── List (cursor-paginated, occurred_at DESC keyset) ─── */
 export async function getTransactions(
   filters: TransactionFilters,
   cursor?: string | null,
@@ -42,37 +36,13 @@ export async function getTransactions(
   return transactionPageSchema.parse(response.data);
 }
 
-/**
- * Walk every page for the current filters.
- *
- * The list endpoint is cursor-paginated and caps at 200 rows per request, but
- * the expenses view needs the full filtered set to chart and export it. Bounded
- * so a careless filter cannot spin forever.
- */
-export async function getAllTransactions(
-  filters: TransactionFilters,
-  maxPages = 25,
-): Promise<Transaction[]> {
-  const all: Transaction[] = [];
-  let cursor: string | null | undefined = undefined;
-
-  for (let page = 0; page < maxPages; page += 1) {
-    const result: TransactionPage = await getTransactions(filters, cursor, 200);
-    all.push(...result.data);
-    if (!result.next_cursor) return all;
-    cursor = result.next_cursor;
-  }
-
-  return all;
-}
-
-/* ─── Single ─── */
+/* ─── Single (carries raw_body/raw_wa_timestamp for whatsapp rows) ─── */
 export async function getTransaction(id: number): Promise<Transaction> {
   const response = await apiClientRust.get(`${BASE}/${id}`);
   return transactionSchema.parse(response.data);
 }
 
-/* ─── Aggregates ─── */
+/* ─── Aggregates — the only place totals come from ─── */
 export async function getTransactionStatistics(
   filters: TransactionFilters,
 ): Promise<TransactionStatistics> {
@@ -82,81 +52,101 @@ export async function getTransactionStatistics(
   return statisticsSchema.parse(response.data);
 }
 
-/* ─── Create ─── */
-export async function createTransaction(
-  values: ExpenseFormValues & { car_id?: number | null },
-): Promise<Transaction> {
-  const response = await apiClientRust.post(BASE, {
-    ...values,
-    // Amount goes back as a string: the backend parses it into a Decimal, and
-    // routing it through a JS float first is how cents go missing.
-    amount: String(values.amount),
-    // A date-only input means "that business day"; send it as an instant.
-    occurred_at: toInstant(values.occurred_at),
+/* ─── Export — the server renders the workbook over the whole filtered set ─── */
+export async function exportTransactions(
+  filters: TransactionFilters,
+): Promise<{ blob: Blob; filename: string }> {
+  const response = await apiClientRust.get(`${BASE}/export`, {
+    params: toParams(filters),
+    responseType: 'blob',
+    // A wide range takes longer than an API call; don't trip the 15s default.
+    timeout: 60_000,
   });
+
+  const blob = new Blob([response.data as BlobPart], {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  });
+
+  let filename = 'expenses.xlsx';
+  const disposition = response.headers?.['content-disposition'];
+  if (typeof disposition === 'string') {
+    const match = disposition.match(/filename="?([^";]+)"?/i);
+    if (match?.[1]) filename = match[1];
+  }
+  return { blob, filename };
+}
+
+/* ─── Payload assembly ─── */
+
+/**
+ * Form values → wire body. The amount goes through VERBATIM as a string;
+ * date + time inputs (Cairo wall clock) combine into one RFC3339 instant.
+ * `nullEmpty` controls what happens to cleared optional text: POST omits it,
+ * PATCH sends null so the server actually clears the column.
+ */
+function toPayload(
+  values: Partial<TransactionFormValues> & TransactionWriteExtras,
+  nullEmpty: boolean,
+): Record<string, unknown> {
+  const payload: Record<string, unknown> = {};
+
+  const text = (key: keyof TransactionFormValues) => {
+    const v = values[key];
+    if (v === undefined) return;
+    const trimmed = String(v).trim();
+    if (trimmed === '') {
+      if (nullEmpty) payload[key] = null;
+      return;
+    }
+    payload[key] = trimmed;
+  };
+
+  if (values.direction !== undefined) payload.direction = values.direction;
+  if (values.amount !== undefined) payload.amount = values.amount.trim();
+  text('currency');
+  if (values.occurred_date) {
+    payload.occurred_at = cairoInstantFromInputs(values.occurred_date, values.occurred_time);
+  }
+  text('category');
+  text('account');
+  text('counterparty');
+  text('reference');
+  text('description');
+  text('payment_method');
+  text('company');
+  text('paid_by');
+
+  if (values.car_id !== undefined) payload.car_id = values.car_id;
+  if (values.driver_id !== undefined) payload.driver_id = values.driver_id;
+  if (values.employee_id !== undefined) payload.employee_id = values.employee_id;
+  if (values.raw_message_id !== undefined) payload.raw_message_id = values.raw_message_id;
+
+  return payload;
+}
+
+/* ─── Create (raw_message_id present = promotion of an ignored message) ─── */
+export async function createTransaction(
+  values: TransactionFormValues & TransactionWriteExtras,
+): Promise<Transaction> {
+  const response = await apiClientRust.post(BASE, toPayload(values, false));
   return transactionSchema.parse(response.data);
 }
 
-/* ─── Update ─── */
-/**
- * Partial update. `version` becomes the `If-Match` header — the server rejects
- * a stale one with 409 rather than silently overwriting a concurrent edit.
- *
- * Corrections to parser-owned fields (amount, counterparty, occurred_at, …) are
- * recorded as overrides server-side; the SMS's original reading is preserved and
- * visible under `parsed`.
- */
+/* ─── Update (If-Match; 409 = concurrent edit or settled loan) ─── */
 export async function updateTransaction(
   id: number,
   version: number,
-  values: Partial<ExpenseFormValues> & {
-    /** null clears the party; undefined leaves it alone. */
-    driver_id?: number | null;
-    employee_id?: number | null;
-    car_id?: number | null;
-  },
+  values: Partial<TransactionFormValues> & TransactionWriteExtras,
 ): Promise<Transaction> {
-  const payload: Record<string, unknown> = { ...values };
-  if (values.amount !== undefined) payload.amount = String(values.amount);
-  if (values.occurred_at) payload.occurred_at = toInstant(values.occurred_at);
-
-  const response = await apiClientRust.patch(`${BASE}/${id}`, payload, {
+  const response = await apiClientRust.patch(`${BASE}/${id}`, toPayload(values, true), {
     headers: { 'If-Match': String(version) },
   });
   return transactionSchema.parse(response.data);
 }
 
-/* ─── Soft delete ─── */
+/* ─── Soft delete (also soft-deletes a linked unpaid loan) ─── */
 export async function deleteTransaction(id: number, version: number): Promise<void> {
   await apiClientRust.delete(`${BASE}/${id}`, {
     headers: { 'If-Match': String(version) },
   });
-}
-
-/* ─── Override history ─── */
-export interface OverrideHistoryEntry {
-  field: string;
-  value: string | null;
-  is_cleared: boolean;
-  actor: string | null;
-  set_at: string;
-  superseded_at: string | null;
-  is_current: boolean;
-}
-
-export async function getTransactionHistory(id: number): Promise<OverrideHistoryEntry[]> {
-  const response = await apiClientRust.get<OverrideHistoryEntry[]>(`${BASE}/${id}/history`);
-  return response.data ?? [];
-}
-
-/**
- * `<input type="date">` yields `YYYY-MM-DD`. Sent bare, the backend would read
- * it as midnight UTC, which lands on the previous day in Cairo (UTC+2/+3) and
- * silently shifts rows between months in reports. Anchoring at local midday
- * keeps the calendar date the user picked.
- */
-function toInstant(dateOnly: string): string {
-  if (!dateOnly) return dateOnly;
-  if (dateOnly.includes('T')) return dateOnly;
-  return new Date(`${dateOnly}T12:00:00`).toISOString();
 }

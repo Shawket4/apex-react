@@ -1,15 +1,20 @@
 import { useInfiniteQuery, useMutation, useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
+import { saveAs } from 'file-saver';
 import {
-  getTransactions,
   createTransaction,
   deleteTransaction,
+  exportTransactions,
   getTransaction,
-  getTransactionHistory,
+  getTransactions,
   getTransactionStatistics,
   updateTransaction,
 } from './api';
-import type { ExpenseFormValues, TransactionFilters } from './schemas';
+import type {
+  TransactionFilters,
+  TransactionFormValues,
+  TransactionWriteExtras,
+} from './schemas';
 import { QUERY_KEYS } from '@/shared/config/constants';
 import { queryClient } from '@/shared/api/query';
 import { toast } from '@/shared/ui/toaster';
@@ -18,25 +23,19 @@ import { extractErrorMessage } from '@/shared/api/errors';
 /** Invalidate every transaction-derived query after a write. */
 function invalidateAll(): void {
   void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.transactions });
+  // Promoting a message mints a transaction; the messages list is stale too.
+  void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.messages });
 }
 
-/* ─── List (paged) ─── */
+/* ─── List (cursor-paged) ─── */
 
 /** Rows fetched per request. The API caps a page at 200. */
 const PAGE_SIZE = 100;
 
 /**
- * Cursor-paged list.
- *
- * Replaces an eager walk that pulled up to 25 pages (5,000 rows) on every
- * filter change and rendered all of them. That was slow on wide date ranges
- * and, worse, silently truncated: past 5,000 rows the table simply stopped,
- * with nothing to say so.
- *
- * The charts and breakdowns are unaffected because they come from
+ * Cursor-paged list. Totals never come from these rows — they come from
  * /transactions/statistics, which aggregates server-side over the whole
- * filtered set. So totals stay correct no matter how many pages are loaded --
- * only the visible rows are incremental.
+ * filtered set, so a partially-loaded list still shows correct numbers.
  */
 export function useTransactionsPaged(filters: TransactionFilters) {
   return useInfiniteQuery({
@@ -67,27 +66,41 @@ export function useTransaction(id: number | undefined) {
   });
 }
 
-/* ─── Override history ─── */
-export function useTransactionHistory(id: number | undefined) {
-  return useQuery({
-    queryKey: id ? [...QUERY_KEYS.transaction(id), 'history'] : ['transactions', 'none'],
-    queryFn: () => getTransactionHistory(id!),
-    enabled: !!id,
-  });
+/* ─── 409 handling ─── */
+
+/**
+ * The API has two distinct 409s on writes: "version conflict" (someone else
+ * edited the row since it was loaded) and "registered loan is already
+ * settled; unsettle it in FalconGo first". The second message says exactly
+ * what to do, so it is surfaced verbatim rather than flattened into the
+ * generic conflict copy.
+ */
+function conflictMessage(error: unknown, fallback: string, versionCopy: string): string {
+  const status = (error as { status?: number })?.status;
+  if (status !== 409) return extractErrorMessage(error, fallback);
+  const message = extractErrorMessage(error, '');
+  if (message && message !== 'version conflict') return message;
+  return versionCopy;
 }
 
 /* ─── Create ─── */
 export function useCreateTransaction() {
   const { t } = useTranslation();
   return useMutation({
-    mutationFn: (values: ExpenseFormValues & { car_id?: number | null }) =>
+    mutationFn: (values: TransactionFormValues & TransactionWriteExtras) =>
       createTransaction(values),
     onSuccess: () => {
       invalidateAll();
       toast.success(t('fleetExpenses.recordedSuccessfully'));
     },
     onError: (error) => {
-      toast.error(extractErrorMessage(error, t('fleetExpenses.saveFailed')));
+      toast.error(
+        conflictMessage(
+          error,
+          t('fleetExpenses.saveFailed'),
+          t('fleetExpenses.versionConflict'),
+        ),
+      );
     },
   });
 }
@@ -103,24 +116,19 @@ export function useUpdateTransaction() {
     }: {
       id: number;
       version: number;
-      values: Partial<ExpenseFormValues> & {
-        driver_id?: number | null;
-        employee_id?: number | null;
-        car_id?: number | null;
-      };
+      values: Partial<TransactionFormValues> & TransactionWriteExtras;
     }) => updateTransaction(id, version, values),
     onSuccess: () => {
       invalidateAll();
       toast.success(t('fleetExpenses.updatedSuccessfully'));
     },
     onError: (error) => {
-      // A 409 means someone else edited the row since it was loaded. Say that,
-      // rather than surfacing a raw "Conflict".
-      const status = (error as { response?: { status?: number } })?.response?.status;
       toast.error(
-        status === 409
-          ? t('fleetExpenses.versionConflict')
-          : extractErrorMessage(error, t('fleetExpenses.saveFailed')),
+        conflictMessage(
+          error,
+          t('fleetExpenses.saveFailed'),
+          t('fleetExpenses.versionConflict'),
+        ),
       );
     },
   });
@@ -137,12 +145,34 @@ export function useDeleteTransaction() {
       toast.success(t('fleetExpenses.deletedSuccessfully'));
     },
     onError: (error) => {
-      const status = (error as { response?: { status?: number } })?.response?.status;
       toast.error(
-        status === 409
-          ? t('fleetExpenses.versionConflict')
-          : extractErrorMessage(error, t('fleetExpenses.deleteFailed')),
+        conflictMessage(
+          error,
+          t('fleetExpenses.deleteFailed'),
+          t('fleetExpenses.versionConflict'),
+        ),
       );
+    },
+  });
+}
+
+/* ─── Export ─── */
+
+/**
+ * Server-rendered XLSX over the current filters — the whole filtered set,
+ * uncapped. Fetched through the API client (not a bare <a href>) so the
+ * Authorization header travels with it in Tauri builds where the cookie
+ * doesn't; the Content-Disposition filename is honoured either way.
+ */
+export function useExportTransactions() {
+  const { t } = useTranslation();
+  return useMutation({
+    mutationFn: (filters: TransactionFilters) => exportTransactions(filters),
+    onSuccess: ({ blob, filename }) => {
+      saveAs(blob, filename);
+    },
+    onError: (error) => {
+      toast.error(extractErrorMessage(error, t('fleetExpenses.exportFailed')));
     },
   });
 }

@@ -1342,60 +1342,73 @@
     "formSubtitle": "Amounts, dates and categories are stored to the cent",
     "addExpense": "Add expense",
     "editExpense": "Edit expense",
+    "transactionTitle": "Transaction #{{id}}",
     "searchPlaceholder": "Search description, counterparty or reference...",
     "noExpenses": "No expenses in this range",
     "noExpensesDescription": "Try widening the date range, or add an expense manually.",
+    "noUncategorized": "Nothing left to categorize",
+    "noUncategorizedDescription": "Every loaded row in this range has a category. Load more rows or clear the filter.",
     "recordedSuccessfully": "Expense recorded",
     "updatedSuccessfully": "Expense updated",
     "deletedSuccessfully": "Expense deleted",
     "deleteConfirmTitle": "Delete this expense?",
-    "deleteConfirmDescription": "This removes the {{amount}} entry from reports. Parsed bank messages are kept, so it can be restored by an administrator.",
+    "deleteConfirmDescription": "This removes the {{amount}} entry from reports. If it registered an unpaid advance or loan, that is removed with it.",
     "deleteFailed": "Failed to delete expense",
     "saveFailed": "Failed to save expense",
-    "loadFailed": "Failed to load expense",
+    "exportFailed": "Export failed",
     "versionConflict": "Someone else changed this expense while you were editing. Reload and try again.",
-    "edited": "Edited",
-    "originalReading": "Original bank message",
-    "parsedByTemplate": "Matched template: {{template}}",
-    "toggleGrouping": "Toggle monthly grouping",
-    "allTypes": "All types",
+    "editedBy": "Edited by {{name}} · {{date}}",
+    "allCategories": "All",
     "allCompanies": "All companies",
     "allMethods": "All methods",
     "allSources": "All sources",
-    "breakdownTitle": "Breakdown",
-    "breakdownDimension": "Dimension",
-    "breakdownKey": "Value",
+    "range": {
+      "label": "Date range",
+      "thisMonth": "This month",
+      "lastMonth": "Last month",
+      "last3Months": "Last 3 months",
+      "thisYear": "This year",
+      "all": "All time",
+      "custom": "Custom range",
+      "previousMonth": "Previous month",
+      "nextMonth": "Next month"
+    },
     "stats": {
-      "total": "Total",
-      "outflow": "Money out",
-      "avgPerDay": "Average per day",
+      "spent": "Spent",
+      "received": "Received",
       "fees": "IPN fees",
       "feesHint": "Derived from fee-inclusive amounts",
-      "count": "Records",
+      "uncategorized": "Uncategorized",
       "records": "{{count}} records",
-      "daysCovered": "{{count}} days"
+      "rowsArrow": "{{count}} rows →",
+      "tapToFilter": "Tap to work the backlog",
+      "showingUncategorized": "Showing uncategorized only"
     },
     "charts": {
       "daily": "Daily spend",
       "dailyHint": "Grouped by day, Cairo time",
-      "byType": "By type",
-      "byCar": "Top vehicles",
-      "byCompany": "By company",
-      "bySource": "By source"
+      "byCategory": "By category",
+      "byCategoryList": "Spend by category",
+      "advancesByPerson": "Advances & loans by person",
+      "other": "Other",
+      "nothingCategorized": "Nothing categorized in this range yet.",
+      "uncategorizedNote": "Categorized spend only — {{count}} rows await a category."
     },
     "sources": {
       "import": "Imported",
       "whatsapp": "Bank SMS",
       "manual": "Manual",
-      "(none)": "Unassigned",
       "fuel_event": "Fuel",
       "loan": "Loan"
     },
     "fields": {
       "amount": "Amount",
+      "currency": "Currency",
+      "direction": "Direction",
       "fee": "IPN fee",
       "date": "Date",
-      "expenseType": "Type",
+      "time": "Time",
+      "expenseType": "Category",
       "car": "Vehicle",
       "company": "Company",
       "paymentMethod": "Payment method",
@@ -1403,13 +1416,43 @@
       "counterparty": "Counterparty",
       "description": "Description",
       "reference": "Reference",
+      "account": "Account",
       "source": "Source"
     },
+    "direction": {
+      "out": "Out",
+      "in": "In"
+    },
     "principal": "Principal",
+    "receivedPill": "received",
     "readOnlySource": "Read-only — owned by another system",
     "readOnlyExplain": "This row comes from the fuel or loans system and is shown here for reporting only. Edit it in its own module.",
     "includeFuel": "Fuel events",
     "includeLoans": "Driver loans",
+    "uncategorized": "Uncategorized",
+    "addCategory": "category",
+    "chooseCategory": "Set a category",
+    "toWhom": "To whom?",
+    "partyRequired": "This category needs a person — choose who.",
+    "loanChip": "Registered as an {{kind}} to {{name}} — {{status}}",
+    "loanKind": {
+      "advance": "advance",
+      "loan": "loan",
+      "salary": "part of salary"
+    },
+    "loanStatus": {
+      "paid": "paid",
+      "unpaid": "unpaid"
+    },
+    "loanSyncNote": "Edits keep it in sync until it is settled.",
+    "loanSettledNote": "Settled — money-relevant edits are refused until it is unsettled in FalconGo.",
+    "sourceMessage": "Source message",
+    "tapToCopy": "Tap to copy",
+    "copied": "Copied",
+    "copyFailed": "Could not copy",
+    "promoteAmountHint": "The amount is never prefilled — copy it from the message and type what the bank actually said.",
+    "ignoredMessages": "Ignored messages ·",
+    "reviewLink": "review",
     "party": {
       "label": "Person",
       "placeholder": "Select a driver or employee",
@@ -1420,52 +1463,36 @@
       "employees": "Employees",
       "employeeCreated": "Employee added",
       "createFailed": "Could not add the employee",
-      "willPost": "Verifying this will register it as a loan for that person.",
-      "postsNow": "This will be registered as a loan for the selected person."
+      "postsNow": "Saving registers this as an advance/loan for the selected person."
     },
     "showingCount": "Showing {{shown}} of {{total}}"
   },
-  "review": {
-    "title": "Review queue",
-    "subtitle": "Bank messages that need a human decision",
+  "messages": {
+    "title": "Messages",
+    "subtitle": "Every verdict the parser made — searchable, nothing hidden",
     "backToExpenses": "Expenses",
-    "score": "score",
-    "fromMe": "sent by us",
-    "emptyBody": "(no text — media message)",
-    "seenTimes": "seen {{count}}x",
-    "markedAsNoise": "Marked as noise. Future messages like it are ignored automatically.",
-    "markedAsTransaction": "Queued for parsing as a transaction.",
-    "reparsed": "Re-parsed.",
-    "actionFailed": "Action failed",
-    "tabs": {
-      "queue": "Needs review",
-      "ignored": "Ignored"
-    },
-    "stats": {
-      "queue": "In queue",
-      "recurring": "Recurring formats",
-      "recurringHint": "Seen more than once — likely a changed bank format",
+    "chips": {
       "ignored": "Ignored",
-      "ignoredHint": "Rejected by the triage gate"
+      "suppressed": "Suppressed",
+      "matched": "Matched",
+      "media": "Media"
     },
-    "empty": {
-      "queue": "Nothing to review",
-      "queueHint": "Every bank message parsed cleanly.",
-      "ignored": "Nothing ignored yet",
-      "ignoredHint": "Messages the triage gate rejects appear here for auditing."
-    },
-    "actions": {
-      "isTransaction": "It's a transaction",
-      "isNoise": "It's not a transaction",
-      "reparse": "Re-parse"
-    },
+    "searchPlaceholder": "Search message text...",
     "status": {
-      "pending": "Pending",
-      "parsed": "Parsed",
-      "partial": "Partial",
-      "unmatched": "Unmatched",
-      "ignored": "Ignored",
-      "error": "Error"
-    }
+      "ignored": "ignored",
+      "suppressed": "suppressed",
+      "matched": "matched"
+    },
+    "recordedPill": "ignored · recorded ✓",
+    "suppressedWhy": "Excluded on purpose: PetroApp fuel already arrives from the PetroApp sync — recording this SMS would double-count it.",
+    "toTransaction": "→ transaction #{{id}}",
+    "recordedAs": "→ recorded manually as transaction #{{id}}",
+    "recordAsTransaction": "Record as transaction",
+    "empty": {
+      "title": "No messages here",
+      "hint": "Nothing with this status matches the current search."
+    },
+    "emptyBody": "(no text — media message)",
+    "fromMe": "sent by us"
   }
 }

@@ -124,7 +124,10 @@ export function PartyPicker({
         </Button>
       </PopoverTrigger>
 
-      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+      {/* z-bumped above the Sheet overlay (z-[9999]) so the picker works when
+          it renders inside the inline-category bottom sheet as well as on the
+          plain edit form. */}
+      <PopoverContent className="z-[10060] w-[--radix-popover-trigger-width] p-0" align="start">
         <Command shouldFilter>
           <CommandInput
             placeholder={t('fleetExpenses.party.search')}

@@ -12,7 +12,7 @@ import { QUERY_KEYS } from '@/shared/config/constants';
  */
 export const vehicleSchema = z.object({
   id: z.number(),
-  plate: z.string(),
+  car_no_plate: z.string(),
 });
 
 export type Vehicle = z.infer<typeof vehicleSchema>;

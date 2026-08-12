@@ -8,17 +8,16 @@ import { toast } from '@/shared/ui/toaster';
 import { extractErrorMessage } from '@/shared/api/errors';
 
 /* -------------------------------------------------------------------------- */
-/* Categories                                                                  */
+/* Categories — GET /api/v1/categories                                         */
 /*                                                                            */
-/* A category carries its own requirements, so the form is rendered from data  */
-/* rather than from a switch statement that has to be kept in step across two  */
-/* languages. Adding a category is a row, not a deploy.                        */
+/* A category is a label plus two facts (D3): `posting_kind` says what          */
+/* categorising into it materialises downstream (an advance/loan/salary row    */
+/* in public.loans), `required_party` says who the transaction must be         */
+/* attributed to. The form renders itself from these — adding a category is    */
+/* a psql row, not a deploy.                                                   */
 /* -------------------------------------------------------------------------- */
 
-export const POSTING_TARGETS = ['none', 'loan'] as const;
 export const PARTY_KINDS = ['none', 'driver', 'employee', 'either'] as const;
-
-export type PostingTarget = (typeof POSTING_TARGETS)[number];
 export type PartyKind = (typeof PARTY_KINDS)[number];
 
 export const categorySchema = z.object({
@@ -26,12 +25,12 @@ export const categorySchema = z.object({
   key: z.string(),
   label: z.string(),
   label_ar: z.string().nullable().optional(),
-  /** What categorising into this materialises downstream. */
-  posting_target: z.string(),
-  /** Who the transaction must be attributed to. */
+  /** 'advance' | 'loan' | 'salary' | null — null means "just a label". */
+  posting_kind: z.string().nullable(),
+  /** 'none' | 'driver' | 'employee' | 'either' */
   required_party: z.string(),
-  field_spec: z.unknown().optional(),
   sort_order: z.number(),
+  enabled: z.boolean(),
 });
 
 export type Category = z.infer<typeof categorySchema>;
@@ -43,6 +42,8 @@ export function useCategories() {
       const res = await apiClientRust.get('/api/v1/categories');
       return z.array(categorySchema).parse(res.data ?? []);
     },
+    select: (all) =>
+      all.filter((c) => c.enabled).sort((a, b) => a.sort_order - b.sort_order),
     // Categories change rarely; re-fetching them on every form open is waste.
     staleTime: 5 * 60_000,
   });
@@ -53,9 +54,14 @@ export function requiresParty(c: Category | undefined): boolean {
   return !!c && c.required_party !== 'none';
 }
 
-/** Does categorising into this create a downstream record? */
+/** Does categorising into this register a loans row? */
 export function posts(c: Category | undefined): boolean {
-  return !!c && c.posting_target !== 'none';
+  return !!c && c.posting_kind != null;
+}
+
+/** Display label in the active language, falling back to the English label. */
+export function categoryLabel(c: Category, language?: string): string {
+  return language?.startsWith('ar') && c.label_ar ? c.label_ar : c.label;
 }
 
 /* -------------------------------------------------------------------------- */

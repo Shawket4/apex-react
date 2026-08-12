@@ -31,8 +31,8 @@ const FleetExpenseNewPage = React.lazy(
 const FleetExpenseEditPage = React.lazy(
   () => import('@/pages/fleet-expenses/fleet-expense-edit'),
 );
-const FleetExpensesReviewPage = React.lazy(
-  () => import('@/pages/fleet-expenses/fleet-expenses-review'),
+const FleetExpensesMessagesPage = React.lazy(
+  () => import('@/pages/fleet-expenses/fleet-expenses-messages'),
 );
 const FuelEventNewPage = React.lazy(() => import('@/pages/fuel-events/fuel-event-new'));
 const FuelEventEditPage = React.lazy(() => import('@/pages/fuel-events/fuel-event-edit'));
@@ -235,12 +235,17 @@ export const router = createBrowserRouter([
             ),
           },
           {
-            path: 'fleet-expenses/review',
+            path: 'fleet-expenses/messages',
             element: (
               <ProtectedRoute minPermissionLevel={PERMISSION_LEVELS.ADMIN}>
-                <FleetExpensesReviewPage />
+                <FleetExpensesMessagesPage />
               </ProtectedRoute>
             ),
+          },
+          // The old review queue is gone; keep its URL working.
+          {
+            path: 'fleet-expenses/review',
+            element: <Navigate to="/fleet-expenses/messages" replace />,
           },
           {
             path: 'fleet-expenses/new',
