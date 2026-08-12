@@ -136,22 +136,9 @@ export function PartyPicker({
           />
           <CommandList>
             <CommandEmpty>
-              {canCreate ? (
-                <button
-                  type="button"
-                  onClick={create}
-                  className="flex w-full items-center gap-2 px-3 py-2 text-start text-sm hover:bg-accent"
-                >
-                  <UserPlus className="h-4 w-4 shrink-0" />
-                  <span className="truncate">
-                    {t('fleetExpenses.party.create', { name: search.trim() })}
-                  </span>
-                </button>
-              ) : (
-                <span className="block px-3 py-2 text-sm text-muted-foreground">
-                  {t('fleetExpenses.party.noMatch')}
-                </span>
-              )}
+              <span className="block px-3 py-2 text-sm text-muted-foreground">
+                {t('fleetExpenses.party.noMatch')}
+              </span>
             </CommandEmpty>
 
             {selectable.some((p) => p.kind === 'driver') && (
@@ -184,6 +171,24 @@ export function PartyPicker({
               </CommandGroup>
             )}
           </CommandList>
+
+          {/* Persistent create action, OUTSIDE the filtered list: a new
+              employee's name often partially matches existing people (half the
+              staff share a first name), so waiting for zero matches would hide
+              the button exactly when it's needed. It only disappears when the
+              typed name matches someone exactly — that's the duplicate guard. */}
+          {canCreate && (
+            <button
+              type="button"
+              onClick={create}
+              className="flex w-full items-center gap-2 border-t px-3 py-2 text-start text-sm hover:bg-accent"
+            >
+              <UserPlus className="h-4 w-4 shrink-0 text-muted-foreground" />
+              <span className="truncate" dir="auto">
+                {t('fleetExpenses.party.create', { name: search.trim() })}
+              </span>
+            </button>
+          )}
         </Command>
       </PopoverContent>
     </Popover>

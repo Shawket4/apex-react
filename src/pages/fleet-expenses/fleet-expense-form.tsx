@@ -520,7 +520,21 @@ export default function FleetExpenseFormPage({ mode }: { mode: 'create' | 'edit'
               </Field>
 
               <Field label={t('fleetExpenses.fields.paidBy')} error={form.formState.errors.paid_by}>
-                <Input dir="auto" disabled={readOnly} {...form.register('paid_by')} />
+                {/* Free text with name suggestions. Picking a driver or an
+                    employee here appends their NAME only — deliberately not an
+                    id link. Salary settlements are labels, not registrations,
+                    and an unregistered name needs no creating to be typed. */}
+                <Input
+                  dir="auto"
+                  disabled={readOnly}
+                  list="party-name-suggestions"
+                  {...form.register('paid_by')}
+                />
+                <datalist id="party-name-suggestions">
+                  {(parties.data ?? []).map((p) => (
+                    <option key={`${p.kind}-${p.id}`} value={p.name} />
+                  ))}
+                </datalist>
               </Field>
 
               <div className="sm:col-span-2">

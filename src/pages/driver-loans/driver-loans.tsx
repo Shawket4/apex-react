@@ -133,7 +133,7 @@ export default function DriverLoansPage() {
   // Advances, loans and salary portions all subtract the same amount, so a
   // single total hides what the money actually was. Splitting them here is the
   // whole point of the kind column.
-  const [kindFilter, setKindFilter] = React.useState<'all' | 'advance' | 'loan' | 'salary'>('all');
+  const [kindFilter, setKindFilter] = React.useState<'all' | 'advance' | 'loan'>('all');
   const { data: allLoans = [], isLoading } = useDriverLoans(driverId);
   const loans = React.useMemo(
     () => (kindFilter === 'all' ? allLoans : allLoans.filter((l) => l.kind === kindFilter)),
@@ -218,7 +218,7 @@ export default function DriverLoansPage() {
       {/* Split by kind. Rendered even when a kind is empty so the categories
           themselves are discoverable rather than appearing only once used. */}
       <div className="flex flex-wrap gap-2">
-        {(['all', 'advance', 'loan', 'salary'] as const).map((k) => (
+        {(['all', 'advance', 'loan'] as const).map((k) => (
           <Button
             key={k}
             size="sm"
