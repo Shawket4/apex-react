@@ -1405,7 +1405,8 @@
       "whatsapp": "رسالة بنكية",
       "manual": "يدوي",
       "fuel_event": "وقود",
-      "loan": "قرض"
+      "loan": "قرض",
+      "split": "جزء مقسّم"
     },
     "fields": {
       "amount": "المبلغ",
@@ -1493,6 +1494,29 @@
       "ignoreConfirm": "إزالة",
       "empty": "لا شيء بانتظار المراجعة",
       "emptyHint": "تمت معالجة كل التحويلات الواردة في هذه الفترة."
+    },
+    "split": {
+      "action": "تقسيم",
+      "title": "تقسيم {{amount}}",
+      "part": "جزء {{n}}",
+      "addPart": "إضافة جزء",
+      "removePart": "إزالة الجزء",
+      "remaining": "متبقٍ {{remaining}} من أصل {{total}}",
+      "overAllocated": "زيادة عن المبلغ بمقدار {{amount}}",
+      "fullyAllocated": "تم توزيع كامل المبلغ",
+      "save": "حفظ التقسيم",
+      "saved": "تم حفظ التقسيم",
+      "saveFailed": "تعذّر حفظ التقسيم",
+      "loadFailed": "تعذّر تحميل التقسيم",
+      "unsplit": "إلغاء التقسيم",
+      "unsplitConfirmTitle": "إلغاء هذا التقسيم؟",
+      "unsplitConfirmDescription": "تُزال الأجزاء — ومعها أي سلفة أو قرض سجّلته — ويعود قيد {{amount}} الأصلي إلى الدفتر.",
+      "unsplitDone": "أُلغي التقسيم",
+      "unsplitFailed": "تعذّر إلغاء التقسيم",
+      "chipPartOf": "جزء من {{amount}}",
+      "chipNOfM": "{{n}} من {{m}} · {{amount}}",
+      "childHint": "المبلغ والاتجاه والتاريخ يحددها التقسيم — عدّل التقسيم ككل.",
+      "editSplit": "تعديل التقسيم"
     },
     "showingCount": "يعرض {{shown}} من {{total}}"
   },

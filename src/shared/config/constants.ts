@@ -43,6 +43,8 @@ export const QUERY_KEYS = {
   transaction: (id: number | string) => ['transactions', String(id)] as const,
   transactionList: (filters: unknown) => ['transactions', 'list', filters] as const,
   transactionStats: (filters: unknown) => ['transactions', 'stats', filters] as const,
+  /** The split set for a parent OR any of its children (server resolves). */
+  transactionSplit: (id: number | string) => ['transactions', 'split', String(id)] as const,
   /** WhatsApp messages with the parser's verdict: ignored/suppressed/matched. */
   messages: ['messages'] as const,
   message: (id: number | string) => ['messages', String(id)] as const,

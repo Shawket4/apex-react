@@ -3,14 +3,19 @@ import { useTranslation } from 'react-i18next';
 import { saveAs } from 'file-saver';
 import {
   createTransaction,
+  createTransactionSplit,
   deleteTransaction,
   exportTransactions,
   getTransaction,
   getTransactions,
+  getTransactionSplit,
   getTransactionStatistics,
+  replaceTransactionSplit,
+  unsplitTransaction,
   updateTransaction,
 } from './api';
 import type {
+  SplitPartInput,
   TransactionFilters,
   TransactionFormValues,
   TransactionWriteExtras,
@@ -151,6 +156,86 @@ export function useDeleteTransaction() {
         conflictMessage(
           error,
           t('fleetExpenses.deleteFailed'),
+          t('fleetExpenses.versionConflict'),
+        ),
+      );
+    },
+  });
+}
+
+/* ─── Splits ─── */
+
+/**
+ * The whole split set for the editor. `id` may be the parent or any child —
+ * the server resolves either to the same set. Never cached as fresh: the
+ * parent's `version` in the response is the If-Match token for every split
+ * write, and a stale one is a guaranteed 409.
+ */
+export function useTransactionSplit(id: number | undefined) {
+  return useQuery({
+    queryKey: id ? QUERY_KEYS.transactionSplit(id) : ['transactions', 'split', 'none'],
+    queryFn: () => getTransactionSplit(id!),
+    enabled: !!id,
+    staleTime: 0,
+  });
+}
+
+/**
+ * POST (new split) or PUT (replace an existing part set), chosen by `replace`.
+ * Both take the PARENT's version as If-Match. Invalidation covers the ledger,
+ * statistics and every cached split set — they all live under 'transactions'.
+ */
+export function useSaveSplit() {
+  const { t } = useTranslation();
+  return useMutation({
+    mutationFn: ({
+      id,
+      version,
+      parts,
+      replace,
+    }: {
+      /** POST: the row being split. PUT: the parent id from the loaded set. */
+      id: number;
+      version: number;
+      parts: SplitPartInput[];
+      replace: boolean;
+    }) =>
+      replace
+        ? replaceTransactionSplit(id, version, parts)
+        : createTransactionSplit(id, version, parts),
+    onSuccess: () => {
+      invalidateAll();
+      toast.success(t('fleetExpenses.split.saved'));
+    },
+    // 400s (bad sum, unsplittable row) and 409s (loan registered as a whole,
+    // settled loans) carry precise server messages — surface them verbatim.
+    onError: (error) => {
+      toast.error(
+        conflictMessage(
+          error,
+          t('fleetExpenses.split.saveFailed'),
+          t('fleetExpenses.versionConflict'),
+        ),
+      );
+    },
+  });
+}
+
+/* ─── Unsplit (409 when any part's registered loan is settled) ─── */
+export function useUnsplit() {
+  const { t } = useTranslation();
+  return useMutation({
+    mutationFn: ({ id, version }: { id: number; version: number }) =>
+      unsplitTransaction(id, version),
+    onSuccess: () => {
+      invalidateAll();
+      toast.success(t('fleetExpenses.split.unsplitDone'));
+    },
+    onError: (error) => {
+      toast.error(
+        conflictMessage(
+          error,
+          t('fleetExpenses.split.unsplitFailed'),
           t('fleetExpenses.versionConflict'),
         ),
       );

@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Fuel, HandCoins, Lock, PenLine } from 'lucide-react';
+import { Fuel, HandCoins, Lock, PenLine, Split } from 'lucide-react';
 
 import { Button } from '@/shared/ui/button';
 import { Sheet, SheetContent } from '@/shared/ui/sheet';
@@ -19,8 +19,14 @@ import {
   type PartyKind,
 } from '@/entities/transaction/categories';
 import { useUpdateTransaction } from '@/entities/transaction/queries';
-import type { ByDate, Transaction } from '@/entities/transaction/schemas';
+import {
+  isSplitChild,
+  splitEligible,
+  type ByDate,
+  type Transaction,
+} from '@/entities/transaction/schemas';
 import { SmartPartyField, type PartyValue } from './party-picker';
+import { SplitChip, SplitEditor } from './split-editor';
 
 /* -------------------------------------------------------------------------- */
 /* Day grouping                                                                */
@@ -89,12 +95,33 @@ export function LedgerList({ rows, dayTotals, canEdit }: LedgerListProps) {
 
   const [flow, setFlow] = React.useState<CategoryFlow | null>(null);
   const [party, setParty] = React.useState<PartyValue>({ driver_id: null, employee_id: null });
+  /** The row the split editor was opened for — a child OR an unsplit row. */
+  const [splitRow, setSplitRow] = React.useState<Transaction | null>(null);
+  const [splitOpen, setSplitOpen] = React.useState(false);
 
   const groups = React.useMemo(() => groupByCairoDay(rows), [rows]);
   const catByKey = React.useMemo(
     () => new Map((categories.data ?? []).map((c) => [c.key, c])),
     [categories.data],
   );
+
+  // Loaded siblings per parent, in list order — lets a chip say "2 of 3" when
+  // the set happens to be on this page, and just "part of X" when it isn't.
+  const splitSiblings = React.useMemo(() => {
+    const map = new Map<number, number[]>();
+    for (const row of rows) {
+      if (row.parent_id == null) continue;
+      const ids = map.get(row.parent_id) ?? [];
+      ids.push(row.id);
+      map.set(row.parent_id, ids);
+    }
+    return map;
+  }, [rows]);
+
+  const openSplit = (row: Transaction) => {
+    setSplitRow(row);
+    setSplitOpen(true);
+  };
 
   const openEdit = (row: Transaction) => {
     if (!canEdit || !row.editable) return;
@@ -164,6 +191,8 @@ export function LedgerList({ rows, dayTotals, canEdit }: LedgerListProps) {
                     catByKey={catByKey}
                     onOpen={() => openEdit(row)}
                     onAddCategory={() => setFlow({ row, step: 'category' })}
+                    splitSiblings={splitSiblings}
+                    onOpenSplit={() => openSplit(row)}
                   />
                 </li>
               ))}
@@ -183,6 +212,8 @@ export function LedgerList({ rows, dayTotals, canEdit }: LedgerListProps) {
                     saving={update.isPending}
                     onOpen={() => openEdit(row)}
                     onPickCategory={(key) => pickCategory(row, key)}
+                    splitSiblings={splitSiblings}
+                    onOpenSplit={() => openSplit(row)}
                   />
                 ))}
               </tbody>
@@ -260,6 +291,15 @@ export function LedgerList({ rows, dayTotals, canEdit }: LedgerListProps) {
           )}
         </SheetContent>
       </Sheet>
+
+      {/* Split editor — new splits and existing sets both land here. The row
+          is kept through the close animation on purpose. */}
+      <SplitEditor
+        open={splitOpen}
+        onOpenChange={setSplitOpen}
+        row={splitRow}
+        canEdit={canEdit}
+      />
     </div>
   );
 }
@@ -388,12 +428,16 @@ function TxnCard({
   catByKey,
   onOpen,
   onAddCategory,
+  splitSiblings,
+  onOpenSplit,
 }: {
   row: Transaction;
   canEdit: boolean;
   catByKey: Map<string, Category>;
   onOpen: () => void;
   onAddCategory: () => void;
+  splitSiblings: Map<number, number[]>;
+  onOpenSplit: () => void;
 }) {
   const { t, i18n } = useTranslation();
   const tappable = canEdit && row.editable;
@@ -441,6 +485,27 @@ function TxnCard({
             + {t('fleetExpenses.addCategory')}
           </button>
         ) : null}
+        {isSplitChild(row) && (
+          <SplitChip
+            row={row}
+            siblings={row.parent_id != null ? splitSiblings.get(row.parent_id) : undefined}
+            onOpen={onOpenSplit}
+            className="min-h-9 lg:min-h-6"
+          />
+        )}
+        {canEdit && splitEligible(row) && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onOpenSplit();
+            }}
+            className="inline-flex min-h-9 items-center gap-1 rounded-full border border-dashed px-3 py-0.5 text-xs font-semibold text-muted-foreground hover:text-foreground lg:min-h-8 lg:px-2.5"
+          >
+            <Split className="h-3 w-3 shrink-0" />
+            {t('fleetExpenses.split.action')}
+          </button>
+        )}
       </div>
     </div>
   );
@@ -458,6 +523,8 @@ function TxnRow({
   saving,
   onOpen,
   onPickCategory,
+  splitSiblings,
+  onOpenSplit,
 }: {
   row: Transaction;
   canEdit: boolean;
@@ -466,6 +533,8 @@ function TxnRow({
   saving: boolean;
   onOpen: () => void;
   onPickCategory: (key: string) => void;
+  splitSiblings: Map<number, number[]>;
+  onOpenSplit: () => void;
 }) {
   const { t, i18n } = useTranslation();
   const tappable = canEdit && row.editable;
@@ -479,8 +548,18 @@ function TxnRow({
         {formatCairoTime(row.occurred_at, i18n.language)}
       </td>
       <td className="px-3 py-2.5">
-        <div className="truncate font-medium" dir="auto">
-          {row.counterparty || row.description || '—'}
+        <div className="flex min-w-0 items-center gap-2">
+          <span className="min-w-0 truncate font-medium" dir="auto">
+            {row.counterparty || row.description || '—'}
+          </span>
+          {isSplitChild(row) && (
+            <SplitChip
+              row={row}
+              siblings={row.parent_id != null ? splitSiblings.get(row.parent_id) : undefined}
+              onOpen={onOpenSplit}
+              className="shrink-0"
+            />
+          )}
         </div>
         {row.counterparty && row.description && (
           <div className="truncate text-xs text-muted-foreground" dir="auto">
@@ -525,6 +604,24 @@ function TxnRow({
       <td className="w-24 px-3 py-2.5">
         <div className="flex items-center gap-1.5">
           <RowFlags row={row} />
+          {canEdit && splitEligible(row) && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onOpenSplit();
+                  }}
+                  aria-label={t('fleetExpenses.split.action')}
+                  className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground opacity-60 hover:bg-accent hover:text-foreground hover:opacity-100"
+                >
+                  <Split className="h-3.5 w-3.5" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>{t('fleetExpenses.split.action')}</TooltipContent>
+            </Tooltip>
+          )}
         </div>
       </td>
       <td className="w-36 px-3 py-2.5 text-end">

@@ -1,9 +1,12 @@
 import { apiClientRust } from '@/shared/api/client';
 import { cairoInstantFromInputs } from '@/shared/lib/cairo';
 import {
+  splitSetSchema,
   statisticsSchema,
   transactionPageSchema,
   transactionSchema,
+  type SplitPartInput,
+  type SplitSet,
   type Transaction,
   type TransactionFilters,
   type TransactionFormValues,
@@ -148,6 +151,68 @@ export async function updateTransaction(
 /* ─── Soft delete (also soft-deletes a linked unpaid loan) ─── */
 export async function deleteTransaction(id: number, version: number): Promise<void> {
   await apiClientRust.delete(`${BASE}/${id}`, {
+    headers: { 'If-Match': String(version) },
+  });
+}
+
+/* -------------------------------------------------------------------------- */
+/* Splits                                                                      */
+/*                                                                            */
+/* The parent's `version` is ALWAYS the If-Match token — a split is an edit of  */
+/* the parent, whichever row the sheet was opened from. Part amounts travel    */
+/* verbatim as strings and must sum exactly to the parent amount; the server   */
+/* is the arbiter and its 400/409 messages are surfaced to the user as-is.     */
+/* -------------------------------------------------------------------------- */
+
+/** Drop undefined fields so the wire body carries only what was set. */
+function toPartsBody(parts: SplitPartInput[]): { parts: Record<string, unknown>[] } {
+  return {
+    parts: parts.map((part) => {
+      const out: Record<string, unknown> = { amount: part.amount.trim() };
+      if (part.category !== undefined) out.category = part.category;
+      if (part.description !== undefined) out.description = part.description;
+      if (part.driver_id !== undefined) out.driver_id = part.driver_id;
+      if (part.employee_id !== undefined) out.employee_id = part.employee_id;
+      if (part.paid_by !== undefined) out.paid_by = part.paid_by;
+      if (part.car_id !== undefined) out.car_id = part.car_id;
+      return out;
+    }),
+  };
+}
+
+/* ─── Read the set — id may be the parent OR any child ─── */
+export async function getTransactionSplit(id: number): Promise<SplitSet> {
+  const response = await apiClientRust.get(`${BASE}/${id}/split`);
+  return splitSetSchema.parse(response.data);
+}
+
+/* ─── Create a split of an unsplit cash-out row ─── */
+export async function createTransactionSplit(
+  id: number,
+  version: number,
+  parts: SplitPartInput[],
+): Promise<SplitSet> {
+  const response = await apiClientRust.post(`${BASE}/${id}/split`, toPartsBody(parts), {
+    headers: { 'If-Match': String(version) },
+  });
+  return splitSetSchema.parse(response.data);
+}
+
+/* ─── Replace an existing part set (id = parent) ─── */
+export async function replaceTransactionSplit(
+  id: number,
+  version: number,
+  parts: SplitPartInput[],
+): Promise<SplitSet> {
+  const response = await apiClientRust.put(`${BASE}/${id}/split`, toPartsBody(parts), {
+    headers: { 'If-Match': String(version) },
+  });
+  return splitSetSchema.parse(response.data);
+}
+
+/* ─── Dissolve — 409 if any part's registered loan is already settled ─── */
+export async function unsplitTransaction(id: number, version: number): Promise<void> {
+  await apiClientRust.post(`${BASE}/${id}/unsplit`, undefined, {
     headers: { 'If-Match': String(version) },
   });
 }

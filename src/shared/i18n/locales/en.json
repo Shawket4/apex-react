@@ -1405,7 +1405,8 @@
       "whatsapp": "Bank SMS",
       "manual": "Manual",
       "fuel_event": "Fuel",
-      "loan": "Loan"
+      "loan": "Loan",
+      "split": "Split part"
     },
     "fields": {
       "amount": "Amount",
@@ -1485,6 +1486,29 @@
       "ignoreConfirm": "Remove",
       "empty": "Nothing left to review",
       "emptyHint": "Every incoming transfer in this range has been handled."
+    },
+    "split": {
+      "action": "Split",
+      "title": "Splitting {{amount}}",
+      "part": "Part {{n}}",
+      "addPart": "Add part",
+      "removePart": "Remove part",
+      "remaining": "{{remaining}} remaining of {{total}}",
+      "overAllocated": "Over-allocated by {{amount}}",
+      "fullyAllocated": "Fully allocated",
+      "save": "Save split",
+      "saved": "Split saved",
+      "saveFailed": "Could not save the split",
+      "loadFailed": "Could not load the split",
+      "unsplit": "Unsplit",
+      "unsplitConfirmTitle": "Dissolve this split?",
+      "unsplitConfirmDescription": "The parts are removed — any advance or loan they registered with them — and the original {{amount}} row returns to the ledger.",
+      "unsplitDone": "Split dissolved",
+      "unsplitFailed": "Could not unsplit",
+      "chipPartOf": "part of {{amount}}",
+      "chipNOfM": "{{n}} of {{m}} · {{amount}}",
+      "childHint": "Amount, direction and date are set by the split — edit the split as a whole.",
+      "editSplit": "Edit split"
     },
     "showingCount": "Showing {{shown}} of {{total}}"
   },

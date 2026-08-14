@@ -16,6 +16,7 @@ export const TRANSACTION_SOURCES = [
   'manual',
   'fuel_event',
   'loan',
+  'split',
 ] as const;
 export type TransactionSource = (typeof TRANSACTION_SOURCES)[number];
 
@@ -61,6 +62,14 @@ export const transactionSchema = z.object({
   principal: z.string().nullable().optional(),
   fee: z.string().nullable().optional(),
 
+  /**
+   * Set on split children (source 'split'): the hidden parent row's id and its
+   * amount, so the ledger can say "part of 20,000.00" without another fetch.
+   * Split parents never appear in list/statistics responses.
+   */
+  parent_id: z.number().nullable().optional(),
+  parent_amount: z.string().nullable().optional(),
+
   /** Optimistic-concurrency token. Must go back as `If-Match` on writes. */
   version: z.number(),
   /** False for fuel/loan rows — owned by PetroApp sync and FalconGo. */
@@ -85,6 +94,58 @@ export const transactionPageSchema = z.object({
 });
 
 export type TransactionPage = z.infer<typeof transactionPageSchema>;
+
+/* -------------------------------------------------------------------------- */
+/* Splits — /api/v1/transactions/{id}/split                                    */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * The whole split set. GET accepts the parent's id OR any child's id; the
+ * parent's `version` is the If-Match token for PUT (replace) and unsplit.
+ */
+export const splitSetSchema = z.object({
+  parent: transactionSchema,
+  parts: z.array(transactionSchema),
+});
+
+export type SplitSet = z.infer<typeof splitSetSchema>;
+
+/**
+ * One part of a POST/PUT split body. Amounts are decimal STRINGS and must sum
+ * EXACTLY to the parent amount — the server rejects anything else with a 400.
+ * A part categorised into an advance/loan category registers its own loan.
+ */
+export interface SplitPartInput {
+  amount: string;
+  category?: string;
+  description?: string;
+  driver_id?: number;
+  employee_id?: number;
+  paid_by?: string;
+  car_id?: number;
+}
+
+/**
+ * Can this row be offered the split action at all? Server contract: only
+ * unsplit cash-out rows. (A row that registered a loan as a whole is refused
+ * server-side with a 409 that says to clear its category first — that message
+ * is surfaced verbatim, so the action stays visible for those.)
+ */
+export function splitEligible(row: Transaction): boolean {
+  return (
+    row.editable &&
+    row.direction === 'out' &&
+    row.source !== 'split' &&
+    row.parent_id == null &&
+    row.source !== 'fuel_event' &&
+    row.source !== 'loan'
+  );
+}
+
+/** Is this row a child of a split set? */
+export function isSplitChild(row: Transaction): boolean {
+  return row.source === 'split' || row.parent_id != null;
+}
 
 /* -------------------------------------------------------------------------- */
 /* Statistics — GET /api/v1/transactions/statistics                            */

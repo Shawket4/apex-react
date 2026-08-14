@@ -3,7 +3,7 @@ import { useLocation, useNavigate, useParams, useSearchParams } from 'react-rout
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, CheckCircle2, Copy, Lock, Receipt, Save, Trash2 } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Copy, Lock, Receipt, Save, Split, Trash2 } from 'lucide-react';
 
 import { PageShell } from '@/shared/ui/page-shell';
 import { Button } from '@/shared/ui/button';
@@ -24,6 +24,7 @@ import {
   formatCairoDateTime,
 } from '@/shared/lib/cairo';
 import { SmartPartyField, type PartyValue } from '@/widgets/fleet-expenses-table/party-picker';
+import { SplitEditor } from '@/widgets/fleet-expenses-table/split-editor';
 import { useDebounce } from '@/shared/hooks/use-debounce';
 import { useVehicles } from '@/entities/transaction/vehicles';
 import {
@@ -45,6 +46,8 @@ import {
 import {
   COMPANIES,
   PAYMENT_METHODS,
+  isSplitChild,
+  splitEligible,
   transactionFormSchema,
   type TransactionFormValues,
 } from '@/entities/transaction/schemas';
@@ -90,6 +93,7 @@ export default function FleetExpenseFormPage({ mode }: { mode: 'create' | 'edit'
   const [carId, setCarId] = React.useState<number | null>(null);
   const [partyMissing, setPartyMissing] = React.useState(false);
   const [confirmDelete, setConfirmDelete] = React.useState(false);
+  const [splitOpen, setSplitOpen] = React.useState(false);
 
   const form = useForm<TransactionFormValues>({
     resolver: zodResolver(transactionFormSchema),
@@ -150,6 +154,16 @@ export default function FleetExpenseFormPage({ mode }: { mode: 'create' | 'edit'
   const row = existing.data;
   const readOnly = mode === 'edit' && row ? !row.editable : false;
 
+  /* ── Split state of this row ──
+     A child's money fields are owned by the split: amount, direction and
+     date/time are set server-side and any PATCH touching them is a 400, so
+     they render disabled with a pointer to the editor. Category, person and
+     description stay editable as normal. An unsplit cash-out row instead
+     gets a "Split" action next to Delete. */
+  const splitChild = mode === 'edit' && !!row && isSplitChild(row);
+  const canSplit = mode === 'edit' && !!row && !readOnly && splitEligible(row);
+  const moneyLocked = readOnly || splitChild;
+
   const catKey = form.watch('category');
   const selectedCategory: Category | undefined = React.useMemo(
     () => categories.data?.find((c) => c.key === catKey),
@@ -202,13 +216,22 @@ export default function FleetExpenseFormPage({ mode }: { mode: 'create' | 'edit'
       return;
     }
     if (!id || !row) return;
+    // A split child's money fields belong to the set — the server 400s any
+    // PATCH that carries them, so they are stripped rather than echoed back.
+    const patchValues: Partial<TransactionFormValues> = { ...values };
+    if (splitChild) {
+      delete patchValues.amount;
+      delete patchValues.direction;
+      delete patchValues.occurred_date;
+      delete patchValues.occurred_time;
+    }
     updateMutation.mutate(
       {
         id,
         // The version we loaded is the If-Match token — a concurrent edit is
         // rejected with 409 rather than silently overwritten.
         version: row.version,
-        values: { ...values, car_id: carId, ...partyFields },
+        values: { ...patchValues, car_id: carId, ...partyFields },
       },
       { onSuccess: finish },
     );
@@ -332,6 +355,32 @@ export default function FleetExpenseFormPage({ mode }: { mode: 'create' | 'edit'
         <form onSubmit={onSubmit} className="space-y-4 lg:order-1 lg:col-span-2">
           <Card>
             <CardContent className="grid gap-4 px-4 py-5 sm:grid-cols-2 sm:px-6 sm:py-6">
+              {/* A split child's money fields belong to the set as a whole. */}
+              {splitChild && (
+                <div className="flex flex-wrap items-center gap-2.5 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2.5 text-sm sm:col-span-2">
+                  <Split className="h-4 w-4 shrink-0 text-primary" />
+                  <div className="min-w-0 flex-1">
+                    <p>{t('fleetExpenses.split.childHint')}</p>
+                    {row?.parent_amount != null && (
+                      <p className="text-xs text-muted-foreground" dir="auto">
+                        {t('fleetExpenses.split.chipPartOf', {
+                          amount: formatMoney(row.parent_amount),
+                        })}
+                      </p>
+                    )}
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="min-h-10 w-full sm:min-h-8 sm:w-auto"
+                    onClick={() => setSplitOpen(true)}
+                  >
+                    {t('fleetExpenses.split.editSplit')}
+                  </Button>
+                </div>
+              )}
+
               <div className="grid grid-cols-[1fr_5rem] gap-2">
                 <Field
                   label={t('fleetExpenses.fields.amount')}
@@ -342,7 +391,7 @@ export default function FleetExpenseFormPage({ mode }: { mode: 'create' | 'edit'
                     dir="ltr"
                     placeholder="0.00"
                     autoFocus={mode === 'create'}
-                    disabled={readOnly}
+                    disabled={moneyLocked}
                     {...form.register('amount')}
                   />
                 </Field>
@@ -363,7 +412,7 @@ export default function FleetExpenseFormPage({ mode }: { mode: 'create' | 'edit'
                     <button
                       key={d}
                       type="button"
-                      disabled={readOnly}
+                      disabled={moneyLocked}
                       onClick={() => form.setValue('direction', d, { shouldDirty: true })}
                       className={cn(
                         'flex-1 text-sm font-semibold transition-colors',
@@ -382,10 +431,10 @@ export default function FleetExpenseFormPage({ mode }: { mode: 'create' | 'edit'
                 label={t('fleetExpenses.fields.date')}
                 error={form.formState.errors.occurred_date}
               >
-                <Input type="date" disabled={readOnly} {...form.register('occurred_date')} />
+                <Input type="date" disabled={moneyLocked} {...form.register('occurred_date')} />
               </Field>
               <Field label={t('fleetExpenses.fields.time')}>
-                <Input type="time" disabled={readOnly} {...form.register('occurred_time')} />
+                <Input type="time" disabled={moneyLocked} {...form.register('occurred_time')} />
               </Field>
 
               <Field
@@ -582,11 +631,14 @@ export default function FleetExpenseFormPage({ mode }: { mode: 'create' | 'edit'
                 <Save className="h-4 w-4" />
                 {saving ? t('common.saving') : t('common.save')}
               </Button>
-              {mode === 'edit' && row && (
+              {mode === 'edit' && row && !splitChild && (
                 <Button
                   type="button"
                   variant="ghost"
-                  className="order-3 min-h-10 w-full text-destructive hover:text-destructive sm:order-1 sm:me-auto sm:min-h-9 sm:w-auto"
+                  className={cn(
+                    'order-3 min-h-10 w-full text-destructive hover:text-destructive sm:order-1 sm:min-h-9 sm:w-auto',
+                    !canSplit && 'sm:me-auto',
+                  )}
                   onClick={() => setConfirmDelete(true)}
                   disabled={saving || deleteMutation.isPending}
                 >
@@ -594,10 +646,37 @@ export default function FleetExpenseFormPage({ mode }: { mode: 'create' | 'edit'
                   {t('common.delete')}
                 </Button>
               )}
+              {/* Splitting an unsplit cash-out row — sits with Delete because
+                  both replace this screen's row with something else. */}
+              {canSplit && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="order-4 min-h-10 w-full text-muted-foreground sm:order-1 sm:me-auto sm:min-h-9 sm:w-auto"
+                  onClick={() => setSplitOpen(true)}
+                  disabled={saving || deleteMutation.isPending}
+                >
+                  <Split className="h-4 w-4" />
+                  {t('fleetExpenses.split.action')}
+                </Button>
+              )}
             </div>
           )}
         </form>
       </div>
+
+      {/* One editor for both entry points: splitting THIS row, or editing the
+          set THIS row is a part of. Either way the saved result replaces the
+          row this screen was loaded around, so onDone leaves the screen. */}
+      {mode === 'edit' && (
+        <SplitEditor
+          open={splitOpen}
+          onOpenChange={setSplitOpen}
+          row={row ?? null}
+          onDone={finish}
+          canEdit={!readOnly}
+        />
+      )}
 
       <ConfirmDialog
         open={confirmDelete}
