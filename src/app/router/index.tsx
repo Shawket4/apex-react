@@ -71,6 +71,8 @@ const ServiceInvoiceDetailsPage = React.lazy(() => import('@/pages/service-invoi
 
 const EtitPage = React.lazy(() => import('@/pages/etit/etit'));
 const ZonesPage = React.lazy(() => import('@/pages/zones/zones'));
+const LocationsPage = React.lazy(() => import('@/pages/locations/locations'));
+const TripAuditPage = React.lazy(() => import('@/pages/trip-audit/trip-audit'));
 
 // Named exports — placeholder file. All resolve to the same chunk; the
 // browser fetches it once and React picks the right component per route.
@@ -277,6 +279,22 @@ export const router = createBrowserRouter([
             element: (
               <ProtectedRoute minPermissionLevel={PERMISSION_LEVELS.MANAGER}>
                 <ZonesPage />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: 'locations',
+            element: (
+              <ProtectedRoute minPermissionLevel={PERMISSION_LEVELS.MANAGER}>
+                <LocationsPage />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: 'trip-audit',
+            element: (
+              <ProtectedRoute minPermissionLevel={PERMISSION_LEVELS.MANAGER}>
+                <TripAuditPage />
               </ProtectedRoute>
             ),
           },

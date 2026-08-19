@@ -62,7 +62,8 @@
     "none": "None",
     "loadMore": "Load more",
     "yes": "Yes",
-    "no": "No"
+    "no": "No",
+    "add": "Add"
   },
   "nav": {
     "overview": "Overview",
@@ -90,6 +91,8 @@
     "etit": "Live tracking",
     "serviceInvoices": "Service Invoices",
     "zones": "Dead Zones",
+    "locations": "Locations",
+    "tripAudit": "Trip Audit",
     "expensesReview": "Review queue"
   },
   "auth": {
@@ -1539,5 +1542,215 @@
     },
     "emptyBody": "(no text — media message)",
     "fromMe": "sent by us"
+  },
+  "locations": {
+    "title": "Locations",
+    "description": "Manage canonical terminals and drop-off points — pins, radii, and aliases — in one place.",
+    "newDropoff": "New drop-off point",
+    "tabs": {
+      "inbox": "Needs Attention",
+      "terminals": "Terminals",
+      "dropoffs": "Drop-off Points"
+    },
+    "kind": {
+      "terminal": "Terminal",
+      "dropoff": "Drop-off"
+    },
+    "pin": {
+      "pinned": "Pinned",
+      "missing": "No pin"
+    },
+    "pinSource": {
+      "manual": "Manual",
+      "gpsSuggested": "GPS"
+    },
+    "fields": {
+      "name": "Name",
+      "address": "Address",
+      "addressPlaceholder": "Optional address",
+      "lat": "Latitude",
+      "lng": "Longitude",
+      "radius": "Radius (m)",
+      "radiusDefaultPlaceholder": "Default ({{m}} m)",
+      "aliases": "Aliases",
+      "pinStatus": "Pin",
+      "pinSource": "Pin source",
+      "coordinates": "Coordinates",
+      "dropoffNamePlaceholder": "e.g. 10th of Ramadan warehouses"
+    },
+    "dialog": {
+      "editTerminal": "Edit Terminal",
+      "editDropoff": "Edit Drop-off Point",
+      "createDropoff": "New Drop-off Point",
+      "mapHelper": "Click the map or drag the marker to set the pin. Leave the radius empty to use the default.",
+      "aliasHelper": "Alternative spellings from trip data that should resolve to this terminal.",
+      "aliasPlaceholder": "Add an alias…",
+      "removeAlias": "Remove alias",
+      "noAliases": "No aliases yet."
+    },
+    "terminals": {
+      "empty": "No terminals found"
+    },
+    "dropoffs": {
+      "empty": "No drop-off points found",
+      "searchPlaceholder": "Search drop-off points…",
+      "missingOnly": "Missing pins only",
+      "deleteTitle": "Delete drop-off point?"
+    },
+    "inbox": {
+      "unpinnedTitle": "Drop-off points without pins",
+      "mismatchTitle": "Pin mismatches",
+      "unknownTitle": "Unknown terminal names",
+      "gpsSuggests": "GPS suggests a pin from {{stops}} stops",
+      "review": "Review",
+      "setPin": "Set pin",
+      "mismatchText": "GPS cluster is {{distance}} m from the stored pin ({{stops}} stops)",
+      "movePin": "Move pin",
+      "keepCurrent": "Keep current",
+      "currentPin": "Stored pin",
+      "suggestedPin": "GPS suggestion",
+      "noMatch": "No matching record found for this name — the pin cannot be moved automatically.",
+      "unknownText": "appears in {{trips}} trips but matches no terminal",
+      "selectTerminal": "Select terminal…",
+      "linkAlias": "Link as alias",
+      "createHint": "A truly new terminal must first be created in the database — then link its trip-data spellings here.",
+      "suggestionsUnavailable": "GPS suggestions are unavailable right now — showing database items only.",
+      "allClear": "All caught up",
+      "allClearDesc": "No locations need attention right now."
+    },
+    "toast": {
+      "terminalUpdated": "Terminal updated",
+      "terminalUpdateError": "Failed to update terminal",
+      "aliasAdded": "Alias added",
+      "aliasAddError": "Failed to add alias",
+      "aliasRemoved": "Alias removed",
+      "aliasRemoveError": "Failed to remove alias",
+      "dropoffCreated": "Drop-off point created",
+      "dropoffCreateError": "Failed to create drop-off point",
+      "dropoffUpdated": "Drop-off point updated",
+      "dropoffUpdateError": "Failed to update drop-off point",
+      "dropoffDeleted": "Drop-off point deleted",
+      "dropoffDeleteError": "Failed to delete drop-off point",
+      "suggestionDismissed": "Suggestion dismissed",
+      "suggestionAckError": "Failed to update suggestion"
+    }
+  },
+  "tripAudit": {
+    "title": "Trip Audit",
+    "description": "Review GPS-audited trips \u2014 actual routes vs the OSRM optimal \u2014 and the flags raised.",
+    "filters": {
+      "status": "Status",
+      "allStatuses": "All statuses",
+      "companyPlaceholder": "Filter by company\u2026",
+      "flaggedOnly": "Flagged only"
+    },
+    "summary": {
+      "total": "Total",
+      "matched": "Matched",
+      "partial": "Partial",
+      "unmatched": "Unmatched",
+      "flagged": "Flagged"
+    },
+    "scan": {
+      "run": "Run scan",
+      "last": "Last scan",
+      "none": "No scans yet"
+    },
+    "status": {
+      "matched": "Matched",
+      "partial": "Partial",
+      "unmatched": "Unmatched"
+    },
+    "unmatchedReason": {
+      "no_etit_car_id": "No ETIT link",
+      "no_terminal_coords": "No terminal pin",
+      "no_dropoff_coords": "No drop-off pins",
+      "no_gps_data": "No GPS data",
+      "no_terminal_departure": "No terminal departure",
+      "no_dropoff_visits": "No drop-off visits"
+    },
+    "table": {
+      "day": "Day",
+      "company": "Company",
+      "terminal": "Terminal",
+      "plate": "Plate",
+      "driver": "Driver",
+      "deliveries": "Deliveries",
+      "actualKm": "Actual km",
+      "osrmKm": "OSRM km",
+      "distanceRatio": "Dist. ratio",
+      "durationRatio": "Dur. ratio",
+      "flags": "Flags",
+      "status": "Status",
+      "reviewed": "Reviewed",
+      "empty": "No audited trips in this range",
+      "emptyDesc": "Adjust the date range or run a scan to audit recent trips."
+    },
+    "detail": {
+      "title": "Trip audit",
+      "description": "Actual route vs OSRM optimal and raised flags.",
+      "loadError": "Failed to load trip details.",
+      "kmActualVsOsrm": "km (actual / OSRM)",
+      "actualRoute": "Actual route",
+      "osrmRoute": "OSRM optimal",
+      "unplannedStops": "Unplanned stops",
+      "legs": "Legs",
+      "noLegs": "No legs recorded for this trip.",
+      "flags": "Flags",
+      "noFlags": "No flags raised for this trip.",
+      "reviewTitle": "Review this trip",
+      "reviewNote": "Review note",
+      "notePlaceholder": "Optional note\u2026",
+      "markReviewed": "Mark reviewed",
+      "updateReview": "Update review",
+      "reviewedAt": "Reviewed {{when}}"
+    },
+    "legs": {
+      "type": "Type",
+      "fromTo": "From \u2192 To",
+      "depart": "Depart",
+      "arrive": "Arrive",
+      "km": "km (actual / OSRM)",
+      "ratio": "Ratio",
+      "duration": "Duration (actual / OSRM)",
+      "maxDeviation": "Max dev.",
+      "night": "Night window"
+    },
+    "legType": {
+      "outbound": "Outbound",
+      "between": "Between stops",
+      "return": "Return"
+    },
+    "flagTypes": {
+      "excess_distance": "Inefficient route",
+      "excess_duration": "Excess duration",
+      "unplanned_stop": "Unplanned stop",
+      "route_deviation": "Route deviation",
+      "skipped_delivery": "Skipped delivery",
+      "no_return_data": "No return data",
+      "no_terminal_departure": "No terminal departure"
+    },
+    "severity": {
+      "info": "Info",
+      "warning": "Warning",
+      "critical": "Critical"
+    },
+    "flagDetails": {
+      "stoppedFor": "Stopped for",
+      "actual": "Actual",
+      "optimal": "Optimal",
+      "dropoff": "Drop-off",
+      "leg": "Leg {{seq}}"
+    },
+    "toast": {
+      "reviewSuccess": "Marked as reviewed",
+      "reviewError": "Failed to mark as reviewed",
+      "scanStarted": "Scan started",
+      "scanStartedDesc": "This can take a few minutes \u2014 results will refresh automatically.",
+      "scanComplete": "Scan complete",
+      "scanSummary": "{{scanned}} trips scanned, {{matched}} matched, {{flags}} flags raised",
+      "scanError": "Scan finished with an error",
+      "scanRequestError": "Failed to run scan"
+    }
   }
 }

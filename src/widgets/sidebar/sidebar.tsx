@@ -22,6 +22,8 @@ import {
   Radar,
   Wrench,
   MapPin,
+  MapPinned,
+  ClipboardCheck,
   type LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/shared/lib/cn';
@@ -57,6 +59,18 @@ export const NAV_SECTIONS: NavSection[] = [
     { to: '/trips', labelKey: 'nav.trips', icon: Route },
     { to: '/etit', labelKey: 'nav.etit', icon: Radar },
     { to: '/zones', labelKey: 'nav.zones', icon: MapPin },
+    {
+      to: '/locations',
+      labelKey: 'nav.locations',
+      icon: MapPinned,
+      minPermission: PERMISSION_LEVELS.MANAGER,
+    },
+    {
+      to: '/trip-audit',
+      labelKey: 'nav.tripAudit',
+      icon: ClipboardCheck,
+      minPermission: PERMISSION_LEVELS.MANAGER,
+    },
     { to: '/oil-changes', labelKey: 'nav.oilChanges', icon: Droplets },
     { to: '/service-invoices', labelKey: 'nav.serviceInvoices', icon: Wrench },
   ],

@@ -56,6 +56,26 @@ export interface MapCircle {
   fillOpacity?: number;
 }
 
+/**
+ * A styled overlay polyline (in addition to the primary `route`). Used by
+ * multi-line displays such as the trip-audit review map, where each leg's
+ * actual GPS trace and its OSRM optimal are drawn as separate lines.
+ */
+export interface MapPolyline {
+  /** Stable identity for React keys + bounds fingerprinting. */
+  id: string;
+  /** Decoded `[lat, lng]` pairs. Empty paths are skipped. */
+  path: Array<[number, number]>;
+  /** Stroke color, e.g. '#3b82f6'. Defaults to blue. */
+  color?: string;
+  /** Stroke weight in px. Defaults to 4. */
+  weight?: number;
+  /** Stroke opacity 0–1. Defaults to 0.85. */
+  opacity?: number;
+  /** Render as a dashed line (both providers support this). */
+  dashed?: boolean;
+}
+
 export interface MapViewProps {
   markers?: MapMarker[];
   circles?: MapCircle[];
@@ -65,6 +85,12 @@ export interface MapViewProps {
    * visual depth.
    */
   route?: Array<[number, number]>;
+  /**
+   * Additional styled polylines drawn as-is (single stroke each, no
+   * halo/casing stack). They participate in auto-fit bounds. Unlike
+   * `route`, they are unaffected by `suppressRoute`.
+   */
+  polylines?: MapPolyline[];
   /**
    * When true, the route polyline is NOT rendered even if `route` is
    * non-empty. Used when only one of two endpoints is valid.

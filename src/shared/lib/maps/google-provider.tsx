@@ -195,6 +195,7 @@ export function GoogleMapView({
   markers = [],
   circles = [],
   route = [],
+  polylines = [],
   centerFallback = [30.0444, 31.2357],
   onMapClick,
   onMarkerClick,
@@ -503,7 +504,36 @@ export function GoogleMapView({
         }),
       );
     }
-  }, [mapReady, markers, circles, route]);
+
+    // 5. Sync extra styled polylines. Dashed lines use the standard
+    // Google Maps trick: transparent stroke + repeated line symbol.
+    for (const p of polylines) {
+      if (p.path.length < 2) continue;
+      const path = p.path.map(([lat, lng]) => ({ lat, lng }));
+      polylinesRef.current.push(
+        new google.maps.Polyline({
+          path,
+          map,
+          strokeColor: p.color ?? '#3b82f6',
+          strokeOpacity: p.dashed ? 0 : (p.opacity ?? 0.85),
+          strokeWeight: p.weight ?? 4,
+          ...(p.dashed && {
+            icons: [
+              {
+                icon: {
+                  path: 'M 0,-1 0,1',
+                  strokeOpacity: p.opacity ?? 0.85,
+                  scale: (p.weight ?? 4) / 1.6,
+                },
+                offset: '0',
+                repeat: '14px',
+              },
+            ],
+          }),
+        }),
+      );
+    }
+  }, [mapReady, markers, circles, route, polylines]);
 
   /* -------- fitBounds — fires only when the route IDENTITY changes ----- */
   /*                                                                       */
@@ -530,7 +560,8 @@ export function GoogleMapView({
     const rEnd = rLen > 0 ? route[rLen - 1].join(',') : '';
     const mCoords = boundsMarkers.map(m => `${m.lat.toFixed(6)},${m.lng.toFixed(6)}`).join('|');
     const cCoords = circles.map(c => `${c.lat.toFixed(6)},${c.lng.toFixed(6)},${c.radius_m}`).join('|');
-    const signature = `${mIds}|${mCoords}|${cIds}|${cCoords}|${rLen}|${rStart}|${rEnd}|${suppressRoute ? 1 : 0}`;
+    const pIds = polylines.map((p) => `${p.id}:${p.path.length}`).join(',');
+    const signature = `${mIds}|${mCoords}|${cIds}|${cCoords}|${rLen}|${rStart}|${rEnd}|${pIds}|${suppressRoute ? 1 : 0}`;
 
     if (signature === lastRouteSignatureRef.current) return;
     lastRouteSignatureRef.current = signature;
@@ -548,6 +579,13 @@ export function GoogleMapView({
       });
     }
 
+    polylines.forEach((p) => {
+      p.path.forEach(([lat, lng]) => {
+        bounds.extend({ lat, lng });
+        hasPoints = true;
+      });
+    });
+
     circles.forEach((c) => {
       // Rough approximation for extending bounds to circle edges
       const latOffset = c.radius_m / 111320;
@@ -559,14 +597,14 @@ export function GoogleMapView({
 
     if (!hasPoints) return;
 
-    if (rLen === 0 && boundsMarkers.length === 1 && circles.length === 0) {
+    if (rLen === 0 && boundsMarkers.length === 1 && circles.length === 0 && polylines.length === 0) {
       const m = boundsMarkers[0];
       map.setZoom(18);
       map.panTo({ lat: m.lat, lng: m.lng });
     } else {
       map.fitBounds(bounds, { top: 80, bottom: 80, left: 60, right: 60 });
     }
-  }, [mapReady, markers, circles, route, suppressRoute]);
+  }, [mapReady, markers, circles, route, polylines, suppressRoute]);
 
   /* -------- Sentinel-driven flyTo (manual focus button) ---------------- */
   /*                                                                       */

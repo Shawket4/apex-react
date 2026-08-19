@@ -155,6 +155,7 @@ export function LeafletMapView({
   markers = [],
   circles = [],
   route = [],
+  polylines = [],
   suppressRoute = false,
   centerFallback = DEFAULT_MAP_CENTER,
   height = 400,
@@ -174,6 +175,7 @@ export function LeafletMapView({
   const markerEntriesRef = React.useRef<Map<string, MarkerEntry>>(new Map());
   const circleEntriesRef = React.useRef<Map<string, import('leaflet').Circle>>(new Map());
   const polylinesRef = React.useRef<LeafletPolyline[]>([]);
+  const extraPolylinesRef = React.useRef<LeafletPolyline[]>([]);
   const themeObserverRef = React.useRef<MutationObserver | null>(null);
   const lastFingerprintRef = React.useRef<string>('');
   const [mapReady, setMapReady] = React.useState(false);
@@ -301,6 +303,28 @@ export function LeafletMapView({
     }
   }, [mapReady, route, suppressRoute]);
 
+  /* ---- Sync extra styled polylines (teardown + recreate) --------------- */
+
+  React.useEffect(() => {
+    const L = LRef.current;
+    const map = mapRef.current;
+    if (!mapReady || !L || !map) return;
+
+    extraPolylinesRef.current.forEach((p) => p.remove());
+    extraPolylinesRef.current = [];
+
+    for (const p of polylines) {
+      if (p.path.length < 2) continue;
+      const line = L.polyline(p.path, {
+        color: p.color ?? '#3b82f6',
+        opacity: p.opacity ?? 0.85,
+        weight: p.weight ?? 4,
+        dashArray: p.dashed ? '6 10' : undefined,
+      }).addTo(map);
+      extraPolylinesRef.current.push(line);
+    }
+  }, [mapReady, polylines]);
+
   /* ---- Sync markers --------------------------------------------------- */
 
   React.useEffect(() => {
@@ -425,10 +449,12 @@ export function LeafletMapView({
     if (route.length > 0 && !suppressRoute) {
       boundsPoints.push(...route);
     }
+    polylines.forEach((p) => boundsPoints.push(...p.path));
 
     const cIds = circles.map(c => c.id).sort().join(',');
     const cCoords = circles.map(c => `${c.lat.toFixed(6)},${c.lng.toFixed(6)},${c.radius_m}`).join('|');
-    const fp = boundsFingerprint(markers, suppressRoute ? [] : route) + `|${cIds}|${cCoords}`;
+    const pIds = polylines.map((p) => `${p.id}:${p.path.length}`).join(',');
+    const fp = boundsFingerprint(markers, suppressRoute ? [] : route) + `|${cIds}|${cCoords}|${pIds}`;
     const fingerprintChanged = fp !== lastFingerprintRef.current;
     lastFingerprintRef.current = fp;
 
@@ -448,7 +474,7 @@ export function LeafletMapView({
         map.fitBounds(L.latLngBounds(boundsPoints), { padding: [40, 40] });
       }
     }
-  }, [mapReady, markers, circles, route, suppressRoute, liveUpdates]);
+  }, [mapReady, markers, circles, route, polylines, suppressRoute, liveUpdates]);
 
   /* ---- Fit-bounds button ---------------------------------------------- */
 
@@ -458,6 +484,7 @@ export function LeafletMapView({
     if (!L || !map) return;
     const points: Array<[number, number]> = [];
     if (route.length > 0 && !suppressRoute) points.push(...route);
+    polylines.forEach((p) => points.push(...p.path));
     markers.forEach((m) => {
       if (m.affectsBounds !== false) points.push([m.lat, m.lng]);
     });
@@ -472,7 +499,7 @@ export function LeafletMapView({
     } else if (points.length === 1) {
       map.setView(points[0], 18);
     }
-  }, [markers, route, suppressRoute]);
+  }, [markers, route, polylines, suppressRoute]);
 
   return (
     <div className={cn('relative', className)} style={{ height }}>

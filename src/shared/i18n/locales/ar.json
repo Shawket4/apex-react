@@ -62,7 +62,8 @@
     "none": "بدون",
     "loadMore": "تحميل المزيد",
     "yes": "نعم",
-    "no": "لا"
+    "no": "لا",
+    "add": "إضافة"
   },
   "nav": {
     "overview": "نظرة عامة",
@@ -90,6 +91,8 @@
     "etit": "التتبع المباشر",
     "serviceInvoices": "فواتير الصيانة",
     "zones": "المناطق الميتة",
+    "locations": "المواقع",
+    "tripAudit": "تدقيق الرحلات",
     "expensesReview": "قائمة المراجعة"
   },
   "auth": {
@@ -1547,5 +1550,215 @@
     },
     "emptyBody": "(بلا نص — رسالة وسائط)",
     "fromMe": "أُرسلت منّا"
+  },
+  "locations": {
+    "title": "المواقع",
+    "description": "إدارة المحطات ونقاط التسليم المعتمدة — المواقع وأنصاف الأقطار والأسماء البديلة — في مكان واحد.",
+    "newDropoff": "نقطة تسليم جديدة",
+    "tabs": {
+      "inbox": "بحاجة إلى مراجعة",
+      "terminals": "المحطات",
+      "dropoffs": "نقاط التسليم"
+    },
+    "kind": {
+      "terminal": "محطة",
+      "dropoff": "نقطة تسليم"
+    },
+    "pin": {
+      "pinned": "محدد على الخريطة",
+      "missing": "بدون تحديد"
+    },
+    "pinSource": {
+      "manual": "يدوي",
+      "gpsSuggested": "GPS"
+    },
+    "fields": {
+      "name": "الاسم",
+      "address": "العنوان",
+      "addressPlaceholder": "عنوان اختياري",
+      "lat": "خط العرض",
+      "lng": "خط الطول",
+      "radius": "نصف القطر (متر)",
+      "radiusDefaultPlaceholder": "افتراضي ({{m}} م)",
+      "aliases": "الأسماء البديلة",
+      "pinStatus": "الموقع",
+      "pinSource": "مصدر التحديد",
+      "coordinates": "الإحداثيات",
+      "dropoffNamePlaceholder": "مثل مخازن العاشر من رمضان"
+    },
+    "dialog": {
+      "editTerminal": "تعديل المحطة",
+      "editDropoff": "تعديل نقطة التسليم",
+      "createDropoff": "نقطة تسليم جديدة",
+      "mapHelper": "انقر على الخريطة أو اسحب العلامة لتحديد الموقع. اترك نصف القطر فارغًا لاستخدام القيمة الافتراضية.",
+      "aliasHelper": "كتابات بديلة من بيانات الرحلات يجب أن تُنسب إلى هذه المحطة.",
+      "aliasPlaceholder": "أضف اسمًا بديلاً…",
+      "removeAlias": "إزالة الاسم البديل",
+      "noAliases": "لا توجد أسماء بديلة بعد."
+    },
+    "terminals": {
+      "empty": "لا توجد محطات"
+    },
+    "dropoffs": {
+      "empty": "لا توجد نقاط تسليم",
+      "searchPlaceholder": "ابحث في نقاط التسليم…",
+      "missingOnly": "بدون تحديد فقط",
+      "deleteTitle": "حذف نقطة التسليم؟"
+    },
+    "inbox": {
+      "unpinnedTitle": "نقاط تسليم بدون تحديد موقع",
+      "mismatchTitle": "تعارض المواقع",
+      "unknownTitle": "أسماء محطات غير معروفة",
+      "gpsSuggests": "يقترح GPS موقعًا استنادًا إلى {{stops}} توقفًا",
+      "review": "مراجعة",
+      "setPin": "تحديد الموقع",
+      "mismatchText": "تجمع GPS يبعد {{distance}} م عن الموقع المخزن ({{stops}} توقفًا)",
+      "movePin": "نقل الموقع",
+      "keepCurrent": "الإبقاء على الحالي",
+      "currentPin": "الموقع المخزن",
+      "suggestedPin": "اقتراح GPS",
+      "noMatch": "لم يتم العثور على سجل مطابق لهذا الاسم — لا يمكن نقل الموقع تلقائيًا.",
+      "unknownText": "يظهر في {{trips}} رحلة دون مطابقة أي محطة",
+      "selectTerminal": "اختر محطة…",
+      "linkAlias": "ربط كاسم بديل",
+      "createHint": "المحطة الجديدة فعلاً يجب إنشاؤها في قاعدة البيانات أولاً — ثم اربط أسماءها الواردة في الرحلات هنا.",
+      "suggestionsUnavailable": "اقتراحات GPS غير متاحة حاليًا — تُعرض عناصر قاعدة البيانات فقط.",
+      "allClear": "كل شيء محدَّث",
+      "allClearDesc": "لا توجد مواقع تحتاج إلى مراجعة حاليًا."
+    },
+    "toast": {
+      "terminalUpdated": "تم تحديث المحطة",
+      "terminalUpdateError": "فشل تحديث المحطة",
+      "aliasAdded": "تمت إضافة الاسم البديل",
+      "aliasAddError": "فشل إضافة الاسم البديل",
+      "aliasRemoved": "تمت إزالة الاسم البديل",
+      "aliasRemoveError": "فشل إزالة الاسم البديل",
+      "dropoffCreated": "تم إنشاء نقطة التسليم",
+      "dropoffCreateError": "فشل إنشاء نقطة التسليم",
+      "dropoffUpdated": "تم تحديث نقطة التسليم",
+      "dropoffUpdateError": "فشل تحديث نقطة التسليم",
+      "dropoffDeleted": "تم حذف نقطة التسليم",
+      "dropoffDeleteError": "فشل حذف نقطة التسليم",
+      "suggestionDismissed": "تم تجاهل الاقتراح",
+      "suggestionAckError": "فشل تحديث الاقتراح"
+    }
+  },
+  "tripAudit": {
+    "title": "تدقيق الرحلات",
+    "description": "مراجعة الرحلات المدققة عبر GPS — المسار الفعلي مقابل المسار الأمثل من OSRM — والتنبيهات المرفوعة.",
+    "filters": {
+      "status": "الحالة",
+      "allStatuses": "كل الحالات",
+      "companyPlaceholder": "تصفية حسب الشركة…",
+      "flaggedOnly": "المعلَّمة فقط"
+    },
+    "summary": {
+      "total": "الإجمالي",
+      "matched": "مطابقة",
+      "partial": "جزئية",
+      "unmatched": "غير مطابقة",
+      "flagged": "معلَّمة"
+    },
+    "scan": {
+      "run": "تشغيل الفحص",
+      "last": "آخر فحص",
+      "none": "لا توجد عمليات فحص بعد"
+    },
+    "status": {
+      "matched": "مطابقة",
+      "partial": "جزئية",
+      "unmatched": "غير مطابقة"
+    },
+    "unmatchedReason": {
+      "no_etit_car_id": "لا يوجد ربط ETIT",
+      "no_terminal_coords": "لا يوجد موقع للمحطة",
+      "no_dropoff_coords": "لا توجد مواقع لنقاط التسليم",
+      "no_gps_data": "لا توجد بيانات GPS",
+      "no_terminal_departure": "لا يوجد انطلاق من المحطة",
+      "no_dropoff_visits": "لا توجد زيارات لنقاط التسليم"
+    },
+    "table": {
+      "day": "اليوم",
+      "company": "الشركة",
+      "terminal": "المحطة",
+      "plate": "اللوحة",
+      "driver": "السائق",
+      "deliveries": "التسليمات",
+      "actualKm": "كم الفعلي",
+      "osrmKm": "كم OSRM",
+      "distanceRatio": "نسبة المسافة",
+      "durationRatio": "نسبة المدة",
+      "flags": "التنبيهات",
+      "status": "الحالة",
+      "reviewed": "تمت المراجعة",
+      "empty": "لا توجد رحلات مدققة في هذا النطاق",
+      "emptyDesc": "عدّل نطاق التاريخ أو شغّل فحصًا لتدقيق الرحلات الأخيرة."
+    },
+    "detail": {
+      "title": "تدقيق الرحلة",
+      "description": "المسار الفعلي مقابل المسار الأمثل من OSRM والتنبيهات المرفوعة.",
+      "loadError": "فشل تحميل تفاصيل الرحلة.",
+      "kmActualVsOsrm": "كم (فعلي / OSRM)",
+      "actualRoute": "المسار الفعلي",
+      "osrmRoute": "المسار الأمثل OSRM",
+      "unplannedStops": "توقفات غير مخططة",
+      "legs": "مراحل الرحلة",
+      "noLegs": "لا توجد مراحل مسجلة لهذه الرحلة.",
+      "flags": "التنبيهات",
+      "noFlags": "لا توجد تنبيهات لهذه الرحلة.",
+      "reviewTitle": "مراجعة هذه الرحلة",
+      "reviewNote": "ملاحظة المراجعة",
+      "notePlaceholder": "ملاحظة اختيارية…",
+      "markReviewed": "وضع علامة تمت المراجعة",
+      "updateReview": "تحديث المراجعة",
+      "reviewedAt": "تمت المراجعة {{when}}"
+    },
+    "legs": {
+      "type": "النوع",
+      "fromTo": "من ← إلى",
+      "depart": "المغادرة",
+      "arrive": "الوصول",
+      "km": "كم (فعلي / OSRM)",
+      "ratio": "النسبة",
+      "duration": "المدة (فعلي / OSRM)",
+      "maxDeviation": "أقصى انحراف",
+      "night": "فترة ليلية"
+    },
+    "legType": {
+      "outbound": "ذهاب",
+      "between": "بين النقاط",
+      "return": "عودة"
+    },
+    "flagTypes": {
+      "excess_distance": "مسار غير فعّال",
+      "excess_duration": "مدة زائدة",
+      "unplanned_stop": "توقف غير مخطط",
+      "route_deviation": "انحراف عن المسار",
+      "skipped_delivery": "تسليم متخطى",
+      "no_return_data": "لا توجد بيانات عودة",
+      "no_terminal_departure": "لا يوجد انطلاق من المحطة"
+    },
+    "severity": {
+      "info": "معلومة",
+      "warning": "تحذير",
+      "critical": "حرج"
+    },
+    "flagDetails": {
+      "stoppedFor": "توقف لمدة",
+      "actual": "الفعلي",
+      "optimal": "الأمثل",
+      "dropoff": "نقطة التسليم",
+      "leg": "المرحلة {{seq}}"
+    },
+    "toast": {
+      "reviewSuccess": "تم وضع علامة تمت المراجعة",
+      "reviewError": "فشل وضع علامة المراجعة",
+      "scanStarted": "بدأ الفحص",
+      "scanStartedDesc": "قد يستغرق هذا بضع دقائق — سيتم تحديث النتائج تلقائيًا.",
+      "scanComplete": "اكتمل الفحص",
+      "scanSummary": "تم فحص {{scanned}} رحلة، تطابقت {{matched}}، ورُفع {{flags}} تنبيه",
+      "scanError": "انتهى الفحص بخطأ",
+      "scanRequestError": "فشل تشغيل الفحص"
+    }
   }
 }
