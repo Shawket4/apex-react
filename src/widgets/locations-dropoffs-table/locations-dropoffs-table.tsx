@@ -7,12 +7,21 @@ interface LocationsDropoffsTableProps {
   dropoffs: DropOffPoint[];
   loading?: boolean;
   onRowClick: (dropoff: DropOffPoint) => void;
+  /** Server-side pagination — the list endpoint is paginated now. */
+  pagination?: {
+    page: number;
+    totalPages: number;
+    onPageChange: (page: number) => void;
+  };
+  pageSize?: number;
 }
 
 export function LocationsDropoffsTable({
   dropoffs,
   loading,
   onRowClick,
+  pagination,
+  pageSize = 50,
 }: LocationsDropoffsTableProps) {
   const { t } = useTranslation();
   const columns = useDropoffColumns();
@@ -23,7 +32,8 @@ export function LocationsDropoffsTable({
       data={dropoffs}
       loading={loading}
       onRowClick={onRowClick}
-      pageSize={50}
+      pageSize={pageSize}
+      pagination={pagination}
       emptyState={t('locations.dropoffs.empty', 'No drop-off points found')}
     />
   );

@@ -28,10 +28,13 @@ import {
   useUpsertReceiptPattern,
 } from '@/entities/location/queries';
 import { LocationsMapPicker } from '../locations-map-picker';
+import { PinSourceBadge } from '../locations-dropoffs-table/pin-source-badge';
 
 interface LocationsTerminalDialogProps {
   terminal: Terminal | null;
   onOpenChange: (open: boolean) => void;
+  /** Runs after a successful save (e.g. ack a GPS suggestion). */
+  onSaved?: () => void | Promise<void>;
 }
 
 /**
@@ -44,6 +47,7 @@ interface LocationsTerminalDialogProps {
 export function LocationsTerminalDialog({
   terminal,
   onOpenChange,
+  onSaved,
 }: LocationsTerminalDialogProps) {
   const { t } = useTranslation();
   const open = terminal !== null;
@@ -96,6 +100,14 @@ export function LocationsTerminalDialog({
     if (coordValid) {
       payload.lat = Number(numericLat.toFixed(6));
       payload.long = Number(numericLng.toFixed(6));
+      // A hand-placed (or hand-confirmed) move counts as a manual pin; an
+      // untouched position keeps its stored pin_source.
+      const moved =
+        terminal.lat == null ||
+        terminal.long == null ||
+        Math.abs(terminal.lat - payload.lat) > 1e-6 ||
+        Math.abs(terminal.long - payload.long) > 1e-6;
+      if (moved) payload.pin_source = 'manual';
     }
     if (radiusOverride !== null) {
       payload.radius_m = radiusOverride;
@@ -105,6 +117,7 @@ export function LocationsTerminalDialog({
 
     try {
       await updateTerminal.mutateAsync({ id: terminal.ID, payload });
+      await onSaved?.();
       onOpenChange(false);
     } catch {
       // Toast handled by the mutation
@@ -119,8 +132,9 @@ export function LocationsTerminalDialog({
             <MapPin className="h-4 w-4 text-primary" />
             {t('locations.dialog.editTerminal', 'Edit Terminal')}
           </DialogTitle>
-          <DialogDescription className="truncate" dir="auto">
-            {terminal?.name ?? ''}
+          <DialogDescription className="flex items-center gap-2 truncate" dir="auto">
+            <span dir="auto" className="truncate">{terminal?.name ?? ''}</span>
+            <PinSourceBadge pinSource={terminal?.pin_source} />
           </DialogDescription>
         </DialogHeader>
 

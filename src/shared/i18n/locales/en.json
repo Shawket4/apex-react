@@ -63,7 +63,9 @@
     "loadMore": "Load more",
     "yes": "Yes",
     "no": "No",
-    "add": "Add"
+    "add": "Add",
+    "previous": "Previous",
+    "next": "Next"
   },
   "nav": {
     "overview": "Overview",
@@ -1020,7 +1022,8 @@
       "updateFailed": "Failed to update mapping",
       "validation": {
         "fillRequired": "Please fill in all required fields with valid values"
-      }
+      },
+      "newDropoffHint": "New drop-off point will be created"
     },
     "filters": {
       "searchPlaceholder": "Search company, terminal, drop-off…",
@@ -1558,7 +1561,6 @@
   "locations": {
     "title": "Locations",
     "description": "Manage canonical terminals and drop-off points — pins, radii, company allowlists, and receipt serialization — in one place.",
-    "newDropoff": "New drop-off point",
     "tabs": {
       "inbox": "Needs Attention",
       "terminals": "Terminals",
@@ -1574,7 +1576,7 @@
     },
     "pinSource": {
       "manual": "Manual",
-      "gpsSuggested": "GPS"
+      "gpsSuggested": "GPS (provisional)"
     },
     "fields": {
       "name": "Name",
@@ -1587,13 +1589,11 @@
       "pinStatus": "Pin",
       "pinSource": "Pin source",
       "coordinates": "Coordinates",
-      "dropoffNamePlaceholder": "e.g. 10th of Ramadan warehouses",
       "allowedCompanies": "Allowed companies"
     },
     "dialog": {
       "editTerminal": "Edit Terminal",
       "editDropoff": "Edit Drop-off Point",
-      "createDropoff": "New Drop-off Point",
       "mapHelper": "Click the map or drag the marker to set the pin. Leave the radius empty to use the default."
     },
     "terminals": {
@@ -1603,7 +1603,8 @@
       "empty": "No drop-off points found",
       "searchPlaceholder": "Search drop-off points…",
       "missingOnly": "Missing pins only",
-      "deleteTitle": "Delete drop-off point?"
+      "deleteTitle": "Delete drop-off point?",
+      "totalCount": "{{count}} drop-off points"
     },
     "inbox": {
       "unpinnedTitle": "Drop-off points without pins",
@@ -1619,13 +1620,20 @@
       "noMatch": "No matching record found for this name — the pin cannot be moved automatically.",
       "suggestionsUnavailable": "GPS suggestions are unavailable right now — showing database items only.",
       "allClear": "All caught up",
-      "allClearDesc": "No locations need attention right now."
+      "allClearDesc": "No locations need attention right now.",
+      "unpinnedCapped": "Showing the first {{shown}} of {{total}} unpinned drop-off points.",
+      "unpinnedTerminalsTitle": "Terminals without pins",
+      "applyPin": "Apply pin",
+      "dismiss": "Dismiss",
+      "provisionalTitle": "Provisional GPS pins",
+      "provisionalHelper": "These pins were applied automatically from GPS stop clusters. Confirm to keep them, or adjust the position.",
+      "provisionalText": "Pin applied automatically from {{stops}} GPS stops",
+      "confirmPin": "Confirm",
+      "adjustPin": "Adjust"
     },
     "toast": {
       "terminalUpdated": "Terminal updated",
       "terminalUpdateError": "Failed to update terminal",
-      "dropoffCreated": "Drop-off point created",
-      "dropoffCreateError": "Failed to create drop-off point",
       "dropoffUpdated": "Drop-off point updated",
       "dropoffUpdateError": "Failed to update drop-off point",
       "dropoffDeleted": "Drop-off point deleted",
@@ -1636,7 +1644,9 @@
       "patternSaved": "Receipt pattern saved",
       "patternSaveError": "Failed to save receipt pattern",
       "patternDeleted": "Receipt pattern deleted",
-      "patternDeleteError": "Failed to delete receipt pattern"
+      "patternDeleteError": "Failed to delete receipt pattern",
+      "dropoffDeleteInUse": "Cannot delete — used by {{count}} fee mapping(s). Remove those mappings first.",
+      "dropoffDeleteInUseUnknown": "Cannot delete — this drop-off point is still used by fee mappings."
     },
     "receiptPatterns": {
       "title": "Receipt serialization",
@@ -1662,14 +1672,10 @@
       "status": "Status",
       "allStatuses": "All statuses",
       "companyPlaceholder": "Filter by company…",
-      "flaggedOnly": "Flagged only"
-    },
-    "summary": {
-      "total": "Total",
-      "matched": "Matched",
-      "partial": "Partial",
-      "unmatched": "Unmatched",
-      "flagged": "Flagged"
+      "flaggedOnly": "Flagged only",
+      "unreviewedOnly": "Unreviewed only",
+      "sortSeverity": "Worst first",
+      "sortDate": "Newest first"
     },
     "scan": {
       "run": "Run scan",
@@ -1723,7 +1729,11 @@
       "notePlaceholder": "Optional note…",
       "markReviewed": "Mark reviewed",
       "updateReview": "Update review",
-      "reviewedAt": "Reviewed {{when}}"
+      "reviewedAt": "Reviewed {{when}}",
+      "stopsAndFlags": "Stops & flags",
+      "geofences": "Geofences",
+      "loadingTrace": "Loading GPS trace…",
+      "playbackUnavailable": "GPS playback is unavailable for this trip — showing the stored route instead."
     },
     "legs": {
       "type": "Type",
@@ -1734,7 +1744,8 @@
       "ratio": "Ratio",
       "duration": "Duration (actual / OSRM)",
       "maxDeviation": "Max dev.",
-      "night": "Night window"
+      "night": "Night window",
+      "sentence": "Left {{from}} at {{depart}} → arrived {{to}} at {{arrive}} — {{actual}} km actual vs {{osrm}} km optimal"
     },
     "legType": {
       "outbound": "Outbound",
@@ -1771,6 +1782,32 @@
       "scanSummary": "{{scanned}} trips scanned, {{matched}} matched, {{flags}} flags raised",
       "scanError": "Scan finished with an error",
       "scanRequestError": "Failed to run scan"
+    },
+    "kpi": {
+      "flagged": "Flagged trips",
+      "flaggedSub": "of {{total}} trips · {{critical}} critical",
+      "unreviewed": "Unreviewed",
+      "unreviewedSub": "flagged trips awaiting review",
+      "efficiency": "Route efficiency",
+      "efficiencySub": "optimal km ÷ driven km",
+      "excessKm": "Excess distance",
+      "excessKmValue": "+{{km}} km",
+      "excessKmSub": "driven over optimal in this window",
+      "worstRoute": "Worst route",
+      "worstRouteSub": "+{{km}} km over {{trips}} trips"
+    },
+    "queue": {
+      "unmatched": "Not audited — {{reason}}",
+      "unknownReason": "unknown reason",
+      "verdict": "{{terminal}} — drove {{actual}} km vs {{osrm}} km optimal (+{{excess}} km excess)",
+      "verdictEfficient": "{{terminal}} — drove {{actual}} km vs {{osrm}} km optimal — on target",
+      "verdictNoData": "{{terminal}} — no distance comparison available",
+      "severityOk": "OK",
+      "deliveries": "deliveries",
+      "reviewedOn": "Reviewed {{when}}",
+      "markReviewed": "Mark reviewed",
+      "reviewWithNote": "Review with a note",
+      "pageOf": "Page {{page}} of {{pages}} · {{total}} trips"
     }
   },
   "terminalSelect": {

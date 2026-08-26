@@ -1,12 +1,24 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
-import { tripAuditApi, type TripMatchFilters } from './api';
+import {
+  tripAuditApi,
+  type TripAuditSummaryFilters,
+  type TripMatchFilters,
+} from './api';
 
 export const tripAuditKeys = {
   all: ['trip-audit'] as const,
   matches: () => [...tripAuditKeys.all, 'matches'] as const,
   matchList: (filters: TripMatchFilters) => [...tripAuditKeys.matches(), filters] as const,
+  summaries: () => [...tripAuditKeys.all, 'summary'] as const,
+  summary: (filters: TripAuditSummaryFilters) =>
+    [...tripAuditKeys.summaries(), filters] as const,
   details: () => [...tripAuditKeys.all, 'detail'] as const,
   detail: (id: number) => [...tripAuditKeys.details(), id] as const,
   runs: () => [...tripAuditKeys.all, 'runs'] as const,
@@ -20,6 +32,20 @@ export function useTripMatches(filters: TripMatchFilters = {}) {
   return useQuery({
     queryKey: tripAuditKeys.matchList(filters),
     queryFn: () => tripAuditApi.listMatches(filters),
+    // Keep the previous page rendered while the next one loads so the
+    // pagination controls don't jump.
+    placeholderData: keepPreviousData,
+  });
+}
+
+/** Whole-window KPI aggregates — same from/to/company as the list. */
+export function useTripAuditSummary(filters: TripAuditSummaryFilters = {}) {
+  return useQuery({
+    queryKey: tripAuditKeys.summary(filters),
+    queryFn: () => tripAuditApi.getSummary(filters),
+    placeholderData: keepPreviousData,
+    staleTime: 30_000,
+    retry: 1,
   });
 }
 
@@ -53,6 +79,7 @@ export function useReviewMatch() {
       tripAuditApi.reviewMatch(id, note),
     onSuccess: (_data, { id }) => {
       queryClient.invalidateQueries({ queryKey: tripAuditKeys.matches() });
+      queryClient.invalidateQueries({ queryKey: tripAuditKeys.summaries() });
       queryClient.invalidateQueries({ queryKey: tripAuditKeys.detail(id) });
       toast.success(t('tripAudit.toast.reviewSuccess', 'Marked as reviewed'));
     },

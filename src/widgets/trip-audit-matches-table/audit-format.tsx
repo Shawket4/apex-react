@@ -1,9 +1,26 @@
+import * as React from 'react';
+import { useTranslation } from 'react-i18next';
 import { Badge } from '@/shared/ui/badge';
 import { formatNumber } from '@/shared/lib/format';
+import { KNOWN_UNMATCHED_REASONS } from '@/entities/trip-audit/schemas';
 
 /* -------------------------------------------------------------------------- */
-/* Small display helpers shared by the trip-audit table and detail dialog.     */
+/* Small display helpers shared by the trip-audit queue and detail dialog.     */
 /* -------------------------------------------------------------------------- */
+
+/** Translate a proxy unmatched_reason code; unknown codes are echoed as-is. */
+export function useUnmatchedReasonLabel() {
+  const { t } = useTranslation();
+  return React.useCallback(
+    (reason: string): string => {
+      if ((KNOWN_UNMATCHED_REASONS as readonly string[]).includes(reason)) {
+        return t(`tripAudit.unmatchedReason.${reason}`, reason);
+      }
+      return reason;
+    },
+    [t],
+  );
+}
 
 /** "12.3" km with one decimal, or an em dash for null. */
 export function formatKm(km: number | null | undefined): string {

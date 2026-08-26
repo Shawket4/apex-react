@@ -54,6 +54,7 @@ const terminalRawSchema = z
     latitude: z.number().nullish(),
     longitude: z.number().nullish(),
     radius_m: z.number().nullish(),
+    pin_source: z.string().nullish(),
     allowed_companies: z.array(z.string()).nullish(),
     receipt_pattern: receiptPatternRawSchema.nullish(),
   })
@@ -66,6 +67,8 @@ export const terminalSchema = terminalRawSchema.transform((row) => ({
   lat: row.lat ?? row.latitude ?? null,
   long: row.long ?? row.longitude ?? null,
   radius_m: row.radius_m ?? null,
+  /** 'manual' | 'gps_suggested' — where the stored pin came from. */
+  pin_source: row.pin_source ?? null,
   /** Only populated when listing without a company filter. */
   allowed_companies: row.allowed_companies ?? [],
   /** Company-resolved pattern — populated on `GET /api/terminals?company=X`. */
@@ -101,11 +104,50 @@ export const dropOffPointSchema = z.object({
 
 export type DropOffPoint = z.infer<typeof dropOffPointSchema>;
 
+/**
+ * Paginated envelope for `GET /api/locations/dropoffs`. Accepts the legacy
+ * `{ data: [...] }` / bare-array shapes too so a stale backend degrades to a
+ * single page instead of a blank table.
+ */
+export const dropOffsPageSchema = z.object({
+  items: z.array(dropOffPointSchema),
+  total: z
+    .number()
+    .nullish()
+    .transform((v) => v ?? 0),
+  page: z
+    .number()
+    .nullish()
+    .transform((v) => v ?? 1),
+  per_page: z
+    .number()
+    .nullish()
+    .transform((v) => v ?? 50),
+});
+
+export type DropOffsPage = z.infer<typeof dropOffsPageSchema>;
+
+export function parseDropOffsPage(payload: unknown): DropOffsPage {
+  const asList = (list: unknown[]): DropOffsPage => {
+    const items = z.array(dropOffPointSchema).parse(list);
+    return { items, total: items.length, page: 1, per_page: Math.max(items.length, 1) };
+  };
+  if (Array.isArray(payload)) return asList(payload);
+  if (payload && typeof payload === 'object') {
+    const obj = payload as Record<string, unknown>;
+    if (Array.isArray(obj.items)) return dropOffsPageSchema.parse(obj);
+    if (Array.isArray(obj.data)) return asList(obj.data);
+  }
+  return { items: [], total: 0, page: 1, per_page: 50 };
+}
+
 export const locationsInboxSchema = z.object({
   unpinned_dropoffs: z
     .array(dropOffPointSchema)
     .nullish()
     .transform((v) => v ?? []),
+  /** Full unpinned count — the list above is capped (currently at 50). */
+  total_unpinned: z.number().nullish(),
 });
 
 export type LocationsInbox = z.infer<typeof locationsInboxSchema>;
@@ -143,6 +185,8 @@ export interface UpdateTerminalPayload {
   long?: number;
   radius_m?: number;
   clear_radius?: boolean;
+  /** 'manual' | 'gps_suggested' — recorded when the pin moves. */
+  pin_source?: string;
 }
 
 /** `POST /api/terminals` — resolve-or-create-or-extend for a company. */
@@ -158,14 +202,6 @@ export interface UpsertReceiptPatternPayload {
   pattern: string;
   description: string;
   active: boolean;
-}
-
-/** `POST /api/locations/dropoffs` */
-export interface CreateDropoffPayload {
-  name: string;
-  lat?: number;
-  long?: number;
-  radius_m?: number;
 }
 
 /** `PUT /api/locations/dropoffs/:id` */

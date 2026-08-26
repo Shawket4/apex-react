@@ -1,2 +1,6 @@
-export { TripAuditMatchesTable } from './trip-audit-matches-table';
-export { RatioBadge, formatKm, formatDurationSecs } from './audit-format';
+export {
+  RatioBadge,
+  formatDurationSecs,
+  formatKm,
+  useUnmatchedReasonLabel,
+} from './audit-format';

@@ -1,18 +1,20 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from '@/shared/ui/toaster';
-import { Loader2, Pencil, Plus, X } from 'lucide-react';
+import { Loader2, Pencil, Plus, Sparkles, X } from 'lucide-react';
 import { Card, CardContent } from '@/shared/ui/card';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { Label } from '@/shared/ui/label';
 import { SearchableSelect } from '@/shared/ui/searchable-select';
 import { extractErrorMessage } from '@/shared/api/errors';
+import { normalize } from '@/shared/lib/normalize';
 import {
   useCreateFeeMapping,
   useUpdateFeeMapping,
   useFeeMappings,
 } from '@/entities/fee-mapping/queries';
+import { useDropoffs } from '@/entities/location/queries';
 import type { FeeMapping } from '@/entities/fee-mapping/schemas';
 import { TerminalSelect } from '@/widgets/terminal-select';
 import type { SelectOption } from '@/shared/types';
@@ -68,18 +70,32 @@ export function FeeMappingsForm({
     return companies.sort().map((c) => ({ value: c, label: c }));
   }, [mappings]);
 
-  // Extract unique drop-off points for the selected company
+  // Canonical drop-off points (the paginated Locations list) plus the names
+  // already used by this company's mappings — a typed name matching neither
+  // is created implicitly by the backend on submit.
+  const dropoffsQuery = useDropoffs({ per_page: 200 });
   const dropOffOptions = React.useMemo<SelectOption<string>[]>(() => {
     if (!form.company) return [];
-    const points = Array.from(
-      new Set(
-        mappings
-          .filter((m) => m.company === form.company)
-          .map((m) => m.dropOffPoint),
-      ),
+    const names = new Set<string>();
+    for (const d of dropoffsQuery.data?.items ?? []) names.add(d.name);
+    for (const m of mappings) {
+      if (m.company === form.company) names.add(m.dropOffPoint);
+    }
+    return [...names].sort().map((p) => ({ value: p, label: p }));
+  }, [mappings, form.company, dropoffsQuery.data]);
+
+  /** True when the typed drop-off name matches no known point — the backend
+   *  will create the point row implicitly. */
+  const isNewDropoff = React.useMemo(() => {
+    const typed = form.drop_off_point.trim();
+    if (!typed) return false;
+    const key = normalize(typed);
+    const knownPoint = (dropoffsQuery.data?.items ?? []).some(
+      (d) => normalize(d.name) === key,
     );
-    return points.sort().map((p) => ({ value: p, label: p }));
-  }, [mappings, form.company]);
+    const knownMapping = mappings.some((m) => normalize(m.dropOffPoint) === key);
+    return !knownPoint && !knownMapping;
+  }, [form.drop_off_point, dropoffsQuery.data, mappings]);
 
   // Hydrate form when entering edit mode. `terminal_id` starts null —
   // TerminalSelect resolves the legacy name against the company's allowed
@@ -220,6 +236,17 @@ export function FeeMappingsForm({
                 placeholder="Qena"
                 disabled={!form.company}
               />
+              {isNewDropoff && (
+                <p className="flex items-start gap-1 text-[11px] text-muted-foreground">
+                  <Sparkles className="mt-0.5 h-3 w-3 shrink-0 text-primary" />
+                  <span dir="auto">
+                    {t(
+                      'feeMappings.form.newDropoffHint',
+                      'New drop-off point will be created',
+                    )}
+                  </span>
+                </p>
+              )}
             </div>
 
             <Field

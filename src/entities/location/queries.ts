@@ -1,9 +1,14 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
+import { ApiError } from '@/shared/api/errors';
 import { locationApi, type DropoffFilters } from './api';
 import type {
-  CreateDropoffPayload,
   ResolveTerminalPayload,
   SuggestionAckStatus,
   UpdateDropoffPayload,
@@ -56,10 +61,13 @@ export function useReceiptPatterns(terminalId: number | null) {
   });
 }
 
+/** Paginated drop-off list — `{ items, total, page, per_page }`. */
 export function useDropoffs(filters: DropoffFilters = {}) {
   return useQuery({
     queryKey: locationKeys.dropoffList(filters),
     queryFn: () => locationApi.listDropoffs(filters),
+    // Keep the previous page rendered while the next one loads.
+    placeholderData: keepPreviousData,
   });
 }
 
@@ -164,24 +172,6 @@ export function useDeleteReceiptPattern() {
   });
 }
 
-export function useCreateDropoff() {
-  const queryClient = useQueryClient();
-  const { t } = useTranslation();
-
-  return useMutation({
-    mutationFn: (payload: CreateDropoffPayload) => locationApi.createDropoff(payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: locationKeys.dropoffs() });
-      queryClient.invalidateQueries({ queryKey: locationKeys.inbox() });
-      toast.success(t('locations.toast.dropoffCreated', 'Drop-off point created'));
-    },
-    onError: (err) => {
-      console.error(err);
-      toast.error(t('locations.toast.dropoffCreateError', 'Failed to create drop-off point'));
-    },
-  });
-}
-
 export function useUpdateDropoff() {
   const queryClient = useQueryClient();
   const { t } = useTranslation();
@@ -201,6 +191,17 @@ export function useUpdateDropoff() {
   });
 }
 
+/** Best-effort count of referencing fee mappings from a 409 payload. */
+function extractMappingCount(payload: unknown): number | null {
+  if (!payload || typeof payload !== 'object') return null;
+  const obj = payload as Record<string, unknown>;
+  for (const key of ['count', 'mappings', 'fee_mappings', 'references']) {
+    const v = obj[key];
+    if (typeof v === 'number' && Number.isFinite(v)) return v;
+  }
+  return null;
+}
+
 export function useDeleteDropoff() {
   const queryClient = useQueryClient();
   const { t } = useTranslation();
@@ -214,6 +215,23 @@ export function useDeleteDropoff() {
     },
     onError: (err) => {
       console.error(err);
+      // 409 — the point is still referenced by fee mappings.
+      if (err instanceof ApiError && err.status === 409) {
+        const count = extractMappingCount(err.payload);
+        toast.error(
+          count != null
+            ? t('locations.toast.dropoffDeleteInUse', {
+                count,
+                defaultValue:
+                  'Cannot delete — used by {{count}} fee mapping(s). Remove those mappings first.',
+              })
+            : t(
+                'locations.toast.dropoffDeleteInUseUnknown',
+                'Cannot delete — this drop-off point is still used by fee mappings.',
+              ),
+        );
+        return;
+      }
       toast.error(t('locations.toast.dropoffDeleteError', 'Failed to delete drop-off point'));
     },
   });

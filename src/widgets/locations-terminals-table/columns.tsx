@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Badge } from '@/shared/ui/badge';
 import { isValidCoordinate } from '@/shared/lib/coords';
 import { TERMINAL_DEFAULT_RADIUS_M, type Terminal } from '@/entities/location/schemas';
+import { PinSourceBadge } from '../locations-dropoffs-table/pin-source-badge';
 
 const MAX_COMPANY_CHIPS = 3;
 
@@ -60,6 +61,16 @@ export function useTerminalColumns(): ColumnDef<Terminal>[] {
             </div>
           );
         },
+      },
+      {
+        accessorKey: 'pin_source',
+        header: t('locations.fields.pinSource', 'Pin source'),
+        cell: ({ row }) =>
+          row.original.pin_source ? (
+            <PinSourceBadge pinSource={row.original.pin_source} />
+          ) : (
+            <span className="text-muted-foreground">—</span>
+          ),
       },
       {
         id: 'allowed_companies',

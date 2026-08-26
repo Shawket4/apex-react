@@ -1,14 +1,13 @@
 import { z } from 'zod';
 import { apiClient, apiClientEtit } from '@/shared/api/client';
 import {
-  dropOffPointSchema,
   locationsInboxSchema,
+  parseDropOffsPage,
   pinSuggestionSchema,
   receiptPatternSchema,
   resolveTerminalResponseSchema,
   terminalSchema,
-  type CreateDropoffPayload,
-  type DropOffPoint,
+  type DropOffsPage,
   type LocationsInbox,
   type PinSuggestion,
   type ReceiptPattern,
@@ -47,13 +46,6 @@ function unwrapList(payload: unknown): unknown[] {
   }
   return [];
 }
-
-const dropoffsEnvelopeSchema = z.object({
-  data: z
-    .array(dropOffPointSchema)
-    .nullish()
-    .transform((v) => v ?? []),
-});
 
 /* ---- FalconGo: inbox ------------------------------------------------------ */
 
@@ -122,19 +114,25 @@ async function deleteReceiptPattern(terminalId: number, company: string): Promis
 export interface DropoffFilters {
   q?: string;
   missing?: boolean;
+  /** 1-based page. */
+  page?: number;
+  per_page?: number;
 }
 
-async function listDropoffs(filters: DropoffFilters = {}): Promise<DropOffPoint[]> {
+/**
+ * Paginated drop-off list — `{ items, total, page, per_page }`. Creation no
+ * longer has a standalone endpoint: drop-off points are created implicitly
+ * when a fee mapping references a new name.
+ */
+async function listDropoffs(filters: DropoffFilters = {}): Promise<DropOffsPage> {
   const params = new URLSearchParams();
   if (filters.q?.trim()) params.set('q', filters.q.trim());
   if (filters.missing) params.set('missing', 'true');
+  if (filters.page != null) params.set('page', String(filters.page));
+  if (filters.per_page != null) params.set('per_page', String(filters.per_page));
   const qs = params.toString();
   const res = await apiClient.get(`${BASE}/dropoffs${qs ? `?${qs}` : ''}`);
-  return dropoffsEnvelopeSchema.parse(res.data).data;
-}
-
-async function createDropoff(payload: CreateDropoffPayload): Promise<void> {
-  await apiClient.post(`${BASE}/dropoffs`, payload);
+  return parseDropOffsPage(res.data);
 }
 
 async function updateDropoff(id: number, payload: UpdateDropoffPayload): Promise<void> {
@@ -169,7 +167,6 @@ export const locationApi = {
   upsertReceiptPattern,
   deleteReceiptPattern,
   listDropoffs,
-  createDropoff,
   updateDropoff,
   deleteDropoff,
   listSuggestions,

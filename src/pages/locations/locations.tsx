@@ -1,8 +1,7 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Inbox, Plus } from 'lucide-react';
+import { Inbox } from 'lucide-react';
 import { PageShell } from '@/shared/ui/page-shell';
-import { Button } from '@/shared/ui/button';
 import { Badge } from '@/shared/ui/badge';
 import { Label } from '@/shared/ui/label';
 import { Switch } from '@/shared/ui/switch';
@@ -26,11 +25,13 @@ import { LocationsDropoffDialog } from '@/widgets/locations-dropoff-dialog';
 
 type LocationsTab = 'inbox' | 'terminals' | 'dropoffs';
 
+const DROPOFFS_PAGE_SIZE = 50;
+
 /**
  * Locations admin page — the single place where canonical terminals and
  * drop-off points are managed (pins, radius overrides, company allowlists,
- * receipt serialization patterns), so fee mappings never need per-row
- * lat/lng entry again.
+ * receipt serialization patterns). Drop-off points are created implicitly
+ * by fee mappings; here they only get pinned, adjusted, or deleted.
  */
 export default function LocationsPage() {
   const { t } = useTranslation();
@@ -41,21 +42,28 @@ export default function LocationsPage() {
 
   const inboxQuery = useLocationsInbox();
   const suggestionsQuery = usePinSuggestions();
+  const autoAppliedQuery = usePinSuggestions('auto_applied');
 
   const mismatchCount = React.useMemo(
     () =>
       (suggestionsQuery.data ?? []).filter(
         (s) =>
           s.status === 'pending' &&
-          s.current_lat != null &&
-          s.current_lng != null &&
-          (s.offset_m ?? 0) > 0,
+          ((s.current_lat != null && s.current_lng != null && (s.offset_m ?? 0) > 0) ||
+            // Terminal set-pin suggestions (no stored pin yet) also surface
+            // as actionable cards.
+            (s.kind === 'terminal' && s.current_lat == null)),
       ).length,
     [suggestionsQuery.data],
   );
 
+  const provisionalCount = React.useMemo(
+    () => (autoAppliedQuery.data ?? []).filter((s) => s.status === 'auto_applied').length,
+    [autoAppliedQuery.data],
+  );
+
   const attentionCount =
-    (inboxQuery.data?.unpinned_dropoffs.length ?? 0) + mismatchCount;
+    (inboxQuery.data?.unpinned_dropoffs.length ?? 0) + mismatchCount + provisionalCount;
 
   // Pick the initial tab once both sources have settled (the suggestions
   // fetch erroring counts as settled — the inbox degrades gracefully).
@@ -90,21 +98,32 @@ export default function LocationsPage() {
       ? (terminalsQuery.data ?? []).find((term) => term.ID === selectedTerminalId) ?? null
       : null;
 
-  /* ---- Drop-offs tab ---- */
+  /* ---- Drop-offs tab (server-side paginated) ---- */
   const [search, setSearch] = React.useState('');
   const debouncedSearch = useDebounce(search, 300);
   const [missingOnly, setMissingOnly] = React.useState(false);
+  const [dropoffsPage, setDropoffsPage] = React.useState(1);
+
+  // Filter changes restart from page 1.
+  React.useEffect(() => {
+    setDropoffsPage(1);
+  }, [debouncedSearch, missingOnly]);
+
   const dropoffsQuery = useDropoffs({
     q: debouncedSearch.trim() || undefined,
     missing: missingOnly || undefined,
+    page: dropoffsPage,
+    per_page: DROPOFFS_PAGE_SIZE,
   });
+  const dropoffs = dropoffsQuery.data?.items ?? [];
+  const dropoffsTotal = dropoffsQuery.data?.total ?? 0;
+  const dropoffsTotalPages = Math.max(1, Math.ceil(dropoffsTotal / DROPOFFS_PAGE_SIZE));
 
   const [editingDropoffId, setEditingDropoffId] = React.useState<number | null>(null);
   const editingDropoff =
     editingDropoffId != null
-      ? (dropoffsQuery.data ?? []).find((d) => d.ID === editingDropoffId) ?? null
+      ? dropoffs.find((d) => d.ID === editingDropoffId) ?? null
       : null;
-  const [createOpen, setCreateOpen] = React.useState(false);
   const [pendingDelete, setPendingDelete] = React.useState<DropOffPoint | null>(null);
   const deleteDropoff = useDeleteDropoff();
 
@@ -119,7 +138,8 @@ export default function LocationsPage() {
       await deleteDropoff.mutateAsync(pendingDelete.ID);
       setPendingDelete(null);
     } catch {
-      // Toast handled by the mutation
+      // Toast (including the 409 "still referenced" case) handled by the mutation
+      setPendingDelete(null);
     }
   };
 
@@ -130,12 +150,6 @@ export default function LocationsPage() {
         'locations.description',
         'Manage canonical terminals and drop-off points — pins, radii, company allowlists, and receipt serialization — in one place.',
       )}
-      actions={
-        <Button onClick={() => setCreateOpen(true)} className="gap-2">
-          <Plus className="h-4 w-4" />
-          {t('locations.newDropoff', 'New drop-off point')}
-        </Button>
-      }
     >
       <Tabs value={tab} onValueChange={handleTabChange}>
         <TabsList>
@@ -186,11 +200,25 @@ export default function LocationsPage() {
                 {t('locations.dropoffs.missingOnly', 'Missing pins only')}
               </Label>
             </div>
+            {dropoffsTotal > 0 && (
+              <span className="text-xs text-muted-foreground tabular-nums sm:ms-auto">
+                {t('locations.dropoffs.totalCount', {
+                  count: dropoffsTotal,
+                  defaultValue: '{{count}} drop-off points',
+                })}
+              </span>
+            )}
           </div>
           <LocationsDropoffsTable
-            dropoffs={dropoffsQuery.data ?? []}
+            dropoffs={dropoffs}
             loading={dropoffsQuery.isLoading}
             onRowClick={(dropoff) => setEditingDropoffId(dropoff.ID)}
+            pagination={{
+              page: dropoffsPage,
+              totalPages: dropoffsTotalPages,
+              onPageChange: setDropoffsPage,
+            }}
+            pageSize={DROPOFFS_PAGE_SIZE}
           />
         </TabsContent>
       </Tabs>
@@ -212,9 +240,6 @@ export default function LocationsPage() {
         dropoff={editingDropoff}
         onDelete={handleDeleteRequest}
       />
-
-      {/* Drop-off creator */}
-      <LocationsDropoffDialog open={createOpen} onOpenChange={setCreateOpen} />
 
       {/* Delete confirmation */}
       <ConfirmDialog

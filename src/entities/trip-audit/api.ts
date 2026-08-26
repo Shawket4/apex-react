@@ -1,15 +1,17 @@
 import { z } from 'zod';
 import { apiClientEtit } from '@/shared/api/client';
 import {
+  parseTripMatchesPage,
   scanResponseSchema,
   scanRunSchema,
+  tripAuditSummarySchema,
   tripMatchDetailSchema,
-  tripMatchSchema,
   type ScanResponse,
   type ScanRun,
-  type TripMatch,
+  type TripAuditSummary,
   type TripMatchDetail,
   type TripMatchStatus,
+  type TripMatchesPage,
 } from './schemas';
 
 /**
@@ -19,6 +21,8 @@ import {
 
 const PREFIX = 'api/v1/trip-audit';
 
+export type TripMatchSort = 'severity' | 'date';
+
 export interface TripMatchFilters {
   /** 'YYYY-MM-DD' inclusive. */
   from?: string;
@@ -27,18 +31,49 @@ export interface TripMatchFilters {
   status?: TripMatchStatus | '';
   company?: string;
   flagged?: boolean;
+  /** Only trips not yet marked reviewed. */
+  unreviewed?: boolean;
+  /** 'severity' = critical flags first, then excess km; 'date' = newest first. */
+  sort?: TripMatchSort;
+  /** 1-based page. */
+  page?: number;
+  /** Max 200 (proxy-enforced). */
+  per_page?: number;
 }
 
-async function listMatches(filters: TripMatchFilters = {}): Promise<TripMatch[]> {
+async function listMatches(filters: TripMatchFilters = {}): Promise<TripMatchesPage> {
   const params = new URLSearchParams();
   if (filters.from) params.set('from', filters.from);
   if (filters.to) params.set('to', filters.to);
   if (filters.status) params.set('status', filters.status);
   if (filters.company?.trim()) params.set('company', filters.company.trim());
   if (filters.flagged) params.set('flagged', 'true');
+  if (filters.unreviewed) params.set('unreviewed', 'true');
+  if (filters.sort) params.set('sort', filters.sort);
+  if (filters.page != null) params.set('page', String(filters.page));
+  if (filters.per_page != null) params.set('per_page', String(filters.per_page));
   const qs = params.toString();
   const res = await apiClientEtit.get(`${PREFIX}/matches${qs ? `?${qs}` : ''}`);
-  return z.array(tripMatchSchema).parse(res.data ?? []);
+  return parseTripMatchesPage(res.data);
+}
+
+export interface TripAuditSummaryFilters {
+  /** 'YYYY-MM-DD' inclusive. */
+  from?: string;
+  /** 'YYYY-MM-DD' inclusive. */
+  to?: string;
+  company?: string;
+}
+
+/** Whole-window aggregates for the KPI strip — exact regardless of paging. */
+async function getSummary(filters: TripAuditSummaryFilters = {}): Promise<TripAuditSummary> {
+  const params = new URLSearchParams();
+  if (filters.from) params.set('from', filters.from);
+  if (filters.to) params.set('to', filters.to);
+  if (filters.company?.trim()) params.set('company', filters.company.trim());
+  const qs = params.toString();
+  const res = await apiClientEtit.get(`${PREFIX}/summary${qs ? `?${qs}` : ''}`);
+  return tripAuditSummarySchema.parse(res.data ?? {});
 }
 
 async function getMatch(id: number): Promise<TripMatchDetail> {
@@ -74,6 +109,7 @@ async function runScan(dates?: string[]): Promise<ScanResponse> {
 
 export const tripAuditApi = {
   listMatches,
+  getSummary,
   getMatch,
   reviewMatch,
   listRuns,

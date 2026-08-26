@@ -93,9 +93,95 @@ export const tripMatchSchema = z.object({
     .number()
     .nullish()
     .transform((v) => v ?? 0),
+  critical_count: z
+    .number()
+    .nullish()
+    .transform((v) => v ?? 0),
 });
 
 export type TripMatch = z.infer<typeof tripMatchSchema>;
+
+/**
+ * Paginated envelope for `GET /trip-audit/matches`. Older proxy builds
+ * returned a bare array — `parseTripMatchesPage` accepts both so a stale
+ * proxy degrades to a single-page result instead of a blank screen.
+ */
+export const tripMatchesPageSchema = z.object({
+  items: z
+    .array(tripMatchSchema)
+    .nullish()
+    .transform((v) => v ?? []),
+  total: z
+    .number()
+    .nullish()
+    .transform((v) => v ?? 0),
+  page: z
+    .number()
+    .nullish()
+    .transform((v) => v ?? 1),
+  per_page: z
+    .number()
+    .nullish()
+    .transform((v) => v ?? 25),
+});
+
+export type TripMatchesPage = z.infer<typeof tripMatchesPageSchema>;
+
+export function parseTripMatchesPage(payload: unknown): TripMatchesPage {
+  if (Array.isArray(payload)) {
+    const items = z.array(tripMatchSchema).parse(payload);
+    return { items, total: items.length, page: 1, per_page: Math.max(items.length, 1) };
+  }
+  return tripMatchesPageSchema.parse(payload ?? {});
+}
+
+/* -------------------------------------------------------------------------- */
+/* Whole-window aggregate summary (KPI strip)                                  */
+/* -------------------------------------------------------------------------- */
+
+const countField = z
+  .number()
+  .nullish()
+  .transform((v) => v ?? 0);
+
+export const tripAuditWorstRouteSchema = z.object({
+  terminal_name: z
+    .string()
+    .nullish()
+    .transform((v) => v ?? ''),
+  destinations: z.string().nullish(),
+  trips: countField,
+  excess_km: countField,
+});
+
+export type TripAuditWorstRoute = z.infer<typeof tripAuditWorstRouteSchema>;
+
+/**
+ * `GET /trip-audit/summary?from&to&company` — exact aggregates for the whole
+ * filter window (independent of list pagination).
+ */
+export const tripAuditSummarySchema = z.object({
+  total: countField,
+  matched: countField,
+  partial: countField,
+  unmatched: countField,
+  flagged: countField,
+  critical: countField,
+  flagged_unreviewed: countField,
+  actual_km: z.number().nullish(),
+  actual_km_compared: z.number().nullish(),
+  osrm_km: z.number().nullish(),
+  /** sum(osrm)/sum(actual) over compared trips, percent, 1 decimal. */
+  efficiency_pct: z.number().nullish(),
+  /** Total km driven over optimal in the window. */
+  excess_km: countField,
+  worst_routes: z
+    .array(tripAuditWorstRouteSchema)
+    .nullish()
+    .transform((v) => v ?? []),
+});
+
+export type TripAuditSummary = z.infer<typeof tripAuditSummarySchema>;
 
 /* -------------------------------------------------------------------------- */
 /* Legs + flags (detail view)                                                  */

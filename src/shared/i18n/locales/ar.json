@@ -63,7 +63,9 @@
     "loadMore": "تحميل المزيد",
     "yes": "نعم",
     "no": "لا",
-    "add": "إضافة"
+    "add": "إضافة",
+    "previous": "السابق",
+    "next": "التالي"
   },
   "nav": {
     "overview": "نظرة عامة",
@@ -1020,7 +1022,8 @@
       "updateFailed": "فشل تحديث الخريطة",
       "validation": {
         "fillRequired": "يرجى ملء جميع الحقول المطلوبة بقيم صحيحة"
-      }
+      },
+      "newDropoffHint": "سيتم إنشاء نقطة تسليم جديدة"
     },
     "filters": {
       "searchPlaceholder": "البحث عن شركة، محطة، نقطة تسليم…",
@@ -1566,7 +1569,6 @@
   "locations": {
     "title": "المواقع",
     "description": "إدارة المحطات ونقاط التسليم المعتمدة — المواقع وأنصاف الأقطار والشركات المسموح بها وتسلسل الإيصالات — في مكان واحد.",
-    "newDropoff": "نقطة تسليم جديدة",
     "tabs": {
       "inbox": "بحاجة إلى مراجعة",
       "terminals": "المحطات",
@@ -1582,7 +1584,7 @@
     },
     "pinSource": {
       "manual": "يدوي",
-      "gpsSuggested": "GPS"
+      "gpsSuggested": "GPS (مبدئي)"
     },
     "fields": {
       "name": "الاسم",
@@ -1595,13 +1597,11 @@
       "pinStatus": "الموقع",
       "pinSource": "مصدر التحديد",
       "coordinates": "الإحداثيات",
-      "dropoffNamePlaceholder": "مثل مخازن العاشر من رمضان",
       "allowedCompanies": "الشركات المسموح بها"
     },
     "dialog": {
       "editTerminal": "تعديل المحطة",
       "editDropoff": "تعديل نقطة التسليم",
-      "createDropoff": "نقطة تسليم جديدة",
       "mapHelper": "انقر على الخريطة أو اسحب العلامة لتحديد الموقع. اترك نصف القطر فارغًا لاستخدام القيمة الافتراضية."
     },
     "terminals": {
@@ -1611,7 +1611,8 @@
       "empty": "لا توجد نقاط تسليم",
       "searchPlaceholder": "ابحث في نقاط التسليم…",
       "missingOnly": "بدون تحديد فقط",
-      "deleteTitle": "حذف نقطة التسليم؟"
+      "deleteTitle": "حذف نقطة التسليم؟",
+      "totalCount": "{{count}} نقطة تسليم"
     },
     "inbox": {
       "unpinnedTitle": "نقاط تسليم بدون تحديد موقع",
@@ -1627,13 +1628,20 @@
       "noMatch": "لم يتم العثور على سجل مطابق لهذا الاسم — لا يمكن نقل الموقع تلقائيًا.",
       "suggestionsUnavailable": "اقتراحات GPS غير متاحة حاليًا — تُعرض عناصر قاعدة البيانات فقط.",
       "allClear": "كل شيء محدَّث",
-      "allClearDesc": "لا توجد مواقع تحتاج إلى مراجعة حاليًا."
+      "allClearDesc": "لا توجد مواقع تحتاج إلى مراجعة حاليًا.",
+      "unpinnedCapped": "تُعرض أول {{shown}} من {{total}} نقطة تسليم بدون تحديد موقع.",
+      "unpinnedTerminalsTitle": "محطات بدون تحديد موقع",
+      "applyPin": "تطبيق الموقع",
+      "dismiss": "تجاهل",
+      "provisionalTitle": "مواقع GPS مبدئية",
+      "provisionalHelper": "طُبِّقت هذه المواقع تلقائيًا من تجمعات توقفات GPS. أكّدها للإبقاء عليها، أو عدّل الموقع.",
+      "provisionalText": "طُبِّق الموقع تلقائيًا من {{stops}} توقف GPS",
+      "confirmPin": "تأكيد",
+      "adjustPin": "تعديل"
     },
     "toast": {
       "terminalUpdated": "تم تحديث المحطة",
       "terminalUpdateError": "فشل تحديث المحطة",
-      "dropoffCreated": "تم إنشاء نقطة التسليم",
-      "dropoffCreateError": "فشل إنشاء نقطة التسليم",
       "dropoffUpdated": "تم تحديث نقطة التسليم",
       "dropoffUpdateError": "فشل تحديث نقطة التسليم",
       "dropoffDeleted": "تم حذف نقطة التسليم",
@@ -1644,7 +1652,9 @@
       "patternSaved": "تم حفظ نمط الإيصال",
       "patternSaveError": "فشل حفظ نمط الإيصال",
       "patternDeleted": "تم حذف نمط الإيصال",
-      "patternDeleteError": "فشل حذف نمط الإيصال"
+      "patternDeleteError": "فشل حذف نمط الإيصال",
+      "dropoffDeleteInUse": "لا يمكن الحذف — مستخدمة في {{count}} تسعيرة. احذف تلك التسعيرات أولًا.",
+      "dropoffDeleteInUseUnknown": "لا يمكن الحذف — نقطة التسليم هذه ما تزال مستخدمة في تسعيرات."
     },
     "receiptPatterns": {
       "title": "تسلسل الإيصالات",
@@ -1670,14 +1680,10 @@
       "status": "الحالة",
       "allStatuses": "كل الحالات",
       "companyPlaceholder": "تصفية حسب الشركة…",
-      "flaggedOnly": "المعلَّمة فقط"
-    },
-    "summary": {
-      "total": "الإجمالي",
-      "matched": "مطابقة",
-      "partial": "جزئية",
-      "unmatched": "غير مطابقة",
-      "flagged": "معلَّمة"
+      "flaggedOnly": "المعلَّمة فقط",
+      "unreviewedOnly": "غير المراجَعة فقط",
+      "sortSeverity": "الأسوأ أولًا",
+      "sortDate": "الأحدث أولًا"
     },
     "scan": {
       "run": "تشغيل الفحص",
@@ -1731,7 +1737,11 @@
       "notePlaceholder": "ملاحظة اختيارية…",
       "markReviewed": "وضع علامة تمت المراجعة",
       "updateReview": "تحديث المراجعة",
-      "reviewedAt": "تمت المراجعة {{when}}"
+      "reviewedAt": "تمت المراجعة {{when}}",
+      "stopsAndFlags": "التوقفات والتنبيهات",
+      "geofences": "النطاقات الجغرافية",
+      "loadingTrace": "جارٍ تحميل مسار GPS…",
+      "playbackUnavailable": "إعادة تشغيل GPS غير متاحة لهذه الرحلة — يُعرض المسار المخزن بدلًا منها."
     },
     "legs": {
       "type": "النوع",
@@ -1742,7 +1752,8 @@
       "ratio": "النسبة",
       "duration": "المدة (فعلي / OSRM)",
       "maxDeviation": "أقصى انحراف",
-      "night": "فترة ليلية"
+      "night": "فترة ليلية",
+      "sentence": "خرج من {{from}} في {{depart}} ← وصل {{to}} في {{arrive}} — {{actual}} كم فعلي مقابل {{osrm}} كم مثالية"
     },
     "legType": {
       "outbound": "ذهاب",
@@ -1779,6 +1790,32 @@
       "scanSummary": "تم فحص {{scanned}} رحلة، تطابقت {{matched}}، ورُفع {{flags}} تنبيه",
       "scanError": "انتهى الفحص بخطأ",
       "scanRequestError": "فشل تشغيل الفحص"
+    },
+    "kpi": {
+      "flagged": "رحلات معلَّمة",
+      "flaggedSub": "من {{total}} رحلة · {{critical}} حرجة",
+      "unreviewed": "غير مراجَعة",
+      "unreviewedSub": "رحلات معلَّمة بانتظار المراجعة",
+      "efficiency": "كفاءة المسار",
+      "efficiencySub": "الكم الأمثل ÷ الكم المقطوع",
+      "excessKm": "مسافة زائدة",
+      "excessKmValue": "+{{km}} كم",
+      "excessKmSub": "فوق المسار الأمثل في هذه الفترة",
+      "worstRoute": "أسوأ مسار",
+      "worstRouteSub": "+{{km}} كم عبر {{trips}} رحلة"
+    },
+    "queue": {
+      "unmatched": "لم تُدقَّق — {{reason}}",
+      "unknownReason": "سبب غير معروف",
+      "verdict": "{{terminal}} — قاد {{actual}} كم مقابل {{osrm}} كم مثالية (+{{excess}} كم زيادة)",
+      "verdictEfficient": "{{terminal}} — قاد {{actual}} كم مقابل {{osrm}} كم مثالية — ضمن المعدل",
+      "verdictNoData": "{{terminal}} — لا تتوفر مقارنة مسافة",
+      "severityOk": "سليمة",
+      "deliveries": "تسليمات",
+      "reviewedOn": "روجعت {{when}}",
+      "markReviewed": "تمت المراجعة",
+      "reviewWithNote": "مراجعة مع ملاحظة",
+      "pageOf": "صفحة {{page}} من {{pages}} · {{total}} رحلة"
     }
   },
   "terminalSelect": {
