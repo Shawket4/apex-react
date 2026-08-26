@@ -33,10 +33,10 @@ import type { DropOffPoint, PinSuggestion, Terminal } from '@/entities/location/
 import { LocationsDropoffDialog } from '../locations-dropoff-dialog';
 import { LocationsTerminalDialog } from '../locations-terminal-dialog';
 import { LocationsMapPicker } from '../locations-map-picker';
+import { TripsPagination } from '../trips-table/trips-pagination';
 
 const STORED_PIN_COLOR = '#2563eb';
 const SUGGESTED_PIN_COLOR = '#16a34a';
-const PAGE_STEP = 15;
 
 /** Case/diacritic-insensitive name matching (Arabic-aware). */
 function sameName(a: string, b: string): boolean {
@@ -148,7 +148,8 @@ export function LocationsNeedsAttention({ onBrowseDropoffs }: { onBrowseDropoffs
   /* ---- Filters ---- */
   const [issue, setIssue] = React.useState<IssueFilter>('all');
   const [kind, setKind] = React.useState<KindFilter>('all');
-  const [shown, setShown] = React.useState(PAGE_STEP);
+  const [page, setPage] = React.useState(1);
+  const [limit, setLimit] = React.useState(25);
 
   const counts = React.useMemo(
     () => ({
@@ -169,9 +170,9 @@ export function LocationsNeedsAttention({ onBrowseDropoffs }: { onBrowseDropoffs
   );
 
   React.useEffect(() => {
-    setShown(PAGE_STEP);
+    setPage(1);
     setExpandedKey(null);
-  }, [issue, kind]);
+  }, [issue, kind, limit]);
 
   /* ---- Single-open accordion ---- */
   const [expandedKey, setExpandedKey] = React.useState<string | null>(null);
@@ -375,7 +376,7 @@ export function LocationsNeedsAttention({ onBrowseDropoffs }: { onBrowseDropoffs
 
       {/* The queue */}
       <div className="divide-y overflow-hidden rounded-lg border bg-card">
-        {filtered.slice(0, shown).map((item) => (
+        {filtered.slice((page - 1) * limit, page * limit).map((item) => (
           <QueueRow
             key={item.key}
             item={item}
@@ -400,16 +401,17 @@ export function LocationsNeedsAttention({ onBrowseDropoffs }: { onBrowseDropoffs
         )}
       </div>
 
-      {filtered.length > shown && (
-        <div className="flex justify-center">
-          <Button variant="outline" size="sm" onClick={() => setShown((n) => n + PAGE_STEP)}>
-            {t('locations.inbox.showMore', {
-              count: filtered.length - shown,
-              defaultValue: 'Show more ({{count}} remaining)',
-            })}
-          </Button>
-        </div>
-      )}
+      <TripsPagination
+        page={page}
+        pages={Math.max(1, Math.ceil(filtered.length / limit))}
+        total={filtered.length}
+        limit={limit}
+        onPageChange={(p) => {
+          setPage(p);
+          setExpandedKey(null);
+        }}
+        onLimitChange={setLimit}
+      />
 
       {/* Drop-off pin editor */}
       <LocationsDropoffDialog
