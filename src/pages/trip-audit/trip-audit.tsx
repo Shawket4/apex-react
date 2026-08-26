@@ -1,16 +1,21 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  ChevronLeft,
-  ChevronRight,
+  CheckCircle2,
+  ClipboardCheck,
+  Filter,
   Loader2,
   Radar,
+  SearchCheck,
 } from 'lucide-react';
 import { PageShell } from '@/shared/ui/page-shell';
 import { Button } from '@/shared/ui/button';
 import { NativeSelect } from '@/shared/ui/native-select';
 import { SearchInput } from '@/shared/ui/search-input';
 import { DateRangePicker } from '@/shared/ui/date-range-picker';
+import { EmptyState } from '@/shared/ui/empty-state';
+import { Popover, PopoverContent, PopoverTrigger } from '@/shared/ui/popover';
+import { Tabs, TabsList, TabsTrigger } from '@/shared/ui/tabs';
 import { useDebounce } from '@/shared/hooks/use-debounce';
 import { cn } from '@/shared/lib/cn';
 import { formatNumber, localDateISO, localToday, toDateOnly } from '@/shared/lib/format';
@@ -21,20 +26,25 @@ import {
   useTripAuditSummary,
   useTripMatches,
 } from '@/entities/trip-audit/queries';
+import type { TripMatchSort } from '@/entities/trip-audit/api';
 import {
   TRIP_MATCH_STATUSES,
   type TripAuditSummary,
   type TripMatch,
   type TripMatchStatus,
 } from '@/entities/trip-audit/schemas';
+import { useCompanies } from '@/entities/mapping/queries';
 import { TripAuditQueue } from '@/widgets/trip-audit-queue';
 import { TripAuditDetailDialog } from '@/widgets/trip-audit-detail-dialog';
-
-const PAGE_SIZE = 25;
+import { TripsCompanyFilter } from '@/widgets/trips-table/trips-filters';
+import { TripsPagination } from '@/widgets/trips-table/trips-pagination';
 
 /* -------------------------------------------------------------------------- */
-/* Date helpers                                                                */
+/* Constants + date helpers                                                    */
 /* -------------------------------------------------------------------------- */
+
+const STORAGE_KEY_LIMIT = 'apex:tripAudit:limit';
+const LIMIT_OPTIONS = [10, 25, 50, 100];
 
 /** Default range: last 7 days (inclusive of today), as ISO instants for the picker. */
 function defaultRange(): { from: string; to: string } {
@@ -53,59 +63,86 @@ function yesterdayKey(): string {
   return toDateOnly(new Date(new Date(today.y, today.m, today.d).getTime() - 86_400_000));
 }
 
+function loadStoredLimit(): number {
+  if (typeof window === 'undefined') return 25;
+  const n = Number(window.localStorage.getItem(STORAGE_KEY_LIMIT));
+  return LIMIT_OPTIONS.includes(n) ? n : 25;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Views                                                                       */
+/*                                                                             */
+/* The page has exactly one job — "review what needs attention" — so instead   */
+/* of a wall of filter chips there are three views behind one segmented        */
+/* control. "Needs review" is the default and THE call to action.              */
+/* -------------------------------------------------------------------------- */
+
+type QueueView = 'needs_review' | 'all' | 'unmatched';
+
+const VIEWS: QueueView[] = ['needs_review', 'all', 'unmatched'];
+
 /* -------------------------------------------------------------------------- */
 /* Page                                                                        */
 /* -------------------------------------------------------------------------- */
 
-/**
- * Trip Audit — a review queue. Defaults to the trips that actually need
- * eyes (flagged, unreviewed, worst first); KPIs come from the whole-window
- * aggregate endpoint so they are exact regardless of pagination.
- */
 export default function TripAuditPage() {
   const { t, i18n } = useTranslation();
 
-  /* ---- Filters — queue defaults: flagged, unreviewed, severity-first ---- */
+  /* ---- View + filters ---- */
+  const [view, setView] = React.useState<QueueView>('needs_review');
+
   const initialRange = React.useRef(defaultRange());
   const [from, setFrom] = React.useState<string | null>(initialRange.current.from);
   const [to, setTo] = React.useState<string | null>(initialRange.current.to);
-  const [status, setStatus] = React.useState<TripMatchStatus | ''>('');
+  const [search, setSearch] = React.useState('');
+  const debouncedSearch = useDebounce(search, 300);
   const [company, setCompany] = React.useState('');
-  const debouncedCompany = useDebounce(company, 300);
-  const [flaggedOnly, setFlaggedOnly] = React.useState(true);
-  const [unreviewedOnly, setUnreviewedOnly] = React.useState(true);
-  const [sortBySeverity, setSortBySeverity] = React.useState(true);
+  const [status, setStatus] = React.useState<TripMatchStatus | ''>('');
+  // null = each view's natural order (severity for the queue, date elsewhere).
+  const [sortOverride, setSortOverride] = React.useState<TripMatchSort | null>(null);
   const [page, setPage] = React.useState(1);
+  const [limit, setLimit] = React.useState<number>(loadStoredLimit);
+
+  const effectiveSort: TripMatchSort =
+    sortOverride ?? (view === 'needs_review' ? 'severity' : 'date');
 
   // Any filter change restarts from the first page.
   React.useEffect(() => {
     setPage(1);
-  }, [from, to, status, debouncedCompany, flaggedOnly, unreviewedOnly, sortBySeverity]);
+  }, [view, debouncedSearch, company, from, to, status, sortOverride]);
+
+  React.useEffect(() => {
+    window.localStorage.setItem(STORAGE_KEY_LIMIT, String(limit));
+  }, [limit]);
 
   const fromDay = from ? toDateOnly(from) : undefined;
   const toDay = to ? toDateOnly(to) : undefined;
-  const companyFilter = debouncedCompany.trim() || undefined;
+  const companyFilter = company.trim() || undefined;
+  const q = debouncedSearch.trim() || undefined;
 
   const filters = React.useMemo(
     () => ({
       from: fromDay,
       to: toDay,
-      status,
+      q,
       company: companyFilter,
-      flagged: flaggedOnly,
-      unreviewed: unreviewedOnly,
-      sort: (sortBySeverity ? 'severity' : 'date') as 'severity' | 'date',
+      status: (view === 'unmatched' ? 'unmatched' : view === 'all' ? status : '') as
+        | TripMatchStatus
+        | '',
+      flagged: view === 'needs_review',
+      unreviewed: view === 'needs_review',
+      sort: effectiveSort,
       page,
-      per_page: PAGE_SIZE,
+      per_page: limit,
     }),
-    [fromDay, toDay, status, companyFilter, flaggedOnly, unreviewedOnly, sortBySeverity, page],
+    [fromDay, toDay, q, companyFilter, view, status, effectiveSort, page, limit],
   );
 
   const matchesQuery = useTripMatches(filters);
   const matchesPage = matchesQuery.data;
   const matches = matchesPage?.items ?? [];
   const total = matchesPage?.total ?? 0;
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil(total / limit));
 
   /* ---- Whole-window KPIs (exact — dedicated aggregate endpoint) ---- */
   const summaryQuery = useTripAuditSummary({
@@ -113,6 +150,12 @@ export default function TripAuditPage() {
     to: toDay,
     company: companyFilter,
   });
+  const summary = summaryQuery.data ?? null;
+  const needsReviewCount = summary?.flagged_unreviewed ?? null;
+
+  /* ---- Company dropdown — same source as the trips module ---- */
+  const { data: companiesResp } = useCompanies();
+  const companies = companiesResp?.data ?? [];
 
   /* ---- Scan runs ---- */
   const runsQuery = useTripAuditRuns();
@@ -133,6 +176,37 @@ export default function TripAuditPage() {
   const [selectedId, setSelectedId] = React.useState<number | null>(null);
   const handleOpen = (match: TripMatch) => setSelectedId(match.id);
 
+  /* ---- Secondary filters (behind the Filters button) ---- */
+  const dateChanged =
+    from !== initialRange.current.from || to !== initialRange.current.to;
+  const activeFilterCount =
+    (dateChanged ? 1 : 0) + (view === 'all' && status ? 1 : 0) + (sortOverride ? 1 : 0);
+
+  const resetSecondaryFilters = () => {
+    setFrom(initialRange.current.from);
+    setTo(initialRange.current.to);
+    setStatus('');
+    setSortOverride(null);
+  };
+
+  const startReview = () => {
+    setView('needs_review');
+    setSearch('');
+    setStatus('');
+    setSortOverride(null);
+  };
+
+  const viewLabel = (v: QueueView): string => {
+    switch (v) {
+      case 'needs_review':
+        return t('tripAudit.views.needsReview', 'Needs review');
+      case 'all':
+        return t('tripAudit.views.all', 'All trips');
+      case 'unmatched':
+        return t('tripAudit.views.unmatched', 'Unmatched');
+    }
+  };
+
   return (
     <PageShell
       title={t('tripAudit.title', 'Trip Audit')}
@@ -140,10 +214,12 @@ export default function TripAuditPage() {
         'tripAudit.description',
         'Review GPS-audited trips — actual routes vs the OSRM optimal — and the flags raised.',
       )}
+      icon={<SearchCheck className="h-5 w-5" />}
       actions={
         <div className="flex flex-col items-end gap-1">
           <Button
             variant="outline"
+            size="sm"
             onClick={handleRunScan}
             disabled={runScan.isPending}
             className="gap-2"
@@ -165,9 +241,6 @@ export default function TripAuditPage() {
                 {lastRun.started_at && (
                   <> · {formatCairoDateTime(lastRun.started_at, i18n.language)}</>
                 )}
-                {lastRun.error && (
-                  <span className="text-destructive"> · {lastRun.error}</span>
-                )}
               </>
             ) : (
               t('tripAudit.scan.none', 'No scans yet')
@@ -176,105 +249,189 @@ export default function TripAuditPage() {
         </div>
       }
     >
-      <div className="space-y-4">
-        {/* KPI strip — whole filter window */}
-        <KpiStrip summary={summaryQuery.data ?? null} loading={summaryQuery.isLoading} />
+      <div className="space-y-5">
+        {/* 1. KPI strip — flagged_unreviewed is THE number */}
+        <KpiStrip
+          summary={summary}
+          loading={summaryQuery.isLoading}
+          reviewing={view === 'needs_review'}
+          onStartReview={startReview}
+        />
 
-        {/* Filters */}
-        <div className="space-y-3">
-          <DateRangePicker
-            from={from}
-            to={to}
-            onChange={(f, tt) => {
-              setFrom(f);
-              setTo(tt);
-            }}
-          />
-          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-            <SearchInput
-              value={company}
-              onChange={setCompany}
-              placeholder={t('tripAudit.filters.companyPlaceholder', 'Filter by company…')}
-              className="sm:max-w-xs"
-            />
-            <NativeSelect
-              value={status}
-              onChange={(e) => setStatus(e.target.value as TripMatchStatus | '')}
-              className="sm:w-44"
-              aria-label={t('tripAudit.filters.status', 'Status')}
-            >
-              <option value="">{t('tripAudit.filters.allStatuses', 'All statuses')}</option>
-              {TRIP_MATCH_STATUSES.map((s) => (
-                <option key={s} value={s}>
-                  {t(`tripAudit.status.${s}`, s)}
-                </option>
-              ))}
-            </NativeSelect>
-            {/* Queue chips — widen the default queue view */}
-            <div className="flex flex-wrap items-center gap-1.5">
-              <FilterChip
-                active={flaggedOnly}
-                onClick={() => setFlaggedOnly((v) => !v)}
-                label={t('tripAudit.filters.flaggedOnly', 'Flagged only')}
+        {/* 2. One prominent segmented control + quiet secondary filters */}
+        <div className="flex flex-col gap-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <Tabs value={view} onValueChange={(v) => setView(v as QueueView)}>
+              <TabsList>
+                {VIEWS.map((v) => (
+                  <TabsTrigger key={v} value={v} className="gap-1.5">
+                    {viewLabel(v)}
+                    {v === 'needs_review' && needsReviewCount != null && (
+                      <span
+                        className={cn(
+                          'inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[11px] font-semibold tabular-nums',
+                          needsReviewCount > 0
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-success/15 text-success',
+                        )}
+                      >
+                        {formatNumber(needsReviewCount)}
+                      </span>
+                    )}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </Tabs>
+
+            <div className="flex flex-1 flex-wrap items-center justify-end gap-2 sm:flex-nowrap">
+              <SearchInput
+                value={search}
+                onChange={setSearch}
+                placeholder={t(
+                  'tripAudit.filters.searchPlaceholder',
+                  'Search plate, driver or terminal…',
+                )}
+                className="min-w-[180px] max-w-xs"
               />
-              <FilterChip
-                active={unreviewedOnly}
-                onClick={() => setUnreviewedOnly((v) => !v)}
-                label={t('tripAudit.filters.unreviewedOnly', 'Unreviewed only')}
+              <TripsCompanyFilter
+                value={company}
+                onChange={setCompany}
+                companies={companies}
               />
-              <FilterChip
-                active={sortBySeverity}
-                onClick={() => setSortBySeverity((v) => !v)}
-                label={
-                  sortBySeverity
-                    ? t('tripAudit.filters.sortSeverity', 'Worst first')
-                    : t('tripAudit.filters.sortDate', 'Newest first')
-                }
-              />
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant={activeFilterCount > 0 ? 'default' : 'outline'}
+                    size="sm"
+                    className="h-9 gap-1.5"
+                  >
+                    <Filter className="h-3.5 w-3.5" />
+                    <span className="hidden sm:inline">
+                      {t('tripAudit.filters.more', 'Filters')}
+                    </span>
+                    {activeFilterCount > 0 && (
+                      <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-primary-foreground px-1 text-[10px] font-semibold text-primary">
+                        {activeFilterCount}
+                      </span>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent align="end" className="w-[340px] space-y-4 p-4">
+                  <div className="space-y-2">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      {t('tripAudit.filters.dateRange', 'Date range')}
+                    </p>
+                    <DateRangePicker
+                      from={from}
+                      to={to}
+                      onChange={(f, tt) => {
+                        setFrom(f);
+                        setTo(tt);
+                      }}
+                    />
+                  </div>
+                  {view === 'all' && (
+                    <div className="space-y-2">
+                      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                        {t('tripAudit.filters.status', 'Status')}
+                      </p>
+                      <NativeSelect
+                        value={status}
+                        onChange={(e) => setStatus(e.target.value as TripMatchStatus | '')}
+                        aria-label={t('tripAudit.filters.status', 'Status')}
+                      >
+                        <option value="">
+                          {t('tripAudit.filters.allStatuses', 'All statuses')}
+                        </option>
+                        {TRIP_MATCH_STATUSES.map((s) => (
+                          <option key={s} value={s}>
+                            {t(`tripAudit.status.${s}`, s)}
+                          </option>
+                        ))}
+                      </NativeSelect>
+                    </div>
+                  )}
+                  <div className="space-y-2">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      {t('tripAudit.filters.sort', 'Sort')}
+                    </p>
+                    <NativeSelect
+                      value={effectiveSort}
+                      onChange={(e) => setSortOverride(e.target.value as TripMatchSort)}
+                      aria-label={t('tripAudit.filters.sort', 'Sort')}
+                    >
+                      <option value="severity">
+                        {t('tripAudit.filters.sortSeverity', 'Worst first')}
+                      </option>
+                      <option value="date">
+                        {t('tripAudit.filters.sortDate', 'Newest first')}
+                      </option>
+                    </NativeSelect>
+                  </div>
+                  {activeFilterCount > 0 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full"
+                      onClick={resetSecondaryFilters}
+                    >
+                      {t('common.clearFilters', 'Clear filters')}
+                    </Button>
+                  )}
+                </PopoverContent>
+              </Popover>
             </div>
           </div>
         </div>
 
-        {/* Queue */}
-        <TripAuditQueue
-          matches={matches}
-          loading={matchesQuery.isLoading || matchesQuery.isPlaceholderData}
-          onOpen={handleOpen}
-        />
-
-        {/* Server-side pagination */}
-        {total > 0 && (
-          <div className="flex items-center justify-between gap-2 text-sm text-muted-foreground">
-            <span className="tabular-nums">
-              {t('tripAudit.queue.pageOf', {
-                page,
-                pages: totalPages,
-                total,
-                defaultValue: 'Page {{page}} of {{pages}} · {{total}} trips',
-              })}
-            </span>
-            <div className="flex items-center gap-1">
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page <= 1 || matchesQuery.isPlaceholderData}
-                aria-label={t('common.previous', 'Previous')}
-              >
-                <ChevronLeft className="h-4 w-4 rtl:rotate-180" />
+        {/* 3. The queue */}
+        {matchesQuery.isError ? (
+          <EmptyState
+            title={t('errors.generic', 'Something went wrong')}
+            action={
+              <Button variant="outline" onClick={() => void matchesQuery.refetch()}>
+                {t('common.retry', 'Retry')}
               </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                disabled={page >= totalPages || matchesQuery.isPlaceholderData}
-                aria-label={t('common.next', 'Next')}
-              >
-                <ChevronRight className="h-4 w-4 rtl:rotate-180" />
-              </Button>
-            </div>
-          </div>
+            }
+          />
+        ) : (
+          <TripAuditQueue
+            matches={matches}
+            loading={matchesQuery.isLoading || matchesQuery.isPlaceholderData}
+            onOpen={handleOpen}
+            empty={
+              view === 'needs_review' && !q && !companyFilter ? (
+                <EmptyState
+                  icon={<CheckCircle2 className="h-6 w-6 text-success" />}
+                  title={t('tripAudit.queue.caughtUp', 'All caught up')}
+                  description={t(
+                    'tripAudit.queue.caughtUpDesc',
+                    'No flagged trips are awaiting review in this range.',
+                  )}
+                  action={
+                    <Button variant="outline" onClick={() => setView('all')}>
+                      {t('tripAudit.queue.browseAll', 'Browse all trips')}
+                    </Button>
+                  }
+                />
+              ) : undefined
+            }
+          />
         )}
+
+        {/* 4. Server-side pagination — same strip as the trips module */}
+        <TripsPagination
+          page={page}
+          pages={totalPages}
+          total={total}
+          limit={limit}
+          onPageChange={setPage}
+          onLimitChange={(newLimit) => {
+            setLimit(newLimit);
+            setPage(1);
+          }}
+          loading={matchesQuery.isPlaceholderData}
+        />
       </div>
 
       <TripAuditDetailDialog
@@ -288,52 +445,68 @@ export default function TripAuditPage() {
 }
 
 /* -------------------------------------------------------------------------- */
-/* Filter chip                                                                 */
-/* -------------------------------------------------------------------------- */
-
-function FilterChip({
-  active,
-  onClick,
-  label,
-}: {
-  active: boolean;
-  onClick: () => void;
-  label: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={active}
-      className={cn(
-        'rounded-full border px-3 py-1.5 text-xs font-medium transition-colors',
-        active
-          ? 'border-primary bg-primary/10 text-primary'
-          : 'border-border bg-card text-muted-foreground hover:text-foreground',
-      )}
-    >
-      {label}
-    </button>
-  );
-}
-
-/* -------------------------------------------------------------------------- */
 /* KPI strip                                                                   */
+/*                                                                             */
+/* One hero number — flagged trips awaiting review — with the page's single    */
+/* call to action, plus three quiet context tiles. One accent color total.     */
 /* -------------------------------------------------------------------------- */
 
 function KpiStrip({
   summary,
   loading,
+  reviewing,
+  onStartReview,
 }: {
   summary: TripAuditSummary | null;
   loading?: boolean;
+  /** True while the queue view is already "needs review" — the CTA then reads as a scroll cue, not a switch. */
+  reviewing?: boolean;
+  onStartReview: () => void;
 }) {
   const { t } = useTranslation();
-  const worst = summary?.worst_routes[0] ?? null;
+  const pending = summary?.flagged_unreviewed ?? null;
+  const allClear = pending != null && pending === 0;
 
   return (
-    <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-5">
-      <KpiCard
+    <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)]">
+      {/* Hero — THE number */}
+      <div
+        className={cn(
+          'flex items-center justify-between gap-3 rounded-lg border p-4 sm:col-span-2 lg:col-span-1',
+          allClear
+            ? 'border-success/30 bg-success/5'
+            : 'border-primary/30 bg-primary/5',
+        )}
+      >
+        <div className="min-w-0">
+          <p className="text-xs font-medium text-muted-foreground">
+            {t('tripAudit.kpi.needsReview', 'Awaiting review')}
+          </p>
+          <p
+            className={cn(
+              'mt-0.5 text-3xl font-bold tabular-nums leading-tight',
+              allClear ? 'text-success' : 'text-primary',
+            )}
+          >
+            {pending != null ? formatNumber(pending) : loading ? '…' : '—'}
+          </p>
+          <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
+            {allClear
+              ? t('tripAudit.kpi.allClearSub', 'nothing needs your attention')
+              : t('tripAudit.kpi.needsReviewSub', 'flagged trips need a decision')}
+          </p>
+        </div>
+        {!allClear && pending != null && (
+          <Button size="sm" className="shrink-0 gap-1.5" onClick={onStartReview}>
+            <ClipboardCheck className="h-4 w-4" />
+            {reviewing
+              ? t('tripAudit.kpi.reviewing', 'Reviewing')
+              : t('tripAudit.kpi.startReview', 'Start review')}
+          </Button>
+        )}
+      </div>
+
+      <KpiTile
         label={t('tripAudit.kpi.flagged', 'Flagged trips')}
         value={summary ? formatNumber(summary.flagged) : loading ? '…' : '—'}
         sub={
@@ -345,15 +518,8 @@ function KpiStrip({
               })
             : undefined
         }
-        tone={summary && summary.critical > 0 ? 'destructive' : 'warning'}
       />
-      <KpiCard
-        label={t('tripAudit.kpi.unreviewed', 'Unreviewed')}
-        value={summary ? formatNumber(summary.flagged_unreviewed) : loading ? '…' : '—'}
-        sub={t('tripAudit.kpi.unreviewedSub', 'flagged trips awaiting review')}
-        tone={summary && summary.flagged_unreviewed > 0 ? 'warning' : 'success'}
-      />
-      <KpiCard
+      <KpiTile
         label={t('tripAudit.kpi.efficiency', 'Route efficiency')}
         value={
           summary?.efficiency_pct != null
@@ -363,17 +529,8 @@ function KpiStrip({
               : '—'
         }
         sub={t('tripAudit.kpi.efficiencySub', 'optimal km ÷ driven km')}
-        tone={
-          summary?.efficiency_pct == null
-            ? undefined
-            : summary.efficiency_pct >= 83
-              ? 'success'
-              : summary.efficiency_pct >= 66
-                ? 'warning'
-                : 'destructive'
-        }
       />
-      <KpiCard
+      <KpiTile
         label={t('tripAudit.kpi.excessKm', 'Excess distance')}
         value={
           summary
@@ -386,65 +543,25 @@ function KpiStrip({
               : '—'
         }
         sub={t('tripAudit.kpi.excessKmSub', 'driven over optimal in this window')}
-        tone={summary && summary.excess_km > 0 ? 'warning' : 'success'}
-      />
-      <KpiCard
-        label={t('tripAudit.kpi.worstRoute', 'Worst route')}
-        value={
-          worst ? (
-            <span className="truncate text-base" dir="auto" title={worst.terminal_name}>
-              {worst.destinations
-                ? `${worst.terminal_name} ← ${worst.destinations}`
-                : worst.terminal_name || '—'}
-            </span>
-          ) : loading ? (
-            '…'
-          ) : (
-            '—'
-          )
-        }
-        sub={
-          worst
-            ? t('tripAudit.kpi.worstRouteSub', {
-                km: formatNumber(worst.excess_km),
-                trips: worst.trips,
-                defaultValue: '+{{km}} km over {{trips}} trips',
-              })
-            : undefined
-        }
-        tone={worst ? 'destructive' : undefined}
-        className="col-span-2 lg:col-span-1"
       />
     </div>
   );
 }
 
-function KpiCard({
+/** Quiet context tile — neutral foreground number, muted label. */
+function KpiTile({
   label,
   value,
   sub,
-  tone,
-  className,
 }: {
   label: React.ReactNode;
   value: React.ReactNode;
   sub?: React.ReactNode;
-  tone?: 'success' | 'warning' | 'destructive';
-  className?: string;
 }) {
   return (
-    <div className={cn('rounded-lg border bg-card p-3', className)}>
+    <div className="rounded-lg border bg-card p-4">
       <p className="text-xs text-muted-foreground">{label}</p>
-      <div
-        className={cn(
-          'mt-0.5 truncate text-xl font-semibold tabular-nums',
-          tone === 'success' && 'text-success',
-          tone === 'warning' && 'text-warning',
-          tone === 'destructive' && 'text-destructive',
-        )}
-      >
-        {value}
-      </div>
+      <div className="mt-0.5 truncate text-xl font-semibold tabular-nums">{value}</div>
       {sub && <p className="mt-0.5 truncate text-[11px] text-muted-foreground">{sub}</p>}
     </div>
   );

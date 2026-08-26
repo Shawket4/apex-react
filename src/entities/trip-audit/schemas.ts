@@ -283,6 +283,34 @@ export function parseFlagDetails(flag: TripFlag): Record<string, unknown> {
 }
 
 /* -------------------------------------------------------------------------- */
+/* Trip replay (NEW exports — consumed only by /trip-audit/:id/replay)         */
+/*                                                                             */
+/* The proxy may attach `off_route_pct` to legs; the base `tripLegSchema`     */
+/* strips unknown keys, so the replay page parses the same detail payload    */
+/* through this extended schema instead. Nothing existing changes shape.     */
+/* -------------------------------------------------------------------------- */
+
+export const tripLegReplaySchema = tripLegSchema.extend({
+  /** % of GPS fixes off the OSRM corridor — present on newer proxy builds. */
+  off_route_pct: z.number().nullish(),
+});
+
+export type TripLegReplay = z.infer<typeof tripLegReplaySchema>;
+
+export const tripMatchReplayDetailSchema = tripMatchSchema.extend({
+  legs: z
+    .array(tripLegReplaySchema)
+    .nullish()
+    .transform((v) => v ?? []),
+  flags: z
+    .array(tripFlagSchema)
+    .nullish()
+    .transform((v) => v ?? []),
+});
+
+export type TripMatchReplayDetail = z.infer<typeof tripMatchReplayDetailSchema>;
+
+/* -------------------------------------------------------------------------- */
 /* Scan runs                                                                   */
 /* -------------------------------------------------------------------------- */
 

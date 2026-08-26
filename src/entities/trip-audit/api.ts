@@ -6,10 +6,12 @@ import {
   scanRunSchema,
   tripAuditSummarySchema,
   tripMatchDetailSchema,
+  tripMatchReplayDetailSchema,
   type ScanResponse,
   type ScanRun,
   type TripAuditSummary,
   type TripMatchDetail,
+  type TripMatchReplayDetail,
   type TripMatchStatus,
   type TripMatchesPage,
 } from './schemas';
@@ -30,6 +32,11 @@ export interface TripMatchFilters {
   to?: string;
   status?: TripMatchStatus | '';
   company?: string;
+  /**
+   * NEW: free-text search, matched server-side against plate / driver /
+   * terminal. Sent as `q=<text>` alongside the existing params.
+   */
+  q?: string;
   flagged?: boolean;
   /** Only trips not yet marked reviewed. */
   unreviewed?: boolean;
@@ -47,6 +54,7 @@ async function listMatches(filters: TripMatchFilters = {}): Promise<TripMatchesP
   if (filters.to) params.set('to', filters.to);
   if (filters.status) params.set('status', filters.status);
   if (filters.company?.trim()) params.set('company', filters.company.trim());
+  if (filters.q?.trim()) params.set('q', filters.q.trim());
   if (filters.flagged) params.set('flagged', 'true');
   if (filters.unreviewed) params.set('unreviewed', 'true');
   if (filters.sort) params.set('sort', filters.sort);
@@ -105,6 +113,17 @@ async function runScan(dates?: string[]): Promise<ScanResponse> {
     { timeout: 600_000 },
   );
   return scanResponseSchema.parse(res.data ?? {});
+}
+
+/**
+ * NEW export for the trip-replay page: same `GET /matches/:id` endpoint,
+ * parsed through the replay schema so `off_route_pct` (when the proxy
+ * sends it) survives parsing. Kept separate from `tripAuditApi.getMatch`
+ * so the existing detail dialog contract is untouched.
+ */
+export async function getTripMatchReplay(id: number): Promise<TripMatchReplayDetail> {
+  const res = await apiClientEtit.get(`${PREFIX}/matches/${encodeURIComponent(id)}`);
+  return tripMatchReplayDetailSchema.parse(res.data);
 }
 
 export const tripAuditApi = {

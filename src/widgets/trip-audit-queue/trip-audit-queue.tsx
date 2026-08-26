@@ -1,33 +1,22 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  Check,
-  CheckCircle2,
-  Flag,
-  Loader2,
-  MessageSquarePlus,
-  Package,
-} from 'lucide-react';
+import { CheckCircle2, ChevronRight, Package } from 'lucide-react';
 import { Badge } from '@/shared/ui/badge';
 import { Button } from '@/shared/ui/button';
-import { Label } from '@/shared/ui/label';
-import { Popover, PopoverContent, PopoverTrigger } from '@/shared/ui/popover';
 import { Skeleton } from '@/shared/ui/skeleton';
-import { Textarea } from '@/shared/ui/textarea';
 import { EmptyState } from '@/shared/ui/empty-state';
 import { cn } from '@/shared/lib/cn';
 import { formatCairoDay } from '@/shared/lib/cairo';
 import { formatNumber } from '@/shared/lib/format';
-import { useReviewMatch } from '@/entities/trip-audit/queries';
 import type { TripMatch } from '@/entities/trip-audit/schemas';
 import { useUnmatchedReasonLabel } from '@/widgets/trip-audit-matches-table';
 
 /* -------------------------------------------------------------------------- */
 /* Row severity                                                                */
 /*                                                                             */
-/* The server reports `critical_count` (exact per-flag severities): any      */
-/* critical flag — or an unmatched trip — reads as critical; any other flag, */
-/* missed deliveries, or a ratio above 1.2 reads as warning.                 */
+/* The server reports `critical_count` (exact per-flag severities): any        */
+/* critical flag — or an unmatched trip — reads as critical; any other flag,   */
+/* missed deliveries, or a ratio above 1.2 reads as warning.                   */
 /* -------------------------------------------------------------------------- */
 
 export type QueueSeverity = 'critical' | 'warning' | 'ok';
@@ -40,12 +29,6 @@ export function severityOf(m: TripMatch): QueueSeverity {
   return 'ok';
 }
 
-const SEVERITY_VARIANT: Record<QueueSeverity, 'destructive' | 'warning' | 'success'> = {
-  critical: 'destructive',
-  warning: 'warning',
-  ok: 'success',
-};
-
 /* -------------------------------------------------------------------------- */
 /* Verdict sentence                                                            */
 /* -------------------------------------------------------------------------- */
@@ -54,177 +37,62 @@ function km(v: number): string {
   return formatNumber(v, v < 100 ? 1 : 0);
 }
 
-function VerdictSentence({ match }: { match: TripMatch }) {
-  const { t } = useTranslation();
-  const reasonLabel = useUnmatchedReasonLabel();
-
+function verdictText(
+  match: TripMatch,
+  t: ReturnType<typeof useTranslation>['t'],
+  reasonLabel: (code: string) => string,
+): string {
   if (match.status === 'unmatched') {
-    return (
-      <span dir="auto">
-        {t('tripAudit.queue.unmatched', {
-          reason: match.unmatched_reason
-            ? reasonLabel(match.unmatched_reason)
-            : t('tripAudit.queue.unknownReason', 'unknown reason'),
-          defaultValue: 'Not audited — {{reason}}',
-        })}
-      </span>
-    );
+    return t('tripAudit.queue.unmatched', {
+      reason: match.unmatched_reason
+        ? reasonLabel(match.unmatched_reason)
+        : t('tripAudit.queue.unknownReason', 'unknown reason'),
+      defaultValue: 'Not audited — {{reason}}',
+    });
   }
 
-  const terminal = match.terminal_name || match.company || '—';
   const actual = match.actual_km;
   const osrm = match.osrm_km;
 
   if (actual == null || osrm == null || !Number.isFinite(actual) || !Number.isFinite(osrm)) {
-    return (
-      <span dir="auto">
-        {t('tripAudit.queue.verdictNoData', {
-          terminal,
-          defaultValue: '{{terminal}} — no distance comparison available',
-        })}
-      </span>
-    );
+    return t('tripAudit.queue.noComparison', 'No distance comparison available');
   }
 
   const excess = actual - osrm;
   if (excess > 0.5) {
-    return (
-      <span dir="auto">
-        {t('tripAudit.queue.verdict', {
-          terminal,
-          actual: km(actual),
-          osrm: km(osrm),
-          excess: km(excess),
-          defaultValue:
-            '{{terminal}} — drove {{actual}} km vs {{osrm}} km optimal (+{{excess}} km excess)',
-        })}
-      </span>
-    );
+    return t('tripAudit.queue.drove', {
+      actual: km(actual),
+      osrm: km(osrm),
+      excess: km(excess),
+      defaultValue: 'Drove {{actual}} km vs {{osrm}} km optimal — +{{excess}} km excess',
+    });
   }
-  return (
-    <span dir="auto">
-      {t('tripAudit.queue.verdictEfficient', {
-        terminal,
-        actual: km(actual),
-        osrm: km(osrm),
-        defaultValue: '{{terminal}} — drove {{actual}} km vs {{osrm}} km optimal — on target',
-      })}
-    </span>
-  );
-}
-
-/* -------------------------------------------------------------------------- */
-/* Inline review action                                                        */
-/*                                                                             */
-/* One-click "Mark reviewed" plus a note popover. Both stop propagation so    */
-/* they never open the row's detail view.                                     */
-/* -------------------------------------------------------------------------- */
-
-function ReviewInline({ match }: { match: TripMatch }) {
-  const { t, i18n } = useTranslation();
-  const reviewMatch = useReviewMatch();
-  const [noteOpen, setNoteOpen] = React.useState(false);
-  const [note, setNote] = React.useState('');
-
-  if (match.reviewed_at) {
-    return (
-      <span
-        className="flex items-center gap-1.5 text-xs text-success"
-        title={match.review_note ?? undefined}
-      >
-        <CheckCircle2 className="h-4 w-4" />
-        {t('tripAudit.queue.reviewedOn', {
-          when: formatCairoDay(match.reviewed_at, i18n.language),
-          defaultValue: 'Reviewed {{when}}',
-        })}
-      </span>
-    );
-  }
-
-  const pending = reviewMatch.isPending;
-
-  const submit = (withNote: boolean) => {
-    reviewMatch.mutate(
-      { id: match.id, note: withNote ? note : undefined },
-      { onSuccess: () => setNoteOpen(false) },
-    );
-  };
-
-  return (
-    <div
-      className="flex items-center gap-1"
-      onClick={(e) => e.stopPropagation()}
-      onKeyDown={(e) => e.stopPropagation()}
-    >
-      <Button
-        type="button"
-        size="sm"
-        variant="outline"
-        className="h-7 gap-1.5 text-xs"
-        disabled={pending}
-        onClick={() => submit(false)}
-      >
-        {pending ? (
-          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-        ) : (
-          <Check className="h-3.5 w-3.5 text-success" />
-        )}
-        {t('tripAudit.queue.markReviewed', 'Mark reviewed')}
-      </Button>
-      <Popover open={noteOpen} onOpenChange={setNoteOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            type="button"
-            size="icon"
-            variant="ghost"
-            className="h-7 w-7 text-muted-foreground hover:text-foreground"
-            aria-label={t('tripAudit.queue.reviewWithNote', 'Review with a note')}
-            title={t('tripAudit.queue.reviewWithNote', 'Review with a note')}
-          >
-            <MessageSquarePlus className="h-3.5 w-3.5" />
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent align="end" className="w-72 space-y-2 p-3">
-          <Label htmlFor={`queue-note-${match.id}`} className="text-xs">
-            {t('tripAudit.detail.reviewNote', 'Review note')}
-          </Label>
-          <Textarea
-            id={`queue-note-${match.id}`}
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            placeholder={t('tripAudit.detail.notePlaceholder', 'Optional note…')}
-            rows={2}
-            dir="auto"
-          />
-          <Button
-            type="button"
-            size="sm"
-            className="w-full gap-1.5"
-            disabled={pending}
-            onClick={() => submit(true)}
-          >
-            {pending ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <Check className="h-3.5 w-3.5" />
-            )}
-            {t('tripAudit.queue.markReviewed', 'Mark reviewed')}
-          </Button>
-        </PopoverContent>
-      </Popover>
-    </div>
-  );
+  return t('tripAudit.queue.droveOnTarget', {
+    actual: km(actual),
+    osrm: km(osrm),
+    defaultValue: 'Drove {{actual}} km vs {{osrm}} km optimal — on target',
+  });
 }
 
 /* -------------------------------------------------------------------------- */
 /* Row                                                                         */
+/*                                                                             */
+/* Deliberately quiet: exactly three visual weights.                           */
+/*   1. Primary line — day · terminal · plate (· driver on sm+).               */
+/*   2. Verdict line — one muted sentence (plus deliveries when short).        */
+/*   3. Right rail — a severity chip (critical/warning only) and ONE action:   */
+/*      "Review", which opens the detail view. Reviewed rows fade out and      */
+/*      swap the button for a subtle check.                                    */
 /* -------------------------------------------------------------------------- */
 
 function QueueRow({ match, onOpen }: { match: TripMatch; onOpen: (m: TripMatch) => void }) {
   const { t, i18n } = useTranslation();
+  const reasonLabel = useUnmatchedReasonLabel();
   const severity = severityOf(match);
+  const reviewed = Boolean(match.reviewed_at);
   const missedDeliveries =
     match.deliveries_expected > 0 && match.deliveries_visited < match.deliveries_expected;
+  const place = match.terminal_name || match.company || '—';
 
   return (
     <div
@@ -237,60 +105,95 @@ function QueueRow({ match, onOpen }: { match: TripMatch; onOpen: (m: TripMatch) 
           onOpen(match);
         }
       }}
-      className="flex cursor-pointer flex-col gap-2 p-3 transition-colors hover:bg-muted/40 sm:flex-row sm:items-center sm:justify-between"
+      className={cn(
+        'group flex cursor-pointer items-center gap-3 px-4 py-3.5 transition-colors hover:bg-muted/40',
+        reviewed && 'opacity-55 hover:opacity-90',
+      )}
     >
-      <div className="min-w-0 space-y-1.5">
-        {/* Verdict line */}
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge variant={SEVERITY_VARIANT[severity]} className="shrink-0">
-            {severity === 'ok'
-              ? t('tripAudit.queue.severityOk', 'OK')
-              : t(`tripAudit.severity.${severity}`, severity)}
-          </Badge>
-          <span className="min-w-0 text-sm font-medium leading-snug">
-            <VerdictSentence match={match} />
-          </span>
-        </div>
-        {/* Meta line */}
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-          <span className="whitespace-nowrap">
+      <div className="min-w-0 flex-1 space-y-1">
+        {/* Primary line */}
+        <div className="flex min-w-0 items-baseline gap-x-2.5">
+          <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
             {formatCairoDay(match.day_local, i18n.language)}
           </span>
+          <span className="min-w-0 truncate text-sm font-medium" dir="auto" title={place}>
+            {place}
+          </span>
           {match.car_no_plate && (
-            <span className="whitespace-nowrap font-medium text-foreground" dir="ltr">
+            <span className="shrink-0 text-xs text-muted-foreground" dir="ltr">
               {match.car_no_plate}
             </span>
           )}
           {match.driver_name && (
-            <span className="max-w-[180px] truncate" dir="auto">
+            <span
+              className="hidden max-w-[160px] truncate text-xs text-muted-foreground sm:inline"
+              dir="auto"
+            >
               {match.driver_name}
             </span>
           )}
+        </div>
+        {/* Verdict line */}
+        <p className="flex min-w-0 flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
+          <span className="min-w-0 truncate" dir="auto">
+            {verdictText(match, t, reasonLabel)}
+          </span>
           {match.deliveries_expected > 0 && (
             <span
               className={cn(
-                'flex items-center gap-1 tabular-nums',
+                'inline-flex shrink-0 items-center gap-1 tabular-nums',
                 missedDeliveries && 'font-medium text-warning',
               )}
             >
               <Package className="h-3 w-3" />
               <span dir="ltr">
                 {match.deliveries_visited}/{match.deliveries_expected}
-              </span>{' '}
+              </span>
               {t('tripAudit.queue.deliveries', 'deliveries')}
             </span>
           )}
-          {match.flag_count > 0 && (
-            <Badge variant="warning" className="tabular-nums">
-              <Flag className="h-3 w-3" />
-              {match.flag_count}
-            </Badge>
-          )}
-        </div>
+        </p>
       </div>
 
-      <div className="shrink-0 sm:ms-3">
-        <ReviewInline match={match} />
+      {/* Right rail — severity + the single action */}
+      <div className="flex shrink-0 items-center gap-2.5">
+        {reviewed ? (
+          <span
+            className="hidden items-center gap-1 text-xs text-success sm:flex"
+            title={match.review_note ?? undefined}
+          >
+            <CheckCircle2 className="h-3.5 w-3.5" />
+            {t('tripAudit.queue.reviewedOn', {
+              when: formatCairoDay(match.reviewed_at as string, i18n.language),
+              defaultValue: 'Reviewed {{when}}',
+            })}
+          </span>
+        ) : (
+          severity !== 'ok' && (
+            <Badge
+              variant={severity === 'critical' ? 'destructive' : 'warning'}
+              className="hidden sm:inline-flex"
+            >
+              {t(`tripAudit.severity.${severity}`, severity)}
+            </Badge>
+          )
+        )}
+        <Button
+          type="button"
+          size="sm"
+          variant={reviewed ? 'ghost' : 'outline'}
+          className="h-8 gap-1 text-xs"
+          tabIndex={-1}
+          onClick={(e) => {
+            e.stopPropagation();
+            onOpen(match);
+          }}
+        >
+          {reviewed
+            ? t('tripAudit.queue.view', 'View')
+            : t('tripAudit.queue.review', 'Review')}
+          <ChevronRight className="h-3.5 w-3.5 rtl:rotate-180" />
+        </Button>
       </div>
     </div>
   );
@@ -304,23 +207,23 @@ interface TripAuditQueueProps {
   matches: TripMatch[];
   loading?: boolean;
   onOpen: (match: TripMatch) => void;
+  /** Rendered when the list is empty — lets the page vary the empty state per view. */
+  empty?: React.ReactNode;
 }
 
 /**
- * "Review queue" — verdict sentences instead of data rows. Each row reads as
- * a judgement ("drove 119 km vs 55 km optimal"), carries the day / plate /
- * driver / deliveries / flag-count context, and offers a one-click
- * mark-reviewed that never opens the detail view. Full numeric columns live
- * inside the detail dialog.
+ * The review queue. Every row answers one question — "does this trip need
+ * attention?" — with one primary line, one verdict sentence and one action.
+ * All numeric detail lives in the detail dialog behind "Review".
  */
-export function TripAuditQueue({ matches, loading, onOpen }: TripAuditQueueProps) {
+export function TripAuditQueue({ matches, loading, onOpen, empty }: TripAuditQueueProps) {
   const { t } = useTranslation();
 
   if (loading && matches.length === 0) {
     return (
       <div className="space-y-2">
-        {Array.from({ length: 5 }).map((_, i) => (
-          <Skeleton key={i} className="h-16 w-full" />
+        {Array.from({ length: 6 }).map((_, i) => (
+          <Skeleton key={i} className="h-[60px] w-full" />
         ))}
       </div>
     );
@@ -328,20 +231,24 @@ export function TripAuditQueue({ matches, loading, onOpen }: TripAuditQueueProps
 
   if (matches.length === 0) {
     return (
-      <EmptyState
-        title={t('tripAudit.table.empty', 'No audited trips in this range')}
-        description={t(
-          'tripAudit.table.emptyDesc',
-          'Adjust the date range or run a scan to audit recent trips.',
+      <>
+        {empty ?? (
+          <EmptyState
+            title={t('tripAudit.table.empty', 'No audited trips in this range')}
+            description={t(
+              'tripAudit.table.emptyDesc',
+              'Adjust the date range or run a scan to audit recent trips.',
+            )}
+          />
         )}
-      />
+      </>
     );
   }
 
   return (
     <div
       className={cn(
-        'divide-y overflow-hidden rounded-lg border bg-card',
+        'divide-y divide-border/60 overflow-hidden rounded-lg border bg-card',
         loading && 'opacity-60',
       )}
     >

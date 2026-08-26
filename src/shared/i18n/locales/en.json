@@ -1675,7 +1675,16 @@
       "flaggedOnly": "Flagged only",
       "unreviewedOnly": "Unreviewed only",
       "sortSeverity": "Worst first",
-      "sortDate": "Newest first"
+      "sortDate": "Newest first",
+      "searchPlaceholder": "Search plate, driver or terminal…",
+      "more": "Filters",
+      "dateRange": "Date range",
+      "sort": "Sort"
+    },
+    "views": {
+      "needsReview": "Needs review",
+      "all": "All trips",
+      "unmatched": "Unmatched"
     },
     "scan": {
       "run": "Run scan",
@@ -1693,7 +1702,8 @@
       "no_dropoff_coords": "No drop-off pins",
       "no_gps_data": "No GPS data",
       "no_terminal_departure": "No terminal departure",
-      "no_dropoff_visits": "No drop-off visits"
+      "no_dropoff_visits": "No drop-off visits",
+      "no_matching_journey": "no journey with this trip's details (terminal/drop-offs) found that day"
     },
     "table": {
       "day": "Day",
@@ -1794,7 +1804,12 @@
       "excessKmValue": "+{{km}} km",
       "excessKmSub": "driven over optimal in this window",
       "worstRoute": "Worst route",
-      "worstRouteSub": "+{{km}} km over {{trips}} trips"
+      "worstRouteSub": "+{{km}} km over {{trips}} trips",
+      "needsReview": "Awaiting review",
+      "needsReviewSub": "flagged trips need a decision",
+      "allClearSub": "nothing needs your attention",
+      "startReview": "Start review",
+      "reviewing": "Reviewing"
     },
     "queue": {
       "unmatched": "Not audited — {{reason}}",
@@ -1807,7 +1822,63 @@
       "reviewedOn": "Reviewed {{when}}",
       "markReviewed": "Mark reviewed",
       "reviewWithNote": "Review with a note",
-      "pageOf": "Page {{page}} of {{pages}} · {{total}} trips"
+      "pageOf": "Page {{page}} of {{pages}} · {{total}} trips",
+      "noComparison": "No distance comparison available",
+      "drove": "Drove {{actual}} km vs {{osrm}} km optimal — +{{excess}} km excess",
+      "droveOnTarget": "Drove {{actual}} km vs {{osrm}} km optimal — on target",
+      "review": "Review",
+      "view": "View",
+      "caughtUp": "All caught up",
+      "caughtUpDesc": "No flagged trips are awaiting review in this range.",
+      "browseAll": "Browse all trips"
+    }
+  },
+  "tripReplay": {
+    "openReplay": "Open replay",
+    "title": "Trip replay",
+    "back": "Back to audit",
+    "loadingTrace": "Loading GPS trace…",
+    "toast": {
+      "loadError": "Could not load this trip.",
+      "unmatched": "This trip was not matched — replay is unavailable."
+    },
+    "banner": {
+      "unavailable": "Replay unavailable — showing route only"
+    },
+    "modes": {
+      "actual": "Actual",
+      "optimal": "Optimal",
+      "race": "Race"
+    },
+    "timeline": {
+      "label": "Trip timeline",
+      "night": "Night permit window (20:00–07:00)"
+    },
+    "hud": {
+      "night": "Night window",
+      "kmDriven": "Driven",
+      "kmOptimal": "km optimal",
+      "speed": "Speed",
+      "kmh": "km/h",
+      "leg": "{{from}} → {{to}}",
+      "betweenLegs": "At a stop between legs",
+      "stoppedFor": "stopped {{duration}}",
+      "skippedTotal": "{{duration}} of stops skipped",
+      "noGhost": "No optimal route for this leg — ghost hidden",
+      "restart": "Restart",
+      "pause": "Pause (Space)",
+      "play": "Play (Space)",
+      "skipStops": "Skip stops",
+      "followCam": "Follow"
+    },
+    "legRail": {
+      "title": "Legs",
+      "expand": "Show legs",
+      "collapse": "Hide legs",
+      "loop": "Loop this leg",
+      "night": "Night window",
+      "km": "km",
+      "offRoute": "{{pct}}% off-route"
     }
   },
   "terminalSelect": {

@@ -7,6 +7,7 @@ import {
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
 import {
+  getTripMatchReplay,
   tripAuditApi,
   type TripAuditSummaryFilters,
   type TripMatchFilters,
@@ -54,6 +55,20 @@ export function useTripMatch(id: number | null) {
     queryKey: tripAuditKeys.detail(id ?? -1),
     queryFn: () => tripAuditApi.getMatch(id as number),
     enabled: id != null,
+  });
+}
+
+/**
+ * NEW export for the trip-replay page — same endpoint as `useTripMatch`
+ * but parsed with the replay schema (keeps `off_route_pct`). Separate
+ * query key so the two parsed shapes never collide in the cache.
+ */
+export function useTripMatchReplay(id: number | null) {
+  return useQuery({
+    queryKey: [...tripAuditKeys.details(), 'replay', id ?? -1] as const,
+    queryFn: () => getTripMatchReplay(id as number),
+    enabled: id != null,
+    staleTime: 60_000,
   });
 }
 

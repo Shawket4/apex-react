@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import {
@@ -8,6 +9,7 @@ import {
   Info,
   Loader2,
   Moon,
+  Play,
 } from 'lucide-react';
 import {
   Dialog,
@@ -1010,6 +1012,14 @@ export function TripAuditDetailDialog({ matchId, onOpenChange }: TripAuditDetail
                   <Badge variant="outline" className="text-muted-foreground">
                     {reasonLabel(detail.unmatched_reason)}
                   </Badge>
+                )}
+                {detail.status !== 'unmatched' && (
+                  <Button asChild variant="outline" size="sm" className="h-7 gap-1.5">
+                    <Link to={`/trip-audit/${detail.id}/replay`}>
+                      <Play className="h-3.5 w-3.5" />
+                      {t('tripReplay.openReplay', 'Open replay')}
+                    </Link>
+                  </Button>
                 )}
               </>
             )}

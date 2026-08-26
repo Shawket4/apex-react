@@ -1683,7 +1683,16 @@
       "flaggedOnly": "المعلَّمة فقط",
       "unreviewedOnly": "غير المراجَعة فقط",
       "sortSeverity": "الأسوأ أولًا",
-      "sortDate": "الأحدث أولًا"
+      "sortDate": "الأحدث أولًا",
+      "searchPlaceholder": "ابحث باللوحة أو السائق أو المحطة…",
+      "more": "عوامل التصفية",
+      "dateRange": "نطاق التاريخ",
+      "sort": "الترتيب"
+    },
+    "views": {
+      "needsReview": "بحاجة إلى مراجعة",
+      "all": "كل الرحلات",
+      "unmatched": "غير مطابقة"
     },
     "scan": {
       "run": "تشغيل الفحص",
@@ -1701,7 +1710,8 @@
       "no_dropoff_coords": "لا توجد مواقع لنقاط التسليم",
       "no_gps_data": "لا توجد بيانات GPS",
       "no_terminal_departure": "لا يوجد انطلاق من المحطة",
-      "no_dropoff_visits": "لا توجد زيارات لنقاط التسليم"
+      "no_dropoff_visits": "لا توجد زيارات لنقاط التسليم",
+      "no_matching_journey": "لم تُرصد رحلة فعلية بنفس تفاصيل هذه الرحلة (المستودع/نقاط التسليم) في ذلك اليوم"
     },
     "table": {
       "day": "اليوم",
@@ -1802,7 +1812,12 @@
       "excessKmValue": "+{{km}} كم",
       "excessKmSub": "فوق المسار الأمثل في هذه الفترة",
       "worstRoute": "أسوأ مسار",
-      "worstRouteSub": "+{{km}} كم عبر {{trips}} رحلة"
+      "worstRouteSub": "+{{km}} كم عبر {{trips}} رحلة",
+      "needsReview": "بانتظار المراجعة",
+      "needsReviewSub": "رحلات معلَّمة تحتاج إلى قرار",
+      "allClearSub": "لا يوجد ما يستدعي انتباهك",
+      "startReview": "ابدأ المراجعة",
+      "reviewing": "قيد المراجعة"
     },
     "queue": {
       "unmatched": "لم تُدقَّق — {{reason}}",
@@ -1815,7 +1830,63 @@
       "reviewedOn": "روجعت {{when}}",
       "markReviewed": "تمت المراجعة",
       "reviewWithNote": "مراجعة مع ملاحظة",
-      "pageOf": "صفحة {{page}} من {{pages}} · {{total}} رحلة"
+      "pageOf": "صفحة {{page}} من {{pages}} · {{total}} رحلة",
+      "noComparison": "لا تتوفر مقارنة مسافة",
+      "drove": "قاد {{actual}} كم مقابل {{osrm}} كم مثالية — +{{excess}} كم زيادة",
+      "droveOnTarget": "قاد {{actual}} كم مقابل {{osrm}} كم مثالية — ضمن المعدل",
+      "review": "مراجعة",
+      "view": "عرض",
+      "caughtUp": "أنجزت كل المراجعات",
+      "caughtUpDesc": "لا توجد رحلات معلَّمة بانتظار المراجعة في هذا النطاق.",
+      "browseAll": "تصفح كل الرحلات"
+    }
+  },
+  "tripReplay": {
+    "openReplay": "فتح إعادة العرض",
+    "title": "إعادة عرض الرحلة",
+    "back": "العودة إلى التدقيق",
+    "loadingTrace": "جارٍ تحميل مسار GPS…",
+    "toast": {
+      "loadError": "تعذر تحميل هذه الرحلة.",
+      "unmatched": "لم تتم مطابقة هذه الرحلة — إعادة العرض غير متاحة."
+    },
+    "banner": {
+      "unavailable": "إعادة العرض غير متاحة — يُعرض المسار فقط"
+    },
+    "modes": {
+      "actual": "الفعلي",
+      "optimal": "الأمثل",
+      "race": "سباق"
+    },
+    "timeline": {
+      "label": "الخط الزمني للرحلة",
+      "night": "نافذة التصريح الليلي (20:00–07:00)"
+    },
+    "hud": {
+      "night": "النافذة الليلية",
+      "kmDriven": "المسافة المقطوعة",
+      "kmOptimal": "كم مثالي",
+      "speed": "السرعة",
+      "kmh": "كم/س",
+      "leg": "من {{from}} إلى {{to}}",
+      "betweenLegs": "متوقف بين المراحل",
+      "stoppedFor": "توقف {{duration}}",
+      "skippedTotal": "تم تخطي {{duration}} من التوقفات",
+      "noGhost": "لا يوجد مسار أمثل لهذه المرحلة — الشبح مخفي",
+      "restart": "إعادة التشغيل",
+      "pause": "إيقاف مؤقت (مسافة)",
+      "play": "تشغيل (مسافة)",
+      "skipStops": "تخطي التوقفات",
+      "followCam": "تتبع"
+    },
+    "legRail": {
+      "title": "المراحل",
+      "expand": "إظهار المراحل",
+      "collapse": "إخفاء المراحل",
+      "loop": "تكرار هذه المرحلة",
+      "night": "النافذة الليلية",
+      "km": "كم",
+      "offRoute": "{{pct}}٪ خارج المسار"
     }
   },
   "terminalSelect": {
