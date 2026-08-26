@@ -5,7 +5,6 @@ import {
   ArrowRightLeft,
   CheckCircle2,
   HelpCircle,
-  Link2,
   Loader2,
   MapPinOff,
   Sparkles,
@@ -14,11 +13,9 @@ import { Button } from '@/shared/ui/button';
 import { Badge } from '@/shared/ui/badge';
 import { Skeleton } from '@/shared/ui/skeleton';
 import { EmptyState } from '@/shared/ui/empty-state';
-import { NativeSelect } from '@/shared/ui/native-select';
 import { normalize } from '@/shared/lib/normalize';
 import {
   useAckSuggestion,
-  useAddTerminalAlias,
   useDropoffs,
   useLocationsInbox,
   usePinSuggestions,
@@ -30,7 +27,6 @@ import type {
   DropOffPoint,
   PinSuggestion,
   Terminal,
-  UnknownTerminal,
 } from '@/entities/location/schemas';
 import { LocationsDropoffDialog } from '../locations-dropoff-dialog';
 import { LocationsMapPicker } from '../locations-map-picker';
@@ -72,17 +68,18 @@ function sameName(a: string, b: string): boolean {
 /**
  * "Needs Attention" inbox.
  *
- * Three sections, all fed from the FalconGo inbox endpoint plus (when the
- * etit proxy is reachable) GPS-derived pin suggestions:
+ * Two sections, fed from the FalconGo inbox endpoint plus (when the etit
+ * proxy is reachable) GPS-derived pin suggestions:
  *   A. Drop-off points with no pin — [Review] a GPS suggestion or [Set pin]
  *      manually.
  *   B. Pin mismatches — GPS cluster sits far from the stored pin; move the
  *      pin to the suggestion or keep the current one.
- *   C. Unknown terminal names in trip data — link them as an alias of an
- *      existing terminal.
+ *
+ * (Unknown terminal names are gone — terminals are picked-by-id in the trip
+ * form now, so free-text spellings can no longer enter trip data.)
  *
  * The suggestions fetch failing (service not deployed yet) only hides the
- * GPS hints; sections A and C keep rendering from the database inbox.
+ * GPS hints; section A keeps rendering from the database inbox.
  */
 export function LocationsNeedsAttention() {
   const { t } = useTranslation();
@@ -132,10 +129,7 @@ export function LocationsNeedsAttention() {
 
   const findTerminalByName = React.useCallback(
     (name: string): Terminal | null =>
-      terminals.find(
-        (term) =>
-          sameName(term.name, name) || term.aliases.some((a) => sameName(a.alias, name)),
-      ) ?? null,
+      terminals.find((term) => sameName(term.name, name)) ?? null,
     [terminals],
   );
 
@@ -198,8 +192,7 @@ export function LocationsNeedsAttention() {
   }
 
   const unpinned = inbox?.unpinned_dropoffs ?? [];
-  const unknownTerminals = inbox?.unknown_terminals ?? [];
-  const isEmpty = unpinned.length === 0 && unknownTerminals.length === 0 && mismatches.length === 0;
+  const isEmpty = unpinned.length === 0 && mismatches.length === 0;
 
   return (
     <div className="space-y-6">
@@ -375,10 +368,6 @@ export function LocationsNeedsAttention() {
             </section>
           )}
 
-          {/* ---------------- Section C: unknown terminal names ---------------- */}
-          {unknownTerminals.length > 0 && (
-            <UnknownTerminalsSection unknownTerminals={unknownTerminals} terminals={terminals} />
-          )}
         </>
       )}
 
@@ -416,108 +405,5 @@ export function LocationsNeedsAttention() {
         }}
       />
     </div>
-  );
-}
-
-/* -------------------------------------------------------------------------- */
-/* Section C                                                                   */
-/* -------------------------------------------------------------------------- */
-
-function UnknownTerminalsSection({
-  unknownTerminals,
-  terminals,
-}: {
-  unknownTerminals: UnknownTerminal[];
-  terminals: Terminal[];
-}) {
-  const { t } = useTranslation();
-  const addAlias = useAddTerminalAlias();
-
-  // Per-row selected terminal (keyed by the unknown name)
-  const [selected, setSelected] = React.useState<Record<string, string>>({});
-  const [busyName, setBusyName] = React.useState<string | null>(null);
-
-  const handleLink = async (unknown: UnknownTerminal) => {
-    const terminalId = Number(selected[unknown.name]);
-    if (!terminalId) return;
-    setBusyName(unknown.name);
-    try {
-      await addAlias.mutateAsync({ terminalId, alias: unknown.name });
-    } catch {
-      // Toast handled by the mutation
-    } finally {
-      setBusyName(null);
-    }
-  };
-
-  return (
-    <section className="space-y-3">
-      <SectionHeader
-        icon={<Link2 className="h-4 w-4" />}
-        title={t('locations.inbox.unknownTitle', 'Unknown terminal names')}
-        count={unknownTerminals.length}
-      />
-      <div className="divide-y overflow-hidden rounded-lg border bg-card">
-        {unknownTerminals.map((unknown) => {
-          const busy = busyName === unknown.name;
-          return (
-            <div
-              key={unknown.name}
-              className="flex flex-col gap-2 p-3 sm:flex-row sm:items-center sm:justify-between"
-            >
-              <div className="min-w-0 text-sm">
-                <span dir="auto" className="font-medium">
-                  {unknown.name}
-                </span>{' '}
-                <span className="text-muted-foreground">
-                  {t('locations.inbox.unknownText', {
-                    trips: unknown.trip_rows,
-                    defaultValue: 'appears in {{trips}} trips but matches no terminal',
-                  })}
-                </span>
-              </div>
-              <div className="flex shrink-0 items-center gap-2">
-                <NativeSelect
-                  className="w-56"
-                  value={selected[unknown.name] ?? ''}
-                  onChange={(e) =>
-                    setSelected((prev) => ({ ...prev, [unknown.name]: e.target.value }))
-                  }
-                >
-                  <option value="">
-                    {t('locations.inbox.selectTerminal', 'Select terminal…')}
-                  </option>
-                  {terminals.map((term) => (
-                    <option key={term.ID} value={term.ID}>
-                      {term.name}
-                    </option>
-                  ))}
-                </NativeSelect>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="gap-1.5"
-                  disabled={!selected[unknown.name] || busy}
-                  onClick={() => void handleLink(unknown)}
-                >
-                  {busy ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  ) : (
-                    <Link2 className="h-3.5 w-3.5" />
-                  )}
-                  {t('locations.inbox.linkAlias', 'Link as alias')}
-                </Button>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-      <p className="text-xs text-muted-foreground">
-        {t(
-          'locations.inbox.createHint',
-          'A truly new terminal must first be created in the database — then link its trip-data spellings here.',
-        )}
-      </p>
-    </section>
   );
 }

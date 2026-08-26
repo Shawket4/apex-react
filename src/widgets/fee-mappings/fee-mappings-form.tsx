@@ -14,6 +14,7 @@ import {
   useFeeMappings,
 } from '@/entities/fee-mapping/queries';
 import type { FeeMapping } from '@/entities/fee-mapping/schemas';
+import { TerminalSelect } from '@/widgets/terminal-select';
 import type { SelectOption } from '@/shared/types';
 
 interface FeeMappingsFormProps {
@@ -25,7 +26,10 @@ interface FeeMappingsFormProps {
 
 interface FormState {
   company: string;
+  /** Canonical terminal name — legacy payload field. */
   terminal: string;
+  /** Picked-by-id terminal reference (resolved from `terminal` on edit). */
+  terminal_id: number | null;
   drop_off_point: string;
   distance: string;
   fee: string;
@@ -34,6 +38,7 @@ interface FormState {
 const emptyForm: FormState = {
   company: '',
   terminal: '',
+  terminal_id: null,
   drop_off_point: '',
   distance: '',
   fee: '',
@@ -76,25 +81,15 @@ export function FeeMappingsForm({
     return points.sort().map((p) => ({ value: p, label: p }));
   }, [mappings, form.company]);
 
-  // Extract unique terminals for the selected company
-  const terminalOptions = React.useMemo<SelectOption<string>[]>(() => {
-    if (!form.company) return [];
-    const points = Array.from(
-      new Set(
-        mappings
-          .filter((m) => m.company === form.company)
-          .map((m) => m.terminal),
-      ),
-    );
-    return points.sort().map((p) => ({ value: p, label: p }));
-  }, [mappings, form.company]);
-
-  // Hydrate form when entering edit mode
+  // Hydrate form when entering edit mode. `terminal_id` starts null —
+  // TerminalSelect resolves the legacy name against the company's allowed
+  // terminals once they load.
   React.useEffect(() => {
     if (editing) {
       setForm({
         company: editing.company,
         terminal: editing.terminal,
+        terminal_id: null,
         drop_off_point: editing.dropOffPoint,
         distance: String(editing.distance),
         fee: String(editing.fee),
@@ -116,6 +111,7 @@ export function FeeMappingsForm({
     const payload = {
       company: form.company.trim(),
       terminal: form.terminal.trim(),
+      ...(form.terminal_id != null ? { terminal_id: form.terminal_id } : {}),
       drop_off_point: form.drop_off_point.trim(),
       distance: Number(form.distance),
       fee: Number(form.fee),
@@ -179,7 +175,14 @@ export function FeeMappingsForm({
                 id="fm-company"
                 options={companyOptions}
                 value={form.company}
-                onChange={(v) => update({ company: v })}
+                onChange={(v) =>
+                  update(
+                    v === form.company
+                      ? { company: v }
+                      : // Terminal allowlists are per-company — reset the pick
+                        { company: v, terminal: '', terminal_id: null },
+                  )
+                }
                 allowCustom
                 placeholder="Watanya"
               />
@@ -190,12 +193,14 @@ export function FeeMappingsForm({
                 {t('feeMappings.fields.terminal')}
                 <span className="text-destructive">*</span>
               </Label>
-              <SearchableSelect<string>
+              <TerminalSelect
                 id="fm-terminal"
-                options={terminalOptions}
-                value={form.terminal}
-                onChange={(v) => update({ terminal: v })}
-                allowCustom
+                company={form.company}
+                terminalId={form.terminal_id}
+                terminalName={form.terminal}
+                onSelect={(terminal) =>
+                  update({ terminal: terminal.name, terminal_id: terminal.ID })
+                }
                 placeholder="Cairo"
                 disabled={!form.company}
               />

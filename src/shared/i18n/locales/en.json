@@ -726,6 +726,12 @@
           "95": "95",
           "diesel": "Diesel"
         }
+      },
+      "receiptPattern": {
+        "mismatchTitle": "Receipt serialization mismatch",
+        "mismatch": "Receipt number doesn't match {{terminal}}'s serialization ({{hint}})",
+        "override": "Save anyway (override)",
+        "blocked": "Some receipt numbers don’t match the terminal’s serialization — tick \"Save anyway (override)\" to proceed."
       }
     },
     "tabs": {
@@ -871,6 +877,12 @@
         "cars": "Vehicles",
         "routes": "Routes"
       }
+    },
+    "receiptSerial": {
+      "invalid": "Serial mismatch",
+      "invalidTooltip": "Receipt number doesn't follow the terminal's serialization",
+      "overridden": "Overridden",
+      "overriddenTooltip": "Receipt doesn't follow the terminal's serialization — overridden by user"
     }
   },
   "oilChanges": {
@@ -1545,7 +1557,7 @@
   },
   "locations": {
     "title": "Locations",
-    "description": "Manage canonical terminals and drop-off points — pins, radii, and aliases — in one place.",
+    "description": "Manage canonical terminals and drop-off points — pins, radii, company allowlists, and receipt serialization — in one place.",
     "newDropoff": "New drop-off point",
     "tabs": {
       "inbox": "Needs Attention",
@@ -1572,21 +1584,17 @@
       "lng": "Longitude",
       "radius": "Radius (m)",
       "radiusDefaultPlaceholder": "Default ({{m}} m)",
-      "aliases": "Aliases",
       "pinStatus": "Pin",
       "pinSource": "Pin source",
       "coordinates": "Coordinates",
-      "dropoffNamePlaceholder": "e.g. 10th of Ramadan warehouses"
+      "dropoffNamePlaceholder": "e.g. 10th of Ramadan warehouses",
+      "allowedCompanies": "Allowed companies"
     },
     "dialog": {
       "editTerminal": "Edit Terminal",
       "editDropoff": "Edit Drop-off Point",
       "createDropoff": "New Drop-off Point",
-      "mapHelper": "Click the map or drag the marker to set the pin. Leave the radius empty to use the default.",
-      "aliasHelper": "Alternative spellings from trip data that should resolve to this terminal.",
-      "aliasPlaceholder": "Add an alias…",
-      "removeAlias": "Remove alias",
-      "noAliases": "No aliases yet."
+      "mapHelper": "Click the map or drag the marker to set the pin. Leave the radius empty to use the default."
     },
     "terminals": {
       "empty": "No terminals found"
@@ -1600,7 +1608,6 @@
     "inbox": {
       "unpinnedTitle": "Drop-off points without pins",
       "mismatchTitle": "Pin mismatches",
-      "unknownTitle": "Unknown terminal names",
       "gpsSuggests": "GPS suggests a pin from {{stops}} stops",
       "review": "Review",
       "setPin": "Set pin",
@@ -1610,10 +1617,6 @@
       "currentPin": "Stored pin",
       "suggestedPin": "GPS suggestion",
       "noMatch": "No matching record found for this name — the pin cannot be moved automatically.",
-      "unknownText": "appears in {{trips}} trips but matches no terminal",
-      "selectTerminal": "Select terminal…",
-      "linkAlias": "Link as alias",
-      "createHint": "A truly new terminal must first be created in the database — then link its trip-data spellings here.",
       "suggestionsUnavailable": "GPS suggestions are unavailable right now — showing database items only.",
       "allClear": "All caught up",
       "allClearDesc": "No locations need attention right now."
@@ -1621,10 +1624,6 @@
     "toast": {
       "terminalUpdated": "Terminal updated",
       "terminalUpdateError": "Failed to update terminal",
-      "aliasAdded": "Alias added",
-      "aliasAddError": "Failed to add alias",
-      "aliasRemoved": "Alias removed",
-      "aliasRemoveError": "Failed to remove alias",
       "dropoffCreated": "Drop-off point created",
       "dropoffCreateError": "Failed to create drop-off point",
       "dropoffUpdated": "Drop-off point updated",
@@ -1632,16 +1631,37 @@
       "dropoffDeleted": "Drop-off point deleted",
       "dropoffDeleteError": "Failed to delete drop-off point",
       "suggestionDismissed": "Suggestion dismissed",
-      "suggestionAckError": "Failed to update suggestion"
+      "suggestionAckError": "Failed to update suggestion",
+      "terminalCreateError": "Failed to create terminal",
+      "patternSaved": "Receipt pattern saved",
+      "patternSaveError": "Failed to save receipt pattern",
+      "patternDeleted": "Receipt pattern deleted",
+      "patternDeleteError": "Failed to delete receipt pattern"
+    },
+    "receiptPatterns": {
+      "title": "Receipt serialization",
+      "helper": "Regex patterns receipt numbers must match at this terminal — per company, or one for all companies.",
+      "allCompanies": "All companies",
+      "company": "Company",
+      "companyPlaceholder": "Leave empty for all companies",
+      "pattern": "Pattern (regex)",
+      "description": "Description",
+      "descriptionPlaceholder": "e.g. WT- followed by 5 digits",
+      "active": "Active",
+      "inactive": "Inactive",
+      "add": "Add pattern",
+      "save": "Save pattern",
+      "empty": "No receipt patterns yet.",
+      "invalidRegex": "This pattern is not a valid regular expression."
     }
   },
   "tripAudit": {
     "title": "Trip Audit",
-    "description": "Review GPS-audited trips \u2014 actual routes vs the OSRM optimal \u2014 and the flags raised.",
+    "description": "Review GPS-audited trips — actual routes vs the OSRM optimal — and the flags raised.",
     "filters": {
       "status": "Status",
       "allStatuses": "All statuses",
-      "companyPlaceholder": "Filter by company\u2026",
+      "companyPlaceholder": "Filter by company…",
       "flaggedOnly": "Flagged only"
     },
     "summary": {
@@ -1700,14 +1720,14 @@
       "noFlags": "No flags raised for this trip.",
       "reviewTitle": "Review this trip",
       "reviewNote": "Review note",
-      "notePlaceholder": "Optional note\u2026",
+      "notePlaceholder": "Optional note…",
       "markReviewed": "Mark reviewed",
       "updateReview": "Update review",
       "reviewedAt": "Reviewed {{when}}"
     },
     "legs": {
       "type": "Type",
-      "fromTo": "From \u2192 To",
+      "fromTo": "From → To",
       "depart": "Depart",
       "arrive": "Arrive",
       "km": "km (actual / OSRM)",
@@ -1746,11 +1766,20 @@
       "reviewSuccess": "Marked as reviewed",
       "reviewError": "Failed to mark as reviewed",
       "scanStarted": "Scan started",
-      "scanStartedDesc": "This can take a few minutes \u2014 results will refresh automatically.",
+      "scanStartedDesc": "This can take a few minutes — results will refresh automatically.",
       "scanComplete": "Scan complete",
       "scanSummary": "{{scanned}} trips scanned, {{matched}} matched, {{flags}} flags raised",
       "scanError": "Scan finished with an error",
       "scanRequestError": "Failed to run scan"
     }
+  },
+  "terminalSelect": {
+    "createOption": "Create terminal '{{name}}'",
+    "confirmTitle": "Create terminal?",
+    "confirmBody": "This will create a new terminal '{{name}}' — or allow an existing one with this name — for {{company}}.",
+    "confirmAction": "Create terminal",
+    "toastCreated": "Terminal created",
+    "toastExtended": "Terminal '{{name}}' allowed for {{company}}",
+    "unresolved": "'{{name}}' is not in {{company}}'s allowed terminals — pick one or create it."
   }
 }

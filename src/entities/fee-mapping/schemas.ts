@@ -81,7 +81,11 @@ export type EnrichmentResult = z.output<typeof enrichmentResultSchema>;
 
 export const feeMappingInputSchema = z.object({
   company: z.string().min(1),
+  // Legacy free-text terminal name (canonical name of the picked terminal) —
+  // kept so nothing downstream breaks; `terminal_id` is the picked-by-id
+  // reference the backend stores now.
   terminal: z.string().min(1),
+  terminal_id: z.number().int().optional(),
   drop_off_point: z.string().min(1),
   distance: z.number().positive(),
   fee: z.number().nonnegative(),

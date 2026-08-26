@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Loader2, MapPin, Plus, Save, X } from 'lucide-react';
+import { Loader2, MapPin, Pencil, Plus, Regex, Save, Trash2, X } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -13,16 +13,19 @@ import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { Label } from '@/shared/ui/label';
 import { Badge } from '@/shared/ui/badge';
+import { Switch } from '@/shared/ui/switch';
 import { isValidCoordinate } from '@/shared/lib/coords';
 import {
   TERMINAL_DEFAULT_RADIUS_M,
+  type ReceiptPattern,
   type Terminal,
   type UpdateTerminalPayload,
 } from '@/entities/location/schemas';
 import {
-  useAddTerminalAlias,
-  useDeleteTerminalAlias,
+  useDeleteReceiptPattern,
+  useReceiptPatterns,
   useUpdateTerminal,
+  useUpsertReceiptPattern,
 } from '@/entities/location/queries';
 import { LocationsMapPicker } from '../locations-map-picker';
 
@@ -33,9 +36,10 @@ interface LocationsTerminalDialogProps {
 
 /**
  * Terminal editor — draggable pin + radius circle (500 m default shown when
- * no override is stored), radius override input, address, and alias
- * management. Aliases persist immediately through their own endpoints; the
- * rest saves on submit via `PUT /api/locations/terminals/:id`.
+ * no override is stored), radius override input, address, allowed-company
+ * chips, and a receipt-serialization pattern editor. Patterns persist
+ * immediately through their own upsert/delete endpoints; the rest saves on
+ * submit via `PUT /api/locations/terminals/:id`.
  */
 export function LocationsTerminalDialog({
   terminal,
@@ -45,17 +49,14 @@ export function LocationsTerminalDialog({
   const open = terminal !== null;
 
   const updateTerminal = useUpdateTerminal();
-  const addAlias = useAddTerminalAlias();
-  const deleteAlias = useDeleteTerminalAlias();
 
   const [address, setAddress] = React.useState('');
   const [lat, setLat] = React.useState('');
   const [lng, setLng] = React.useState('');
   const [radius, setRadius] = React.useState('');
-  const [aliasInput, setAliasInput] = React.useState('');
 
   // Re-hydrate only when the target terminal changes (not on every cache
-  // refresh — alias mutations refetch the list and we must not clobber
+  // refresh — pattern mutations refetch the list and we must not clobber
   // in-progress edits).
   const hydratedId = React.useRef<number | null>(null);
   React.useEffect(() => {
@@ -69,7 +70,6 @@ export function LocationsTerminalDialog({
     setLat(terminal.lat != null ? String(terminal.lat) : '');
     setLng(terminal.long != null ? String(terminal.long) : '');
     setRadius(terminal.radius_m != null ? String(terminal.radius_m) : '');
-    setAliasInput('');
   }, [terminal]);
 
   const numericLat = Number(lat);
@@ -84,14 +84,6 @@ export function LocationsTerminalDialog({
     setLat(newLat.toFixed(6));
     setLng(newLng.toFixed(6));
   }, []);
-
-  const handleAddAlias = async () => {
-    if (!terminal) return;
-    const alias = aliasInput.trim();
-    if (!alias) return;
-    await addAlias.mutateAsync({ terminalId: terminal.ID, alias });
-    setAliasInput('');
-  };
 
   const handleSave = async () => {
     if (!terminal || !radiusValid) return;
@@ -133,6 +125,23 @@ export function LocationsTerminalDialog({
         </DialogHeader>
 
         <div className="flex flex-1 flex-col gap-4 overflow-y-auto px-6 py-4">
+          {/* Allowed companies (read-only — extend via the trip form's
+              create/allow flow or the backend) */}
+          {(terminal?.allowed_companies?.length ?? 0) > 0 && (
+            <div className="space-y-1.5">
+              <Label className="text-xs">
+                {t('locations.fields.allowedCompanies', 'Allowed companies')}
+              </Label>
+              <div className="flex flex-wrap gap-1.5">
+                {terminal?.allowed_companies.map((company) => (
+                  <Badge key={company} variant="secondary" dir="auto">
+                    {company}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Address */}
           <div className="space-y-1">
             <Label htmlFor="terminal-address" className="text-xs">
@@ -214,65 +223,8 @@ export function LocationsTerminalDialog({
             className="h-[320px]"
           />
 
-          {/* Aliases */}
-          <div className="space-y-2">
-            <Label className="text-xs">{t('locations.fields.aliases', 'Aliases')}</Label>
-            <p className="text-xs text-muted-foreground">
-              {t(
-                'locations.dialog.aliasHelper',
-                'Alternative spellings from trip data that should resolve to this terminal.',
-              )}
-            </p>
-            <div className="flex flex-wrap gap-1.5">
-              {(terminal?.aliases ?? []).map((alias) => (
-                <Badge key={alias.ID} variant="secondary" className="gap-1 pe-1" dir="auto">
-                  <span dir="auto">{alias.alias}</span>
-                  <button
-                    type="button"
-                    className="rounded-full p-0.5 hover:bg-muted-foreground/20"
-                    onClick={() => deleteAlias.mutate(alias.ID)}
-                    disabled={deleteAlias.isPending}
-                    aria-label={t('locations.dialog.removeAlias', 'Remove alias')}
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                </Badge>
-              ))}
-              {(terminal?.aliases ?? []).length === 0 && (
-                <span className="text-xs text-muted-foreground">
-                  {t('locations.dialog.noAliases', 'No aliases yet.')}
-                </span>
-              )}
-            </div>
-            <div className="flex gap-2">
-              <Input
-                dir="auto"
-                value={aliasInput}
-                onChange={(e) => setAliasInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    void handleAddAlias();
-                  }
-                }}
-                placeholder={t('locations.dialog.aliasPlaceholder', 'Add an alias…')}
-              />
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => void handleAddAlias()}
-                disabled={!aliasInput.trim() || addAlias.isPending}
-                className="shrink-0 gap-1.5"
-              >
-                {addAlias.isPending ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Plus className="h-4 w-4" />
-                )}
-                {t('common.add', 'Add')}
-              </Button>
-            </div>
-          </div>
+          {/* Receipt serialization patterns */}
+          {terminal && <ReceiptPatternsSection terminalId={terminal.ID} />}
         </div>
 
         <DialogFooter className="shrink-0 gap-2 border-t px-6 py-3">
@@ -293,5 +245,319 @@ export function LocationsTerminalDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/* Receipt patterns editor                                                     */
+/*                                                                             */
+/* One pattern per (terminal, company); empty company = "all companies".       */
+/* Saves through the PUT upsert immediately (independent of the dialog's       */
+/* main Save button). The regex must compile client-side before saving.        */
+/* -------------------------------------------------------------------------- */
+
+interface PatternFormState {
+  /** Empty string = applies to all companies. */
+  company: string;
+  pattern: string;
+  description: string;
+  active: boolean;
+  /** Company key of the row being edited, null when adding a new pattern. */
+  editingCompany: string | null;
+}
+
+const emptyPatternForm: PatternFormState = {
+  company: '',
+  pattern: '',
+  description: '',
+  active: true,
+  editingCompany: null,
+};
+
+function ReceiptPatternsSection({ terminalId }: { terminalId: number }) {
+  const { t } = useTranslation();
+  const patternsQuery = useReceiptPatterns(terminalId);
+  const upsertPattern = useUpsertReceiptPattern();
+  const deletePattern = useDeleteReceiptPattern();
+
+  const [form, setForm] = React.useState<PatternFormState>(emptyPatternForm);
+  const [showForm, setShowForm] = React.useState(false);
+  const [deleteBusyCompany, setDeleteBusyCompany] = React.useState<string | null>(null);
+
+  // Reset when switching terminals
+  React.useEffect(() => {
+    setForm(emptyPatternForm);
+    setShowForm(false);
+  }, [terminalId]);
+
+  const patterns = patternsQuery.data ?? [];
+
+  const regexError = React.useMemo(() => {
+    if (!form.pattern.trim()) return false;
+    try {
+      void new RegExp(form.pattern);
+      return false;
+    } catch {
+      return true;
+    }
+  }, [form.pattern]);
+
+  const canSave = !!form.pattern.trim() && !regexError && !upsertPattern.isPending;
+
+  const startEdit = (pattern: ReceiptPattern) => {
+    setForm({
+      company: pattern.company ?? '',
+      pattern: pattern.pattern,
+      description: pattern.description,
+      active: pattern.active,
+      editingCompany: pattern.company ?? '',
+    });
+    setShowForm(true);
+  };
+
+  const handleSavePattern = async () => {
+    if (!canSave) return;
+    try {
+      await upsertPattern.mutateAsync({
+        terminalId,
+        payload: {
+          company: form.company.trim(),
+          pattern: form.pattern.trim(),
+          description: form.description.trim(),
+          active: form.active,
+        },
+      });
+      setForm(emptyPatternForm);
+      setShowForm(false);
+    } catch {
+      // Toast handled by the mutation
+    }
+  };
+
+  const handleDelete = async (pattern: ReceiptPattern) => {
+    const companyKey = pattern.company ?? '';
+    setDeleteBusyCompany(companyKey);
+    try {
+      await deletePattern.mutateAsync({ terminalId, company: companyKey });
+      if (form.editingCompany === companyKey) {
+        setForm(emptyPatternForm);
+        setShowForm(false);
+      }
+    } catch {
+      // Toast handled by the mutation
+    } finally {
+      setDeleteBusyCompany(null);
+    }
+  };
+
+  return (
+    <div className="space-y-2 rounded-lg border bg-muted/20 p-3">
+      <div className="flex items-center justify-between gap-2">
+        <Label className="flex items-center gap-1.5 text-xs">
+          <Regex className="h-3.5 w-3.5 text-primary" />
+          {t('locations.receiptPatterns.title', 'Receipt serialization')}
+        </Label>
+        {!showForm && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-7 gap-1.5 text-xs"
+            onClick={() => {
+              setForm(emptyPatternForm);
+              setShowForm(true);
+            }}
+          >
+            <Plus className="h-3 w-3" />
+            {t('locations.receiptPatterns.add', 'Add pattern')}
+          </Button>
+        )}
+      </div>
+      <p className="text-xs text-muted-foreground">
+        {t(
+          'locations.receiptPatterns.helper',
+          'Regex patterns receipt numbers must match at this terminal — per company, or one for all companies.',
+        )}
+      </p>
+
+      {/* Existing patterns */}
+      {patternsQuery.isLoading ? (
+        <div className="flex items-center gap-2 py-2 text-xs text-muted-foreground">
+          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          {t('common.loading', 'Loading…')}
+        </div>
+      ) : patterns.length === 0 ? (
+        <p className="py-1 text-xs text-muted-foreground">
+          {t('locations.receiptPatterns.empty', 'No receipt patterns yet.')}
+        </p>
+      ) : (
+        <div className="divide-y overflow-hidden rounded-md border bg-card">
+          {patterns.map((pattern) => {
+            const companyKey = pattern.company ?? '';
+            const busy = deleteBusyCompany === companyKey && deletePattern.isPending;
+            return (
+              <div
+                key={companyKey || '__all__'}
+                className="flex flex-col gap-1.5 p-2.5 text-xs sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div className="min-w-0 space-y-0.5">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <Badge variant={pattern.company ? 'secondary' : 'outline'} dir="auto">
+                      {pattern.company ??
+                        t('locations.receiptPatterns.allCompanies', 'All companies')}
+                    </Badge>
+                    {!pattern.active && (
+                      <Badge variant="warning">
+                        {t('locations.receiptPatterns.inactive', 'Inactive')}
+                      </Badge>
+                    )}
+                    <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-[11px]">
+                      {pattern.pattern}
+                    </code>
+                  </div>
+                  {pattern.description && (
+                    <p className="truncate text-muted-foreground" dir="auto">
+                      {pattern.description}
+                    </p>
+                  )}
+                </div>
+                <div className="flex shrink-0 items-center gap-0.5">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    onClick={() => startEdit(pattern)}
+                    aria-label={t('common.edit', 'Edit')}
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                    onClick={() => void handleDelete(pattern)}
+                    disabled={busy}
+                    aria-label={t('common.delete', 'Delete')}
+                  >
+                    {busy ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-3.5 w-3.5" />
+                    )}
+                  </Button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Add / edit form */}
+      {showForm && (
+        <div className="space-y-2 rounded-md border bg-card p-3">
+          <div className="grid gap-2 sm:grid-cols-2">
+            <div className="space-y-1">
+              <Label htmlFor="rp-company" className="text-xs">
+                {t('locations.receiptPatterns.company', 'Company')}
+              </Label>
+              <Input
+                id="rp-company"
+                dir="auto"
+                value={form.company}
+                // The upsert is keyed on (terminal, company) — changing the
+                // company while editing would create a second row, so lock it.
+                disabled={form.editingCompany !== null}
+                onChange={(e) => setForm((prev) => ({ ...prev, company: e.target.value }))}
+                placeholder={t(
+                  'locations.receiptPatterns.companyPlaceholder',
+                  'Leave empty for all companies',
+                )}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="rp-pattern" className="text-xs">
+                {t('locations.receiptPatterns.pattern', 'Pattern (regex)')}
+              </Label>
+              <Input
+                id="rp-pattern"
+                value={form.pattern}
+                onChange={(e) => setForm((prev) => ({ ...prev, pattern: e.target.value }))}
+                placeholder="^WT-\d{5}$"
+                className="font-mono"
+                aria-invalid={regexError || undefined}
+              />
+              {regexError && (
+                <p className="text-[11px] font-medium text-destructive">
+                  {t(
+                    'locations.receiptPatterns.invalidRegex',
+                    'This pattern is not a valid regular expression.',
+                  )}
+                </p>
+              )}
+            </div>
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="rp-description" className="text-xs">
+              {t('locations.receiptPatterns.description', 'Description')}
+            </Label>
+            <Input
+              id="rp-description"
+              dir="auto"
+              value={form.description}
+              onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
+              placeholder={t(
+                'locations.receiptPatterns.descriptionPlaceholder',
+                'e.g. WT- followed by 5 digits',
+              )}
+            />
+          </div>
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <Switch
+                id="rp-active"
+                checked={form.active}
+                onCheckedChange={(checked) =>
+                  setForm((prev) => ({ ...prev, active: checked }))
+                }
+              />
+              <Label htmlFor="rp-active" className="cursor-pointer text-xs">
+                {t('locations.receiptPatterns.active', 'Active')}
+              </Label>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-7 gap-1 text-xs"
+                onClick={() => {
+                  setForm(emptyPatternForm);
+                  setShowForm(false);
+                }}
+              >
+                <X className="h-3 w-3" />
+                {t('common.cancel', 'Cancel')}
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                className="h-7 gap-1 text-xs"
+                disabled={!canSave}
+                onClick={() => void handleSavePattern()}
+              >
+                {upsertPattern.isPending ? (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                ) : (
+                  <Save className="h-3 w-3" />
+                )}
+                {t('locations.receiptPatterns.save', 'Save pattern')}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

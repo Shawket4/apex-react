@@ -2,6 +2,7 @@ import * as React from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
+  AlertTriangle,
   Building2,
   Car,
   ChevronDown,
@@ -84,6 +85,49 @@ function ReceiptStatusBadge({
 
 function camel(s: string): string {
   return s.replace(/_([a-z])/g, (_, c: string) => c.toUpperCase());
+}
+
+/* -------------------------------------------------------------------------- */
+/* Receipt serialization badge                                                 */
+/*                                                                             */
+/* `receipt_valid === false` → the receipt number fails the terminal's         */
+/* per-company serialization pattern. Overridden rows (user ticked "Save       */
+/* anyway") get a distinct badge; null means no pattern configured — no badge. */
+/* -------------------------------------------------------------------------- */
+
+function ReceiptSerialBadge({
+  trip,
+}: {
+  trip: Pick<Trip, 'receipt_valid' | 'receipt_override'>;
+}) {
+  const { t } = useTranslation();
+  if (trip.receipt_valid !== false) return null;
+
+  if (trip.receipt_override) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span className="inline-flex items-center gap-1 rounded-full border border-warning/40 bg-transparent px-2 py-0.5 text-[10px] font-medium text-warning">
+            <AlertTriangle className="h-3 w-3" />
+            {t('trips.receiptSerial.overridden')}
+          </span>
+        </TooltipTrigger>
+        <TooltipContent>{t('trips.receiptSerial.overriddenTooltip')}</TooltipContent>
+      </Tooltip>
+    );
+  }
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className="inline-flex items-center gap-1 rounded-full border border-warning/30 bg-warning/15 px-2 py-0.5 text-[10px] font-medium text-warning">
+          <AlertTriangle className="h-3 w-3" />
+          {t('trips.receiptSerial.invalid')}
+        </span>
+      </TooltipTrigger>
+      <TooltipContent>{t('trips.receiptSerial.invalidTooltip')}</TooltipContent>
+    </Tooltip>
+  );
 }
 
 /* -------------------------------------------------------------------------- */
@@ -356,11 +400,12 @@ function TripMobileCard({
               )}
             </div>
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <span className="text-sm font-black tabular-nums tracking-tight text-foreground">
                   #{trip.receipt_no || '—'}
                 </span>
                 <ReceiptStatusBadge trip={trip} compact />
+                <ReceiptSerialBadge trip={trip} />
               </div>
               <div className="mt-1 flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/70">
                 <span className="flex items-center gap-1">
@@ -663,8 +708,9 @@ function StandaloneRow({
               <FileText className="h-4 w-4" />
             </div>
             <div className="min-w-0">
-              <div className="text-sm font-semibold tabular-nums">
+              <div className="flex flex-wrap items-center gap-1.5 text-sm font-semibold tabular-nums">
                 #{trip.receipt_no || '—'}
+                <ReceiptSerialBadge trip={trip} />
               </div>
               <div className="text-xs text-muted-foreground">
                 {t('trips.row.singleTrip')}
@@ -883,8 +929,9 @@ function ParentRows({
                       {idx + 1}
                     </div>
                     <div className="min-w-0">
-                      <div className="text-sm font-medium tabular-nums">
+                      <div className="flex flex-wrap items-center gap-1.5 text-sm font-medium tabular-nums">
                         #{container.receipt_no || '—'}
+                        <ReceiptSerialBadge trip={container} />
                       </div>
                       <div className="text-xs text-muted-foreground">
                         {t('trips.row.containerN', { n: idx + 1 })}

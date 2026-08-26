@@ -11,30 +11,84 @@ export const DROPOFF_DEFAULT_RADIUS_M = 300;
 
 /* -------------------------------------------------------------------------- */
 /* FalconGo shapes (Go/GORM naming: `ID`, `long`)                              */
+/*                                                                             */
+/* Terminals moved from free-text strings (with aliases) to picked-by-id       */
+/* entities with per-company allowlists and per-(terminal,company) receipt     */
+/* serial patterns. The backend is inconsistent about `ID` vs `id` and is      */
+/* mid-migration from `lat`/`long` to `latitude`/`longitude`, so the raw       */
+/* schemas accept both and normalise here.                                     */
 /* -------------------------------------------------------------------------- */
 
-export const terminalAliasSchema = z.object({
-  ID: z.number(),
-  alias: z.string(),
-  terminal_id: z.number(),
-});
+const receiptPatternRawSchema = z
+  .object({
+    ID: z.number().nullish(),
+    id: z.number().nullish(),
+    terminal_id: z.number().nullish(),
+    company: z.string().nullish(),
+    pattern: z.string(),
+    description: z.string().nullish(),
+    active: z.boolean().nullish(),
+  })
+  .passthrough();
 
-export type TerminalAlias = z.infer<typeof terminalAliasSchema>;
+export const receiptPatternSchema = receiptPatternRawSchema.transform((row) => ({
+  ID: row.ID ?? row.id ?? 0,
+  terminal_id: row.terminal_id ?? null,
+  /** null / empty string means "applies to all companies". */
+  company: row.company?.trim() ? row.company : null,
+  pattern: row.pattern,
+  description: row.description ?? '',
+  active: row.active ?? false,
+}));
 
-export const terminalSchema = z.object({
-  ID: z.number(),
-  name: z.string(),
-  address: z.string().nullish(),
-  lat: z.number().nullish(),
-  long: z.number().nullish(),
-  radius_m: z.number().nullish(),
-  aliases: z
-    .array(terminalAliasSchema)
-    .nullish()
-    .transform((v) => v ?? []),
-});
+export type ReceiptPattern = z.output<typeof receiptPatternSchema>;
 
-export type Terminal = z.infer<typeof terminalSchema>;
+const terminalRawSchema = z
+  .object({
+    ID: z.number().nullish(),
+    id: z.number().nullish(),
+    name: z.string(),
+    address: z.string().nullish(),
+    lat: z.number().nullish(),
+    long: z.number().nullish(),
+    latitude: z.number().nullish(),
+    longitude: z.number().nullish(),
+    radius_m: z.number().nullish(),
+    allowed_companies: z.array(z.string()).nullish(),
+    receipt_pattern: receiptPatternRawSchema.nullish(),
+  })
+  .passthrough();
+
+export const terminalSchema = terminalRawSchema.transform((row) => ({
+  ID: row.ID ?? row.id ?? 0,
+  name: row.name,
+  address: row.address ?? null,
+  lat: row.lat ?? row.latitude ?? null,
+  long: row.long ?? row.longitude ?? null,
+  radius_m: row.radius_m ?? null,
+  /** Only populated when listing without a company filter. */
+  allowed_companies: row.allowed_companies ?? [],
+  /** Company-resolved pattern — populated on `GET /api/terminals?company=X`. */
+  receipt_pattern:
+    row.receipt_pattern != null ? receiptPatternSchema.parse(row.receipt_pattern) : null,
+}));
+
+export type Terminal = z.output<typeof terminalSchema>;
+
+/** `POST /api/terminals` — resolve-or-create-or-extend response. */
+export const resolveTerminalResponseSchema = z
+  .object({
+    terminal: terminalSchema,
+    created: z.boolean().nullish(),
+    extended: z.boolean().nullish(),
+  })
+  .transform((row) => ({
+    terminal: row.terminal,
+    created: row.created ?? false,
+    extended: row.extended ?? false,
+  }));
+
+export type ResolveTerminalResponse = z.output<typeof resolveTerminalResponseSchema>;
 
 export const dropOffPointSchema = z.object({
   ID: z.number(),
@@ -47,20 +101,9 @@ export const dropOffPointSchema = z.object({
 
 export type DropOffPoint = z.infer<typeof dropOffPointSchema>;
 
-export const unknownTerminalSchema = z.object({
-  name: z.string(),
-  trip_rows: z.number(),
-});
-
-export type UnknownTerminal = z.infer<typeof unknownTerminalSchema>;
-
 export const locationsInboxSchema = z.object({
   unpinned_dropoffs: z
     .array(dropOffPointSchema)
-    .nullish()
-    .transform((v) => v ?? []),
-  unknown_terminals: z
-    .array(unknownTerminalSchema)
     .nullish()
     .transform((v) => v ?? []),
 });
@@ -100,6 +143,21 @@ export interface UpdateTerminalPayload {
   long?: number;
   radius_m?: number;
   clear_radius?: boolean;
+}
+
+/** `POST /api/terminals` — resolve-or-create-or-extend for a company. */
+export interface ResolveTerminalPayload {
+  name: string;
+  company: string;
+}
+
+/** `PUT /api/terminals/:id/receipt-patterns` — upsert per (terminal, company). */
+export interface UpsertReceiptPatternPayload {
+  /** Empty string means "applies to all companies". */
+  company: string;
+  pattern: string;
+  description: string;
+  active: boolean;
 }
 
 /** `POST /api/locations/dropoffs` */

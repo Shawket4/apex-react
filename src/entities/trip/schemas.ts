@@ -89,6 +89,7 @@ export const parentTripSchema = z.object({
   transporter: z.string().default('Apex'),
   company: z.string(),
   terminal: z.string(),
+  terminal_id: z.number().int().nullable().optional(),
   date: z.string(), // YYYY-MM-DD
 
   author: z.string().nullable().optional(),
@@ -135,6 +136,7 @@ export const tripSchema = z.object({
   // Route
   company: z.string(),
   terminal: z.string(),
+  terminal_id: z.number().int().nullable().optional(),
   drop_off_point: z.string(),
   location_name: z.string().optional().default(''),
   location: tripLocationSchema.optional(),
@@ -147,6 +149,11 @@ export const tripSchema = z.object({
   // Admin
   date: z.string(), // YYYY-MM-DD
   receipt_no: z.string(),
+
+  // Receipt serialization (per-(terminal,company) pattern validation).
+  // `receipt_valid === null` means no pattern is configured for the pair.
+  receipt_valid: z.boolean().nullable().optional(),
+  receipt_override: z.boolean().nullable().optional(),
 
   // Financials / distance (both `mileage` and `distance` appear — keep both)
   mileage: z.number().optional().default(0),
@@ -255,6 +262,8 @@ export const containerInputSchema = z.object({
   tank_capacity: z.number().positive(),
   gas_type: z.string().default(''),
   receipt_no: z.string().min(1),
+  /** Explicit user override when the receipt fails the terminal's pattern. */
+  receipt_override: z.boolean().optional(),
   // Parent-level fields — included on each container for updates so the
   // backend doesn't need to re-propagate from the parent record.
   car_id: z.number().int().optional(),
@@ -264,6 +273,7 @@ export const containerInputSchema = z.object({
   transporter: z.string().optional(),
   company: z.string().optional(),
   terminal: z.string().optional(),
+  terminal_id: z.number().int().optional(),
   date: z.string().optional(),
 });
 export type ContainerInput = z.infer<typeof containerInputSchema>;
@@ -275,7 +285,11 @@ export const parentTripInputSchema = z.object({
   driver_name: z.string().min(1),
   transporter: z.string().default('Apex'),
   company: z.string().min(1),
+  // Terminals are picked-by-id now; the legacy string still travels so
+  // nothing downstream breaks (it carries the canonical terminal name).
   terminal: z.string().min(1),
+  terminal_id: z.number().int().optional(),
+  receipt_override: z.boolean().optional(),
   date: z.string().min(1), // YYYY-MM-DD
 });
 export type ParentTripInput = z.infer<typeof parentTripInputSchema>;

@@ -28,8 +28,9 @@ type LocationsTab = 'inbox' | 'terminals' | 'dropoffs';
 
 /**
  * Locations admin page — the single place where canonical terminals and
- * drop-off points are managed (pins, radius overrides, aliases), so fee
- * mappings never need per-row lat/lng entry again.
+ * drop-off points are managed (pins, radius overrides, company allowlists,
+ * receipt serialization patterns), so fee mappings never need per-row
+ * lat/lng entry again.
  */
 export default function LocationsPage() {
   const { t } = useTranslation();
@@ -54,9 +55,7 @@ export default function LocationsPage() {
   );
 
   const attentionCount =
-    (inboxQuery.data?.unpinned_dropoffs.length ?? 0) +
-    (inboxQuery.data?.unknown_terminals.length ?? 0) +
-    mismatchCount;
+    (inboxQuery.data?.unpinned_dropoffs.length ?? 0) + mismatchCount;
 
   // Pick the initial tab once both sources have settled (the suggestions
   // fetch erroring counts as settled — the inbox degrades gracefully).
@@ -85,7 +84,7 @@ export default function LocationsPage() {
   /* ---- Terminals tab ---- */
   const terminalsQuery = useTerminals();
   const [selectedTerminalId, setSelectedTerminalId] = React.useState<number | null>(null);
-  // Derive from the query cache so alias add/remove refreshes the open dialog
+  // Derive from the query cache so pattern edits refresh the open dialog
   const selectedTerminal =
     selectedTerminalId != null
       ? (terminalsQuery.data ?? []).find((term) => term.ID === selectedTerminalId) ?? null
@@ -129,7 +128,7 @@ export default function LocationsPage() {
       title={t('locations.title', 'Locations')}
       description={t(
         'locations.description',
-        'Manage canonical terminals and drop-off points — pins, radii, and aliases — in one place.',
+        'Manage canonical terminals and drop-off points — pins, radii, company allowlists, and receipt serialization — in one place.',
       )}
       actions={
         <Button onClick={() => setCreateOpen(true)} className="gap-2">

@@ -5,7 +5,7 @@ import { Badge } from '@/shared/ui/badge';
 import { isValidCoordinate } from '@/shared/lib/coords';
 import { TERMINAL_DEFAULT_RADIUS_M, type Terminal } from '@/entities/location/schemas';
 
-const MAX_ALIAS_CHIPS = 3;
+const MAX_COMPANY_CHIPS = 3;
 
 export function useTerminalColumns(): ColumnDef<Terminal>[] {
   const { t } = useTranslation();
@@ -62,20 +62,20 @@ export function useTerminalColumns(): ColumnDef<Terminal>[] {
         },
       },
       {
-        id: 'aliases',
-        header: t('locations.fields.aliases', 'Aliases'),
+        id: 'allowed_companies',
+        header: t('locations.fields.allowedCompanies', 'Allowed companies'),
         cell: ({ row }) => {
-          const aliases = row.original.aliases;
-          if (!aliases.length) {
+          const companies = row.original.allowed_companies;
+          if (!companies.length) {
             return <span className="text-muted-foreground">—</span>;
           }
-          const shown = aliases.slice(0, MAX_ALIAS_CHIPS);
-          const extra = aliases.length - shown.length;
+          const shown = companies.slice(0, MAX_COMPANY_CHIPS);
+          const extra = companies.length - shown.length;
           return (
             <div className="flex max-w-[320px] flex-wrap gap-1">
-              {shown.map((alias) => (
-                <Badge key={alias.ID} variant="secondary" dir="auto">
-                  {alias.alias}
+              {shown.map((company) => (
+                <Badge key={company} variant="secondary" dir="auto">
+                  {company}
                 </Badge>
               ))}
               {extra > 0 && <Badge variant="outline">+{extra}</Badge>}

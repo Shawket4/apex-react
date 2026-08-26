@@ -29,6 +29,14 @@ interface SearchableSelectProps<T extends string | number> {
   matchTriggerWidth?: boolean;
   /** Allow entering custom values not present in the options list */
   allowCustom?: boolean;
+  /**
+   * When set and the typed text matches no option exactly, show a create
+   * affordance that calls this with the typed text (instead of selecting it
+   * as a value the way `allowCustom` does).
+   */
+  onCreate?: (text: string) => void;
+  /** Label for the create affordance; receives the typed text. */
+  createLabel?: (text: string) => React.ReactNode;
 }
 
 export function SearchableSelect<T extends string | number>({
@@ -42,6 +50,8 @@ export function SearchableSelect<T extends string | number>({
   id,
   matchTriggerWidth = true,
   allowCustom = false,
+  onCreate,
+  createLabel,
 }: SearchableSelectProps<T>) {
   const { t } = useTranslation();
   const [open, setOpen] = React.useState(false);
@@ -163,6 +173,23 @@ export function SearchableSelect<T extends string | number>({
                   <Plus className="me-2 h-4 w-4" />
                   <span>
                     {t('common.use')} "{search}"
+                  </span>
+                </CommandItem>
+              )}
+              {onCreate && search.trim() && !hasExactMatch && (
+                <CommandItem
+                  value={`__create__${search}`}
+                  onSelect={() => {
+                    onCreate(search.trim());
+                    setOpen(false);
+                  }}
+                  className="text-primary font-medium"
+                >
+                  <Plus className="me-2 h-4 w-4" />
+                  <span dir="auto">
+                    {createLabel
+                      ? createLabel(search.trim())
+                      : `${t('common.add')} "${search.trim()}"`}
                   </span>
                 </CommandItem>
               )}

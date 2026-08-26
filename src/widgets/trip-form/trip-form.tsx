@@ -19,6 +19,7 @@ import { Card, CardContent } from '@/shared/ui/card';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { Label } from '@/shared/ui/label';
+import { Checkbox } from '@/shared/ui/checkbox';
 import { SearchableSelect } from '@/shared/ui/searchable-select';
 import { DatePicker } from '@/shared/ui/date-picker';
 import { Skeleton } from '@/shared/ui/skeleton';
@@ -30,10 +31,10 @@ import {
   UNREGISTERED_DRIVER_ID,
   UNREGISTERED_DRIVER_NAME,
 } from '@/entities/driver/schemas';
-import {
-  useCompanies,
-  useTerminals,
-} from '@/entities/mapping/queries';
+import { useCompanies } from '@/entities/mapping/queries';
+import { useTerminals } from '@/entities/location/queries';
+import type { Terminal } from '@/entities/location/schemas';
+import { TerminalSelect } from '@/widgets/terminal-select';
 import {
   useCreateMultiContainerTrip,
   useUpdateMultiContainerTrip,
@@ -50,6 +51,7 @@ import type { MappingDetail } from '@/entities/mapping/schemas';
 import { extractErrorMessage } from '@/shared/api/errors';
 import { today, formatNumber, formatCurrency } from '@/shared/lib/format';
 import { cn } from '@/shared/lib/cn';
+import { normalize } from '@/shared/lib/normalize';
 import { useAuthStore } from '@/shared/auth/store';
 import { ConfirmDialog } from '@/shared/ui/confirm-dialog';
 
@@ -148,7 +150,11 @@ export function TripForm({ parentId }: TripFormProps) {
   const paramTerminal = searchParams.get('terminal');
 
   const [company, setCompany] = React.useState<string>(paramCompany ?? '');
+  // Terminals are picked-by-id entities now. `terminal` keeps the canonical
+  // name (legacy payload field + drop-off mapping cascade); `terminalId` is
+  // the id the backend actually stores.
   const [terminal, setTerminal] = React.useState<string>(paramTerminal ?? '');
+  const [terminalId, setTerminalId] = React.useState<number | null>(null);
 
   React.useEffect(() => {
     if (paramCompany) setCompany(paramCompany);
@@ -181,14 +187,18 @@ export function TripForm({ parentId }: TripFormProps) {
   const { data: cars = [], isLoading: loadingCars } = useCars();
   const { data: drivers = [], isLoading: loadingDrivers } = useDrivers();
   const { data: companiesResp, isLoading: loadingCompanies } = useCompanies();
-  const { data: terminalsResp } = useTerminals(company, { enabled: !!company });
+  const { data: terminalEntities = [] } = useTerminals(company, { enabled: !!company });
   const { data: parentData, isLoading: loadingParent } = useParentContainers(
     parentId ?? null,
     { enabled: isEdit },
   );
 
   const companyList = companiesResp?.data ?? [];
-  const terminalList = terminalsResp?.data ?? [];
+
+  const selectedTerminal = React.useMemo<Terminal | null>(
+    () => terminalEntities.find((term) => term.ID === terminalId) ?? null,
+    [terminalEntities, terminalId],
+  );
 
   /* ---- Derived: selected car / driver ---------------------------------- */
 
@@ -220,6 +230,9 @@ export function TripForm({ parentId }: TripFormProps) {
     setDate(parent.date ?? today());
     setCompany(parent.company ?? '');
     setTerminal(parent.terminal ?? '');
+    // Legacy parents without terminal_id resolve by name once the company's
+    // terminal list loads (handled inside TerminalSelect).
+    setTerminalId(parent.terminal_id ?? null);
     setContainers(
       fetchedContainers.map((c) => ({
         id: c.ID,
@@ -260,6 +273,7 @@ export function TripForm({ parentId }: TripFormProps) {
     if (lastCompanyRef.current === company) return;
     if (lastCompanyRef.current !== '' && terminal !== paramTerminal) {
       setTerminal('');
+      setTerminalId(null);
       setContainers((cs) =>
         cs.map((c) => ({ ...c, drop_off_point: '', _fee: 0, _distance: 0 })),
       );
@@ -270,7 +284,11 @@ export function TripForm({ parentId }: TripFormProps) {
   const lastTerminalRef = React.useRef(terminal);
   React.useEffect(() => {
     if (lastTerminalRef.current === terminal) return;
-    if (lastTerminalRef.current !== '') {
+    // Legacy free-text names auto-resolve to the canonical terminal name
+    // (casing/diacritics may differ) — that's the same terminal, so keep the
+    // containers' drop-offs.
+    const sameTerminal = normalize(lastTerminalRef.current) === normalize(terminal);
+    if (lastTerminalRef.current !== '' && !sameTerminal) {
       setContainers((cs) =>
         cs.map((c) => ({ ...c, drop_off_point: '', _fee: 0, _distance: 0 })),
       );
@@ -356,6 +374,65 @@ export function TripForm({ parentId }: TripFormProps) {
     return dupes;
   }, [containers]);
 
+  /* -------------------------------------------------------------------------- */
+  /* Receipt serialization — per-(terminal,company) regex, soft-blocking        */
+  /* -------------------------------------------------------------------------- */
+
+  /**
+   * The selected terminal's active receipt pattern (already company-resolved
+   * by `GET /api/terminals?company=X`). Compiled client-side; a pattern that
+   * doesn't compile is treated as "no pattern" rather than blocking entry.
+   */
+  const receiptPattern = React.useMemo(() => {
+    const rp = selectedTerminal?.receipt_pattern;
+    if (!rp || !rp.active || !rp.pattern) return null;
+    try {
+      // Compile once to validate; `.test` below uses fresh instances so a
+      // global flag can't leak `lastIndex` state between containers.
+      void new RegExp(rp.pattern);
+      return { pattern: rp.pattern, hint: rp.description || rp.pattern };
+    } catch {
+      return null;
+    }
+  }, [selectedTerminal]);
+
+  /** Container indices whose non-empty receipt fails the terminal's pattern. */
+  const receiptPatternMismatches = React.useMemo(() => {
+    const mismatches = new Set<number>();
+    if (!receiptPattern) return mismatches;
+    containers.forEach((c, idx) => {
+      const v = c.receipt_no.trim();
+      if (v.length === 0) return;
+      if (!new RegExp(receiptPattern.pattern).test(v)) mismatches.add(idx);
+    });
+    return mismatches;
+  }, [containers, receiptPattern]);
+
+  // "Save anyway (override)" acknowledgements, per container. Reset when the
+  // terminal changes — a mismatch against one terminal says nothing about
+  // another's serialization.
+  const [overriddenReceipts, setOverriddenReceipts] = React.useState<Set<number>>(
+    () => new Set(),
+  );
+  React.useEffect(() => {
+    setOverriddenReceipts(new Set());
+  }, [terminalId]);
+
+  const toggleReceiptOverride = (idx: number) => {
+    setOverriddenReceipts((prev) => {
+      const next = new Set(prev);
+      if (next.has(idx)) next.delete(idx);
+      else next.add(idx);
+      return next;
+    });
+  };
+
+  /** True while any mismatching receipt hasn't been explicitly overridden. */
+  const receiptPatternBlocked = React.useMemo(
+    () => [...receiptPatternMismatches].some((idx) => !overriddenReceipts.has(idx)),
+    [receiptPatternMismatches, overriddenReceipts],
+  );
+
   /* ---- Mutations ------------------------------------------------------- */
 
   const createMutation = useCreateMultiContainerTrip();
@@ -379,15 +456,17 @@ export function TripForm({ parentId }: TripFormProps) {
   const removeContainer = (idx: number) => {
     if (containers.length <= 1) return;
     setContainers((cs) => cs.filter((_, i) => i !== idx));
-    // Clean up touched-state when removing — re-index remaining entries
-    setReceiptTouched((prev) => {
+    // Clean up index-keyed state when removing — re-index remaining entries
+    const reindex = (prev: Set<number>) => {
       const next = new Set<number>();
       prev.forEach((i) => {
         if (i < idx) next.add(i);
         else if (i > idx) next.add(i - 1);
       });
       return next;
-    });
+    };
+    setReceiptTouched(reindex);
+    setOverriddenReceipts(reindex);
   };
 
   const splitEvenly = () => {
@@ -436,7 +515,7 @@ export function TripForm({ parentId }: TripFormProps) {
   const isValid = React.useMemo(() => {
     if (!selectedCar) return false;
     if (!driverId) return false;
-    if (!company || !terminal) return false;
+    if (!company || !terminal || terminalId == null) return false;
     if (!date) return false;
     if (containers.length === 0 || containers.length > MAX_CONTAINERS) return false;
     return containers.every(
@@ -445,7 +524,7 @@ export function TripForm({ parentId }: TripFormProps) {
         !!c.drop_off_point &&
         c.tank_capacity > 0,
     );
-  }, [selectedCar, driverId, company, terminal, date, containers]);
+  }, [selectedCar, driverId, company, terminal, terminalId, date, containers]);
 
   /* ---- Submit ---------------------------------------------------------- */
 
@@ -460,6 +539,12 @@ export function TripForm({ parentId }: TripFormProps) {
         : driverId === UNREGISTERED_DRIVER_ID
           ? UNREGISTERED_DRIVER_NAME
           : '');
+    // receipt_override travels per container: true only for receipts that
+    // fail the terminal's serialization AND were explicitly acknowledged
+    // (submit is blocked otherwise). Valid receipts always send false.
+    const anyOverride = [...receiptPatternMismatches].some((idx) =>
+      overriddenReceipts.has(idx),
+    );
     return {
       parent_trip: {
         car_id: selectedCar.ID,
@@ -468,12 +553,17 @@ export function TripForm({ parentId }: TripFormProps) {
         driver_name: driverName,
         transporter: 'Apex',
         company,
+        // Legacy string keeps the canonical name so nothing else breaks;
+        // terminal_id is what the backend stores now.
         terminal,
+        ...(terminalId != null ? { terminal_id: terminalId } : {}),
+        receipt_override: anyOverride,
         date,
       },
-      containers: containers.map((c) => ({
+      containers: containers.map((c, idx) => ({
         ...(c.id ? { id: c.id } : {}),
         receipt_no: c.receipt_no.trim(),
+        receipt_override: receiptPatternMismatches.has(idx),
         drop_off_point: c.drop_off_point,
         tank_capacity: c.tank_capacity,
         gas_type: c.gas_type ?? '',
@@ -486,6 +576,7 @@ export function TripForm({ parentId }: TripFormProps) {
         transporter: 'Apex',
         company,
         terminal,
+        ...(terminalId != null ? { terminal_id: terminalId } : {}),
         date,
       })),
       update_containers: isEdit ? true : undefined,
@@ -498,6 +589,10 @@ export function TripForm({ parentId }: TripFormProps) {
   const submit = async (force = false) => {
     if (!isValid) {
       toast.error(t('trips.form.validation.fillRequired'));
+      return;
+    }
+    if (receiptPatternBlocked) {
+      toast.error(t('trips.form.receiptPattern.blocked'));
       return;
     }
     if (!capacityValid) {
@@ -690,17 +785,21 @@ export function TripForm({ parentId }: TripFormProps) {
               )}
             </div>
 
-            {/* Terminal */}
+            {/* Terminal — picked-by-id, filtered to the company's allowlist */}
             <div className="space-y-1 md:col-span-2">
               <Label htmlFor="trip-terminal">
                 {t('trips.fields.terminal')}
                 <span className="text-destructive">*</span>
               </Label>
-              <SearchableSelect
+              <TerminalSelect
                 id="trip-terminal"
-                options={terminalList.map((tname) => ({ value: tname, label: tname }))}
-                value={terminal}
-                onChange={setTerminal}
+                company={company}
+                terminalId={terminalId}
+                terminalName={terminal}
+                onSelect={(term) => {
+                  setTerminalId(term.ID);
+                  setTerminal(term.name);
+                }}
                 disabled={!company}
                 placeholder={
                   company
@@ -778,6 +877,16 @@ export function TripForm({ parentId }: TripFormProps) {
                   receiptTouched.has(idx) && !!receiptLengthErrors.get(idx)
                 }
                 duplicateWith={inFormDuplicates.get(idx) ?? null}
+                patternMismatch={
+                  receiptPatternMismatches.has(idx) && receiptPattern
+                    ? {
+                        terminalName: selectedTerminal?.name ?? terminal,
+                        hint: receiptPattern.hint,
+                      }
+                    : null
+                }
+                overridden={overriddenReceipts.has(idx)}
+                onToggleOverride={() => toggleReceiptOverride(idx)}
                 onChange={(patch) => updateContainer(idx, patch)}
                 onRemove={() => removeContainer(idx)}
                 onPickDropOff={() => setPickingContainerIdx(idx)}
@@ -799,7 +908,7 @@ export function TripForm({ parentId }: TripFormProps) {
         </Button>
         <Button
           onClick={() => void submit(false)}
-          disabled={!isValid || capacityBlocked || isPending}
+          disabled={!isValid || capacityBlocked || receiptPatternBlocked || isPending}
         >
           {isPending ? (
             <Loader2 className="h-4 w-4 animate-spin" />
@@ -947,6 +1056,11 @@ interface ContainerCardProps {
   receiptTooShort: boolean;
   /** Other container indices (1-based when displayed) sharing this receipt */
   duplicateWith: number[] | null;
+  /** Set when the receipt fails the selected terminal's serialization. */
+  patternMismatch: { terminalName: string; hint: string } | null;
+  /** "Save anyway (override)" acknowledged for this container. */
+  overridden: boolean;
+  onToggleOverride: () => void;
   onChange: (patch: Partial<ContainerForm>) => void;
   onRemove: () => void;
   onPickDropOff: () => void;
@@ -960,6 +1074,9 @@ function ContainerCard({
   terminalChosen,
   receiptTooShort,
   duplicateWith,
+  patternMismatch,
+  overridden,
+  onToggleOverride,
   onChange,
   onRemove,
   onPickDropOff,
@@ -1015,6 +1132,35 @@ function ContainerCard({
           </Button>
         )}
       </div>
+
+      {/* Receipt-serialization warning — amber, submit requires the override
+          checkbox to be ticked (sets receipt_override=true in the payload) */}
+      {patternMismatch && (
+        <div className="mb-3 space-y-2 rounded-md border border-warning/30 bg-warning/5 px-3 py-2 text-xs">
+          <div className="flex items-start gap-2 text-warning">
+            <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+            <div className="flex-1">
+              <div className="font-medium">
+                {t('trips.form.receiptPattern.mismatchTitle')}
+              </div>
+              <div className="text-foreground/80" dir="auto">
+                {t('trips.form.receiptPattern.mismatch', {
+                  terminal: patternMismatch.terminalName,
+                  hint: patternMismatch.hint,
+                })}
+              </div>
+            </div>
+          </div>
+          <label className="flex cursor-pointer items-center gap-2 ps-5 font-medium text-foreground">
+            <Checkbox
+              checked={overridden}
+              onCheckedChange={() => onToggleOverride()}
+              aria-label={t('trips.form.receiptPattern.override')}
+            />
+            {t('trips.form.receiptPattern.override')}
+          </label>
+        </div>
+      )}
 
       {/* In-form duplicate warning — soft (doesn't block submit) */}
       {duplicateWith && duplicateWith.length > 0 && (

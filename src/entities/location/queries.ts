@@ -4,15 +4,21 @@ import { useTranslation } from 'react-i18next';
 import { locationApi, type DropoffFilters } from './api';
 import type {
   CreateDropoffPayload,
+  ResolveTerminalPayload,
   SuggestionAckStatus,
   UpdateDropoffPayload,
   UpdateTerminalPayload,
+  UpsertReceiptPatternPayload,
 } from './schemas';
 
 export const locationKeys = {
   all: ['locations'] as const,
   inbox: () => [...locationKeys.all, 'inbox'] as const,
-  terminals: () => [...locationKeys.all, 'terminals'] as const,
+  terminalsRoot: () => [...locationKeys.all, 'terminals'] as const,
+  terminals: (company?: string) =>
+    [...locationKeys.terminalsRoot(), company?.trim() || 'all'] as const,
+  receiptPatterns: (terminalId: number) =>
+    [...locationKeys.all, 'receipt-patterns', terminalId] as const,
   dropoffs: () => [...locationKeys.all, 'dropoffs'] as const,
   dropoffList: (filters: DropoffFilters) => [...locationKeys.dropoffs(), filters] as const,
   suggestions: (status: string) => [...locationKeys.all, 'suggestions', status] as const,
@@ -29,10 +35,24 @@ export function useLocationsInbox() {
   });
 }
 
-export function useTerminals() {
+/**
+ * Terminals list. With `company`, only the terminals allowed for that company
+ * (each carrying its resolved `receipt_pattern`); without, all terminals with
+ * their `allowed_companies`.
+ */
+export function useTerminals(company?: string, options: { enabled?: boolean } = {}) {
   return useQuery({
-    queryKey: locationKeys.terminals(),
-    queryFn: () => locationApi.listTerminals(),
+    queryKey: locationKeys.terminals(company),
+    queryFn: () => locationApi.listTerminals(company),
+    enabled: options.enabled ?? true,
+  });
+}
+
+export function useReceiptPatterns(terminalId: number | null) {
+  return useQuery({
+    queryKey: locationKeys.receiptPatterns(terminalId ?? 0),
+    queryFn: () => locationApi.listReceiptPatterns(terminalId ?? 0),
+    enabled: terminalId != null,
   });
 }
 
@@ -69,7 +89,7 @@ export function useUpdateTerminal() {
     mutationFn: ({ id, payload }: { id: number; payload: UpdateTerminalPayload }) =>
       locationApi.updateTerminal(id, payload),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: locationKeys.terminals() });
+      queryClient.invalidateQueries({ queryKey: locationKeys.terminalsRoot() });
       queryClient.invalidateQueries({ queryKey: locationKeys.inbox() });
       toast.success(t('locations.toast.terminalUpdated', 'Terminal updated'));
     },
@@ -80,39 +100,66 @@ export function useUpdateTerminal() {
   });
 }
 
-export function useAddTerminalAlias() {
+/**
+ * Resolve-or-create-or-extend a terminal for a company. Success toasts are
+ * left to the caller — it must differentiate "created" from "allowed for
+ * company" using the response; only failures surface here.
+ */
+export function useResolveTerminal() {
   const queryClient = useQueryClient();
   const { t } = useTranslation();
 
   return useMutation({
-    mutationFn: ({ terminalId, alias }: { terminalId: number; alias: string }) =>
-      locationApi.addTerminalAlias(terminalId, alias),
+    mutationFn: (payload: ResolveTerminalPayload) => locationApi.resolveTerminal(payload),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: locationKeys.terminals() });
-      queryClient.invalidateQueries({ queryKey: locationKeys.inbox() });
-      toast.success(t('locations.toast.aliasAdded', 'Alias added'));
+      queryClient.invalidateQueries({ queryKey: locationKeys.terminalsRoot() });
     },
     onError: (err) => {
       console.error(err);
-      toast.error(t('locations.toast.aliasAddError', 'Failed to add alias'));
+      toast.error(t('locations.toast.terminalCreateError', 'Failed to create terminal'));
     },
   });
 }
 
-export function useDeleteTerminalAlias() {
+export function useUpsertReceiptPattern() {
   const queryClient = useQueryClient();
   const { t } = useTranslation();
 
   return useMutation({
-    mutationFn: (aliasId: number) => locationApi.deleteAlias(aliasId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: locationKeys.terminals() });
-      queryClient.invalidateQueries({ queryKey: locationKeys.inbox() });
-      toast.success(t('locations.toast.aliasRemoved', 'Alias removed'));
+    mutationFn: ({
+      terminalId,
+      payload,
+    }: {
+      terminalId: number;
+      payload: UpsertReceiptPatternPayload;
+    }) => locationApi.upsertReceiptPattern(terminalId, payload),
+    onSuccess: (_data, { terminalId }) => {
+      queryClient.invalidateQueries({ queryKey: locationKeys.receiptPatterns(terminalId) });
+      queryClient.invalidateQueries({ queryKey: locationKeys.terminalsRoot() });
+      toast.success(t('locations.toast.patternSaved', 'Receipt pattern saved'));
     },
     onError: (err) => {
       console.error(err);
-      toast.error(t('locations.toast.aliasRemoveError', 'Failed to remove alias'));
+      toast.error(t('locations.toast.patternSaveError', 'Failed to save receipt pattern'));
+    },
+  });
+}
+
+export function useDeleteReceiptPattern() {
+  const queryClient = useQueryClient();
+  const { t } = useTranslation();
+
+  return useMutation({
+    mutationFn: ({ terminalId, company }: { terminalId: number; company: string }) =>
+      locationApi.deleteReceiptPattern(terminalId, company),
+    onSuccess: (_data, { terminalId }) => {
+      queryClient.invalidateQueries({ queryKey: locationKeys.receiptPatterns(terminalId) });
+      queryClient.invalidateQueries({ queryKey: locationKeys.terminalsRoot() });
+      toast.success(t('locations.toast.patternDeleted', 'Receipt pattern deleted'));
+    },
+    onError: (err) => {
+      console.error(err);
+      toast.error(t('locations.toast.patternDeleteError', 'Failed to delete receipt pattern'));
     },
   });
 }
