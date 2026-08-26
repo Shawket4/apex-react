@@ -66,7 +66,9 @@ export async function updateDriverDocuments(
 
 /* ─── Delete driver ─── */
 export async function deleteDriver(id: number): Promise<void> {
-  await apiPost<unknown>('/api/DeleteDriver', { ID: id });
+  // The legacy POST /api/DeleteDriver RPC no longer exists in FalconGo;
+  // DELETE /api/drivers/:id is the surviving route.
+  await apiClient.delete(`/api/drivers/${id}`);
 }
 
 /* ─── Approve / Reject ─── */
