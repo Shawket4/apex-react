@@ -1597,7 +1597,8 @@
       "mapHelper": "Click the map or drag the marker to set the pin. Leave the radius empty to use the default."
     },
     "terminals": {
-      "empty": "No terminals found"
+      "empty": "No terminals found",
+      "searchPlaceholder": "Search terminals…"
     },
     "dropoffs": {
       "empty": "No drop-off points found",
@@ -1629,7 +1630,19 @@
       "provisionalHelper": "These pins were applied automatically from GPS stop clusters. Confirm to keep them, or adjust the position.",
       "provisionalText": "Pin applied automatically from {{stops}} GPS stops",
       "confirmPin": "Confirm",
-      "adjustPin": "Adjust"
+      "adjustPin": "Adjust",
+      "filter": {
+        "all": "All",
+        "mismatch": "Wrong pin",
+        "unpinned": "Missing pin",
+        "provisional": "Provisional",
+        "kind": "Location type",
+        "allKinds": "All types"
+      },
+      "noneForFilter": "Nothing matches this filter.",
+      "showMore": "Show more ({{count}} remaining)",
+      "browseDropoffs": "Browse drop-off points",
+      "noPinNoData": "No pin yet — set it on the map"
     },
     "toast": {
       "terminalUpdated": "Terminal updated",
@@ -1663,6 +1676,25 @@
       "save": "Save pattern",
       "empty": "No receipt patterns yet.",
       "invalidRegex": "This pattern is not a valid regular expression."
+    },
+    "header": {
+      "needAttention": "locations need attention",
+      "startPinning": "Start pinning",
+      "allPinned": "Every location is pinned",
+      "allPinnedSub": "New names appear here automatically.",
+      "dropoffs": "Drop-off points",
+      "terminals": "Terminals",
+      "pinned": "pinned",
+      "coverage": "Pin coverage"
+    },
+    "filter": {
+      "all": "All",
+      "missingPins": "Missing pins"
+    },
+    "actions": {
+      "editPin": "Edit pin",
+      "setPin": "Set pin",
+      "manage": "Manage"
     }
   },
   "tripAudit": {

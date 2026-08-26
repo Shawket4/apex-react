@@ -1,13 +1,15 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Inbox } from 'lucide-react';
+import { CheckCircle2, Inbox, MapPin, Warehouse } from 'lucide-react';
 import { PageShell } from '@/shared/ui/page-shell';
 import { Badge } from '@/shared/ui/badge';
-import { Label } from '@/shared/ui/label';
-import { Switch } from '@/shared/ui/switch';
+import { Button } from '@/shared/ui/button';
+import { Progress } from '@/shared/ui/progress';
 import { SearchInput } from '@/shared/ui/search-input';
 import { ConfirmDialog } from '@/shared/ui/confirm-dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/tabs';
+import { cn } from '@/shared/lib/cn';
+import { isValidCoordinate } from '@/shared/lib/coords';
 import { useDebounce } from '@/shared/hooks/use-debounce';
 import {
   useDeleteDropoff,
@@ -22,60 +24,77 @@ import { LocationsTerminalsTable } from '@/widgets/locations-terminals-table';
 import { LocationsDropoffsTable } from '@/widgets/locations-dropoffs-table';
 import { LocationsTerminalDialog } from '@/widgets/locations-terminal-dialog';
 import { LocationsDropoffDialog } from '@/widgets/locations-dropoff-dialog';
+import { TripsPagination } from '@/widgets/trips-table/trips-pagination';
 
 type LocationsTab = 'inbox' | 'terminals' | 'dropoffs';
+type PinFilter = 'all' | 'missing';
 
-const DROPOFFS_PAGE_SIZE = 50;
+const LIMIT_STORAGE_KEY = 'apex:locations:limit';
+
+function storedLimit(): number {
+  try {
+    const v = parseInt(localStorage.getItem(LIMIT_STORAGE_KEY) ?? '', 10);
+    return [10, 25, 50, 100].includes(v) ? v : 25;
+  } catch {
+    return 25;
+  }
+}
 
 /**
- * Locations admin page — the single place where canonical terminals and
- * drop-off points are managed (pins, radius overrides, company allowlists,
- * receipt serialization patterns). Drop-off points are created implicitly
- * by fee mappings; here they only get pinned, adjusted, or deleted.
+ * Locations — the single place where canonical terminals and drop-off points
+ * are managed. The page's job is one thing: every place ends up with an
+ * accurate pin. The header shows coverage and points at the work; the
+ * "Needs attention" queue is where the work happens; the two catalog views
+ * are for browsing and editing.
  */
 export default function LocationsPage() {
   const { t } = useTranslation();
 
-  /* ---- Tab state; defaults to the inbox when it has items ---- */
   const [tab, setTab] = React.useState<LocationsTab>('inbox');
   const tabDecided = React.useRef(false);
 
+  /* ---- Shared data for the header + inbox badge ---- */
   const inboxQuery = useLocationsInbox();
   const suggestionsQuery = usePinSuggestions();
   const autoAppliedQuery = usePinSuggestions('auto_applied');
+  const terminalsQuery = useTerminals();
+  // One-row probe: the envelope's `total` is the full drop-off count.
+  const dropoffTotalsQuery = useDropoffs({ page: 1, per_page: 1 });
 
-  const mismatchCount = React.useMemo(
+  const pendingCount = React.useMemo(
     () =>
       (suggestionsQuery.data ?? []).filter(
         (s) =>
           s.status === 'pending' &&
           ((s.current_lat != null && s.current_lng != null && (s.offset_m ?? 0) > 0) ||
-            // Terminal set-pin suggestions (no stored pin yet) also surface
-            // as actionable cards.
             (s.kind === 'terminal' && s.current_lat == null)),
       ).length,
     [suggestionsQuery.data],
   );
-
   const provisionalCount = React.useMemo(
     () => (autoAppliedQuery.data ?? []).filter((s) => s.status === 'auto_applied').length,
     [autoAppliedQuery.data],
   );
+  const unpinnedDropoffs = inboxQuery.data?.total_unpinned ?? 0;
+  const attentionCount = unpinnedDropoffs + pendingCount + provisionalCount;
 
-  const attentionCount =
-    (inboxQuery.data?.unpinned_dropoffs.length ?? 0) + mismatchCount + provisionalCount;
+  const terminals = terminalsQuery.data ?? [];
+  const terminalsPinned = terminals.filter((x) => isValidCoordinate(x.lat, x.long)).length;
+  const dropoffsTotalAll = dropoffTotalsQuery.data?.total ?? 0;
+  const dropoffsPinned = Math.max(0, dropoffsTotalAll - unpinnedDropoffs);
+  const totalPlaces = terminals.length + dropoffsTotalAll;
+  const totalPinned = terminalsPinned + dropoffsPinned;
+  const coveragePct = totalPlaces > 0 ? Math.round((totalPinned / totalPlaces) * 100) : 0;
 
-  // Pick the initial tab once both sources have settled (the suggestions
-  // fetch erroring counts as settled — the inbox degrades gracefully).
+  // Land on the catalog when there is nothing to fix (user choice always wins).
   React.useEffect(() => {
     if (tabDecided.current) return;
-    const inboxSettled = inboxQuery.isSuccess || inboxQuery.isError;
-    const suggestionsSettled = suggestionsQuery.isSuccess || suggestionsQuery.isError;
-    if (!inboxSettled || !suggestionsSettled) return;
+    const settled =
+      (inboxQuery.isSuccess || inboxQuery.isError) &&
+      (suggestionsQuery.isSuccess || suggestionsQuery.isError);
+    if (!settled) return;
     tabDecided.current = true;
-    if (attentionCount === 0) {
-      setTab('dropoffs');
-    }
+    if (attentionCount === 0) setTab('dropoffs');
   }, [
     inboxQuery.isSuccess,
     inboxQuery.isError,
@@ -85,63 +104,105 @@ export default function LocationsPage() {
   ]);
 
   const handleTabChange = (value: string) => {
-    tabDecided.current = true; // user choice always wins
+    tabDecided.current = true;
     setTab(value as LocationsTab);
   };
 
-  /* ---- Terminals tab ---- */
-  const terminalsQuery = useTerminals();
+  /* ---- Terminals view ---- */
+  const [terminalSearch, setTerminalSearch] = React.useState('');
+  const [terminalPinFilter, setTerminalPinFilter] = React.useState<PinFilter>('all');
   const [selectedTerminalId, setSelectedTerminalId] = React.useState<number | null>(null);
-  // Derive from the query cache so pattern edits refresh the open dialog
   const selectedTerminal =
-    selectedTerminalId != null
-      ? (terminalsQuery.data ?? []).find((term) => term.ID === selectedTerminalId) ?? null
-      : null;
+    selectedTerminalId != null ? terminals.find((x) => x.ID === selectedTerminalId) ?? null : null;
 
-  /* ---- Drop-offs tab (server-side paginated) ---- */
+  const visibleTerminals = React.useMemo(() => {
+    const q = terminalSearch.trim().toLowerCase();
+    return terminals.filter((x) => {
+      if (terminalPinFilter === 'missing' && isValidCoordinate(x.lat, x.long)) return false;
+      if (q && !x.name.toLowerCase().includes(q)) return false;
+      return true;
+    });
+  }, [terminals, terminalSearch, terminalPinFilter]);
+
+  /* ---- Drop-offs view (server-side search + filter + pagination) ---- */
   const [search, setSearch] = React.useState('');
   const debouncedSearch = useDebounce(search, 300);
-  const [missingOnly, setMissingOnly] = React.useState(false);
-  const [dropoffsPage, setDropoffsPage] = React.useState(1);
+  const [pinFilter, setPinFilter] = React.useState<PinFilter>('all');
+  const [page, setPage] = React.useState(1);
+  const [limit, setLimit] = React.useState(storedLimit);
 
-  // Filter changes restart from page 1.
   React.useEffect(() => {
-    setDropoffsPage(1);
-  }, [debouncedSearch, missingOnly]);
+    setPage(1);
+  }, [debouncedSearch, pinFilter, limit]);
 
   const dropoffsQuery = useDropoffs({
     q: debouncedSearch.trim() || undefined,
-    missing: missingOnly || undefined,
-    page: dropoffsPage,
-    per_page: DROPOFFS_PAGE_SIZE,
+    missing: pinFilter === 'missing' || undefined,
+    page,
+    per_page: limit,
   });
   const dropoffs = dropoffsQuery.data?.items ?? [];
   const dropoffsTotal = dropoffsQuery.data?.total ?? 0;
-  const dropoffsTotalPages = Math.max(1, Math.ceil(dropoffsTotal / DROPOFFS_PAGE_SIZE));
+  const dropoffsPages = Math.max(1, Math.ceil(dropoffsTotal / limit));
+
+  const handleLimitChange = (next: number) => {
+    setLimit(next);
+    try {
+      localStorage.setItem(LIMIT_STORAGE_KEY, String(next));
+    } catch {
+      /* storage may be unavailable; the in-memory value still applies */
+    }
+  };
 
   const [editingDropoffId, setEditingDropoffId] = React.useState<number | null>(null);
   const editingDropoff =
-    editingDropoffId != null
-      ? dropoffs.find((d) => d.ID === editingDropoffId) ?? null
-      : null;
+    editingDropoffId != null ? dropoffs.find((d) => d.ID === editingDropoffId) ?? null : null;
   const [pendingDelete, setPendingDelete] = React.useState<DropOffPoint | null>(null);
   const deleteDropoff = useDeleteDropoff();
-
-  const handleDeleteRequest = (dropoff: DropOffPoint) => {
-    setEditingDropoffId(null);
-    setPendingDelete(dropoff);
-  };
 
   const handleDeleteConfirm = async () => {
     if (!pendingDelete) return;
     try {
       await deleteDropoff.mutateAsync(pendingDelete.ID);
-      setPendingDelete(null);
     } catch {
-      // Toast (including the 409 "still referenced" case) handled by the mutation
+      // Toast (incl. the 409 "still referenced" case) handled by the mutation
+    } finally {
       setPendingDelete(null);
     }
   };
+
+  const pinPills = (
+    value: PinFilter,
+    onChange: (v: PinFilter) => void,
+    missingCount?: number,
+  ) => (
+    <div className="flex gap-1.5">
+      {(
+        [
+          { id: 'all', label: t('locations.filter.all', 'All') },
+          { id: 'missing', label: t('locations.filter.missingPins', 'Missing pins') },
+        ] as Array<{ id: PinFilter; label: string }>
+      ).map((p) => (
+        <button
+          key={p.id}
+          type="button"
+          onClick={() => onChange(p.id)}
+          aria-pressed={value === p.id}
+          className={cn(
+            'inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-xs font-medium transition-colors',
+            value === p.id
+              ? 'border-primary bg-primary text-primary-foreground'
+              : 'bg-card text-muted-foreground hover:bg-muted/60',
+          )}
+        >
+          {p.label}
+          {p.id === 'missing' && (missingCount ?? 0) > 0 && (
+            <span className="tabular-nums opacity-80">{missingCount}</span>
+          )}
+        </button>
+      ))}
+    </div>
+  );
 
   return (
     <PageShell
@@ -151,6 +212,76 @@ export default function LocationsPage() {
         'Manage canonical terminals and drop-off points — pins, radii, company allowlists, and receipt serialization — in one place.',
       )}
     >
+      {/* ---- Coverage header: the page's one job, made visible ---- */}
+      <div className="mb-4 grid gap-3 sm:grid-cols-3">
+        <div
+          className={cn(
+            'rounded-lg border p-4 sm:col-span-1',
+            attentionCount > 0 ? 'border-warning/50 bg-warning/5' : 'border-success/40 bg-success/5',
+          )}
+        >
+          {attentionCount > 0 ? (
+            <>
+              <div className="text-3xl font-semibold tabular-nums text-warning">
+                {attentionCount}
+              </div>
+              <div className="mt-0.5 text-sm text-muted-foreground">
+                {t('locations.header.needAttention', 'locations need attention')}
+              </div>
+              <Button size="sm" className="mt-3" onClick={() => handleTabChange('inbox')}>
+                {t('locations.header.startPinning', 'Start pinning')}
+              </Button>
+            </>
+          ) : (
+            <div className="flex h-full flex-col justify-center gap-1">
+              <div className="flex items-center gap-2 text-success">
+                <CheckCircle2 className="h-5 w-5" />
+                <span className="font-medium">
+                  {t('locations.header.allPinned', 'Every location is pinned')}
+                </span>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {t('locations.header.allPinnedSub', 'New names appear here automatically.')}
+              </p>
+            </div>
+          )}
+        </div>
+
+        <div className="rounded-lg border bg-card p-4">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <MapPin className="h-4 w-4" />
+            {t('locations.header.dropoffs', 'Drop-off points')}
+          </div>
+          <div className="mt-1 text-2xl font-semibold tabular-nums" dir="ltr">
+            {dropoffsPinned}/{dropoffsTotalAll}
+          </div>
+          <div className="text-xs text-muted-foreground">
+            {t('locations.header.pinned', 'pinned')}
+          </div>
+        </div>
+
+        <div className="rounded-lg border bg-card p-4">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Warehouse className="h-4 w-4" />
+            {t('locations.header.terminals', 'Terminals')}
+          </div>
+          <div className="mt-1 text-2xl font-semibold tabular-nums" dir="ltr">
+            {terminalsPinned}/{terminals.length}
+          </div>
+          <div className="text-xs text-muted-foreground">
+            {t('locations.header.pinned', 'pinned')}
+          </div>
+        </div>
+
+        <div className="sm:col-span-3">
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <span>{t('locations.header.coverage', 'Pin coverage')}</span>
+            <span className="tabular-nums">{coveragePct}%</span>
+          </div>
+          <Progress value={coveragePct} className="mt-1 h-1.5" />
+        </div>
+      </div>
+
       <Tabs value={tab} onValueChange={handleTabChange}>
         <TabsList>
           <TabsTrigger value="inbox" className="gap-1.5">
@@ -162,27 +293,17 @@ export default function LocationsPage() {
               </Badge>
             )}
           </TabsTrigger>
-          <TabsTrigger value="terminals">
-            {t('locations.tabs.terminals', 'Terminals')}
-          </TabsTrigger>
           <TabsTrigger value="dropoffs">
             {t('locations.tabs.dropoffs', 'Drop-off Points')}
           </TabsTrigger>
+          <TabsTrigger value="terminals">{t('locations.tabs.terminals', 'Terminals')}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="inbox" className="mt-4">
-          <LocationsNeedsAttention />
+          <LocationsNeedsAttention onBrowseDropoffs={() => handleTabChange('dropoffs')} />
         </TabsContent>
 
-        <TabsContent value="terminals" className="mt-4">
-          <LocationsTerminalsTable
-            terminals={terminalsQuery.data ?? []}
-            loading={terminalsQuery.isLoading}
-            onRowClick={(terminal) => setSelectedTerminalId(terminal.ID)}
-          />
-        </TabsContent>
-
-        <TabsContent value="dropoffs" className="mt-4 space-y-4">
+        <TabsContent value="dropoffs" className="mt-4 space-y-3">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <SearchInput
               value={search}
@@ -190,35 +311,43 @@ export default function LocationsPage() {
               placeholder={t('locations.dropoffs.searchPlaceholder', 'Search drop-off points…')}
               className="sm:max-w-sm"
             />
-            <div className="flex items-center gap-2">
-              <Switch
-                id="missing-only"
-                checked={missingOnly}
-                onCheckedChange={setMissingOnly}
-              />
-              <Label htmlFor="missing-only" className="cursor-pointer text-sm">
-                {t('locations.dropoffs.missingOnly', 'Missing pins only')}
-              </Label>
-            </div>
-            {dropoffsTotal > 0 && (
-              <span className="text-xs text-muted-foreground tabular-nums sm:ms-auto">
-                {t('locations.dropoffs.totalCount', {
-                  count: dropoffsTotal,
-                  defaultValue: '{{count}} drop-off points',
-                })}
-              </span>
-            )}
+            {pinPills(pinFilter, setPinFilter, unpinnedDropoffs)}
           </div>
           <LocationsDropoffsTable
             dropoffs={dropoffs}
             loading={dropoffsQuery.isLoading}
             onRowClick={(dropoff) => setEditingDropoffId(dropoff.ID)}
-            pagination={{
-              page: dropoffsPage,
-              totalPages: dropoffsTotalPages,
-              onPageChange: setDropoffsPage,
-            }}
-            pageSize={DROPOFFS_PAGE_SIZE}
+            pageSize={limit}
+          />
+          <TripsPagination
+            page={page}
+            pages={dropoffsPages}
+            total={dropoffsTotal}
+            limit={limit}
+            onPageChange={setPage}
+            onLimitChange={handleLimitChange}
+            loading={dropoffsQuery.isFetching}
+          />
+        </TabsContent>
+
+        <TabsContent value="terminals" className="mt-4 space-y-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <SearchInput
+              value={terminalSearch}
+              onChange={setTerminalSearch}
+              placeholder={t('locations.terminals.searchPlaceholder', 'Search terminals…')}
+              className="sm:max-w-sm"
+            />
+            {pinPills(
+              terminalPinFilter,
+              setTerminalPinFilter,
+              terminals.length - terminalsPinned,
+            )}
+          </div>
+          <LocationsTerminalsTable
+            terminals={visibleTerminals}
+            loading={terminalsQuery.isLoading}
+            onRowClick={(terminal) => setSelectedTerminalId(terminal.ID)}
           />
         </TabsContent>
       </Tabs>
@@ -238,7 +367,10 @@ export default function LocationsPage() {
           if (!open) setEditingDropoffId(null);
         }}
         dropoff={editingDropoff}
-        onDelete={handleDeleteRequest}
+        onDelete={(d) => {
+          setEditingDropoffId(null);
+          setPendingDelete(d);
+        }}
       />
 
       {/* Delete confirmation */}

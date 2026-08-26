@@ -94,6 +94,28 @@ export function useTerminalColumns(): ColumnDef<Terminal>[] {
           );
         },
       },
+      {
+        id: 'action',
+        header: '',
+        cell: ({ row }) => {
+          const pinned = isValidCoordinate(row.original.lat, row.original.long);
+          return (
+            <div className="text-end">
+              <span
+                className={
+                  pinned
+                    ? 'text-xs font-medium text-muted-foreground'
+                    : 'text-xs font-medium text-primary'
+                }
+              >
+                {pinned
+                  ? t('locations.actions.manage', 'Manage')
+                  : t('locations.actions.setPin', 'Set pin')}
+              </span>
+            </div>
+          );
+        },
+      },
     ],
     [t],
   );

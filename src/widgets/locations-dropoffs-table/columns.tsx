@@ -76,6 +76,29 @@ export function useDropoffColumns(): ColumnDef<DropOffPoint>[] {
           );
         },
       },
+      {
+        id: 'action',
+        header: '',
+        cell: ({ row }) => {
+          const pinned = isValidCoordinate(row.original.lat, row.original.long);
+          // Row click opens the same editor — the button is the visible CTA.
+          return (
+            <div className="text-end">
+              <span
+                className={
+                  pinned
+                    ? 'text-xs font-medium text-muted-foreground'
+                    : 'text-xs font-medium text-primary'
+                }
+              >
+                {pinned
+                  ? t('locations.actions.editPin', 'Edit pin')
+                  : t('locations.actions.setPin', 'Set pin')}
+              </span>
+            </div>
+          );
+        },
+      },
     ],
     [t],
   );
