@@ -94,7 +94,9 @@ function HudToggle({
       aria-pressed={active}
       onClick={onClick}
       className={cn(
-        'flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold transition-colors',
+        'relative flex cursor-pointer items-center gap-1 rounded-full border px-2 py-1 text-[10px] font-semibold transition-colors',
+        'after:absolute after:inset-x-0 after:-inset-y-2 after:content-[""]', // ~40px hit
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
         active
           ? 'border-primary/50 bg-primary/10 text-foreground'
           : 'border-border bg-card/60 text-muted-foreground hover:text-foreground',
@@ -120,11 +122,18 @@ export function TripReplayHud({
   const { t, i18n } = useTranslation();
 
   return (
+    // pointer-events-auto: the page's overlay wrapper is pointer-events-none,
+    // so the card must re-enable input for itself. The stop-propagation guards
+    // make sure no gesture that starts on the HUD ever reaches the map.
     <div
       className={cn(
-        'w-64 rounded-xl border bg-card/85 p-3 shadow-xl backdrop-blur-md',
+        'pointer-events-auto w-64 rounded-xl border bg-card/85 p-3 shadow-xl backdrop-blur-md',
         className,
       )}
+      onPointerDown={(e) => e.stopPropagation()}
+      onMouseDown={(e) => e.stopPropagation()}
+      onTouchStart={(e) => e.stopPropagation()}
+      onWheel={(e) => e.stopPropagation()}
     >
       {/* Clock row */}
       <div className="flex items-center justify-between gap-2">
@@ -211,18 +220,24 @@ export function TripReplayHud({
             type="button"
             variant="ghost"
             size="icon"
-            className="h-7 w-7 text-muted-foreground hover:text-foreground"
+            className="relative h-7 w-7 text-muted-foreground after:absolute after:-inset-1.5 after:content-[''] hover:text-foreground"
             onClick={onRestart}
             title={t('tripReplay.hud.restart', 'Restart')}
+            aria-label={t('tripReplay.hud.restart', 'Restart')}
           >
             <RotateCcw className="h-3.5 w-3.5" />
           </Button>
           <Button
             type="button"
             size="icon"
-            className="h-8 w-8 rounded-full shadow-lg shadow-primary/30"
+            className="relative h-8 w-8 rounded-full shadow-lg shadow-primary/30 after:absolute after:-inset-1 after:content-['']"
             onClick={onTogglePlay}
             title={
+              state.playing
+                ? t('tripReplay.hud.pause', 'Pause (Space)')
+                : t('tripReplay.hud.play', 'Play (Space)')
+            }
+            aria-label={
               state.playing
                 ? t('tripReplay.hud.pause', 'Pause (Space)')
                 : t('tripReplay.hud.play', 'Play (Space)')
@@ -243,8 +258,14 @@ export function TripReplayHud({
               key={s}
               type="button"
               onClick={() => onSpeedChange(s)}
+              aria-pressed={state.speedX === s}
+              aria-label={t('tripReplay.hud.speedAria', 'Playback speed {{x}}×', { x: s })}
               className={cn(
-                'rounded px-1.5 py-0.5 text-[10px] font-black tabular-nums transition-colors',
+                'relative cursor-pointer rounded px-1.5 py-1 text-[10px] font-black tabular-nums transition-colors',
+                // Segmented control: extend the hit area vertically to ~40px;
+                // horizontally each button owns its own slice.
+                'after:absolute after:inset-x-0 after:-inset-y-2 after:content-[""]',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
                 state.speedX === s
                   ? 'bg-primary text-primary-foreground'
                   : 'text-muted-foreground hover:bg-muted hover:text-foreground',

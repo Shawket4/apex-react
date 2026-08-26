@@ -219,7 +219,10 @@ function ModeControl({
           onClick={() => onChange(m.id)}
           aria-pressed={mode === m.id}
           className={cn(
-            'rounded px-2.5 py-1 text-xs font-semibold transition-colors',
+            'relative cursor-pointer rounded px-2.5 py-1 text-xs font-semibold transition-colors',
+            'after:absolute after:inset-x-0 after:-inset-y-1.5 after:content-[""]', // taller hit
+            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
+            'disabled:cursor-not-allowed',
             mode === m.id
               ? 'bg-primary text-primary-foreground'
               : 'text-muted-foreground hover:bg-muted hover:text-foreground',
@@ -563,7 +566,10 @@ export default function TripReplayPage() {
               className="absolute inset-0"
             />
 
-            {/* Floating overlays */}
+            {/* Floating overlays — SIBLINGS of the map container, never inside
+                it. The wrapper is pointer-events-none so only the panels
+                themselves (each pointer-events-auto + stopPropagation guards)
+                catch input; everywhere else gestures fall through to the map. */}
             <div className="pointer-events-none absolute inset-0 z-10 flex items-start justify-between gap-3 p-3">
               {model && model.timedLegs.length > 0 ? (
                 <TripReplayLegRail

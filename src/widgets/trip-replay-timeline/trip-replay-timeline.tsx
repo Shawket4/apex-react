@@ -65,6 +65,8 @@ export const TripReplayTimeline = React.forwardRef<
   const playheadRef = React.useRef<HTMLDivElement>(null);
   const ghostRef = React.useRef<HTMLDivElement>(null);
   const tooltipRef = React.useRef<HTMLDivElement>(null);
+  const draggingRef = React.useRef(false);
+  const [dragging, setDragging] = React.useState(false);
 
   const pctOf = React.useCallback(
     (ms: number) =>
@@ -78,6 +80,8 @@ export const TripReplayTimeline = React.forwardRef<
       setPlayhead(ms: number) {
         const node = playheadRef.current;
         if (node) node.style.left = `${pctOf(ms)}%`;
+        // Keep the slider's value in sync for AT without React re-renders.
+        bandRef.current?.setAttribute('aria-valuenow', String(Math.round(ms)));
       },
     }),
     [pctOf],
@@ -96,11 +100,9 @@ export const TripReplayTimeline = React.forwardRef<
     [model.startMs, model.spanMs],
   );
 
-  const handleMove = (e: React.MouseEvent) => {
-    if (disabled) return;
-    const ms = msAtClientX(e.clientX);
+  /** Direct DOM writes — pointermove fires at frame rate. */
+  const showPreviewAt = (ms: number) => {
     const pct = pctOf(ms);
-    // Direct DOM writes — mousemove fires at frame rate.
     if (ghostRef.current) {
       ghostRef.current.style.left = `${pct}%`;
       ghostRef.current.style.opacity = '1';
@@ -112,18 +114,65 @@ export const TripReplayTimeline = React.forwardRef<
       tip.style.opacity = '1';
       tip.style.left = `${pct}%`;
     }
+  };
+
+  const hidePreview = () => {
+    if (ghostRef.current) ghostRef.current.style.opacity = '0';
+    if (tooltipRef.current) tooltipRef.current.style.opacity = '0';
+  };
+
+  /* Drag = scrub (playhead locks to the pointer, map never pans).            */
+  /* Hover (mouse only, no button) = ghost preview that never fights the      */
+  /* locked playhead — the page restores the locked frame on leave.           */
+
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    // Never let the gesture reach anything behind/around the band.
+    e.stopPropagation();
+    if (disabled || (e.pointerType === 'mouse' && e.button !== 0)) return;
+    e.preventDefault(); // no text selection / native touch pan
+    draggingRef.current = true;
+    setDragging(true);
+    // Keep receiving moves even when the pointer leaves the band mid-drag.
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId);
+    } catch {
+      /* capture unsupported — drag still works while inside the band */
+    }
+    const ms = msAtClientX(e.clientX);
+    showPreviewAt(ms);
+    onScrub(ms);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (disabled) return;
+    const ms = msAtClientX(e.clientX);
+    if (draggingRef.current) {
+      showPreviewAt(ms);
+      onScrub(ms); // live scrub — lock the playhead as we drag
+      return;
+    }
+    if (e.pointerType !== 'mouse') return; // no hover concept on touch/pen
+    showPreviewAt(ms);
     onHover(ms);
   };
 
-  const handleLeave = () => {
-    if (ghostRef.current) ghostRef.current.style.opacity = '0';
-    if (tooltipRef.current) tooltipRef.current.style.opacity = '0';
-    onHover(null);
+  const endDrag = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!draggingRef.current) return;
+    draggingRef.current = false;
+    setDragging(false);
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    } catch {
+      /* already released */
+    }
+    // Touch has no hover — clear the preview once the finger lifts.
+    if (e.pointerType !== 'mouse') hidePreview();
   };
 
-  const handleClick = (e: React.MouseEvent) => {
-    if (disabled) return;
-    onScrub(msAtClientX(e.clientX));
+  const handlePointerLeave = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (draggingRef.current) return; // captured drag continues off-element
+    hidePreview();
+    if (e.pointerType === 'mouse') onHover(null);
   };
 
   /* ---- Static geometry (percent positions) ----------------------------- */
@@ -166,7 +215,16 @@ export const TripReplayTimeline = React.forwardRef<
 
   return (
     // NOTE: dir="ltr" is intentional — the time axis stays LTR in RTL locales.
-    <div dir="ltr" className={cn('select-none px-4 pb-2 pt-5', className)}>
+    // The band is a control surface: gestures that start here must never
+    // reach the map or any ancestor drag handler.
+    <div
+      dir="ltr"
+      className={cn('select-none px-4 pb-2 pt-5', className)}
+      onPointerDown={(e) => e.stopPropagation()}
+      onMouseDown={(e) => e.stopPropagation()}
+      onTouchStart={(e) => e.stopPropagation()}
+      onWheel={(e) => e.stopPropagation()}
+    >
       <div className="relative">
         {/* Tooltip */}
         <div
@@ -182,13 +240,22 @@ export const TripReplayTimeline = React.forwardRef<
           aria-label={t('tripReplay.timeline.label', 'Trip timeline')}
           aria-valuemin={model.startMs}
           aria-valuemax={model.endMs}
+          aria-valuenow={model.startMs}
+          aria-disabled={disabled || undefined}
           tabIndex={-1}
-          onMouseMove={handleMove}
-          onMouseLeave={handleLeave}
-          onClick={handleClick}
+          onPointerDown={handlePointerDown}
+          onPointerMove={handlePointerMove}
+          onPointerUp={endDrag}
+          onPointerCancel={endDrag}
+          onPointerLeave={handlePointerLeave}
           className={cn(
-            'relative h-9 overflow-hidden rounded-lg border bg-muted/50',
-            disabled ? 'cursor-not-allowed opacity-40' : 'cursor-crosshair',
+            // touch-none: the browser must never hijack the drag for scrolling.
+            'relative h-9 touch-none overflow-hidden rounded-lg border bg-muted/50',
+            disabled
+              ? 'cursor-not-allowed opacity-40'
+              : dragging
+                ? 'cursor-grabbing'
+                : 'cursor-grab',
           )}
         >
           {/* Dwell gaps — striped, dimmed */}
@@ -246,7 +313,7 @@ export const TripReplayTimeline = React.forwardRef<
           </div>
         </div>
 
-        {/* Event pins */}
+        {/* Event pins — 12px dot inside a larger invisible hit area */}
         <div className="relative mt-1 h-4">
           {model.pins.map((pin) => (
             <button
@@ -257,12 +324,20 @@ export const TripReplayTimeline = React.forwardRef<
               title={pin.label}
               aria-label={pin.label}
               className={cn(
-                'absolute top-0 h-3 w-3 -translate-x-1/2 rounded-full border border-background shadow transition-transform hover:scale-125',
-                PIN_KIND_CLASS[pin.kind],
+                'group absolute -top-1.5 z-10 flex h-6 w-6 -translate-x-1/2 cursor-pointer items-center justify-center rounded-full',
+                'after:absolute after:-inset-2 after:content-[""]', // ~40px hit
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
                 disabled && 'pointer-events-none opacity-40',
               )}
               style={{ left: `${pctOf(pin.ms)}%` }}
-            />
+            >
+              <span
+                className={cn(
+                  'h-3 w-3 rounded-full border border-background shadow transition-transform group-hover:scale-125',
+                  PIN_KIND_CLASS[pin.kind],
+                )}
+              />
+            </button>
           ))}
         </div>
 
@@ -279,8 +354,11 @@ export const TripReplayTimeline = React.forwardRef<
                 disabled={disabled}
                 onClick={() => onLegClick(seg.timedIndex)}
                 title={seg.label}
+                aria-label={seg.label}
                 className={cn(
-                  'flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[10px] font-semibold tabular-nums transition-colors hover:bg-muted',
+                  'relative flex cursor-pointer items-center gap-1 rounded-full border px-1.5 py-0.5 text-[10px] font-semibold tabular-nums transition-colors hover:bg-muted',
+                  'after:absolute after:inset-x-0 after:-inset-y-2 after:content-[""]', // taller hit
+                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
                   disabled && 'pointer-events-none opacity-40',
                 )}
               >

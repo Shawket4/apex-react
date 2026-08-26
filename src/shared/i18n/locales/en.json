@@ -1760,7 +1760,8 @@
     "legType": {
       "outbound": "Outbound",
       "between": "Between stops",
-      "return": "Return"
+      "return": "Return",
+      "garage": "Garage stop"
     },
     "flagTypes": {
       "excess_distance": "Inefficient route",
@@ -1769,7 +1770,10 @@
       "route_deviation": "Route deviation",
       "skipped_delivery": "Skipped delivery",
       "no_return_data": "No return data",
-      "no_terminal_departure": "No terminal departure"
+      "no_terminal_departure": "No terminal departure",
+      "suboptimal_order": "Drop-offs visited in a longer order than optimal",
+      "allowed_stop": "Stop at an allowed point (garage)",
+      "return_pending": "Trip still open — awaiting terminal return"
     },
     "severity": {
       "info": "Info",
@@ -1868,6 +1872,7 @@
       "restart": "Restart",
       "pause": "Pause (Space)",
       "play": "Play (Space)",
+      "speedAria": "Playback speed {{x}}×",
       "skipStops": "Skip stops",
       "followCam": "Follow"
     },

@@ -1768,7 +1768,8 @@
     "legType": {
       "outbound": "ذهاب",
       "between": "بين النقاط",
-      "return": "عودة"
+      "return": "عودة",
+      "garage": "توقف جراج"
     },
     "flagTypes": {
       "excess_distance": "مسار غير فعّال",
@@ -1777,7 +1778,10 @@
       "route_deviation": "انحراف عن المسار",
       "skipped_delivery": "تسليم متخطى",
       "no_return_data": "لا توجد بيانات عودة",
-      "no_terminal_departure": "لا يوجد انطلاق من المحطة"
+      "no_terminal_departure": "لا يوجد انطلاق من المحطة",
+      "suboptimal_order": "ترتيب نقاط التسليم أطول من الترتيب الأمثل",
+      "allowed_stop": "توقف في نقطة مسموح بها (جراج)",
+      "return_pending": "الرحلة ما زالت مفتوحة — في انتظار العودة للمستودع"
     },
     "severity": {
       "info": "معلومة",
@@ -1876,6 +1880,7 @@
       "restart": "إعادة التشغيل",
       "pause": "إيقاف مؤقت (مسافة)",
       "play": "تشغيل (مسافة)",
+      "speedAria": "سرعة التشغيل {{x}}×",
       "skipStops": "تخطي التوقفات",
       "followCam": "تتبع"
     },

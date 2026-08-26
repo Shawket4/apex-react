@@ -43,12 +43,17 @@ export function TripReplayLegRail({
 
   if (collapsed) {
     return (
-      <div className={cn('pointer-events-auto', className)}>
+      <div
+        className={cn('pointer-events-auto', className)}
+        onPointerDown={(e) => e.stopPropagation()}
+        onMouseDown={(e) => e.stopPropagation()}
+        onTouchStart={(e) => e.stopPropagation()}
+      >
         <Button
           type="button"
           variant="secondary"
           size="icon"
-          className="h-9 w-9 rounded-full bg-card/85 shadow-lg backdrop-blur-md"
+          className="h-10 w-10 rounded-full bg-card/85 shadow-lg backdrop-blur-md"
           onClick={() => setCollapsed(false)}
           title={t('tripReplay.legRail.expand', 'Show legs')}
           aria-label={t('tripReplay.legRail.expand', 'Show legs')}
@@ -60,11 +65,17 @@ export function TripReplayLegRail({
   }
 
   return (
+    // Gestures (drag/scroll/wheel) that start on the rail must never reach
+    // the map behind it.
     <div
       className={cn(
         'pointer-events-auto flex max-h-full w-72 flex-col overflow-hidden rounded-xl border bg-card/85 shadow-xl backdrop-blur-md',
         className,
       )}
+      onPointerDown={(e) => e.stopPropagation()}
+      onMouseDown={(e) => e.stopPropagation()}
+      onTouchStart={(e) => e.stopPropagation()}
+      onWheel={(e) => e.stopPropagation()}
     >
       <div className="flex items-center justify-between border-b px-3 py-2">
         <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
@@ -74,7 +85,7 @@ export function TripReplayLegRail({
           type="button"
           variant="ghost"
           size="icon"
-          className="h-6 w-6 text-muted-foreground"
+          className="relative h-6 w-6 text-muted-foreground after:absolute after:-inset-2 after:content-['']"
           onClick={() => setCollapsed(true)}
           title={t('tripReplay.legRail.collapse', 'Hide legs')}
           aria-label={t('tripReplay.legRail.collapse', 'Hide legs')}
@@ -83,7 +94,7 @@ export function TripReplayLegRail({
         </Button>
       </div>
 
-      <ul className="flex-1 space-y-1.5 overflow-y-auto p-2">
+      <ul className="flex-1 space-y-1.5 overflow-y-auto overscroll-contain p-2">
         {model.timedLegs.map((leg, i) => {
           const active = i === activeIndex;
           const excessKm =
@@ -104,6 +115,7 @@ export function TripReplayLegRail({
                 }}
                 className={cn(
                   'w-full cursor-pointer rounded-lg border p-2 text-start transition-colors',
+                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
                   active
                     ? 'border-primary/60 bg-primary/10'
                     : 'hover:bg-muted/60',
@@ -128,7 +140,7 @@ export function TripReplayLegRail({
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="h-6 w-6 shrink-0 text-muted-foreground hover:text-foreground"
+                    className="relative h-6 w-6 shrink-0 text-muted-foreground after:absolute after:-inset-1.5 after:content-[''] hover:text-foreground"
                     onClick={(e) => {
                       e.stopPropagation();
                       onLoopLeg(i);
