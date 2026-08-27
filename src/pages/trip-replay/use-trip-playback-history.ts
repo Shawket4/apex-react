@@ -9,17 +9,20 @@ import type {
 /* -------------------------------------------------------------------------- */
 /* Vehicle history for the replay                                              */
 /*                                                                             */
-/* Extracted copy of `useTripPlaybackHistory` from                             */
-/* `src/widgets/trip-audit-detail-dialog/trip-audit-detail-dialog.tsx` (that  */
-/* widget doesn't export the hook, and it is being reworked in parallel, so   */
-/* the replay page owns its copy). Same behavior: the trip window             */
-/* [start−15m, end+15m] decides which Cairo day(s) of the live-tracking       */
-/* history endpoint to fetch; a window crossing Cairo midnight fetches both   */
-/* days and concatenates. Any failure degrades to the stored leg geometries.  */
+/* The trip window [start−15m, end+15m] decides which Cairo days of the      */
+/* live-tracking history endpoint to fetch — EVERY day the window spans, up  */
+/* to MAX_PLAYBACK_DAYS (open returns are capped at 72h, so 5 slots cover    */
+/* any real trip). The original two-slot version (start day + end day only)  */
+/* silently dropped the middle days of multi-day trips: a 4-day odyssey      */
+/* rendered as a route that never visited its own drop-off. Any failure      */
+/* degrades to the stored leg geometries.                                    */
 /* -------------------------------------------------------------------------- */
 
 /** Window padding around [start_ts, end_ts] for the playback trace. */
 export const PLAYBACK_PAD_MS = 15 * 60_000;
+
+/** Max Cairo days fetched for one replay (72h return cap ⇒ 5 covers all). */
+const MAX_PLAYBACK_DAYS = 5;
 
 export interface TripWindowSource {
   vehicle_id?: string | null;
@@ -62,34 +65,55 @@ export function useTripPlaybackHistory(
     };
   }, [detail]);
 
-  const startDay = React.useMemo(
-    () => (window ? new Date(window.startMs) : null),
-    [window],
-  );
-  const endDay = React.useMemo(() => (window ? new Date(window.endMs) : null), [window]);
+  // Every Cairo calendar day the window touches (the proxy resolves `date=`
+  // in its own timezone). Fixed slot count keeps the hook calls stable.
+  const days = React.useMemo<(Date | null)[]>(() => {
+    const out: (Date | null)[] = Array(MAX_PLAYBACK_DAYS).fill(null);
+    if (!window) return out;
+    const endKey = cairoDayKeyOf(new Date(window.endMs));
+    const seen = new Set<string>();
+    let cursor = window.startMs;
+    let i = 0;
+    while (i < MAX_PLAYBACK_DAYS) {
+      const d = new Date(cursor);
+      const key = cairoDayKeyOf(d);
+      if (!seen.has(key)) {
+        seen.add(key);
+        out[i] = d;
+        i += 1;
+      }
+      if (key === endKey) break;
+      cursor += 12 * 60 * 60 * 1000; // half-day steps never skip a Cairo day
+    }
+    return out;
+  }, [window]);
 
-  // Compare Cairo calendar days, not browser-local ones — the proxy resolves
-  // `date=` in its own timezone.
-  const crossesMidnight =
-    startDay != null && endDay != null && cairoDayKeyOf(startDay) !== cairoDayKeyOf(endDay);
-
-  const firstQuery = useEtitHistoryDay(
-    enabled && window && startDay ? { vehicleId: window.vehicleId, day: startDay } : null,
+  const q0 = useEtitHistoryDay(
+    enabled && window && days[0] ? { vehicleId: window.vehicleId, day: days[0] } : null,
   );
-  const secondQuery = useEtitHistoryDay(
-    enabled && window && crossesMidnight && endDay
-      ? { vehicleId: window.vehicleId, day: endDay }
-      : null,
+  const q1 = useEtitHistoryDay(
+    enabled && window && days[1] ? { vehicleId: window.vehicleId, day: days[1] } : null,
   );
+  const q2 = useEtitHistoryDay(
+    enabled && window && days[2] ? { vehicleId: window.vehicleId, day: days[2] } : null,
+  );
+  const q3 = useEtitHistoryDay(
+    enabled && window && days[3] ? { vehicleId: window.vehicleId, day: days[3] } : null,
+  );
+  const q4 = useEtitHistoryDay(
+    enabled && window && days[4] ? { vehicleId: window.vehicleId, day: days[4] } : null,
+  );
+  const queries = [q0, q1, q2, q3, q4];
 
   return React.useMemo(() => {
     if (!window) {
       return { points: [], stops: [], sensors: [], loading: false, unavailable: true };
     }
-    const loading = firstQuery.isLoading || (crossesMidnight && secondQuery.isLoading);
-    const responses = [firstQuery.data, crossesMidnight ? secondQuery.data : undefined].filter(
-      (r): r is NonNullable<typeof r> => r != null,
-    );
+    const active = queries.filter((_, i) => days[i] != null);
+    const loading = active.some((q) => q.isLoading);
+    const responses = active
+      .map((q) => q.data)
+      .filter((r): r is NonNullable<typeof r> => r != null);
 
     // Concatenate + de-duplicate by timestamp, then clamp to the trip window.
     const byMs = new Map<number, EtitHistoryPoint>();
@@ -121,12 +145,14 @@ export function useTripPlaybackHistory(
       loading,
       unavailable: !loading && points.length < 2,
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     window,
-    crossesMidnight,
-    firstQuery.isLoading,
-    firstQuery.data,
-    secondQuery.isLoading,
-    secondQuery.data,
+    days,
+    q0.isLoading, q0.data,
+    q1.isLoading, q1.data,
+    q2.isLoading, q2.data,
+    q3.isLoading, q3.data,
+    q4.isLoading, q4.data,
   ]);
 }
