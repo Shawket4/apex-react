@@ -342,15 +342,14 @@ function TripsTotal({ rows, companyTotal }: { rows: GroupStat[]; companyTotal: n
     return <span className="text-xs sm:text-sm">{formatNumber(companyTotal, 0)}</span>;
   }
 
+  // Marked, not annotated. The count is the thing being read; the reason the
+  // rows above it add to something else belongs on hover, not in the cell.
   return (
     <span
-      className="text-xs sm:text-sm"
+      className="cursor-help text-xs underline decoration-dotted underline-offset-4 sm:text-sm"
       title={t('trips.statistics.multiRouteHint', { count: overlap })}
     >
       {formatNumber(companyTotal, 0)}
-      <span className="ms-1 font-normal text-muted-foreground">
-        {t('trips.statistics.multiRouteNote', { count: overlap })}
-      </span>
     </span>
   );
 }

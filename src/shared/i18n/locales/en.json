@@ -263,7 +263,14 @@
     "apply": "Apply",
     "clickStart": "Click to select start date",
     "clickEnd": "Click to select end date",
-    "rangeSelected": "Range selected"
+    "rangeSelected": "Range selected",
+    "short": {
+      "today": "Today",
+      "days7": "7 days",
+      "currentMonth": "Month",
+      "days90": "90 days",
+      "allTime": "All"
+    }
   },
   "excel": {
     "generating": "Generating spreadsheet...",
@@ -885,8 +892,6 @@
         "cars": "Vehicles",
         "routes": "Routes"
       },
-      "multiRouteNote": "(+{{count}} multi-route)",
-      "multiRouteNote_other": "(+{{count}} multi-route)",
       "multiRouteHint": "{{count}} trip delivered to more than one route, so it is counted by each route it served. The company total counts it once.",
       "multiRouteHint_other": "{{count}} trips delivered to more than one route, so each is counted by every route it served. The company total counts each once."
     },

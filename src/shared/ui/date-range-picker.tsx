@@ -134,12 +134,11 @@ export function DateRangePicker({ from, to, onChange, className }: Props) {
   return (
     <div
       className={cn(
-        // One scrollable row on a phone instead of wrapping to three. The
-        // quick ranges are a shortcut, not the point of the screen, and on a
-        // 375px viewport wrapping them cost more vertical space than the first
-        // two trips in the list below.
-        'flex items-center gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none]',
-        '[&::-webkit-scrollbar]:hidden sm:flex-wrap sm:overflow-visible sm:pb-0',
+        // Wraps rather than scrolls. A horizontal scroller hides options
+        // off-screen with nothing to say they are there, which is a poor trade
+        // for a control whose whole job is showing you the choices. The chips
+        // are small enough on a phone that all of them fit in two lines.
+        'flex flex-wrap items-center gap-1.5',
         className,
       )}
     >
@@ -149,18 +148,20 @@ export function DateRangePicker({ from, to, onChange, className }: Props) {
           variant={isPresetActive(p) ? 'default' : 'outline'}
           size="sm"
           onClick={() => applyPreset(p)}
-          className="h-8 shrink-0 text-xs"
+          className="h-7 shrink-0 px-2 text-[11px] sm:h-8 sm:px-3 sm:text-xs"
         >
-          {t(`datePicker.${p.key}`)}
+          <span className="sm:hidden">{t(`datePicker.short.${p.key}`)}</span>
+          <span className="hidden sm:inline">{t(`datePicker.${p.key}`)}</span>
         </Button>
       ))}
       <Button
         variant={isAllTime ? 'default' : 'outline'}
         size="sm"
         onClick={() => onChange(null, null)}
-        className="h-8 shrink-0 text-xs"
+        className="h-7 shrink-0 px-2 text-[11px] sm:h-8 sm:px-3 sm:text-xs"
       >
-        {t('datePicker.allTime')}
+        <span className="sm:hidden">{t('datePicker.short.allTime')}</span>
+        <span className="hidden sm:inline">{t('datePicker.allTime')}</span>
       </Button>
 
       <Popover open={open} onOpenChange={setOpen}>
@@ -168,7 +169,7 @@ export function DateRangePicker({ from, to, onChange, className }: Props) {
           <Button
             variant={isCustom ? 'default' : 'outline'}
             size="sm"
-            className="h-8 shrink-0 gap-1.5 text-xs"
+            className="h-7 shrink-0 gap-1 px-2 text-[11px] sm:h-8 sm:gap-1.5 sm:px-3 sm:text-xs"
           >
             <CalendarIcon className="h-3 w-3" />
             {isCustom ? `${fmtDate(from)} → ${to ? fmtDate(to) : ''}` : t('datePicker.custom')}
