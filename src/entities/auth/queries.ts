@@ -38,9 +38,22 @@ export function useLogout() {
   const { t } = useTranslation();
 
   return () => {
-    clearSession();
-    queryClient.clear();
-    toast.success(t('auth.loggedOut'));
-    navigate('/login', { replace: true });
+    // Deferred by a tick on purpose.
+    //
+    // This runs from inside a dropdown item's click handler. Clearing the
+    // session makes UserMenu render null, which unmounts the still-open Radix
+    // menu mid-event, and the navigate then unmounts the whole layout — and on
+    // mobile the open drawer with it. Tearing down a Radix portal from inside
+    // its own event is the classic source of "Failed to execute 'removeChild'
+    // on 'Node'", which is what was crashing the sidebar on a phone.
+    //
+    // Yielding first lets the menu close and release its portal before any of
+    // this happens.
+    setTimeout(() => {
+      clearSession();
+      queryClient.clear();
+      toast.success(t('auth.loggedOut'));
+      navigate('/login', { replace: true });
+    }, 0);
   };
 }

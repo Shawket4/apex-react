@@ -252,17 +252,23 @@ export function Sidebar({ collapsed, onToggleCollapse, onNavigate, className }: 
               <ThemeToggle />
               <LanguageToggle />
             </div>
+            {/* Below md this was `hidden`, and SheetContent is rendered with
+                hideCloseButton — so on a phone the drawer had no close control
+                at all. It is shown at every width now; in the drawer the same
+                handler closes it, which is what the chevron means there. */}
             <Button
               variant="ghost"
               size="icon"
               onClick={onToggleCollapse}
-              className="hidden md:inline-flex h-8 w-8 shrink-0 transition-transform duration-200"
-              aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+              className="h-8 w-8 shrink-0 transition-transform duration-200"
+              aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             >
-              <ChevronLeft className={cn(
-                "h-4 w-4 transition-transform duration-200",
-                collapsed ? "rotate-180 rtl:rotate-0" : "rtl:rotate-180"
-              )} />
+              <ChevronLeft
+                className={cn(
+                  'h-4 w-4 transition-transform duration-200',
+                  collapsed ? 'rotate-180 rtl:rotate-0' : 'rtl:rotate-180',
+                )}
+              />
             </Button>
           </div>
         </div>
