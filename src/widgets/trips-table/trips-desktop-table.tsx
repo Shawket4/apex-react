@@ -457,6 +457,12 @@ function Expanded({
                 <span className="font-mono tabular-nums">
                   {formatNumber(c.tank_capacity || 0, 0)} L
                 </span>
+                {/* Each container's OWN distance. The row above shows the
+                    trip's furthest drop; these are the individual drops that
+                    the furthest one is the maximum of. */}
+                <span className="font-mono tabular-nums">
+                  {formatNumber(c.mileage || c.distance || 0, 0)} km
+                </span>
                 <ReceiptStatusBadge trip={c} compact />
               </span>
 

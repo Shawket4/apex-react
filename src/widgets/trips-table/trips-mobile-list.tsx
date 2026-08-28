@@ -261,6 +261,11 @@ function MobileRow({
                         <span className="tabular-nums">
                           {formatNumber(c.tank_capacity || 0, 0)} L
                         </span>
+                        {/* The container's own distance; the row above shows
+                            the trip's furthest drop. */}
+                        <span className="tabular-nums">
+                          {formatNumber(c.mileage || c.distance || 0, 0)} km
+                        </span>
                       </span>
                       {showRevenue && c.allocated_total != null && (
                         <span className="shrink-0 font-mono text-[12.5px] font-semibold tabular-nums text-money">
