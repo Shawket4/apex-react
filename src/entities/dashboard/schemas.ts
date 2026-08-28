@@ -41,7 +41,7 @@ export const dashboardMoneySchema = z.object({
   cash_out_bank: z.string(),
   cash_out_fuel: z.string(),
   cash_out_advances: z.string(),
-  /** Outstanding debt as of now — never window-scoped. */
+  /** Advances/loans issued in the window (payroll recovers them monthly). */
   owed: owedBlockSchema,
   by_category: z.array(categoryOutSchema).default([]),
 });

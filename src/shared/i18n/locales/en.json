@@ -138,7 +138,7 @@
       "acrossTrucks": "across {{count}} trucks",
       "unpaidCount": "{{count}} unpaid",
       "unpaidCount_other": "{{count}} unpaid",
-      "owed": "Money owed",
+      "owed": "Advances & loans",
       "owedSplit": "Drivers {{drivers}} · Employees {{employees}}",
       "cashOutSplit": "Bank {{bank}} · Fuel {{fuel}} · Advances {{advances}}",
       "allCompanies": "(all companies)"

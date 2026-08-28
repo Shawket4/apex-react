@@ -138,7 +138,7 @@
       "acrossTrucks": "عبر {{count}} شاحنة",
       "unpaidCount": "{{count}} غير مسدد",
       "unpaidCount_other": "{{count}} غير مسددة",
-      "owed": "مستحقات علينا تحصيلها",
+      "owed": "سلف وقروض",
       "owedSplit": "السائقون {{drivers}} · الموظفون {{employees}}",
       "cashOutSplit": "بنك {{bank}} · وقود {{fuel}} · سلف {{advances}}",
       "allCompanies": "(كل الشركات)"
