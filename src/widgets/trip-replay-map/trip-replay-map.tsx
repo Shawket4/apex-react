@@ -22,6 +22,7 @@ export interface TripReplayMapHandle {
   follow(lat: number, lng: number): void;
   fitPoints(points: Array<[number, number]>): void;
   pulse(lat: number, lng: number, color?: string): void;
+  setMapType(type: 'roadmap' | 'hybrid'): void;
 }
 
 export interface TripReplayMapProps {
@@ -117,6 +118,7 @@ export const TripReplayMap = React.forwardRef<TripReplayMapHandle, TripReplayMap
         follow: (lat, lng) => adapterRef.current?.follow(lat, lng),
         fitPoints: (points) => adapterRef.current?.fitPoints(points),
         pulse: (lat, lng, color) => adapterRef.current?.pulse(lat, lng, color),
+        setMapType: (type) => adapterRef.current?.setMapType(type),
       }),
       [],
     );

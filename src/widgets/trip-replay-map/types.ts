@@ -50,6 +50,8 @@ export interface ReplayMapAdapter {
   /** Expanding-ring pulse animation at a location (dwell/event emphasis). */
   pulse(lat: number, lng: number, color?: string): void;
   onPinClick(handler: ((pinId: string) => void) | null): void;
+  /** Basemap: streets or satellite hybrid. */
+  setMapType(type: 'roadmap' | 'hybrid'): void;
   destroy(): void;
 }
 

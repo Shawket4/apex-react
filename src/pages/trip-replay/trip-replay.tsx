@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
-import { ArrowLeft, Loader2, TriangleAlert } from 'lucide-react';
+import { Layers, ArrowLeft, Loader2, TriangleAlert } from 'lucide-react';
 import { cn } from '@/shared/lib/cn';
 import { Button } from '@/shared/ui/button';
 import { Badge } from '@/shared/ui/badge';
@@ -285,6 +285,7 @@ export default function TripReplayPage() {
   /* ---- Refs + engine ---------------------------------------------------- */
 
   const mapRef = React.useRef<TripReplayMapHandle>(null);
+  const [satellite, setSatellite] = React.useState(false);
   const timelineRef = React.useRef<TripReplayTimelineHandle>(null);
   const engineRef = React.useRef<ReplayEngine | null>(null);
 
@@ -565,6 +566,26 @@ export default function TripReplayPage() {
               onReady={handleMapReady}
               className="absolute inset-0"
             />
+
+            {/* Basemap toggle — streets ↔ satellite, same control as the
+                other maps. */}
+            <button
+              type="button"
+              aria-pressed={satellite}
+              onClick={() =>
+                setSatellite((v) => {
+                  mapRef.current?.setMapType(v ? 'roadmap' : 'hybrid');
+                  return !v;
+                })
+              }
+              aria-label={t('tracking.mapType', 'Satellite')}
+              className={cn(
+                'absolute bottom-3 end-3 z-20 grid h-9 w-9 place-items-center rounded-full border shadow backdrop-blur',
+                satellite ? 'bg-primary text-primary-foreground' : 'bg-card/90 hover:bg-card',
+              )}
+            >
+              <Layers className="h-4 w-4" />
+            </button>
 
             {/* Floating overlays — SIBLINGS of the map container, never inside
                 it. The wrapper is pointer-events-none so only the panels

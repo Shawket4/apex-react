@@ -121,6 +121,14 @@ export async function createGoogleReplayAdapter(
   }
 
   return {
+    setMapType(type: 'roadmap' | 'hybrid') {
+      map.setMapTypeId(
+        type === 'hybrid' ? google.maps.MapTypeId.HYBRID : google.maps.MapTypeId.ROADMAP,
+      );
+      if (type === 'roadmap') {
+        map.setOptions({ styles: isDark() ? darkMapStyle : lightMapStyle });
+      }
+    },
     setScene(scene: ReplayScene) {
       staticOverlays.forEach((o) => o.setMap(null));
       staticOverlays.length = 0;

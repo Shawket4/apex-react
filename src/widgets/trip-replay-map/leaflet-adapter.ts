@@ -66,6 +66,17 @@ export async function createLeafletReplayAdapter(
     attributeFilter: ['class'],
   });
 
+  const SAT_TILE =
+    'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+  let mapType: 'roadmap' | 'hybrid' = 'roadmap';
+  const applyTile = () => {
+    map.removeLayer(tile);
+    tile = L.tileLayer(mapType === 'hybrid' ? SAT_TILE : isDark() ? TILE_DARK : TILE_LIGHT, {
+      attribution: TILE_ATTR,
+      maxZoom: 19,
+    }).addTo(map);
+  };
+
   const staticLayers: LeafletLayer[] = [];
   const dyn = new Map<DynMarkerId, DynEntry>();
   let pinClickHandler: ((pinId: string) => void) | null = null;
@@ -100,6 +111,10 @@ export async function createLeafletReplayAdapter(
   }
 
   return {
+    setMapType(type: 'roadmap' | 'hybrid') {
+      mapType = type;
+      applyTile();
+    },
     setScene(scene: ReplayScene) {
       staticLayers.forEach((l) => map.removeLayer(l));
       staticLayers.length = 0;
