@@ -1,6 +1,17 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Flame, LocateFixed, MapPinned, Pause, Play, RotateCcw, X } from 'lucide-react';
+import {
+  Flame,
+  LocateFixed,
+  MapPin,
+  MapPinned,
+  Pause,
+  Play,
+  RotateCcw,
+  Route,
+  X,
+} from 'lucide-react';
+import { legColor, legId } from '../map/layers';
 import { cn } from '@/shared/lib/cn';
 import { indexAt, SPEEDS } from '../playback';
 import type { HistoryData } from '../use-history';
@@ -157,6 +168,12 @@ export function TimeDeck({
   onToggleFollow,
   showStops,
   showIgnitions,
+  showPins,
+  onTogglePins,
+  showLegs,
+  onToggleLegs,
+  activeLegId,
+  onActivateLeg,
   onScrub,
   onPlayPause,
   onRestart,
@@ -174,6 +191,12 @@ export function TimeDeck({
   onToggleFollow: () => void;
   showStops: boolean;
   showIgnitions: boolean;
+  showPins: boolean;
+  onTogglePins: () => void;
+  showLegs: boolean;
+  onToggleLegs: () => void;
+  activeLegId: string | null;
+  onActivateLeg: (id: string) => void;
   onScrub: (ms: number) => void;
   onPlayPause: () => void;
   onRestart: () => void;
@@ -320,8 +343,69 @@ export function TimeDeck({
                 >
                   <Flame className="h-3.5 w-3.5" />
                 </button>
+                <button
+                  type="button"
+                  aria-pressed={showPins}
+                  onClick={onTogglePins}
+                  title={t('tracking.places', 'Places')}
+                  className={cn(
+                    'grid h-8 w-8 place-items-center rounded-lg border',
+                    showPins
+                      ? 'border-primary/50 bg-primary/10 text-primary'
+                      : 'bg-background text-muted-foreground hover:bg-muted',
+                  )}
+                >
+                  <MapPin className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={showLegs}
+                  onClick={onToggleLegs}
+                  title={t('tracking.legs', 'Legs')}
+                  className={cn(
+                    'grid h-8 w-8 place-items-center rounded-lg border',
+                    showLegs
+                      ? 'border-violet-500/50 bg-violet-500/10 text-violet-600'
+                      : 'bg-background text-muted-foreground hover:bg-muted',
+                  )}
+                >
+                  <Route className="h-3.5 w-3.5" />
+                </button>
               </div>
             </div>
+            {showLegs && history.legs.length > 0 && (
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 pt-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                {history.legs.map((seg) => {
+                  const id = legId(seg);
+                  const [r, g, b] = legColor(seg);
+                  const active = activeLegId === id;
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      aria-pressed={active}
+                      onClick={() => onActivateLeg(id)}
+                      title={`${seg.leg.fromName ?? '—'} → ${seg.leg.toName ?? '—'}`}
+                      className={cn(
+                        'flex shrink-0 items-center gap-1.5 rounded-full border px-2 py-0.5 font-mono text-[10px] font-semibold',
+                        active
+                          ? 'border-transparent text-white'
+                          : 'bg-background text-muted-foreground hover:bg-muted',
+                      )}
+                      style={active ? { background: `rgb(${r} ${g} ${b})` } : undefined}
+                    >
+                      <span
+                        className="h-1.5 w-1.5 rounded-full"
+                        style={{ background: active ? '#fff' : `rgb(${r} ${g} ${b})` }}
+                      />
+                      {seg.cutStart && '‹'}
+                      {seg.leg.parentTripId}·{seg.leg.seq}
+                      {seg.cutEnd && '›'}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </>
         ) : history.isLoading ? (
           <p className="py-1 text-center text-xs text-muted-foreground">

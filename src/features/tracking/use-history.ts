@@ -1,8 +1,8 @@
 import * as React from 'react';
 import { useQueries, useQuery, type QueryClient } from '@tanstack/react-query';
 import { cairoDay, parseCairoWall, trackingApi, trackingKeys } from './api';
-import { buildTrack } from './playback';
-import type { SensorEvent, Stop, TripPin } from './schemas';
+import { buildTrack, indexAt } from './playback';
+import type { SensorEvent, Stop, TripLeg, TripPin } from './schemas';
 import type { HistoryPoint } from './schemas';
 
 /* -------------------------------------------------------------------------- */
@@ -24,6 +24,17 @@ export interface HistoryRange {
 }
 
 export type DayStatus = 'pending' | 'loaded' | 'error';
+
+export interface LegSegment {
+  leg: TripLeg;
+  /** The leg's slice of the drawn track — [lng, lat], possibly empty. */
+  path: [number, number][];
+  /** True when the leg extends beyond the LOADED RANGE (recomputed here —
+   *  the per-day fetch makes the server's per-window flags meaningless for
+   *  multi-day ranges). */
+  cutStart: boolean;
+  cutEnd: boolean;
+}
 
 export interface DayTrail {
   day: string;
@@ -56,6 +67,8 @@ export interface HistoryData {
   sensors: SensorEvent[];
   /** Audit-matched place visits (terminals, drop-offs, garages). */
   pins: TripPin[];
+  /** Audit legs over the range, with their sliced track segments. */
+  legs: LegSegment[];
   /** True until the FIRST day lands. */
   isLoading: boolean;
   isError: boolean;
@@ -114,6 +127,7 @@ export function useHistory(range: HistoryRange | null): HistoryData {
         stops: [],
         sensors: [],
         pins: [],
+        legs: [],
         isLoading: days.length > 0 && !dayRows.every((d) => d.status === 'error'),
         isError: days.length > 0 && dayRows.every((d) => d.status === 'error'),
       };
@@ -125,6 +139,7 @@ export function useHistory(range: HistoryRange | null): HistoryData {
     const sensors: SensorEvent[] = [];
     const pins: TripPin[] = [];
     const pinSeen = new Set<string>();
+    const legById = new Map<string, TripLeg>();
 
     days.forEach((day, i) => {
       const data = queries[i]?.data;
@@ -135,6 +150,11 @@ export function useHistory(range: HistoryRange | null): HistoryData {
       for (const p of data.points) if (p.timestamp) points.push(p);
       stops.push(...data.stops);
       sensors.push(...data.sensors);
+      // A leg spanning midnight arrives in both day responses describing the
+      // same full leg — keep one copy per (trip, seq).
+      for (const leg of data.legs) {
+        legById.set(`${leg.parentTripId}:${leg.seq}`, leg);
+      }
       // A visit can straddle two fetched days — dedupe by identity.
       for (const pin of data.pins) {
         const key = `${pin.parentTripId ?? ''}:${pin.kind}:${pin.name}:${pin.arrive?.getTime() ?? ''}:${pin.depart?.getTime() ?? ''}`;
@@ -165,6 +185,28 @@ export function useHistory(range: HistoryRange | null): HistoryData {
       track = buildTrack(trimmedPoints);
     }
 
+    // Slice each leg's segment from the track by its time range. Range-edge
+    // flags are recomputed against OUR range — the server's are per-day.
+    const legs: LegSegment[] = [...legById.values()]
+      .sort((a, b) => a.parentTripId - b.parentTripId || a.seq - b.seq)
+      .map((leg) => {
+        let path: [number, number][] = [];
+        if (track) {
+          const a = leg.depart.getTime();
+          const b = leg.arrive.getTime();
+          const i0 = indexAt(track.timesMs, a);
+          const i1 = indexAt(track.timesMs, b);
+          const start = track.timesMs[i0] < a ? i0 + 1 : i0;
+          path = track.path.slice(Math.max(0, start), Math.min(track.path.length, i1 + 1));
+        }
+        return {
+          leg,
+          path,
+          cutStart: leg.depart.getTime() < fromMs,
+          cutEnd: leg.arrive.getTime() > toMs,
+        };
+      });
+
     return {
       days: dayRows,
       loadedCount,
@@ -174,11 +216,47 @@ export function useHistory(range: HistoryRange | null): HistoryData {
       stops: trimmedStops,
       sensors: trimmedSensors,
       pins,
+      legs,
       isLoading: false,
       isError: false,
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [range?.vehicleId, range?.from, range?.to, days, fingerprint]);
+}
+
+/**
+ * Optimal (OSRM) geometries for the range's legs — fetched only when a leg
+ * is activated (`enabled`), on separately keyed day queries so the initial
+ * paint never pays for them. Returns polyline5 strings by leg identity.
+ */
+export function useOptimalLegs(
+  range: HistoryRange | null,
+  enabled: boolean,
+): Map<string, string> {
+  const days = React.useMemo(
+    () =>
+      range && enabled ? daysCovering(range.from.slice(0, 10), range.to.slice(0, 10)) : [],
+    [range?.from, range?.to, enabled], // eslint-disable-line react-hooks/exhaustive-deps
+  );
+  const queries = useQueries({
+    queries: days.map((day) => ({
+      queryKey: trackingKeys.day(range!.vehicleId, day, true),
+      queryFn: () => trackingApi.historyDay(range!.vehicleId, day, { optimal: true }),
+      staleTime: 5 * 60_000,
+      refetchOnWindowFocus: false,
+    })),
+  });
+  const fingerprint = queries.map((q) => (q.data ? '1' : '0')).join('');
+  return React.useMemo(() => {
+    const m = new Map<string, string>();
+    for (const q of queries) {
+      for (const leg of q.data?.legs ?? []) {
+        if (leg.osrmGeometry) m.set(`${leg.parentTripId}:${leg.seq}`, leg.osrmGeometry);
+      }
+    }
+    return m;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fingerprint]);
 }
 
 /** One Cairo day of history — for consumers (audit replay) that window a

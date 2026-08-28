@@ -89,9 +89,14 @@ export const trackingApi = {
 
   /** One Cairo calendar day of history — the unit of caching and fetching.
    *  MessagePack on the wire: a day is ~64 KB as JSON, much less packed. */
-  async historyDay(vehicleId: string, day: string, refresh?: boolean): Promise<HistoryDay> {
+  async historyDay(
+    vehicleId: string,
+    day: string,
+    opts?: { refresh?: boolean; optimal?: boolean },
+  ): Promise<HistoryDay> {
     const params = new URLSearchParams({ date: day, format: 'msgpack' });
-    if (refresh) params.set('refresh', 'true');
+    if (opts?.refresh) params.set('refresh', 'true');
+    if (opts?.optimal) params.set('include', 'optimal');
     const res = await apiClientEtit.get(
       `${PREFIX}/vehicles/${encodeURIComponent(vehicleId)}/history?${params}`,
       { responseType: 'arraybuffer', headers: { Accept: 'application/msgpack' } },
@@ -121,8 +126,8 @@ export const trackingKeys = {
   all: ['tracking'] as const,
   vehicles: () => [...trackingKeys.all, 'vehicles'] as const,
   live: () => [...trackingKeys.all, 'live'] as const,
-  day: (vehicleId: string, day: string) =>
-    [...trackingKeys.all, 'day', vehicleId, day] as const,
+  day: (vehicleId: string, day: string, optimal = false) =>
+    [...trackingKeys.all, 'day', vehicleId, day, optimal ? 'optimal' : 'base'] as const,
   summary: (vehicleId: string, from: string, to: string) =>
     [...trackingKeys.all, 'summary', vehicleId, from, to] as const,
 };

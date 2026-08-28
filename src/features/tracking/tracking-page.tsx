@@ -10,6 +10,7 @@ import {
   dayOfMs,
   prefetchHistoryDays,
   useHistory,
+  useOptimalLegs,
   useRangeSummary,
 } from './use-history';
 import { TrackingMap, type TrackingMapHandle } from './map/tracking-map';
@@ -78,6 +79,12 @@ export default function TrackingPage() {
   const [hiddenIds, setHiddenIds] = React.useState<Set<string>>(loadHidden);
   const [showStops, setShowStops] = React.useState(true);
   const [showIgnitions, setShowIgnitions] = React.useState(true);
+  // Places on by default, Legs off — the brief's call.
+  const [showPins, setShowPins] = React.useState(true);
+  const [showLegs, setShowLegs] = React.useState(false);
+  const [activeLegId, setActiveLegId] = React.useState<string | null>(null);
+  // Optimal geometries load only once a leg is activated.
+  const optimalGeometries = useOptimalLegs(historyRange, activeLegId !== null);
   const [playing, setPlaying] = React.useState(false);
   const [follow, setFollow] = React.useState(true);
   const [speed, setSpeed] = React.useState(16);
@@ -163,6 +170,11 @@ export default function TrackingPage() {
             stops: history.stops,
             sensors: history.sensors,
             pins: history.pins,
+            legs: history.legs,
+            showPins,
+            showLegs,
+            activeLegId,
+            optimalGeometries,
             cursorDay,
             showStops,
             showIgnitions,
@@ -173,7 +185,7 @@ export default function TrackingPage() {
       mapRef.current?.setCursor(cursor.get() || history.track.startMs);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [historyRange?.vehicleId, historyRange?.from, historyRange?.to, history, cursorDay, showStops, showIgnitions]);
+  }, [historyRange?.vehicleId, historyRange?.from, historyRange?.to, history, cursorDay, showStops, showIgnitions, showPins, showLegs, activeLegId, optimalGeometries]);
 
   // Pause → the moment becomes a link (debounced).
   React.useEffect(() => {
@@ -229,6 +241,7 @@ export default function TrackingPage() {
   );
 
   const exitHistory = React.useCallback(() => {
+    setActiveLegId(null);
     setPlaying(false);
     writeUrl({ mode: 'live', from: null, to: null, cursorMs: null });
   }, [writeUrl]);
@@ -274,6 +287,10 @@ export default function TrackingPage() {
           setPanelOpen(false);
         }}
         onUserPan={() => setFollow(false)}
+        onActivateLeg={(id) => {
+          setShowLegs(true);
+          setActiveLegId(id);
+        }}
         className="absolute inset-0"
       />
 
@@ -420,6 +437,22 @@ export default function TrackingPage() {
             onToggleFollow={() => setFollow((f) => !f)}
             onToggleStops={() => setShowStops((v) => !v)}
             onToggleIgnitions={() => setShowIgnitions((v) => !v)}
+            showPins={showPins}
+            onTogglePins={() => setShowPins((v) => !v)}
+            showLegs={showLegs}
+            onToggleLegs={() =>
+              setShowLegs((v) => {
+                if (v) setActiveLegId(null);
+                return !v;
+              })
+            }
+            activeLegId={activeLegId}
+            onActivateLeg={(id) => {
+              setShowLegs(true);
+              setActiveLegId((prev) => (prev === id ? null : id));
+              const seg = history.legs.find((l) => `${l.leg.parentTripId}:${l.leg.seq}` === id);
+              if (seg && seg.path.length > 1) mapRef.current?.fitTo(seg.path);
+            }}
             onExit={exitHistory}
           />
         ) : composerOpen && selected ? (

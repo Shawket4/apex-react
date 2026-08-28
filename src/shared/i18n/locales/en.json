@@ -2135,6 +2135,8 @@
     "scrub": "Playback position",
     "hour": "hour",
     "minute": "minute",
-    "mapType": "Satellite"
+    "mapType": "Satellite",
+    "places": "Places",
+    "legs": "Legs"
   }
 }

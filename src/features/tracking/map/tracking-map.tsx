@@ -4,7 +4,9 @@ import { GoogleMapsOverlay } from '@deck.gl/google-maps';
 import { STATUS_COLOR, statusGroup, type LiveStatus, type Vehicle } from '../schemas';
 import { buildStaticLayers, buildTailLayer, type HistoryLayerInput } from './layers';
 import { buildMarkerSvg, markerSize } from '@/shared/lib/maps/marker-svg';
-import type { SensorEvent, Stop, TripPin } from '../schemas';
+import type { SensorEvent, Stop } from '../schemas';
+import type { LegSegment } from '../use-history';
+import { legId, type PinCluster } from './layers';
 import { sampleAt } from '../playback';
 
 /* -------------------------------------------------------------------------- */
@@ -40,6 +42,8 @@ interface Props {
   onSelect: (vehicleId: string) => void;
   /** The user grabbed the map — the page usually turns follow off. */
   onUserPan?: () => void;
+  /** A leg segment was tapped on the map. */
+  onActivateLeg?: (legId: string) => void;
   onMapReady?: () => void;
   className?: string;
 }
@@ -138,17 +142,46 @@ function fmtDwell(secs: number): string {
   return h > 0 ? `${h}h ${mm}m` : `${mm}m`;
 }
 
-function pinInfoHtml(pin: TripPin, kindLabel: string): string {
+/** One marker can stand for several back-to-back visits — list them all. */
+function pinInfoHtml(cluster: PinCluster): string {
+  const head = cluster.visits[0];
   const rows = [
-    `<div style="font-weight:700">${esc(pin.name)}</div>`,
-    `<div style="color:#6b7280">${esc(kindLabel)}${pin.parentTripId ? ` · #${pin.parentTripId}` : ''}</div>`,
-    pin.arrive ? `<div>▾ ${infoTimeFmt.format(pin.arrive)}</div>` : '',
-    pin.depart ? `<div>▴ ${infoTimeFmt.format(pin.depart)}</div>` : '',
-    pin.dwellSecs != null && pin.dwellSecs > 0
-      ? `<div style="font-weight:600">${fmtDwell(pin.dwellSecs)}</div>`
+    `<div style="font-weight:700">${esc(head.name)}</div>`,
+    `<div style="color:#6b7280">${esc(cluster.kind)}</div>`,
+    ...cluster.visits.map((pin) => {
+      const bits = [
+        pin.parentTripId ? `#${pin.parentTripId}` : '',
+        pin.arrive ? `▾ ${infoTimeFmt.format(pin.arrive)}` : '',
+        pin.depart ? `▴ ${infoTimeFmt.format(pin.depart)}` : '',
+        pin.dwellSecs != null && pin.dwellSecs > 0
+          ? `<b>${fmtDwell(pin.dwellSecs)}</b>`
+          : '',
+      ].filter(Boolean);
+      return `<div>${bits.join(' · ')}</div>`;
+    }),
+  ];
+  return `<div style="font:12px system-ui;display:grid;gap:2px;min-width:140px;user-select:none">${rows.join('')}</div>`;
+}
+
+function legInfoHtml(seg: LegSegment): string {
+  const l = seg.leg;
+  const km =
+    l.actualKm != null
+      ? `${l.actualKm.toFixed(1)} km${l.osrmKm != null ? ` / ${l.osrmKm.toFixed(1)} km` : ''}`
+      : '';
+  const secs = (v: number | null | undefined) => (v != null ? fmtDwell(v) : '');
+  const rows = [
+    `<div style="font-weight:700">${esc(l.fromName ?? '—')} → ${esc(l.toName ?? '—')}</div>`,
+    `<div style="color:#6b7280">${esc(l.legType)} · #${l.parentTripId}·${l.seq}</div>`,
+    `<div>${infoTimeFmt.format(l.depart)} → ${infoTimeFmt.format(l.arrive)}</div>`,
+    km ? `<div><b>${km}</b>${l.distanceRatio != null ? ` · ×${l.distanceRatio.toFixed(2)}` : ''}</div>` : '',
+    l.actualSecs != null ? `<div>${secs(l.actualSecs)}${l.osrmSecs != null ? ` / ${secs(l.osrmSecs)}` : ''}</div>` : '',
+    l.offRoutePct != null ? `<div style="color:#6b7280">off-route ${Math.round(l.offRoutePct)}%</div>` : '',
+    seg.cutStart || seg.cutEnd
+      ? `<div style="color:#b45309">⟷ continues beyond the loaded range</div>`
       : '',
   ];
-  return `<div style="font:12px system-ui;display:grid;gap:2px;min-width:120px;user-select:none">${rows.join('')}</div>`;
+  return `<div style="font:12px system-ui;display:grid;gap:2px;max-width:240px;user-select:none">${rows.join('')}</div>`;
 }
 
 function sensorInfoHtml(ev: SensorEvent): string {
@@ -161,7 +194,7 @@ function sensorInfoHtml(ev: SensorEvent): string {
 }
 
 export const TrackingMap = React.forwardRef<TrackingMapHandle, Props>(
-  function TrackingMap({ onSelect, onUserPan, onMapReady, className }, ref) {
+  function TrackingMap({ onSelect, onUserPan, onActivateLeg, onMapReady, className }, ref) {
     const containerRef = React.useRef<HTMLDivElement>(null);
     const mapRef = React.useRef<google.maps.Map | null>(null);
     const overlayRef = React.useRef<GoogleMapsOverlay | null>(null);
@@ -180,9 +213,11 @@ export const TrackingMap = React.forwardRef<TrackingMapHandle, Props>(
     const pickAtRef = React.useRef(0);
     const onSelectRef = React.useRef(onSelect);
     const onUserPanRef = React.useRef(onUserPan);
+    const onActivateLegRef = React.useRef(onActivateLeg);
     React.useEffect(() => {
       onSelectRef.current = onSelect;
       onUserPanRef.current = onUserPan;
+      onActivateLegRef.current = onActivateLeg;
     });
 
     const staticLayersRef = React.useRef<ReturnType<typeof buildStaticLayers>>([]);
@@ -376,14 +411,19 @@ export const TrackingMap = React.forwardRef<TrackingMapHandle, Props>(
               map.setZoom(Math.max(map.getZoom() ?? 0, 16));
               return;
             }
+            if (info.layer.id === 'legs' || info.layer.id === 'legs-garage') {
+              onActivateLegRef.current?.(legId(info.object as LegSegment));
+            }
             const html =
               info.layer.id === 'stops'
                 ? stopInfoHtml(info.object as Stop)
                 : info.layer.id === 'sensors'
                   ? sensorInfoHtml(info.object as SensorEvent)
                   : info.layer.id === 'trip-pins'
-                    ? pinInfoHtml(info.object as TripPin, (info.object as TripPin).kind)
-                    : null;
+                    ? pinInfoHtml(info.object as PinCluster)
+                    : info.layer.id === 'legs' || info.layer.id === 'legs-garage'
+                      ? legInfoHtml(info.object as LegSegment)
+                      : null;
             if (html && infoRef.current) {
               pickAtRef.current = performance.now();
               infoRef.current.setContent(html);

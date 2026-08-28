@@ -7,12 +7,13 @@
  */
 
 import { IconLayer, PathLayer } from '@deck.gl/layers';
+import { PathStyleExtension } from '@deck.gl/extensions';
 import { TripsLayer } from '@deck.gl/geo-layers';
 import type { Layer } from '@deck.gl/core';
 import { buildMarkerSvg, markerSize } from '@/shared/lib/maps/marker-svg';
 import type { MarkerKind } from '@/shared/lib/maps/types';
 import type { SensorEvent, Stop, TripPin } from '../schemas';
-import type { DayTrail, ReplayTrack } from '../use-history';
+import type { DayTrail, LegSegment, ReplayTrack } from '../use-history';
 
 export interface HistoryLayerInput {
   trails: DayTrail[];
@@ -21,6 +22,14 @@ export interface HistoryLayerInput {
   sensors: SensorEvent[];
   /** Audit-matched place visits — terminals, drop-offs, garages. */
   pins: TripPin[];
+  /** Audit legs with sliced segments. */
+  legs: LegSegment[];
+  showPins: boolean;
+  showLegs: boolean;
+  /** `parentTripId:seq` of the activated leg, if any. */
+  activeLegId: string | null;
+  /** polyline5 optimal geometries by leg id (loaded on demand). */
+  optimalGeometries: Map<string, string>;
   /** Cairo day under the replay cursor — its trail draws full-strength. */
   cursorDay: string | null;
   showStops: boolean;
@@ -37,6 +46,38 @@ const PIN_COLORS: Record<string, string> = {
   dropoff: '#d97706',
   garage: '#6b7280',
 };
+/** Leg palette, cycled by seq. Garage legs draw dashed instead. */
+const LEG_PALETTE: [number, number, number][] = [
+  [59, 130, 246],
+  [139, 92, 246],
+  [5, 150, 105],
+  [217, 119, 6],
+  [220, 38, 38],
+  [8, 145, 178],
+];
+export const legId = (l: LegSegment) => `${l.leg.parentTripId}:${l.leg.seq}`;
+export function legColor(seg: LegSegment): [number, number, number] {
+  return LEG_PALETTE[Math.abs(seg.leg.seq) % LEG_PALETTE.length];
+}
+
+/** Pins standing on ~the same spot (back-to-back visits) merge into ONE
+ *  marker whose tooltip lists every visit. Data stays untouched. */
+export interface PinCluster {
+  lat: number;
+  lng: number;
+  kind: string;
+  visits: TripPin[];
+}
+export function clusterPins(pins: TripPin[]): PinCluster[] {
+  const byPos = new Map<string, PinCluster>();
+  for (const pin of pins) {
+    const key = `${pin.lat.toFixed(4)},${pin.lng.toFixed(4)}`; // ~11 m
+    const existing = byPos.get(key);
+    if (existing) existing.visits.push(pin);
+    else byPos.set(key, { lat: pin.lat, lng: pin.lng, kind: pin.kind, visits: [pin] });
+  }
+  return [...byPos.values()];
+}
 
 /** Replay tail length in seconds of track time. */
 const TAIL_SECS = 45 * 60;
@@ -135,11 +176,82 @@ export function buildStaticLayers(input: HistoryLayerInput): Layer[] {
     );
   }
 
-  if (input.pins.length > 0) {
+  if (input.showLegs && input.legs.length > 0) {
+    const solid = input.legs.filter((l) => l.leg.legType !== 'garage' && l.path.length > 1);
+    const dashed = input.legs.filter((l) => l.leg.legType === 'garage' && l.path.length > 1);
+    const paint = (d: LegSegment): [number, number, number, number] => {
+      const [r, g, b] = legColor(d);
+      const dim = input.activeLegId !== null && legId(d) !== input.activeLegId;
+      return [r, g, b, dim ? 70 : 240];
+    };
+    const width = (d: LegSegment) =>
+      input.activeLegId !== null && legId(d) === input.activeLegId ? 6 : 4.5;
+    if (solid.length > 0) {
+      layers.push(
+        new PathLayer<LegSegment>({
+          id: 'legs',
+          data: solid,
+          getPath: (d) => d.path,
+          getColor: paint,
+          getWidth: width,
+          widthUnits: 'pixels',
+          widthMinPixels: 3,
+          capRounded: true,
+          jointRounded: true,
+          pickable: true,
+          updateTriggers: { getColor: input.activeLegId, getWidth: input.activeLegId },
+        }),
+      );
+    }
+    if (dashed.length > 0) {
+      layers.push(
+        new PathLayer<LegSegment>({
+          id: 'legs-garage',
+          data: dashed,
+          getPath: (d: LegSegment) => d.path,
+          getColor: paint,
+          getWidth: width,
+          widthUnits: 'pixels',
+          widthMinPixels: 3,
+          capRounded: true,
+          jointRounded: true,
+          pickable: true,
+          getDashArray: [8, 6],
+          dashJustified: true,
+          extensions: [new PathStyleExtension({ dash: true })],
+          updateTriggers: { getColor: input.activeLegId, getWidth: input.activeLegId },
+        } as never),
+      );
+    }
+
+    /* The activated leg's OSRM optimal — dashed green over everything. */
+    const optimal =
+      input.activeLegId !== null ? input.optimalGeometries.get(input.activeLegId) : undefined;
+    if (optimal) {
+      layers.push(
+        new PathLayer<{ path: [number, number][] }>({
+          id: 'leg-optimal',
+          data: [{ path: decodePolyline5ToLngLat(optimal) }],
+          getPath: (d: { path: [number, number][] }) => d.path,
+          getColor: [22, 163, 74, 230],
+          getWidth: 4,
+          widthUnits: 'pixels',
+          widthMinPixels: 2,
+          capRounded: true,
+          jointRounded: true,
+          getDashArray: [6, 5],
+          dashJustified: true,
+          extensions: [new PathStyleExtension({ dash: true })],
+        } as never),
+      );
+    }
+  }
+
+  if (input.showPins && input.pins.length > 0) {
     layers.push(
-      new IconLayer<TripPin>({
+      new IconLayer<PinCluster>({
         id: 'trip-pins',
-        data: input.pins,
+        data: clusterPins(input.pins),
         getPosition: (d) => [d.lng, d.lat],
         getIcon: (d) => icon('pin', PIN_COLORS[d.kind] ?? PIN_COLORS.dropoff),
         getSize: markerSize('pin').height,
@@ -150,6 +262,31 @@ export function buildStaticLayers(input: HistoryLayerInput): Layer[] {
   }
 
   return layers;
+}
+
+/** polyline5 → [lng, lat][] (the audit stores optimal routes as polyline5). */
+function decodePolyline5ToLngLat(encoded: string): [number, number][] {
+  const out: [number, number][] = [];
+  let index = 0;
+  let lat = 0;
+  let lng = 0;
+  while (index < encoded.length) {
+    for (const which of [0, 1] as const) {
+      let result = 0;
+      let shift = 0;
+      let b: number;
+      do {
+        b = encoded.charCodeAt(index++) - 63;
+        result |= (b & 0x1f) << shift;
+        shift += 5;
+      } while (b >= 0x20);
+      const delta = result & 1 ? ~(result >> 1) : result >> 1;
+      if (which === 0) lat += delta;
+      else lng += delta;
+    }
+    out.push([lng / 1e5, lat / 1e5]);
+  }
+  return out;
 }
 
 /**
