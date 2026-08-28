@@ -1,3 +1,4 @@
+import { decode as msgpackDecode } from '@msgpack/msgpack';
 import { apiClient, apiClientRust } from '@/shared/api/client';
 import {
   tripListResponseSchema,
@@ -44,12 +45,21 @@ export const tripApi = {
    * whole reason this one call moved off Go while its siblings below did not.
    * Rows carry `revenue` and the `allocated_*` fields for permission 4 and
    * omit them entirely otherwise.
+   *
+   * MessagePack rather than JSON: every row nests its receipt steps and, for a
+   * container, its parent header with that parent's scanned receipts, so the
+   * keys repeat heavily and the binary encoding is markedly smaller. It also
+   * round-trips floats exactly, where JSON loses the last bit of an f64 —
+   * which matters for money.
    */
   async list(params: TripListParams): Promise<TripListResponse> {
-    const { data } = await apiClientRust.get('/api/v1/trips', {
-      params: listParams(params),
+    const response = await apiClientRust.get('/api/v1/trips', {
+      params: { ...listParams(params), format: 'msgpack' },
+      responseType: 'arraybuffer',
+      headers: { Accept: 'application/msgpack' },
     });
-    return tripListResponseSchema.parse(data);
+    const decoded = msgpackDecode(new Uint8Array(response.data as ArrayBuffer));
+    return tripListResponseSchema.parse(decoded);
   },
 
   /** Fetch a single trip + its route/terminal coordinates for the map dialog. */

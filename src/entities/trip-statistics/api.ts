@@ -50,9 +50,12 @@ export const tripStatisticsApi = {
     if (params.fee != null) query.fee = params.fee;
     if (params.routeName) query.route_name = params.routeName;
 
-    const { data } = await apiClientRust.get('/api/v1/trip-statistics/route-days', {
-      params: query,
+    const response = await apiClientRust.get('/api/v1/trip-statistics/route-days', {
+      params: { ...query, format: 'msgpack' },
+      responseType: 'arraybuffer',
+      headers: { Accept: 'application/msgpack' },
     });
-    return routeDaysResponseSchema.parse(data).data;
+    const decoded = msgpackDecode(new Uint8Array(response.data as ArrayBuffer));
+    return routeDaysResponseSchema.parse(decoded).data;
   },
 };
