@@ -1817,7 +1817,10 @@
       "actual": "Actual",
       "optimal": "Optimal",
       "dropoff": "Drop-off",
-      "leg": "Leg {{seq}}"
+      "leg": "Leg {{seq}}",
+      "orderTitle": "A shorter delivery order existed",
+      "orderDriven": "Driven",
+      "orderOptimal": "Optimal"
     },
     "toast": {
       "reviewSuccess": "Marked as reviewed",

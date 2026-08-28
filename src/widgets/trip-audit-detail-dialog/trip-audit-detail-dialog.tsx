@@ -808,6 +808,52 @@ function FlagDetails({ flag }: { flag: TripFlag }) {
         </p>
       );
     }
+    case 'suboptimal_order': {
+      const drivenOrder = Array.isArray(details.driven_order)
+        ? (details.driven_order as unknown[]).filter((x): x is string => typeof x === 'string')
+        : [];
+      const optimalOrder = Array.isArray(details.optimal_order)
+        ? (details.optimal_order as unknown[]).filter((x): x is string => typeof x === 'string')
+        : [];
+      const savings = asNumber(details.savings_km);
+      const OrderChips = ({ names, tone }: { names: string[]; tone: 'muted' | 'good' }) => (
+        <span className="inline-flex flex-wrap items-center gap-1">
+          {names.map((n, i) => (
+            <React.Fragment key={`${n}-${i}`}>
+              {i > 0 && <span className="text-muted-foreground">←</span>}
+              <span
+                dir="auto"
+                className={
+                  tone === 'good'
+                    ? 'rounded bg-emerald-500/10 px-1.5 py-0.5 text-emerald-700 dark:text-emerald-400'
+                    : 'rounded bg-muted px-1.5 py-0.5'
+                }
+              >
+                {n}
+              </span>
+            </React.Fragment>
+          ))}
+        </span>
+      );
+      return (
+        <div className="space-y-1.5 rounded-md border border-amber-500/40 bg-amber-500/5 p-2 text-sm">
+          <p className="font-medium text-amber-700 dark:text-amber-400">
+            {t('tripAudit.flagDetails.orderTitle', 'A shorter delivery order existed')}
+            {savings != null && (
+              <span dir="ltr"> (−{formatKm(savings)} km)</span>
+            )}
+          </p>
+          <p className="text-muted-foreground">
+            {t('tripAudit.flagDetails.orderDriven', 'Driven')}:{' '}
+            <OrderChips names={drivenOrder} tone="muted" />
+          </p>
+          <p className="text-muted-foreground">
+            {t('tripAudit.flagDetails.orderOptimal', 'Optimal')}:{' '}
+            <OrderChips names={optimalOrder} tone="good" />
+          </p>
+        </div>
+      );
+    }
     case 'skipped_delivery': {
       const dropOff = asString(details.drop_off_point);
       const reason = asString(details.reason);

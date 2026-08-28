@@ -1825,7 +1825,10 @@
       "actual": "الفعلي",
       "optimal": "الأمثل",
       "dropoff": "نقطة التسليم",
-      "leg": "المرحلة {{seq}}"
+      "leg": "المرحلة {{seq}}",
+      "orderTitle": "كان هناك ترتيب تسليم أقصر",
+      "orderDriven": "الفعلي",
+      "orderOptimal": "الأمثل"
     },
     "toast": {
       "reviewSuccess": "تم وضع علامة تمت المراجعة",
