@@ -464,7 +464,8 @@
       "status": "Status",
       "tank": "Tank",
       "terminal": "Terminal",
-      "vehicleDriver": "Vehicle / Driver"
+      "vehicleDriver": "Vehicle / Driver",
+      "revenue": "Revenue"
     },
     "fields": {
       "company": "Company",
@@ -889,6 +890,14 @@
       "invalidTooltip": "Receipt number doesn't follow the terminal's serialization",
       "overridden": "Overridden",
       "overriddenTooltip": "Receipt doesn't follow the terminal's serialization — overridden by user"
+    },
+    "revenue": {
+      "breakdownLabel": "Show how this revenue is made up",
+      "base": "This trip",
+      "rentalShare": "Share of car rental",
+      "vat": "VAT",
+      "total": "Total",
+      "shareHint": "Car rental is charged per car, not per trip, so this trip carries a share of it. The share depends on the date range you have selected."
     }
   },
   "oilChanges": {

@@ -33,8 +33,7 @@ import type {
   RouteStat,
   TripStatisticsParams,
 } from '@/entities/trip-statistics/schemas';
-import { useAllTripsInRange } from '@/entities/trip/queries';
-import type { Trip } from '@/entities/trip/schemas';
+import { useRouteDays } from '@/entities/trip-statistics/queries';
 
 interface TripsStatisticsCompaniesProps {
   companies: CompanyStat[];
@@ -833,49 +832,9 @@ function RouteBreakdownPanel({
  *   3. per-trip fee equals the route fee (Watanya fee-tier routes)
  *   4. route named after the drop-off point / terminal (fallback)
  */
-function matchTripsToRoute(
-  route: RouteStat,
-  trips: Trip[],
-  company: string,
-): Trip[] {
-  const pool = company ? trips.filter((t) => t.company === company) : trips;
-
-  if (route.terminal && route.drop_off_point) {
-    return pool.filter(
-      (t) =>
-        t.terminal === route.terminal &&
-        t.drop_off_point === route.drop_off_point,
-    );
-  }
-
-  if (route.terminal) {
-    return pool.filter((t) => t.terminal === route.terminal);
-  }
-
-  if (route.fee != null && route.fee > 0) {
-    const byFee = pool.filter((t) => (t.fee || 0) === route.fee);
-    if (byFee.length > 0) return byFee;
-  }
-
-  return pool.filter(
-    (t) =>
-      t.drop_off_point === route.route_name ||
-      t.terminal === route.route_name,
-  );
-}
-
 /* -------------------------------------------------------------------------- */
 /* Days sub-table (level 3, per-day view) — inset under a route row            */
 /* -------------------------------------------------------------------------- */
-
-interface DayRow {
-  date: string;
-  trips: number;
-  volume: number;
-  distance: number;
-  revenue: number;
-  carCount: number;
-}
 
 function DaysSubTable({
   route,
@@ -889,46 +848,26 @@ function DaysSubTable({
   hasFinancialAccess: boolean;
 }) {
   const { t } = useTranslation();
+
+  // Aggregated server-side. This used to download every trip in the range and
+  // group them here, which truncated at ten thousand rows and summed
+  // `trip.revenue || trip.fee` as revenue — and `fee` is a fee BAND NUMBER for
+  // Watanya, not money.
   const {
-    data: trips,
+    data: days = [],
     isLoading,
     isError,
-  } = useAllTripsInRange({
-    company: filters.company ?? '',
+  } = useRouteDays({
+    company: filters.company || company,
     startDate: filters.startDate ?? '',
     endDate: filters.endDate ?? '',
+    // Sent as-is; the server applies the same precedence the old client-side
+    // matcher did (terminal + drop-off, then terminal, then fee, then name).
+    terminal: route.terminal,
+    dropOffPoint: route.drop_off_point,
+    fee: route.fee,
+    routeName: route.route_name,
   });
-
-  const days = React.useMemo<DayRow[]>(() => {
-    if (!trips) return [];
-    const matched = matchTripsToRoute(route, trips, company);
-
-    const byDate = new Map<
-      string,
-      Omit<DayRow, 'date' | 'carCount'> & { cars: Set<string> }
-    >();
-    for (const trip of matched) {
-      const date = (trip.date || '').slice(0, 10);
-      if (!date) continue;
-      const day =
-        byDate.get(date) ??
-        { trips: 0, volume: 0, distance: 0, revenue: 0, cars: new Set<string>() };
-      day.trips += 1;
-      day.volume += trip.tank_capacity || 0;
-      day.distance += trip.mileage || trip.distance || 0;
-      day.revenue += trip.revenue || trip.fee || 0;
-      day.cars.add(trip.car_no_plate);
-      byDate.set(date, day);
-    }
-
-    return [...byDate.entries()]
-      .map(([date, { cars, ...rest }]) => ({
-        date,
-        ...rest,
-        carCount: cars.size,
-      }))
-      .sort((a, b) => b.date.localeCompare(a.date));
-  }, [trips, route, company]);
 
   if (isLoading) {
     return (
@@ -1016,7 +955,7 @@ function DaysSubTable({
                 {formatNumber(day.distance, 2)}
               </td>
               <td className="px-3 py-1.5 text-end tabular-nums text-muted-foreground">
-                {day.carCount}
+                {day.car_count}
               </td>
               {hasFinancialAccess && (
                 <td className="px-3 py-1.5 text-end tabular-nums font-semibold">

@@ -101,6 +101,48 @@ export const routeStatSchema = z
 export type RouteStat = z.infer<typeof routeStatSchema>;
 
 // -----------------------------------------------------------------------------
+// Per-route daily breakdown (the expandable panel under a route row)
+// -----------------------------------------------------------------------------
+
+/**
+ * One day of a single route's activity, aggregated server-side.
+ *
+ * This used to be computed in the browser from up to ten thousand raw trips.
+ * Two things were wrong with that: the fetch truncated silently at that limit,
+ * and the revenue it summed was `trip.revenue || trip.fee` — the trips table's
+ * `revenue` column is not maintained, so it fell through to `fee`, which for
+ * Watanya is a fee BAND NUMBER (1-15) rather than money.
+ */
+export const routeDaySchema = z.object({
+  /** YYYY-MM-DD */
+  date: z.string(),
+  /** Logical trips: a multi-container trip counts once. */
+  trips: z.number().default(0),
+  volume: z.number().default(0),
+  distance: z.number().default(0),
+  /** Base revenue — sums to the route row's total_revenue. */
+  revenue: z.number().default(0),
+  /** Base plus this day's share of car rental and VAT. */
+  revenue_total: z.number().default(0),
+  car_count: z.number().default(0),
+});
+export type RouteDay = z.infer<typeof routeDaySchema>;
+
+export const routeDaysResponseSchema = z.object({
+  data: z.array(routeDaySchema).default([]),
+});
+
+export interface RouteDaysParams {
+  company: string;
+  startDate: string;
+  endDate: string;
+  terminal?: string;
+  dropOffPoint?: string;
+  fee?: number;
+  routeName?: string;
+}
+
+// -----------------------------------------------------------------------------
 // Group-level detail (inside companyStat.details)
 // -----------------------------------------------------------------------------
 

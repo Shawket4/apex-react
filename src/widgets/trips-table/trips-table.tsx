@@ -34,6 +34,8 @@ import { Button } from '@/shared/ui/button';
 import { Skeleton } from '@/shared/ui/skeleton';
 import { EmptyState } from '@/shared/ui/empty-state';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip';
+import { Popover, PopoverContent, PopoverTrigger } from '@/shared/ui/popover';
+import { usePermissions } from '@/shared/hooks/use-permissions';
 import { format, formatCurrency, formatNumber } from '@/shared/lib/format';
 import { cn } from '@/shared/lib/cn';
 import { TripsRowExpanded } from './trips-row-expanded';
@@ -178,6 +180,10 @@ export function TripsTable({
   emptyAction,
 }: TripsTableProps) {
   const { t } = useTranslation();
+  // Permission 4 sees money. The backend omits the fields below that, so this
+  // only governs whether the COLUMN exists — an empty result set still has to
+  // render the right number of headers.
+  const { isAdmin: showRevenue } = usePermissions();
 
   // Group into standalone / parent buckets, preserve date-desc order.
   const items = React.useMemo<TripListItem[]>(() => {
@@ -295,6 +301,11 @@ export function TripsTable({
               <th className="hidden h-11 px-4 text-end font-medium lg:table-cell">
                 {t('trips.columns.distanceFee')}
               </th>
+              {showRevenue && (
+                <th className="hidden h-11 px-4 text-end font-medium lg:table-cell">
+                  {t('trips.columns.revenue')}
+                </th>
+              )}
               <th className="hidden h-11 px-4 text-start font-medium md:table-cell">
                 {t('trips.columns.status')}
               </th>
@@ -366,6 +377,7 @@ function TripMobileCard({
   index?: number;
 }) {
   const { t } = useTranslation();
+  const { isAdmin: showRevenue } = usePermissions();
   const distance = trip.mileage || trip.distance || 0;
 
   return (
@@ -491,7 +503,9 @@ function TripMobileCard({
               <DollarSign className="h-4 w-4" />
             </div>
             <span className="text-lg font-black tracking-tight">
-              {formatCurrency(trip.fee)}
+              {formatCurrency(showRevenue && trip.allocated_total != null
+                ? trip.allocated_total
+                : trip.fee)}
             </span>
           </div>
         </div>
@@ -540,8 +554,14 @@ function TripGroupCard({
   onOpenReceiptBatch: (parentId: number) => void;
 }) {
   const { t } = useTranslation();
+  const { isAdmin: showRevenue } = usePermissions();
   const { parentId, parentTrip, containers } = item;
   const first = containers[0];
+  // A group's revenue is its containers'. Stays undefined when the caller may
+  // not see money, so the card falls back to the fee rather than showing zero.
+  const groupRevenue = showRevenue
+    ? sumRevenue(containers, 'allocated_total')
+    : undefined;
   const totalCapacity = containers.reduce(
     (sum, c) => sum + (c.tank_capacity || 0),
     0,
@@ -638,7 +658,7 @@ function TripGroupCard({
                 <DollarSign className="h-4 w-4" />
               </div>
               <span className="text-lg font-black tracking-tight">
-                {formatCurrency(totalFee)}
+                {formatCurrency(groupRevenue ?? totalFee)}
               </span>
             </div>
           </div>
@@ -688,6 +708,10 @@ function StandaloneRow({
   onOpenMap,
 }: StandaloneRowProps) {
   const { t } = useTranslation();
+  // Permission 4 sees money. The backend omits the fields below that, so this
+  // only governs whether the COLUMN exists — an empty result set still has to
+  // render the right number of headers.
+  const { isAdmin: showRevenue } = usePermissions();
   const distance = trip.mileage || trip.distance || 0;
 
   return (
@@ -745,6 +769,16 @@ function StandaloneRow({
         <td className="hidden px-4 py-3 align-middle text-end lg:table-cell">
           <DistanceFee distance={distance} fee={trip.fee} />
         </td>
+        {showRevenue && (
+          <td className="hidden px-4 py-3 align-middle text-end lg:table-cell">
+            <RevenueCell
+              base={trip.revenue}
+              rental={trip.allocated_rental}
+              vat={trip.allocated_vat}
+              total={trip.allocated_total}
+            />
+          </td>
+        )}
         <td className="hidden px-4 py-3 align-middle md:table-cell">
           <ReceiptStatusBadge trip={trip} />
         </td>
@@ -758,7 +792,7 @@ function StandaloneRow({
       </tr>
       {isExpanded && (
         <tr className="border-b">
-          <td colSpan={10} className="bg-muted/20 p-0">
+          <td colSpan={showRevenue ? 11 : 10} className="bg-muted/20 p-0">
             <TripsRowExpanded
               trip={trip}
               onOpenReceipt={() => onOpenReceipt(trip.ID)}
@@ -800,6 +834,10 @@ function ParentRows({
   onOpenReceiptBatch,
 }: ParentRowsProps) {
   const { t } = useTranslation();
+  // Permission 4 sees money. The backend omits the fields below that, so this
+  // only governs whether the COLUMN exists — an empty result set still has to
+  // render the right number of headers.
+  const { isAdmin: showRevenue } = usePermissions();
   const { parentId, parentTrip, containers } = item;
   const first = containers[0];
   const totalCapacity = containers.reduce(
@@ -892,6 +930,16 @@ function ParentRows({
         <td className="hidden px-4 py-3 align-middle text-end lg:table-cell">
           <DistanceFee distance={totalDistance} fee={totalFee} />
         </td>
+        {showRevenue && (
+          <td className="hidden px-4 py-3 align-middle text-end lg:table-cell">
+            <RevenueCell
+              base={sumRevenue(containers, 'revenue')}
+              rental={sumRevenue(containers, 'allocated_rental')}
+              vat={sumRevenue(containers, 'allocated_vat')}
+              total={sumRevenue(containers, 'allocated_total')}
+            />
+          </td>
+        )}
         <td className="hidden px-4 py-3 align-middle text-xs text-muted-foreground md:table-cell">
           {/* Parents don't have a single status — containers carry it */}
         </td>
@@ -974,7 +1022,7 @@ function ParentRows({
               </tr>
               {isContainerExpanded && (
                 <tr className="border-b">
-                  <td colSpan={10} className="bg-muted/20 p-0">
+                  <td colSpan={showRevenue ? 11 : 10} className="bg-muted/20 p-0">
                     <TripsRowExpanded
                       trip={container}
                       onOpenReceipt={() => onOpenReceipt(container.ID)}
@@ -1042,6 +1090,111 @@ function RoutePreview({ from, to }: { from: string; to: string }) {
         </span>
       </div>
     </div>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/* Revenue                                                                     */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Sum a revenue field across a group's containers, preserving "not permitted".
+ *
+ * Returns undefined if no container carries the field — which is what a caller
+ * below permission 4 sees, and must not be flattened to a confident zero.
+ */
+export function sumRevenue(trips: Trip[], key: 'revenue' | 'allocated_rental' | 'allocated_vat' | 'allocated_total'): number | undefined {
+  let total: number | undefined;
+  for (const trip of trips) {
+    const value = trip[key];
+    if (value == null) continue;
+    total = (total ?? 0) + value;
+  }
+  return total;
+}
+
+/**
+ * A trip's revenue, with the parts behind a press.
+ *
+ * The headline is the fully-loaded figure, because that is what the trip is
+ * worth. The breakdown matters because only the first line is genuinely the
+ * trip's own: TAQA rents by car-month and Petromin by car-day, so the rental
+ * shown here is this trip's SHARE of a cost several trips incurred together,
+ * and it shifts if the date filter shifts. Presenting that without saying so
+ * would invite someone to read it as a per-trip cost and be wrong.
+ *
+ * A press rather than a hover — this table is used on phones.
+ */
+function RevenueCell({
+  base,
+  rental,
+  vat,
+  total,
+}: {
+  base?: number;
+  rental?: number;
+  vat?: number;
+  total?: number;
+}) {
+  const { t } = useTranslation();
+
+  if (total == null) {
+    return <span className="text-muted-foreground">—</span>;
+  }
+
+  // Nothing shared to explain: Petrol Arrows and Watanya have no car rental,
+  // and Petrol Arrows has no VAT either. Showing an empty breakdown would be
+  // noise, so those rows are a plain figure.
+  const hasParts = (rental ?? 0) !== 0 || (vat ?? 0) !== 0;
+  if (!hasParts) {
+    return (
+      <span className="font-semibold tabular-nums text-success">
+        {formatCurrency(total)}
+      </span>
+    );
+  }
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className="rounded-md px-1 font-semibold tabular-nums text-success underline decoration-dotted underline-offset-4 hover:bg-success/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          aria-label={t('trips.revenue.breakdownLabel')}
+        >
+          {formatCurrency(total)}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-64">
+        <dl className="space-y-1.5 text-sm">
+          <div className="flex items-baseline justify-between gap-4">
+            <dt className="text-muted-foreground">{t('trips.revenue.base')}</dt>
+            <dd className="font-medium tabular-nums">{formatCurrency(base ?? 0)}</dd>
+          </div>
+          {(rental ?? 0) !== 0 && (
+            <div className="flex items-baseline justify-between gap-4">
+              <dt className="text-muted-foreground">{t('trips.revenue.rentalShare')}</dt>
+              <dd className="font-medium tabular-nums">{formatCurrency(rental ?? 0)}</dd>
+            </div>
+          )}
+          {(vat ?? 0) !== 0 && (
+            <div className="flex items-baseline justify-between gap-4">
+              <dt className="text-muted-foreground">{t('trips.revenue.vat')}</dt>
+              <dd className="font-medium tabular-nums">{formatCurrency(vat ?? 0)}</dd>
+            </div>
+          )}
+          <div className="flex items-baseline justify-between gap-4 border-t pt-1.5">
+            <dt className="font-medium">{t('trips.revenue.total')}</dt>
+            <dd className="font-semibold tabular-nums text-success">
+              {formatCurrency(total)}
+            </dd>
+          </div>
+        </dl>
+        <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+          {t('trips.revenue.shareHint')}
+        </p>
+      </PopoverContent>
+    </Popover>
   );
 }
 
@@ -1318,11 +1471,14 @@ function ParentRowActions({
 /* -------------------------------------------------------------------------- */
 
 function SkeletonRows() {
+  // The skeleton spans the same columns the real rows will, so the layout does
+  // not jump when the data lands.
+  const { isAdmin: showRevenue } = usePermissions();
   return (
     <>
       {Array.from({ length: 5 }).map((_, i) => (
         <tr key={i} className="border-b">
-          <td colSpan={10} className="px-4 py-3">
+          <td colSpan={showRevenue ? 11 : 10} className="px-4 py-3">
             <div className="flex items-center gap-3">
               <Skeleton className="h-8 w-8 rounded-md" />
               <div className="flex-1 space-y-2">

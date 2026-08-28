@@ -158,8 +158,25 @@ export const tripSchema = z.object({
   // Financials / distance (both `mileage` and `distance` appear — keep both)
   mileage: z.number().optional().default(0),
   distance: z.number().optional().default(0),
-  revenue: z.number().optional().default(0),
   fee: z.number().optional().default(0),
+
+  /**
+   * Revenue. Present only for permission 4 — the backend omits these keys
+   * entirely below that, rather than sending zeros, so `undefined` means "not
+   * allowed to see" and never "earned nothing". Hence no `.default(0)` here:
+   * defaulting would erase exactly that distinction.
+   *
+   * `revenue` is the trip's own earnings and is a fact about the trip. The
+   * `allocated_*` fields are its SHARE of costs it does not own alone — TAQA
+   * rents by car-month and Petromin by car-day, spread across the trips that
+   * used them. They sum to the statistics totals for the same filters, and they
+   * shift when the date range shifts, which is why the UI labels them as a
+   * share rather than folding them into `revenue`.
+   */
+  revenue: z.number().optional(),
+  allocated_rental: z.number().optional(),
+  allocated_vat: z.number().optional(),
+  allocated_total: z.number().optional(),
 
   // Receipt tracking
   receipt_steps: z.array(receiptStepSchema).nullable().optional(),

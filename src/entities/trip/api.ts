@@ -1,10 +1,9 @@
-import { apiClient } from '@/shared/api/client';
+import { apiClient, apiClientRust } from '@/shared/api/client';
 import {
   tripListResponseSchema,
   tripDetailsResponseSchema,
   parentContainersResponseSchema,
   duplicateDetectionResponseSchema,
-  type Trip,
   type TripListResponse,
   type TripDetailsResponse,
   type ParentContainersResponse,
@@ -14,62 +13,43 @@ import {
 } from './schemas';
 
 /**
- * Build query params for the trip-list endpoints.
+ * Build query params for the trips list.
  *
- * The backend splits list endpoints three ways:
- *   - /api/trips                         (no company, no date range)
- *   - /api/trips/company/:company        (company only)
- *   - /api/trips/date                    (date range, optionally filtered by company)
+ * The Go backend split this three ways — /api/trips, /api/trips/company/:c and
+ * /api/trips/date — because each grew its own handler over time. The Rust
+ * endpoint takes company and date range as ordinary optional filters, so all
+ * three collapse into one call.
  *
- * This helper picks the right URL + params to match the active filter set.
+ * The date range is not only a row filter: it also scopes the window the
+ * allocated revenue is divided over. See `allocated_*` on the Trip schema.
  */
-function resolveListEndpoint(params: TripListParams): {
-  url: string;
-  params: Record<string, string | number>;
-} {
+function listParams(params: TripListParams): Record<string, string | number> {
   const { page, limit, search, missingData, receiptStatus, company, startDate, endDate } = params;
 
   const query: Record<string, string | number> = { page, limit };
   if (search) query.search = search;
   if (missingData) query.missing_data = missingData;
   if (receiptStatus) query.receipt_status = receiptStatus;
-
-  // Date range wins — the date endpoint accepts an optional company filter.
-  if (startDate && endDate) {
-    query.start_date = startDate;
-    query.end_date = endDate;
-    if (company) query.company = company;
-    return { url: '/api/trips/date', params: query };
-  }
-
-  if (company) {
-    return { url: `/api/trips/company/${encodeURIComponent(company)}`, params: query };
-  }
-
-  return { url: '/api/trips', params: query };
+  if (company) query.company = company;
+  if (startDate) query.from = startDate;
+  if (endDate) query.to = endDate;
+  return query;
 }
 
 export const tripApi = {
-  /** List trips with filters, pagination, and optional full-text search. */
-  async list(params: TripListParams): Promise<TripListResponse> {
-    const { url, params: query } = resolveListEndpoint(params);
-    const { data } = await apiClient.get(url, { params: query });
-    return tripListResponseSchema.parse(data);
-  },
-
   /**
-   * Fetch *all* trips matching the current filters in a single call.
-   * Used by the Excel exporter — the backend supports `limit=10000`.
+   * List trips with filters, pagination, and optional full-text search.
+   *
+   * Served by apex-rust, which is where the revenue formulas live — that is the
+   * whole reason this one call moved off Go while its siblings below did not.
+   * Rows carry `revenue` and the `allocated_*` fields for permission 4 and
+   * omit them entirely otherwise.
    */
-  async listAll(params: Omit<TripListParams, 'page' | 'limit'>): Promise<Trip[]> {
-    const { url, params: query } = resolveListEndpoint({
-      ...params,
-      page: 1,
-      limit: 10000,
+  async list(params: TripListParams): Promise<TripListResponse> {
+    const { data } = await apiClientRust.get('/api/v1/trips', {
+      params: listParams(params),
     });
-    const { data } = await apiClient.get(url, { params: query });
-    const parsed = tripListResponseSchema.parse(data);
-    return parsed.data;
+    return tripListResponseSchema.parse(data);
   },
 
   /** Fetch a single trip + its route/terminal coordinates for the map dialog. */
