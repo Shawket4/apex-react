@@ -1242,7 +1242,8 @@
       },
       "overlays": "Overlays",
       "toggleStops": "Stops",
-      "toggleIgnitions": "Ignitions"
+      "toggleIgnitions": "Ignitions",
+      "roadMatched": "Road-matched distance ({{pct}}% GPS coverage)"
     },
     "player": {
       "empty": "Load a history range with at least two timestamped points to enable playback.",

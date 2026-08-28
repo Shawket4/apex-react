@@ -7,17 +7,17 @@ import {
   MapPin,
   Pause,
   RefreshCw,
-  User,
   Zap,
 } from 'lucide-react';
 import { Button } from '@/shared/ui/button';
 import { Skeleton } from '@/shared/ui/skeleton';
 import { cn } from '@/shared/lib/cn';
 import { EtitDateTimeRange } from '@/widgets/etit-datetime-range/etit-datetime-range';
-import type {
-  EtitHistoryResponse,
-  EtitTripSummary,
-  EtitVehicle,
+import {
+  formatSummaryDuration,
+  type EtitHistoryResponse,
+  type EtitTripSummary,
+  type EtitVehicle,
 } from '@/entities/etit-vehicle/schemas';
 
 /* -------------------------------------------------------------------------- */
@@ -160,17 +160,17 @@ function EtitHistoryControlsBase({
             <Stat
               icon={<MapPin className="h-3.5 w-3.5" />}
               label={t('etit.controls.stats.mileage')}
-              value={`${summary.totalMileage} ${t('etit.units.km')}`}
+              value={`${summary.mileageKm.toFixed(1)} ${t('etit.units.km')}`}
             />
             <Stat
               icon={<Clock className="h-3.5 w-3.5" />}
               label={t('etit.controls.stats.activeTime')}
-              value={summary.totalActiveTime || '—'}
+              value={formatSummaryDuration(summary.activeSecs)}
             />
             <Stat
               icon={<Gauge className="h-3.5 w-3.5" />}
               label={t('etit.controls.stats.stops')}
-              value={summary.numberOfStops || '0'}
+              value={String(summary.stopCount)}
             />
           </>
         ) : (
@@ -185,26 +185,28 @@ function EtitHistoryControlsBase({
       {/* Driver / counts */}
       {summary && (
         <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 border-t pt-3 text-[10px] font-medium text-muted-foreground uppercase tracking-wider">
-          <div className="flex items-center gap-1.5 px-2 py-1 bg-muted/30 rounded-md">
-            <User className="h-3 w-3 text-primary/70" />
-            <span className="text-foreground">{summary.driverName || t('etit.controls.unassignedDriver')}</span>
-          </div>
-          {summary.ignitionOnCount && (
+          {summary.ignitionOnCount > 0 && (
             <div className="flex items-center gap-1.5">
               <Zap className="h-3 w-3 text-success/70" />
               <span>{t('etit.controls.ignitionOn')}: <span className="text-foreground font-bold">{summary.ignitionOnCount}</span></span>
             </div>
           )}
-          {summary.ignitionOffCount && (
+          {summary.ignitionOffCount > 0 && (
             <div className="flex items-center gap-1.5">
               <Zap className="h-3 w-3 text-destructive/70" />
               <span>{t('etit.controls.ignitionOff')}: <span className="text-foreground font-bold">{summary.ignitionOffCount}</span></span>
             </div>
           )}
-          {summary.totalIdleTime && summary.totalIdleTime !== '00:00:00' && (
+          {summary.idleSecs > 0 && (
             <div className="flex items-center gap-1.5">
               <Clock className="h-3 w-3 text-yellow-500/70" />
-              <span>{t('etit.controls.idle')}: <span className="text-foreground font-bold">{summary.totalIdleTime}</span></span>
+              <span>{t('etit.controls.idle')}: <span className="text-foreground font-bold">{formatSummaryDuration(summary.idleSecs)}</span></span>
+            </div>
+          )}
+          {summary.disconnectedSecs > 0 && (
+            <div className="flex items-center gap-1.5">
+              <Clock className="h-3 w-3 text-muted-foreground/70" />
+              <span>{t('etit.controls.disconnected')}: <span className="text-foreground font-bold">{formatSummaryDuration(summary.disconnectedSecs)}</span></span>
             </div>
           )}
         </div>

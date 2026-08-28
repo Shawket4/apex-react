@@ -151,17 +151,35 @@ export type EtitHistoryResponse = z.output<typeof etitHistoryResponseSchema>;
 /* Trip summary                                                                */
 /* -------------------------------------------------------------------------- */
 
+/**
+ * Computed locally by the proxy from the same GPS points the map draws —
+ * deterministic per window, never ETIT's lagging summary endpoint.
+ * `distanceMethod` says whether mileage is OSRM road-matched or a raw
+ * chord sum fallback.
+ */
 export const etitTripSummarySchema = z.object({
-  totalMileage: z.string(),
-  totalActiveTime: z.string(),
-  totalPassiveTime: z.string().optional(),
-  totalIdleTime: z.string(),
-  driverName: z.string(),
-  numberOfStops: z.string(),
-  totalDisconnectedTime: z.string().optional(),
-  totalFuelConsumption: z.string(),
-  ignitionOffCount: z.string().optional(),
-  ignitionOnCount: z.string(),
+  mileageKm: z.number(),
+  distanceMethod: z.enum(['matched', 'raw']).catch('raw'),
+  matchCoveragePct: z.number().optional(),
+  activeSecs: z.number(),
+  idleSecs: z.number(),
+  passiveSecs: z.number(),
+  disconnectedSecs: z.number(),
+  stopCount: z.number(),
+  ignitionOnCount: z.number(),
+  ignitionOffCount: z.number(),
+  pointCount: z.number(),
+  from: z.string(),
+  to: z.string(),
 });
 
 export type EtitTripSummary = z.output<typeof etitTripSummarySchema>;
+
+/** 5025 -> "1h 24m"; sub-minute -> "<1m"; 0 -> "0m". */
+export function formatSummaryDuration(secs: number): string {
+  if (secs <= 0) return '0m';
+  if (secs < 60) return '<1m';
+  const h = Math.floor(secs / 3600);
+  const m = Math.floor((secs % 3600) / 60);
+  return h > 0 ? `${h}h ${m}m` : `${m}m`;
+}

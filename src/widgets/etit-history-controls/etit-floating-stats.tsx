@@ -1,8 +1,8 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Clock, Gauge, MapPin, Pause, User, Zap } from 'lucide-react';
+import { Clock, Gauge, MapPin, Pause, Zap } from 'lucide-react';
 import { cn } from '@/shared/lib/cn';
-import type { EtitTripSummary } from '@/entities/etit-vehicle/schemas';
+import { formatSummaryDuration, type EtitTripSummary } from '@/entities/etit-vehicle/schemas';
 
 /* -------------------------------------------------------------------------- */
 /* Floating Stats                                                              */
@@ -52,17 +52,24 @@ export function EtitFloatingStats({
             <Stat
               icon={<MapPin className="h-3.5 w-3.5" />}
               label={t('etit.controls.stats.mileage')}
-              value={`${summary.totalMileage} ${t('etit.units.km')}`}
+              value={`${summary.mileageKm.toFixed(1)} ${t('etit.units.km')}`}
+              hint={
+                summary.distanceMethod === 'matched'
+                  ? t('etit.controls.roadMatched', {
+                      pct: summary.matchCoveragePct?.toFixed(0) ?? '—',
+                    })
+                  : undefined
+              }
             />
             <Stat
               icon={<Clock className="h-3.5 w-3.5" />}
               label={t('etit.controls.stats.activeTime')}
-              value={summary.totalActiveTime || '—'}
+              value={formatSummaryDuration(summary.activeSecs)}
             />
             <Stat
               icon={<Gauge className="h-3.5 w-3.5" />}
               label={t('etit.controls.stats.stops')}
-              value={summary.numberOfStops || '0'}
+              value={String(summary.stopCount)}
             />
           </>
         ) : (
@@ -72,12 +79,22 @@ export function EtitFloatingStats({
         )}
       </div>
 
-      {summary?.driverName && (
-        <div className="flex items-center gap-2 px-2.5 py-1.5 bg-primary/5 rounded-xl border border-primary/10">
-          <User className="h-3 w-3 text-primary shrink-0" />
-          <span className="text-[10px] font-bold text-foreground truncate uppercase tracking-tight">
-            {summary.driverName}
-          </span>
+      {summary && (summary.idleSecs > 0 || summary.disconnectedSecs > 0) && (
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 px-2.5 py-1.5 bg-primary/5 rounded-xl border border-primary/10 text-[10px] font-bold uppercase tracking-tight">
+          {summary.idleSecs > 0 && (
+            <span className="text-muted-foreground">
+              {t('etit.controls.idle')}:{' '}
+              <span className="text-foreground">{formatSummaryDuration(summary.idleSecs)}</span>
+            </span>
+          )}
+          {summary.disconnectedSecs > 0 && (
+            <span className="text-muted-foreground">
+              {t('etit.controls.disconnected')}:{' '}
+              <span className="text-foreground">
+                {formatSummaryDuration(summary.disconnectedSecs)}
+              </span>
+            </span>
+          )}
         </div>
       )}
 
@@ -106,9 +123,21 @@ export function EtitFloatingStats({
   );
 }
 
-function Stat({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+function Stat({
+  icon,
+  label,
+  value,
+  hint,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  hint?: string;
+}) {
   return (
-    <div className="group flex items-center justify-between gap-2 rounded-lg border border-border/40 bg-muted/30 p-2 transition-all hover:bg-muted/50 hover:border-border">
+    <div
+      title={hint}
+      className="group flex items-center justify-between gap-2 rounded-lg border border-border/40 bg-muted/30 p-2 transition-all hover:bg-muted/50 hover:border-border">
       <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground uppercase tracking-tight min-w-0">
         <div className="text-primary group-hover:scale-110 transition-transform shrink-0">
           {icon}
