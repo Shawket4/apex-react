@@ -366,10 +366,12 @@ export function EtitPage() {
   }, [loadedRange, historyDays.merged, urlState.cursorMs]);
 
   // Pausing writes the cursor into the URL, so the moment is shareable.
-  // (Never while playing — that would rewrite history 60×/s.)
+  // Debounced: while playing nothing is written, and a scrub only lands in
+  // the URL once the thumb settles — not on every tick.
   React.useEffect(() => {
-    if (!loadedRange || playing || !cursorSeededRef.current) return;
-    if (currentMs > 0) writeUrl({ cursorMs: currentMs });
+    if (!loadedRange || playing || !cursorSeededRef.current || currentMs <= 0) return;
+    const id = window.setTimeout(() => writeUrl({ cursorMs: currentMs }), 400);
+    return () => window.clearTimeout(id);
   }, [playing, currentMs, loadedRange, writeUrl]);
 
   /* ---- Errors & Status ---- */
