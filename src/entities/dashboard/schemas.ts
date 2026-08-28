@@ -1,0 +1,164 @@
+import { z } from 'zod';
+
+/* -------------------------------------------------------------------------- */
+/* Wire shapes — GET /api/v1/dashboard (apex-rust) and etit-proxy live         */
+/*                                                                            */
+/* Money crosses as decimal STRINGS and is parsed to numbers only at the       */
+/* moment of display. The `money` block is ABSENT below permission 4 — never   */
+/* zeroed — so the schema must not default it into existence.                  */
+/* -------------------------------------------------------------------------- */
+
+export const dashboardMonthSchema = z.object({
+  trips: z.number(),
+  trucks: z.number(),
+  litres: z.number(),
+});
+
+export const categoryOutSchema = z.object({
+  key: z.string(),
+  out: z.string(),
+});
+
+export const dashboardMoneySchema = z.object({
+  revenue: z.string(),
+  /** Same span of the previous month, for a like-for-like delta. */
+  revenue_prev: z.string(),
+  cash_out: z.string(),
+  advances_outstanding: z.string(),
+  advances_count: z.number(),
+  by_category: z.array(categoryOutSchema).default([]),
+});
+
+export const fleetEntrySchema = z.object({
+  /** null = untracked service vehicle. Also the join key to etit's live feed. */
+  etit_id: z.string().nullable(),
+  /** The digits — how the fleet says a truck out loud. */
+  plate_no: z.string(),
+  /** The Arabic letters, secondary on the tile. */
+  plate_ar: z.string(),
+  last_trip_date: z.string().nullable(),
+  days_idle: z.number().nullable(),
+});
+export type FleetEntry = z.infer<typeof fleetEntrySchema>;
+
+export const dashboardExceptionSchema = z.object({
+  key: z.string(),
+  severity: z.string(),
+  count: z.number(),
+  href: z.string(),
+});
+export type DashboardException = z.infer<typeof dashboardExceptionSchema>;
+
+export const dashboardSchema = z.object({
+  as_of: z.string(),
+  month: dashboardMonthSchema,
+  money: dashboardMoneySchema.optional(),
+  fleet: z.array(fleetEntrySchema).default([]),
+  exceptions: z.array(dashboardExceptionSchema).default([]),
+});
+export type Dashboard = z.infer<typeof dashboardSchema>;
+
+/* ─── Drawers ─── */
+
+export const revenueDrawerSchema = z.object({
+  companies: z.array(z.object({ name: z.string(), amount: z.string() })).default([]),
+  daily: z.array(z.object({ date: z.string(), amount: z.string() })).default([]),
+});
+export type RevenueDrawer = z.infer<typeof revenueDrawerSchema>;
+
+export const cashOutDrawerSchema = z.object({
+  by_category: z.array(z.object({ name: z.string(), amount: z.string() })).default([]),
+  largest: z
+    .array(
+      z.object({
+        occurred_at: z.string(),
+        label: z.string(),
+        category: z.string().nullable().optional(),
+        amount: z.string(),
+      }),
+    )
+    .default([]),
+});
+export type CashOutDrawer = z.infer<typeof cashOutDrawerSchema>;
+
+export const tripsDrawerSchema = z.object({
+  companies: z.array(z.object({ name: z.string(), trips: z.number() })).default([]),
+  daily: z.array(z.object({ date: z.string(), trips: z.number() })).default([]),
+});
+export type TripsDrawer = z.infer<typeof tripsDrawerSchema>;
+
+export const advancesDrawerSchema = z.object({
+  parties: z
+    .array(
+      z.object({
+        name: z.string(),
+        kind: z.string().nullable().optional(),
+        total: z.string(),
+        count: z.number(),
+      }),
+    )
+    .default([]),
+});
+export type AdvancesDrawer = z.infer<typeof advancesDrawerSchema>;
+
+/* -------------------------------------------------------------------------- */
+/* etit-proxy — LiveVehicleStatus and the day summary                          */
+/* Contract: etit-proxy-rust API.md §2.2 / §2.6. Field names are camelCase on  */
+/* that service.                                                               */
+/* -------------------------------------------------------------------------- */
+
+export const liveVehicleSchema = z.object({
+  id: z.string(),
+  plate: z.string().nullable().optional(),
+  lat: z.number().optional().default(0),
+  lng: z.number().optional().default(0),
+  speed: z.number().optional().default(0),
+  status: z.number().optional().default(0),
+  statusLabel: z.string().optional().default(''),
+  timestamp: z.string().nullable().optional(),
+  event: z.string().nullable().optional(),
+});
+export type LiveVehicle = z.infer<typeof liveVehicleSchema>;
+
+/** SSE `snapshot` / `update` / one-shot `/vehicles/live` payloads. The stream
+ *  wraps the array in `{count, vehicles}`; the REST endpoint returns the bare
+ *  array. Accept both. */
+export const liveFeedSchema = z.union([
+  z.array(liveVehicleSchema),
+  z.object({ vehicles: z.array(liveVehicleSchema) }).transform((v) => v.vehicles),
+]);
+
+export const vehicleDaySummarySchema = z.object({
+  totalMileage: z.string().optional().default(''),
+  totalActiveTime: z.string().optional().default(''),
+  totalIdleTime: z.string().optional().default(''),
+  driverName: z.string().optional().default(''),
+  numberOfStops: z.string().optional().default(''),
+  totalFuelConsumption: z.string().optional().default(''),
+  ignitionOnCount: z.string().optional().default(''),
+});
+export type VehicleDaySummary = z.infer<typeof vehicleDaySummarySchema>;
+
+/* -------------------------------------------------------------------------- */
+/* Derived                                                                     */
+/* -------------------------------------------------------------------------- */
+
+/** Tile state, in the order the legend shows it. `untracked` is the two
+ *  service vehicles; `unknown` is a tracked truck the feed said nothing about. */
+export type TileStatus =
+  | 'moving'
+  | 'idling'
+  | 'stopped'
+  | 'offline'
+  | 'unknown'
+  | 'untracked';
+
+export function tileStatus(entry: FleetEntry, live: LiveVehicle | undefined): TileStatus {
+  if (entry.etit_id === null) return 'untracked';
+  if (!live) return 'unknown';
+  const label = (live.statusLabel || '').toLowerCase();
+  if (label.includes('mov') || live.speed > 3) return 'moving';
+  if (label.includes('idl')) return 'idling';
+  if (label.includes('off')) return 'offline';
+  return 'stopped';
+}

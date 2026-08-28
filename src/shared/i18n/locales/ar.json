@@ -115,14 +115,80 @@
     "brandSubline": "تتبّع المركبات وراقب الوقود وحسّن العمليات في مكان واحد."
   },
   "dashboard": {
-    "subtitle": "نظرة عامة على النظام",
-    "greeting": "{{greeting}}، {{name}}",
-    "totalVehicles": "المركبات",
-    "activeDrivers": "السائقون النشطون",
-    "fuelEventsThisMonth": "عمليات الوقود (الشهر)",
-    "spendThisMonth": "الإنفاق (الشهر)",
-    "quickActions": "إجراءات سريعة",
-    "recentFuelEvents": "عمليات الوقود الأخيرة"
+    "subtitleMonth": "{{month}} حتى الآن",
+    "updatedAt": "آخر تحديث {{time}}",
+    "apexDown": "الأرقام غير متاحة — خدمة التقارير لم تستجب. لوحة الأسطول تعمل بشكل مستقل.",
+    "conn": {
+      "live": "مباشر",
+      "caughtUp": "مباشر · تم التدارك",
+      "connecting": "جارٍ الاتصال…",
+      "notLive": "غير مباشر",
+      "refresh": "تحديث"
+    },
+    "kpi": {
+      "revenue": "الإيراد",
+      "cashOut": "المصروفات",
+      "trips": "الرحلات",
+      "advances": "السلف القائمة",
+      "litres": "اللترات المنقولة",
+      "trucks": "شاحنات عملت",
+      "vsPrev": "مقارنة بنفس الفترة الشهر الماضي",
+      "deltaPrev": "{{pct}}٪ عن الشهر الماضي",
+      "bankLedger": "دفتر البنك، هذا الشهر",
+      "acrossTrucks": "عبر {{count}} شاحنة",
+      "unpaidCount": "{{count}} غير مسدد",
+      "unpaidCount_other": "{{count}} غير مسددة"
+    },
+    "drawer": {
+      "failed": "تعذر تحميل التفاصيل.",
+      "largest": "أكبر المدفوعات"
+    },
+    "fleet": {
+      "title": "الأسطول",
+      "live": "مباشر",
+      "connecting": "جارٍ الاتصال…",
+      "fromTrips": "من سجل الرحلات",
+      "streamDown": "الحالة المباشرة غير متاحة. يُعرض آخر يوم عمل لكل شاحنة من سجل الرحلات.",
+      "notTracked": "غير متتبعة",
+      "ranToday": "عملت اليوم",
+      "idleDays": "متوقفة {{count}} يوم",
+      "idleDays_other": "متوقفة {{count}} أيام",
+      "noTrips": "لا رحلات",
+      "kmh": "{{speed}} كم/س",
+      "serviceVehicles": "سيارات الخدمة",
+      "status": {
+        "moving": "تتحرك",
+        "idling": "تعمل واقفة",
+        "stopped": "متوقفة",
+        "offline": "غير متصلة",
+        "unknown": "لا إشارة"
+      }
+    },
+    "truck": {
+      "lastWorked": "آخر يوم عمل",
+      "needsStream": "تفاصيل اليوم تحتاج الخدمة المباشرة.",
+      "distance": "مسافة اليوم",
+      "moving": "حركة",
+      "idling": "تشغيل واقف",
+      "stops": "التوقفات",
+      "ignitions": "مرات التشغيل"
+    },
+    "exceptions": {
+      "title": "ما يستنزف المال",
+      "allClear": "لا شيء يحتاجك. يوم جيد.",
+      "unavailable": "غير متاح أثناء تعطل الأرقام.",
+      "trips_earning_zero": {
+        "label": "رحلات بلا إيراد",
+        "hint": "مسار غير مسعّر أو سائق غير مسجل"
+      },
+      "transfers_unreviewed": {
+        "label": "تحويلات لم تُراجع",
+        "hint": "أموال واردة بلا تفسير"
+      }
+    },
+    "cash": {
+      "title": "المصروفات حسب الفئة"
+    }
   },
   "fuelEvents": {
     "title": "عمليات الوقود",

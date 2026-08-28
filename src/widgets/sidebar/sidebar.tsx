@@ -27,6 +27,8 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { cn } from '@/shared/lib/cn';
+import { useQueryClient } from '@tanstack/react-query';
+import { prefetchRoute } from '@/shared/lib/route-prefetch';
 import { Button } from '@/shared/ui/button';
 import { ScrollArea } from '@/shared/ui/scroll-area';
 import { UserMenu } from '@/widgets/user-menu/user-menu';
@@ -142,6 +144,11 @@ interface SidebarProps {
 }
 
 export function Sidebar({ collapsed, onToggleCollapse, onNavigate, className }: SidebarProps) {
+  // Intent prefetch (the Madar pattern): hovering or focusing a nav link warms
+  // the destination's code chunk — and, where the mount-time query key is
+  // exactly known, its data too — so the click lands on a page that is already
+  // downloaded. Deduped, so repeat hovers are free.
+  const queryClient = useQueryClient();
   const { t } = useTranslation();
   const { pathname } = useLocation();
   const { atLeast } = usePermissions();
@@ -211,6 +218,9 @@ export function Sidebar({ collapsed, onToggleCollapse, onNavigate, className }: 
                       <NavLink
                         to={item.to}
                         onClick={onNavigate}
+                        onPointerEnter={() => prefetchRoute(item.to, queryClient)}
+                        onFocus={() => prefetchRoute(item.to, queryClient)}
+                        onTouchStart={() => prefetchRoute(item.to, queryClient)}
                         className={cn(
                           'flex items-center rounded-md text-sm font-medium transition-all duration-200 ease-out',
                           active

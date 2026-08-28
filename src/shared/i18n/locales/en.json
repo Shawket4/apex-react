@@ -115,14 +115,80 @@
     "brandSubline": "Track vehicles, monitor fuel, and optimise operations — all in one place."
   },
   "dashboard": {
-    "subtitle": "System overview",
-    "greeting": "{{greeting}}, {{name}}",
-    "totalVehicles": "Vehicles",
-    "activeDrivers": "Active Drivers",
-    "fuelEventsThisMonth": "Fuel Events (Month)",
-    "spendThisMonth": "Spend (Month)",
-    "quickActions": "Quick Actions",
-    "recentFuelEvents": "Recent Fuel Events"
+    "subtitleMonth": "{{month}} to date",
+    "updatedAt": "updated {{time}}",
+    "apexDown": "Figures unavailable — the reporting service did not answer. The fleet panel is unaffected.",
+    "conn": {
+      "live": "Live",
+      "caughtUp": "Live · caught up",
+      "connecting": "Connecting…",
+      "notLive": "Not live",
+      "refresh": "Refresh"
+    },
+    "kpi": {
+      "revenue": "Revenue",
+      "cashOut": "Cash out",
+      "trips": "Trips",
+      "advances": "Out on advances",
+      "litres": "Litres hauled",
+      "trucks": "Trucks worked",
+      "vsPrev": "vs same span last month",
+      "deltaPrev": "{{pct}}% vs last month",
+      "bankLedger": "bank ledger, this month",
+      "acrossTrucks": "across {{count}} trucks",
+      "unpaidCount": "{{count}} unpaid",
+      "unpaidCount_other": "{{count}} unpaid"
+    },
+    "drawer": {
+      "failed": "Could not load the detail.",
+      "largest": "Largest payments"
+    },
+    "fleet": {
+      "title": "The fleet",
+      "live": "live",
+      "connecting": "connecting…",
+      "fromTrips": "from trip records",
+      "streamDown": "Live status unavailable. Showing when each truck last worked, from the trip records.",
+      "notTracked": "not tracked",
+      "ranToday": "ran today",
+      "idleDays": "idle {{count}}d",
+      "idleDays_other": "idle {{count}}d",
+      "noTrips": "no trips",
+      "kmh": "{{speed}} km/h",
+      "serviceVehicles": "Service vehicles",
+      "status": {
+        "moving": "moving",
+        "idling": "idling",
+        "stopped": "stopped",
+        "offline": "offline",
+        "unknown": "no signal"
+      }
+    },
+    "truck": {
+      "lastWorked": "Last worked",
+      "needsStream": "Day detail needs the live service.",
+      "distance": "Distance today",
+      "moving": "Moving",
+      "idling": "Idling",
+      "stops": "Stops",
+      "ignitions": "Ignition starts"
+    },
+    "exceptions": {
+      "title": "What is leaking",
+      "allClear": "Nothing needs you. Good day.",
+      "unavailable": "Unavailable while figures are down.",
+      "trips_earning_zero": {
+        "label": "Trips earning nothing",
+        "hint": "Unmapped route or unregistered driver"
+      },
+      "transfers_unreviewed": {
+        "label": "Transfers not reviewed",
+        "hint": "Money in, unexplained"
+      }
+    },
+    "cash": {
+      "title": "Cash out by category"
+    }
   },
   "fuelEvents": {
     "title": "Fuel Events",
