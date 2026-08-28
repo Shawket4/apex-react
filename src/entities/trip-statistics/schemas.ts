@@ -131,7 +131,15 @@ export type GroupStat = z.infer<typeof groupStatSchema>;
 export const companyStatSchema = z
   .object({
     company: z.string(),
+    /** Logical trips — a multi-container trip counts once, whatever its receipts. */
     total_trips: z.number().default(0),
+    /**
+     * Individual receipt rows, always >= total_trips.
+     *
+     * Optional so an older backend still parses; the UI falls back to hiding the
+     * breakdown rather than showing a wrong zero.
+     */
+    total_receipts: z.number().optional(),
     total_volume: z.number().default(0),
     total_distance: z.number().default(0),
     total_revenue: z.number().default(0),

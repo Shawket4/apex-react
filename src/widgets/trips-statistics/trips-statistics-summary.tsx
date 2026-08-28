@@ -8,6 +8,7 @@ import {
   Users,
 } from 'lucide-react';
 import { StatCard } from '@/shared/ui/stat-card';
+import { Popover, PopoverContent, PopoverTrigger } from '@/shared/ui/popover';
 import {
   formatNumber,
   formatCurrency,
@@ -69,6 +70,7 @@ export function TripsStatisticsSummary({
   const totals = companies.reduce(
     (acc, c) => ({
       trips: acc.trips + (c.total_trips || 0),
+      receipts: acc.receipts + (c.total_receipts ?? 0),
       volume: acc.volume + (c.total_volume || 0),
       distance: acc.distance + (c.total_distance || 0),
       revenue: acc.revenue + (c.total_revenue || 0),
@@ -76,7 +78,15 @@ export function TripsStatisticsSummary({
       total_with_vat:
         acc.total_with_vat + (c.total_amount || c.total_revenue || 0),
     }),
-    { trips: 0, volume: 0, distance: 0, revenue: 0, vat: 0, total_with_vat: 0 },
+    {
+      trips: 0,
+      receipts: 0,
+      volume: 0,
+      distance: 0,
+      revenue: 0,
+      vat: 0,
+      total_with_vat: 0,
+    },
   );
 
   // Determine the spanned days for daily averages
@@ -90,6 +100,11 @@ export function TripsStatisticsSummary({
         : 1;
 
   const safeDays = Math.max(1, days);
+
+  // An older backend omits total_receipts entirely. Hide the breakdown row
+  // rather than showing a confident zero.
+  const hasReceipts = companies.some((c) => c.total_receipts != null);
+  const tripsAriaLabel = t('trips.statistics.kpi.tripsBreakdown');
   const safeTrips = Math.max(1, totals.trips);
 
   // Unique routes count — deduped across companies
@@ -100,18 +115,58 @@ export function TripsStatisticsSummary({
 
   return (
     <div className="grid grid-cols-2 gap-2.5 md:grid-cols-3 lg:grid-cols-5">
-      <StatCard
-        label={t('trips.statistics.kpi.totalTrips')}
-        value={{
-          full: formatNumber(totals.trips, 0),
-          compact: formatCompactNumber(totals.trips, 0),
-        }}
-        subvalue={t('trips.statistics.kpi.tripsPerDay', {
-          n: formatNumber(totals.trips / safeDays, 2),
-        })}
-        icon={Truck}
-        tone="primary"
-      />
+      {/*
+        The headline is LOGICAL trips: a multi-container trip counts once,
+        however many receipts it carries. Receipts are the other number people
+        want, and conflating them was the bug -- so both are one tap away rather
+        than the card silently picking one.
+
+        A press, not a hover: this page is used on a phone.
+      */}
+      <Popover>
+        <PopoverTrigger asChild>
+          <button type="button" className="text-start" aria-label={tripsAriaLabel}>
+            <StatCard
+              label={t('trips.statistics.kpi.totalTrips')}
+              value={{
+                full: formatNumber(totals.trips, 0),
+                compact: formatCompactNumber(totals.trips, 0),
+              }}
+              subvalue={t('trips.statistics.kpi.tripsPerDay', {
+                n: formatNumber(totals.trips / safeDays, 2),
+              })}
+              icon={Truck}
+              tone="primary"
+              className="h-full cursor-pointer transition-colors hover:bg-accent/40"
+            />
+          </button>
+        </PopoverTrigger>
+
+        <PopoverContent align="start" className="w-64 p-3">
+          <p className="mb-2 text-xs font-medium text-muted-foreground">
+            {t('trips.statistics.kpi.tripsBreakdown')}
+          </p>
+          <dl className="space-y-2 text-sm">
+            <div className="flex items-baseline justify-between gap-3">
+              <dt>{t('trips.statistics.kpi.logicalTrips')}</dt>
+              <dd className="font-semibold tabular-nums">
+                {formatNumber(totals.trips, 0)}
+              </dd>
+            </div>
+            {hasReceipts && (
+              <div className="flex items-baseline justify-between gap-3">
+                <dt>{t('trips.statistics.kpi.receipts')}</dt>
+                <dd className="font-semibold tabular-nums">
+                  {formatNumber(totals.receipts, 0)}
+                </dd>
+              </div>
+            )}
+          </dl>
+          <p className="mt-2 border-t pt-2 text-xs leading-relaxed text-muted-foreground">
+            {t('trips.statistics.kpi.tripsBreakdownHint')}
+          </p>
+        </PopoverContent>
+      </Popover>
 
       <StatCard
         label={t('trips.statistics.kpi.totalVolume')}

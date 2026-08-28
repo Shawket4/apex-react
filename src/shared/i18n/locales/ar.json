@@ -771,7 +771,11 @@
         "distancePerTrip": "{{n}} كم / رحلة",
         "revenuePerTrip": "{{n}} / رحلة",
         "vatLine": "ضريبة: {{n}}",
-        "daysSpanned": "{{n}} يوم"
+        "daysSpanned": "{{n}} يوم",
+        "tripsBreakdown": "النقلات مقابل الإيصالات",
+        "logicalTrips": "النقلات",
+        "receipts": "الإيصالات",
+        "tripsBreakdownHint": "النقلة متعددة الحاويات تُحتسب مرة واحدة، ولكل حاوية إيصال خاص بها."
       },
       "timeline": {
         "title": {

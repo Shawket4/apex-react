@@ -766,7 +766,11 @@
         "distancePerTrip": "{{n}} km / trip",
         "revenuePerTrip": "{{n}} / trip",
         "vatLine": "VAT: {{n}}",
-        "daysSpanned": "{{n}} days"
+        "daysSpanned": "{{n}} days",
+        "tripsBreakdown": "Trips vs receipts",
+        "logicalTrips": "Trips",
+        "receipts": "Receipts",
+        "tripsBreakdownHint": "A trip with several containers counts once. Each container has its own receipt."
       },
       "timeline": {
         "title": {
