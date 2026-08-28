@@ -1775,7 +1775,8 @@
       "stopsAndFlags": "Stops & flags",
       "geofences": "Geofences",
       "loadingTrace": "Loading GPS trace…",
-      "playbackUnavailable": "GPS playback is unavailable for this trip — showing the stored route instead."
+      "playbackUnavailable": "GPS playback is unavailable for this trip — showing the stored route instead.",
+      "orderVerified": "Delivery order verified — driven order was already the shortest."
     },
     "legs": {
       "type": "Type",
@@ -1805,7 +1806,8 @@
       "no_terminal_departure": "No terminal departure",
       "suboptimal_order": "Drop-offs visited in a longer order than optimal",
       "allowed_stop": "Stop at an allowed point (garage)",
-      "return_pending": "Trip still open — awaiting terminal return"
+      "return_pending": "Trip still open — awaiting terminal return",
+      "ineffective_bundling": "Drop-offs in different directions"
     },
     "severity": {
       "info": "Info",
@@ -1820,7 +1822,11 @@
       "leg": "Leg {{seq}}",
       "orderTitle": "A shorter delivery order existed",
       "orderDriven": "Driven",
-      "orderOptimal": "Optimal"
+      "orderOptimal": "Optimal",
+      "bundlingTitle": "These drop-offs point in different directions",
+      "bundlingBody": "Bundled",
+      "bundlingSplit": "As separate trips",
+      "bundlingSaves": "bundling saves only"
     },
     "toast": {
       "reviewSuccess": "Marked as reviewed",

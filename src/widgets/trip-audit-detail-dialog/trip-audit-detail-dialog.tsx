@@ -854,6 +854,29 @@ function FlagDetails({ flag }: { flag: TripFlag }) {
         </div>
       );
     }
+    case 'ineffective_bundling': {
+      const drops = Array.isArray(details.drops)
+        ? (details.drops as unknown[]).filter((x): x is string => typeof x === 'string')
+        : [];
+      const bundled = asNumber(details.bundled_km);
+      const split = asNumber(details.split_km);
+      const savingsPct = asNumber(details.savings_pct);
+      return (
+        <div className="space-y-1 rounded-md border border-sky-500/40 bg-sky-500/5 p-2 text-sm">
+          <p className="font-medium text-sky-700 dark:text-sky-400">
+            {t('tripAudit.flagDetails.bundlingTitle', 'These drop-offs point in different directions')}
+          </p>
+          <p className="text-muted-foreground" dir="auto">
+            {drops.join(' · ')}
+          </p>
+          <p className="text-muted-foreground" dir="ltr">
+            {t('tripAudit.flagDetails.bundlingBody', 'Bundled')}: {formatKm(bundled)} km ·{' '}
+            {t('tripAudit.flagDetails.bundlingSplit', 'As separate trips')}: {formatKm(split)} km
+            {savingsPct != null && <> · {t('tripAudit.flagDetails.bundlingSaves', 'bundling saves only')} {savingsPct.toFixed(1)}%</>}
+          </p>
+        </div>
+      );
+    }
     case 'skipped_delivery': {
       const dropOff = asString(details.drop_off_point);
       const reason = asString(details.reason);
@@ -886,20 +909,43 @@ function FlagDetails({ flag }: { flag: TripFlag }) {
   }
 }
 
-function FlagsList({ flags, legs }: { flags: TripFlag[]; legs: TripLeg[] }) {
+function FlagsList({
+  flags,
+  legs,
+  orderVerified,
+}: {
+  flags: TripFlag[];
+  legs: TripLeg[];
+  orderVerified?: boolean;
+}) {
   const { t } = useTranslation();
+
+  // Silence is ambiguous: when a multi-drop trip's ordering check ran and
+  // found the driven order already optimal, say so — otherwise "no order
+  // flag" is indistinguishable from "not checked".
+  const verifiedLine = orderVerified ? (
+    <p className="flex items-center gap-1.5 text-sm text-emerald-700 dark:text-emerald-400">
+      <CheckCircle2 className="h-4 w-4 shrink-0" />
+      {t('tripAudit.detail.orderVerified', 'Delivery order verified — driven order was already the shortest.')}
+    </p>
+  ) : null;
 
   if (flags.length === 0) {
     return (
-      <p className="text-sm text-muted-foreground">
-        {t('tripAudit.detail.noFlags', 'No flags raised for this trip.')}
-      </p>
+      <div className="space-y-2">
+        {verifiedLine}
+        <p className="text-sm text-muted-foreground">
+          {t('tripAudit.detail.noFlags', 'No flags raised for this trip.')}
+        </p>
+      </div>
     );
   }
 
   const legSeq = new Map(legs.map((leg) => [leg.id, leg.seq]));
 
   return (
+    <div className="space-y-2">
+      {verifiedLine}
     <ul className="space-y-2">
       {flags.map((flag) => {
         const typeLabel = (KNOWN_FLAG_TYPES as readonly string[]).includes(flag.flag_type)
@@ -926,7 +972,8 @@ function FlagsList({ flags, legs }: { flags: TripFlag[]; legs: TripLeg[] }) {
           </li>
         );
       })}
-    </ul>
+      </ul>
+    </div>
   );
 }
 
@@ -1144,7 +1191,17 @@ export function TripAuditDetailDialog({ matchId, onOpenChange }: TripAuditDetail
                 <h3 className="text-sm font-semibold">
                   {t('tripAudit.detail.flags', 'Flags')}
                 </h3>
-                <FlagsList flags={detail.flags} legs={detail.legs} />
+                <FlagsList
+                  flags={detail.flags}
+                  legs={detail.legs}
+                  orderVerified={
+                    detail.deliveries_expected >= 2 &&
+                    !detail.flags.some((f) => f.flag_type === 'suboptimal_order') &&
+                    detail.legs
+                      .filter((l) => l.leg_type !== 'return')
+                      .every((l) => l.osrm_km != null)
+                  }
+                />
               </section>
 
               <ReviewSection detail={detail} />
