@@ -9,7 +9,7 @@ import { format, formatCurrency, formatNumber } from '@/shared/lib/format';
 import { cn } from '@/shared/lib/cn';
 import { Truncate } from '@/shared/ui/truncate';
 import { ReceiptStatusBadge } from './receipt-status-badge';
-import { RevenueBreakdown } from './revenue-breakdown';
+import { ContainerRevenue, RevenueBreakdown } from './revenue-breakdown';
 import { DROP_SEPARATOR, groupByDate, type TripRow } from './trip-row';
 import type { TripsDesktopTableProps } from './trips-desktop-table';
 
@@ -118,8 +118,10 @@ function MobileRow({
 
   const { head, containers, isGroup } = row;
   const canSeeMoney = showRevenue && row.revenue != null;
+  // The only trip edit route is trips/multi-container/:parentId/edit; a
+  // standalone trip has nowhere to go, so it gets no edit action at all.
   const editPath =
-    row.parentId != null ? `/trips/${row.parentId}/edit?multi=1` : `/trips/${head.ID}/edit`;
+    row.parentId != null ? `/trips/multi-container/${row.parentId}/edit` : null;
 
   return (
     <article className="border-b last:border-b-0">
@@ -267,9 +269,9 @@ function MobileRow({
                           {formatNumber(c.mileage || c.distance || 0, 0)} km
                         </span>
                       </span>
-                      {showRevenue && c.allocated_total != null && (
-                        <span className="shrink-0 font-mono text-[12.5px] font-semibold tabular-nums text-money">
-                          {formatCurrency(c.allocated_total)}
+                      {showRevenue && (
+                        <span className="shrink-0">
+                          <ContainerRevenue container={c} />
                         </span>
                       )}
                     </div>
@@ -300,16 +302,18 @@ function MobileRow({
                 </Action>
               </>
             )}
-            <Link
-              to={editPath}
-              onClick={(e) => e.stopPropagation()}
-              className="inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-[12px]
-                         font-medium transition-colors hover:bg-muted focus-visible:outline-none
-                         focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              <Edit3 className="h-3.5 w-3.5" />
-              {t('common.edit')}
-            </Link>
+            {editPath && (
+              <Link
+                to={editPath}
+                onClick={(e) => e.stopPropagation()}
+                className="inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-[12px]
+                           font-medium transition-colors hover:bg-muted focus-visible:outline-none
+                           focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <Edit3 className="h-3.5 w-3.5" />
+                {t('common.edit')}
+              </Link>
+            )}
             <Action
               danger
               icon={<Trash2 className="h-3.5 w-3.5" />}

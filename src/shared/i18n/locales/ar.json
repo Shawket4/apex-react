@@ -503,7 +503,13 @@
       "missingData": "بيانات مفقودة",
       "missingDriver": "سائق غير مسجل",
       "missingRoute": "مسار غير مسجل",
-      "receiptStatus": "حالة الإيصال"
+      "receiptStatus": "حالة الإيصال",
+      "short": {
+        "all": "الكل",
+        "pending": "معلق",
+        "garage": "الجراج",
+        "office": "المكتب"
+      }
     },
     "receiptStatus": {
       "pending": "معلق",

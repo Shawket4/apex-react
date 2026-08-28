@@ -22,7 +22,7 @@ import { format, formatCurrency, formatNumber } from '@/shared/lib/format';
 import { cn } from '@/shared/lib/cn';
 import { Truncate } from '@/shared/ui/truncate';
 import { ReceiptStatusBadge } from './receipt-status-badge';
-import { RevenueBreakdown } from './revenue-breakdown';
+import { ContainerRevenue, RevenueBreakdown } from './revenue-breakdown';
 import { DROP_SEPARATOR, type TripRow } from './trip-row';
 
 /* -------------------------------------------------------------------------- */
@@ -467,11 +467,7 @@ function Expanded({
               </span>
 
               <span className="flex items-center gap-2">
-                {showRevenue && c.allocated_total != null && (
-                  <span className="font-mono text-[12.5px] font-semibold tabular-nums text-money">
-                    {formatCurrency(c.allocated_total)}
-                  </span>
-                )}
+                {showRevenue && <ContainerRevenue container={c} />}
                 <IconButton
                   label={t('trips.actions.manageReceipts')}
                   onClick={() => onOpenReceipt(c.ID)}
@@ -548,8 +544,11 @@ function RowActions({
 >) {
   const { t } = useTranslation();
   const { head, containers, isGroup, parentId } = row;
+  // The ONLY trip edit route is trips/multi-container/:parentId/edit. There is
+  // no trips/:id/edit, so a standalone trip has nowhere to go and gets no edit
+  // action rather than a link to a 404.
   const editPath =
-    parentId != null ? `/trips/${parentId}/edit?multi=1` : `/trips/${head.ID}/edit`;
+    parentId != null ? `/trips/multi-container/${parentId}/edit` : null;
 
   return (
     <div className="flex items-center justify-end gap-1">
@@ -571,17 +570,19 @@ function RowActions({
           </IconButton>
         </>
       )}
-      <Button
-        variant="ghost"
-        size="icon"
-        asChild
-        className="h-7 w-7"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <Link to={editPath} aria-label={t('common.edit')} title={t('common.edit')}>
-          <Edit3 className="h-3.5 w-3.5" />
-        </Link>
-      </Button>
+      {editPath && (
+        <Button
+          variant="ghost"
+          size="icon"
+          asChild
+          className="h-7 w-7"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <Link to={editPath} aria-label={t('common.edit')} title={t('common.edit')}>
+            <Edit3 className="h-3.5 w-3.5" />
+          </Link>
+        </Button>
+      )}
       <IconButton
         danger
         label={t('common.delete')}

@@ -4,6 +4,7 @@ import type { TFunction } from 'i18next';
 import type { Trip } from '@/entities/trip/schemas';
 import { formatCurrency, formatNumber } from '@/shared/lib/format';
 import { cn } from '@/shared/lib/cn';
+import { Popover, PopoverContent, PopoverTrigger } from '@/shared/ui/popover';
 import { Truncate } from '@/shared/ui/truncate';
 
 /* -------------------------------------------------------------------------- */
@@ -127,6 +128,44 @@ function Line({
  * dropping 13,000 L and 26,000 L at one place and 13,000 L at another. A single
  * "Fee" row cannot describe that, so every container states its own basis.
  */
+/**
+ * One container's revenue, pressable, with its own breakdown.
+ *
+ * A container earns its own money: its own base from its own volume or
+ * distance, its own share of the car's rental, its own VAT. Showing the parent
+ * a breakdown while its containers show bare figures made the children look
+ * like a summary of the parent rather than the things being summarised.
+ */
+export function ContainerRevenue({ container }: { container: Trip }) {
+  const { t } = useTranslation();
+  if (container.allocated_total == null) {
+    return <span className="text-muted-foreground">—</span>;
+  }
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          onClick={(e) => e.stopPropagation()}
+          aria-label={t('trips.revenue.breakdownLabel')}
+          className="rounded font-mono text-[12.5px] font-semibold tabular-nums text-money
+                     underline decoration-dotted underline-offset-4 hover:bg-money/10
+                     focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          {formatCurrency(container.allocated_total)}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent
+        align="end"
+        className="w-72"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <RevenueBreakdown containers={[container]} />
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 export function RevenueBreakdown({ containers }: { containers: Trip[] }) {
   const { t } = useTranslation();
 

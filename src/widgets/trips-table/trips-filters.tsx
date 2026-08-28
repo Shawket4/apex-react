@@ -169,12 +169,14 @@ interface ReceiptStatusControlProps {
 const RECEIPT_STATUS_OPTIONS: Array<{
   value: ReceiptStatusFilter;
   labelKey: string;
+  /** Shown below sm, where the full wording wraps inside its own chip. */
+  shortKey: string;
   icon?: React.ComponentType<{ className?: string }>;
 }> = [
-  { value: '', labelKey: 'trips.filters.allReceipts' },
-  { value: 'pending', labelKey: 'trips.receiptStatus.pending', icon: Clock },
-  { value: 'in_garage', labelKey: 'trips.receiptStatus.inGarage', icon: Archive },
-  { value: 'in_office', labelKey: 'trips.receiptStatus.inOffice', icon: Building2 },
+  { value: '', labelKey: 'trips.filters.allReceipts', shortKey: 'trips.filters.short.all' },
+  { value: 'pending', labelKey: 'trips.receiptStatus.pending', shortKey: 'trips.filters.short.pending', icon: Clock },
+  { value: 'in_garage', labelKey: 'trips.receiptStatus.inGarage', shortKey: 'trips.filters.short.garage', icon: Archive },
+  { value: 'in_office', labelKey: 'trips.receiptStatus.inOffice', shortKey: 'trips.filters.short.office', icon: Building2 },
 ];
 
 export function TripsReceiptStatusControl({
@@ -185,7 +187,10 @@ export function TripsReceiptStatusControl({
 
   return (
     <div
-      className="inline-flex h-9 items-center gap-0.5 rounded-md border bg-muted/40 p-0.5"
+      // Height is auto, not h-9. Fixed height plus wrapping labels is what
+      // burst this control open: the words wrapped inside each chip, the chip
+      // grew past its parent, and the whole thing looked broken.
+      className="inline-flex max-w-full flex-wrap items-center gap-0.5 rounded-md border bg-muted/40 p-0.5"
       role="tablist"
       aria-label={t('trips.filters.receiptStatus')}
     >
@@ -200,14 +205,16 @@ export function TripsReceiptStatusControl({
             aria-selected={active}
             onClick={() => onChange(opt.value)}
             className={cn(
-              'inline-flex h-7 items-center gap-1.5 rounded px-2.5 text-xs font-medium transition-colors',
+              'inline-flex h-7 shrink-0 items-center gap-1.5 whitespace-nowrap rounded px-2.5',
+              'text-xs font-medium transition-colors',
               active
                 ? 'bg-background text-foreground shadow-sm'
                 : 'text-muted-foreground hover:text-foreground',
             )}
           >
-            {Icon && <Icon className="h-3 w-3" />}
-            <span>{t(opt.labelKey)}</span>
+            {Icon && <Icon className="h-3 w-3 shrink-0" />}
+            <span className="sm:hidden">{t(opt.shortKey)}</span>
+            <span className="hidden sm:inline">{t(opt.labelKey)}</span>
           </button>
         );
       })}

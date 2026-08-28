@@ -503,7 +503,13 @@
       "missingData": "Missing data",
       "missingDriver": "Unregistered driver",
       "missingRoute": "Unregistered route",
-      "receiptStatus": "Receipt status"
+      "receiptStatus": "Receipt status",
+      "short": {
+        "all": "All",
+        "pending": "Pending",
+        "garage": "Garage",
+        "office": "Office"
+      }
     },
     "receiptStatus": {
       "pending": "Pending",
