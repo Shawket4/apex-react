@@ -2084,5 +2084,44 @@
       "custom": "Custom"
     },
     "allCompanies": "All companies"
+  },
+  "tracking": {
+    "fleet": "Fleet",
+    "searchPlaceholder": "Search plate or codename",
+    "kmh": "km/h",
+    "km": "km",
+    "focus": "Focus",
+    "replay": "Replay",
+    "hide": "Hide",
+    "show": "Show",
+    "load": "Load history",
+    "loadingDay": "Loading the first day…",
+    "historyFailed": "History failed to load",
+    "noPoints": "No GPS points in this range.",
+    "stops": "Stops",
+    "ignitions": "Ignitions",
+    "restart": "Restart",
+    "play": "Play",
+    "pause": "Pause",
+    "fullscreen": "Fullscreen",
+    "conn": {
+      "live": "Live",
+      "connecting": "Connecting",
+      "down": "Offline"
+    },
+    "group": {
+      "moving": "Moving",
+      "idling": "Idling",
+      "stopped": "Stopped",
+      "geofence": "Geofence",
+      "offline": "Offline",
+      "unknown": "Unknown"
+    },
+    "range": {
+      "today": "Today",
+      "2d": "2 days",
+      "7d": "7 days",
+      "30d": "30 days"
+    }
   }
 }

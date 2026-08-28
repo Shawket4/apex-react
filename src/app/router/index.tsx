@@ -69,7 +69,7 @@ const ServiceInvoiceNewPage = React.lazy(() => import('@/pages/service-invoices/
 const ServiceInvoiceEditPage = React.lazy(() => import('@/pages/service-invoices/service-invoice-edit'));
 const ServiceInvoiceDetailsPage = React.lazy(() => import('@/pages/service-invoices/service-invoice-details'));
 
-const EtitPage = React.lazy(() => import('@/pages/etit/etit'));
+const TrackingPage = React.lazy(() => import('@/features/tracking/tracking-page'));
 const ZonesPage = React.lazy(() => import('@/pages/zones/zones'));
 const LocationsPage = React.lazy(() => import('@/pages/locations/locations'));
 const TripAuditPage = React.lazy(() => import('@/pages/trip-audit/trip-audit'));
@@ -179,7 +179,7 @@ export const router = createBrowserRouter([
           { path: 'trips', element: <TripsPage /> },
           { path: 'trips/new', element: <TripNewPage /> },
           { path: 'trips/multi-container/:parentId/edit', element: <TripEditPage /> },
-          { path: 'trips/parent/:parentId/route-summary', element: <EtitPage /> },
+          { path: 'trips/parent/:parentId/route-summary', element: <TrackingPage /> },
 
           // Oil changes
           { path: 'oil-changes', element: <OilChangesPage /> },
@@ -274,7 +274,7 @@ export const router = createBrowserRouter([
               </ProtectedRoute>
             ),
           },
-          { path: 'etit', element: <EtitPage /> },
+          { path: 'etit', element: <TrackingPage /> },
           {
             path: 'zones',
             element: (
