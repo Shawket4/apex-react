@@ -428,48 +428,51 @@ function Expanded({
         <Layers className="h-3 w-3" aria-hidden />
         {t('trips.mobile.containers', { count: row.containers.length })}
       </p>
-      <table className="w-full text-[12.5px]">
-        <tbody>
-          {row.containers.map((c, i) => (
-            <tr key={c.ID} className="border-b last:border-b-0">
-              <td className="py-1.5 pe-3 w-8">
-                <span className="rounded border px-1 font-mono text-[10px] text-muted-foreground">
-                  {i + 1}
+      {/* A list, not a table. The drop-off is Arabic and the receipt number is
+          Latin digits; side by side in a squeezed cell they read in opposite
+          directions and the name truncated on every row. The name now owns its
+          line and everything measurable sits underneath it. */}
+      <ul className="divide-y">
+        {row.containers.map((c, i) => (
+          <li key={c.ID} className="py-2 first:pt-0 last:pb-0">
+            <div className="flex items-baseline gap-2">
+              <span className="shrink-0 rounded border px-1 font-mono text-[10px] text-muted-foreground">
+                {i + 1}
+              </span>
+              <Truncate className="text-[13px] font-medium" dir="auto">
+                {c.drop_off_point}
+              </Truncate>
+            </div>
+
+            <div className="mt-1 flex flex-wrap items-center justify-between gap-x-5 gap-y-1 ps-7">
+              <span className="flex items-center gap-4 text-[12px] text-muted-foreground">
+                <span className="font-mono tabular-nums">#{c.receipt_no || '—'}</span>
+                <span className="font-mono tabular-nums">
+                  {formatNumber(c.tank_capacity || 0, 0)} L
                 </span>
-              </td>
-              <td className="max-w-0 py-1.5 pe-3">
-                <Truncate dir="auto">{c.drop_off_point}</Truncate>
-              </td>
-              <td className="py-1.5 pe-3 font-mono tabular-nums">#{c.receipt_no || '—'}</td>
-              <td className="py-1.5 pe-3 text-end font-mono tabular-nums">
-                {formatNumber(c.tank_capacity || 0, 0)} L
-              </td>
-              <td className="py-1.5 pe-3 text-end font-mono tabular-nums">
-                {showRevenue && c.allocated_total != null ? (
-                  <span className="font-semibold text-money">
+                <ReceiptStatusBadge trip={c} compact />
+              </span>
+
+              <span className="flex items-center gap-2">
+                {showRevenue && c.allocated_total != null && (
+                  <span className="font-mono text-[12.5px] font-semibold tabular-nums text-money">
                     {formatCurrency(c.allocated_total)}
                   </span>
-                ) : (
-                  <span className="text-muted-foreground">—</span>
                 )}
-              </td>
-              <td className="py-1.5 text-center">
-                <ReceiptStatusBadge trip={c} compact />
-              </td>
-              <td className="py-1.5 ps-3 text-end">
-                <div className="flex justify-end gap-1">
-                  <IconButton label={t('trips.actions.manageReceipts')} onClick={() => onOpenReceipt(c.ID)}>
-                    <ImageIcon className="h-3.5 w-3.5" />
-                  </IconButton>
-                  <IconButton label={t('trips.actions.viewOnMap')} onClick={() => onOpenMap(c.ID)}>
-                    <Map className="h-3.5 w-3.5" />
-                  </IconButton>
-                </div>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+                <IconButton
+                  label={t('trips.actions.manageReceipts')}
+                  onClick={() => onOpenReceipt(c.ID)}
+                >
+                  <ImageIcon className="h-3.5 w-3.5" />
+                </IconButton>
+                <IconButton label={t('trips.actions.viewOnMap')} onClick={() => onOpenMap(c.ID)}>
+                  <Map className="h-3.5 w-3.5" />
+                </IconButton>
+              </span>
+            </div>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

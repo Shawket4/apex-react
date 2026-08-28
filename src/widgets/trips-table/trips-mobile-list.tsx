@@ -235,36 +235,33 @@ function MobileRow({
                 <Layers className="h-3 w-3" aria-hidden />
                 {t('trips.mobile.containers', { count: containers.length })}
               </p>
-              <ul className="space-y-1.5">
+              <ul className="divide-y">
                 {containers.map((c, i) => (
-                  <li
-                    key={c.ID}
-                    className="flex items-baseline justify-between gap-3 text-[12.5px]"
-                  >
-                    <span className="flex min-w-0 flex-col gap-0.5">
-                      <span className="flex min-w-0 items-baseline gap-1.5">
-                        <span className="shrink-0 rounded border px-1 font-mono text-[10px] text-muted-foreground">
-                          {i + 1}
+                  <li key={c.ID} className="py-2 first:pt-0 last:pb-0">
+                    {/* The drop-off owns its line. Beside the Latin receipt
+                        number it reads in the opposite direction and truncated
+                        on every row. */}
+                    <div className="flex items-baseline gap-2">
+                      <span className="shrink-0 rounded border px-1 font-mono text-[10px] text-muted-foreground">
+                        {i + 1}
+                      </span>
+                      <Truncate className="text-[13px] font-medium" dir="auto">
+                        {c.drop_off_point}
+                      </Truncate>
+                    </div>
+                    <div className="mt-1 flex items-baseline justify-between gap-3 ps-7">
+                      <span className="flex items-baseline gap-3 text-[11.5px] text-muted-foreground">
+                        <span className="font-mono tabular-nums">#{c.receipt_no || '—'}</span>
+                        <span className="tabular-nums">
+                          {formatNumber(c.tank_capacity || 0, 0)} L
                         </span>
-                        <Truncate dir="auto">{c.drop_off_point}</Truncate>
-                      </span>
-                      {/* The container's own receipt number. The desktop
-                          expanded table has always shown this; the phone did
-                          not, so a group's receipts were unreachable there. */}
-                      <span className="ps-6 font-mono text-[11px] tabular-nums text-muted-foreground">
-                        #{c.receipt_no || '—'}
-                      </span>
-                    </span>
-                    <span className="flex shrink-0 items-baseline gap-2.5">
-                      <span className="tabular-nums text-muted-foreground">
-                        {formatNumber(c.tank_capacity || 0, 0)} L
                       </span>
                       {showRevenue && c.allocated_total != null && (
-                        <span className="font-mono font-semibold tabular-nums text-money">
+                        <span className="shrink-0 font-mono text-[12.5px] font-semibold tabular-nums text-money">
                           {formatCurrency(c.allocated_total)}
                         </span>
                       )}
-                    </span>
+                    </div>
                   </li>
                 ))}
               </ul>
