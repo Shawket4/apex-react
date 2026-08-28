@@ -65,7 +65,8 @@
     "no": "No",
     "add": "Add",
     "previous": "Previous",
-    "next": "Next"
+    "next": "Next",
+    "filters": "Filters"
   },
   "nav": {
     "overview": "Overview",
@@ -897,7 +898,18 @@
       "rentalShare": "Share of car rental",
       "vat": "VAT",
       "total": "Total",
-      "shareHint": "Car rental is charged per car, not per trip, so this trip carries a share of it. The share depends on the date range you have selected."
+      "shareHint": "Car rental is charged per car, not per trip, so this trip carries a share of it. The share depends on the date range you have selected.",
+      "chargedOn": "Charged on",
+      "atBand": "{{volume}} L · band {{band}}",
+      "atRate": "{{volume}} L · {{rate}} per 1,000 L"
+    },
+    "mobile": {
+      "tripCount": "{{count}} trip",
+      "tripCount_other": "{{count}} trips",
+      "drops": "{{count}} drop",
+      "drops_other": "{{count}} drops",
+      "containers": "{{count}} container",
+      "containers_other": "{{count}} containers"
     }
   },
   "oilChanges": {

@@ -4,77 +4,79 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222 47% 11%;
+    /* ------------------------------------------------------------------
+       Apex palette — graphite ground, ink navy, amber money.
 
+       Two hues, one job each. Navy marks anything you can act on; amber
+       marks anything someone gets paid. Everything else is neutral, so
+       colour on this screen is information rather than decoration — and on
+       a truly neutral ground the amber carries further than it would on a
+       blue-tinted one.
+
+       `--money` is deliberately separate from `--success`: revenue is not a
+       passing status, and reusing the success green for it is what made a
+       figure look like a badge. Adding a third accent colour breaks the
+       whole scheme, so don't.
+       ------------------------------------------------------------------ */
+    --background: 210 14% 95%;
+    --foreground: 210 17% 9%;
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
-
+    --card-foreground: 210 17% 9%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
-
-    --primary: 222 76% 40%;
-    --primary-foreground: 210 40% 98%;
-
-    --secondary: 210 40% 96%;
-    --secondary-foreground: 222 47% 11%;
-
-    --muted: 210 40% 96%;
-    --muted-foreground: 215 16% 47%;
-
-    --accent: 210 40% 96%;
-    --accent-foreground: 222 47% 11%;
-
-    --destructive: 0 72% 51%;
-    --destructive-foreground: 210 40% 98%;
-
-    --success: 142 71% 45%;
-    --success-foreground: 210 40% 98%;
-
-    --warning: 38 92% 50%;
-    --warning-foreground: 222 47% 11%;
-
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 222 76% 40%;
+    --popover-foreground: 210 17% 9%;
+    --primary: 217 60% 26%;
+    --primary-foreground: 218 57% 97%;
+    --secondary: 210 13% 91%;
+    --secondary-foreground: 210 17% 9%;
+    --muted: 210 13% 91%;
+    --muted-foreground: 210 8% 42%;
+    --muted-foreground: 210 8% 42%;
+    --accent: 218 38% 92%;
+    --accent-foreground: 217 60% 26%;
+    --destructive: 6 50% 47%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 154 46% 34%;
+    --success-foreground: 0 0% 100%;
+    --warning: 42 79% 30%;
+    --warning-foreground: 0 0% 100%;
+    --money: 37 82% 30%;
+    --money-foreground: 0 0% 100%;
+    --money-soft: 39 67% 94%;
+    --border: 213 13% 86%;
+    --input: 213 13% 86%;
+    --ring: 217 60% 26%;
 
     --radius: 0.75rem;
   }
 
   .dark {
-    --background: 222 47% 6%;
-    --foreground: 210 40% 98%;
-
-    --card: 222 47% 9%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222 47% 9%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 217 91% 60%;
-    --primary-foreground: 222 47% 11%;
-
-    --secondary: 217 33% 17%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
-
-    --accent: 217 33% 17%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 63% 40%;
-    --destructive-foreground: 210 40% 98%;
-
-    --success: 142 71% 45%;
-    --success-foreground: 210 40% 98%;
-
-    --warning: 38 92% 50%;
-    --warning-foreground: 222 47% 11%;
-
-    --border: 217 33% 17%;
-    --input: 217 33% 17%;
-    --ring: 217 91% 60%;
+    --background: 206 23% 6%;
+    --foreground: 210 14% 92%;
+    --card: 213 18% 10%;
+    --card-foreground: 210 14% 92%;
+    --popover: 213 18% 10%;
+    --popover-foreground: 210 14% 92%;
+    --primary: 217 64% 57%;
+    --primary-foreground: 218 50% 3%;
+    --secondary: 215 18% 13%;
+    --secondary-foreground: 210 14% 92%;
+    --muted: 215 18% 13%;
+    --muted-foreground: 208 8% 57%;
+    --muted-foreground: 208 8% 57%;
+    --accent: 217 33% 15%;
+    --accent-foreground: 216 70% 70%;
+    --destructive: 8 62% 61%;
+    --destructive-foreground: 206 23% 6%;
+    --success: 150 36% 48%;
+    --success-foreground: 206 23% 6%;
+    --warning: 38 65% 57%;
+    --warning-foreground: 206 23% 6%;
+    --money: 38 71% 58%;
+    --money-foreground: 206 23% 6%;
+    --money-soft: 39 37% 11%;
+    --border: 212 15% 17%;
+    --input: 212 15% 17%;
+    --ring: 217 64% 57%;
   }
 }
 
@@ -86,6 +88,11 @@
   body {
     @apply bg-background text-foreground antialiased;
     font-feature-settings: 'rlig' 1, 'calt' 1;
+    /* IBM Plex Sans Arabic and IBM Plex Sans are the same superfamily, so
+       Arabic and Latin sit on one skeleton instead of two faces meeting in
+       the middle of a row. Most of this data is Arabic, so the Arabic cut
+       leads. */
+    font-family: 'IBM Plex Sans Arabic', 'IBM Plex Sans', system-ui, sans-serif;
   }
 
   html {
@@ -93,9 +100,7 @@
   }
 
   /* RTL support: flip padding/margin/flex in body for Arabic */
-  html[dir='rtl'] body {
-    font-family: 'Cairo', system-ui, sans-serif;
-  }
+  /* Same family in both directions now — no swap needed. */
 
   /* Disable number input spinners */
   input[type='number']::-webkit-inner-spin-button,
@@ -206,5 +211,15 @@
   .text-xs textarea,
   .text-xs select {
     font-size: 16px !important;
+  }
+}
+
+@layer base {
+  /* Receipt numbers, litres, kilometres and money all stack in columns.
+     Proportional digits make those columns ragged, so figures get the mono
+     cut of the same superfamily and tabular spacing. */
+  .font-mono,
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
   }
 }

@@ -8,6 +8,7 @@ import {
   Download,
   FileSpreadsheet,
   FilterX,
+  SlidersHorizontal,
   List,
   Loader2,
   Plus,
@@ -25,6 +26,7 @@ import { SearchInput } from '@/shared/ui/search-input';
 import { EmptyState } from '@/shared/ui/empty-state';
 import { ConfirmDialog } from '@/shared/ui/confirm-dialog';
 import { DateRangePicker } from '@/shared/ui/date-range-picker';
+import { cn } from '@/shared/lib/cn';
 import { useDebounce } from '@/shared/hooks/use-debounce';
 import {
   firstDayOfMonth,
@@ -133,6 +135,10 @@ export default function TripsPage() {
   /* ------------------------------------------------------------------------ */
 
   const [search, setSearch] = React.useState(() => searchParams.get('q') ?? '');
+  // Phone-only disclosure for the refinement filters. Kept in the page rather
+  // than the widget because the widget is shared with the desktop toolbar,
+  // which always shows them.
+  const [showMoreFilters, setShowMoreFilters] = React.useState(false);
   const debouncedSearch = useDebounce(search, 300);
 
   const [from, setFrom] = React.useState<string | null>(() => {
@@ -393,6 +399,9 @@ export default function TripsPage() {
 
   const anyFilterActive =
     !!debouncedSearch || !!company || !!missingData || !!receiptStatus;
+  // What the badge on the phone's Filters button counts: only the filters that
+  // toggle actually hides.
+  const refinementCount = [receiptStatus, missingData].filter(Boolean).length;
 
   /* ------------------------------------------------------------------------ */
   /* Action buttons (top-right of PageShell)                                   */
@@ -503,13 +512,39 @@ export default function TripsPage() {
                   placeholder={t('trips.searchPlaceholder')}
                   className="max-w-sm"
                 />
-                <TripsCompanyFilter
-                  value={company}
-                  onChange={setCompany}
-                  companies={companies}
-                />
+                <div className="flex items-center gap-2">
+                  <TripsCompanyFilter
+                    value={company}
+                    onChange={setCompany}
+                    companies={companies}
+                  />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-9 shrink-0 gap-1.5 sm:hidden"
+                    aria-expanded={showMoreFilters}
+                    onClick={() => setShowMoreFilters((v) => !v)}
+                  >
+                    <SlidersHorizontal className="h-3.5 w-3.5" />
+                    {t('common.filters')}
+                    {refinementCount > 0 && (
+                      <span className="rounded-full bg-primary px-1.5 text-[10px] font-semibold text-primary-foreground">
+                        {refinementCount}
+                      </span>
+                    )}
+                  </Button>
+                </div>
               </div>
-              <div className="flex flex-wrap items-center gap-2">
+              {/* Receipt status and missing-data are refinements, not the
+                  primary filter, so on a phone they sit behind a toggle. They
+                  cost ~150px of a 812px screen and pushed the first trip below
+                  the fold. Always visible from sm up. */}
+              <div
+                className={cn(
+                  'flex-wrap items-center gap-2',
+                  showMoreFilters ? 'flex' : 'hidden sm:flex',
+                )}
+              >
                 <TripsReceiptStatusControl
                   value={receiptStatus}
                   onChange={setReceiptStatus}

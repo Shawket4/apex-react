@@ -132,14 +132,24 @@ export function DateRangePicker({ from, to, onChange, className }: Props) {
   }, [locale]);
 
   return (
-    <div className={cn('flex flex-wrap items-center gap-1.5', className)}>
+    <div
+      className={cn(
+        // One scrollable row on a phone instead of wrapping to three. The
+        // quick ranges are a shortcut, not the point of the screen, and on a
+        // 375px viewport wrapping them cost more vertical space than the first
+        // two trips in the list below.
+        'flex items-center gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none]',
+        '[&::-webkit-scrollbar]:hidden sm:flex-wrap sm:overflow-visible sm:pb-0',
+        className,
+      )}
+    >
       {PRESETS.map((p) => (
         <Button
           key={p.key}
           variant={isPresetActive(p) ? 'default' : 'outline'}
           size="sm"
           onClick={() => applyPreset(p)}
-          className="h-8 text-xs"
+          className="h-8 shrink-0 text-xs"
         >
           {t(`datePicker.${p.key}`)}
         </Button>
@@ -148,7 +158,7 @@ export function DateRangePicker({ from, to, onChange, className }: Props) {
         variant={isAllTime ? 'default' : 'outline'}
         size="sm"
         onClick={() => onChange(null, null)}
-        className="h-8 text-xs"
+        className="h-8 shrink-0 text-xs"
       >
         {t('datePicker.allTime')}
       </Button>
@@ -158,7 +168,7 @@ export function DateRangePicker({ from, to, onChange, className }: Props) {
           <Button
             variant={isCustom ? 'default' : 'outline'}
             size="sm"
-            className="h-8 gap-1.5 text-xs"
+            className="h-8 shrink-0 gap-1.5 text-xs"
           >
             <CalendarIcon className="h-3 w-3" />
             {isCustom ? `${fmtDate(from)} → ${to ? fmtDate(to) : ''}` : t('datePicker.custom')}

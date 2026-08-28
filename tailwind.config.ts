@@ -12,6 +12,10 @@ const config: Config = {
       screens: { '2xl': '1400px' },
     },
     extend: {
+      fontFamily: {
+        sans: ['IBM Plex Sans Arabic', 'IBM Plex Sans', 'system-ui', 'sans-serif'],
+        mono: ['IBM Plex Mono', 'ui-monospace', 'monospace'],
+      },
       colors: {
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
@@ -21,6 +25,13 @@ const config: Config = {
         primary: {
           DEFAULT: 'hsl(var(--primary))',
           foreground: 'hsl(var(--primary-foreground))',
+        },
+        // Money is its own semantic, separate from success. A revenue figure
+        // is not a passing status and should not borrow the colour of one.
+        money: {
+          DEFAULT: 'hsl(var(--money))',
+          foreground: 'hsl(var(--money-foreground))',
+          soft: 'hsl(var(--money-soft))',
         },
         secondary: {
           DEFAULT: 'hsl(var(--secondary))',
