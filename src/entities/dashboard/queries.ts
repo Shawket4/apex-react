@@ -1,5 +1,5 @@
 import { useQuery, type QueryClient } from '@tanstack/react-query';
-import { dashboardApi, etitApi } from './api';
+import { dashboardApi, etitApi, type DashboardScope } from './api';
 import type {
   AdvancesDrawer,
   CashOutDrawer,
@@ -17,39 +17,44 @@ export type DrawerData = RevenueDrawer | CashOutDrawer | TripsDrawer | AdvancesD
 /* against a near-miss key is a wasted request that the page refetches anyway. */
 /* -------------------------------------------------------------------------- */
 
+function scopeKey(scope?: DashboardScope): string {
+  if (!scope) return 'current';
+  return `${scope.from ?? ''}..${scope.to ?? ''}@${scope.company ?? 'all'}` || 'current';
+}
+
 export const dashboardKeys = {
   all: ['dashboard'] as const,
-  main: (month?: string) => [...dashboardKeys.all, 'main', month ?? 'current'] as const,
-  drawer: (kind: string, month?: string) =>
-    [...dashboardKeys.all, 'drawer', kind, month ?? 'current'] as const,
+  main: (scope?: DashboardScope) => [...dashboardKeys.all, 'main', scopeKey(scope)] as const,
+  drawer: (kind: string, scope?: DashboardScope) =>
+    [...dashboardKeys.all, 'drawer', kind, scopeKey(scope)] as const,
   truckDay: (vehicleId: string, date: string) =>
     [...dashboardKeys.all, 'truck', vehicleId, date] as const,
 };
 
 /* ─── The one payload that paints the page ─── */
 
-export function useDashboard(month?: string) {
+export function useDashboard(scope?: DashboardScope) {
   return useQuery({
-    queryKey: dashboardKeys.main(month),
-    queryFn: () => dashboardApi.get(month),
+    queryKey: dashboardKeys.main(scope),
+    queryFn: () => dashboardApi.get(scope),
     staleTime: 30_000,
   });
 }
 
 /* ─── Drawers — fetched when a card opens, or warmed on hover ─── */
 
-const DRAWER_FETCHERS: Record<string, (month?: string) => Promise<DrawerData>> = {
-  revenue: (month?: string) => dashboardApi.revenue(month),
-  'cash-out': (month?: string) => dashboardApi.cashOut(month),
-  trips: (month?: string) => dashboardApi.trips(month),
+const DRAWER_FETCHERS: Record<string, (scope?: DashboardScope) => Promise<DrawerData>> = {
+  revenue: (scope?: DashboardScope) => dashboardApi.revenue(scope),
+  'cash-out': (scope?: DashboardScope) => dashboardApi.cashOut(scope),
+  trips: (scope?: DashboardScope) => dashboardApi.trips(scope),
   advances: () => dashboardApi.advances(),
 };
 export type DrawerKind = 'revenue' | 'cash-out' | 'trips' | 'advances';
 
-export function useDrawer(kind: DrawerKind, month: string | undefined, enabled: boolean) {
+export function useDrawer(kind: DrawerKind, scope: DashboardScope | undefined, enabled: boolean) {
   return useQuery({
-    queryKey: dashboardKeys.drawer(kind, month),
-    queryFn: () => DRAWER_FETCHERS[kind](month),
+    queryKey: dashboardKeys.drawer(kind, scope),
+    queryFn: () => DRAWER_FETCHERS[kind](scope),
     staleTime: 60_000,
     enabled,
   });
@@ -74,18 +79,18 @@ export function useTruckDay(vehicleId: string | null, date: string) {
 /* staleTime, so calling these repeatedly costs nothing.                       */
 /* -------------------------------------------------------------------------- */
 
-export function prefetchDashboard(qc: QueryClient, month?: string): void {
+export function prefetchDashboard(qc: QueryClient, scope?: DashboardScope): void {
   void qc.prefetchQuery({
-    queryKey: dashboardKeys.main(month),
-    queryFn: () => dashboardApi.get(month),
+    queryKey: dashboardKeys.main(scope),
+    queryFn: () => dashboardApi.get(scope),
     staleTime: 30_000,
   });
 }
 
-export function prefetchDrawer(qc: QueryClient, kind: DrawerKind, month?: string): void {
+export function prefetchDrawer(qc: QueryClient, kind: DrawerKind, scope?: DashboardScope): void {
   void qc.prefetchQuery({
-    queryKey: dashboardKeys.drawer(kind, month),
-    queryFn: () => DRAWER_FETCHERS[kind](month),
+    queryKey: dashboardKeys.drawer(kind, scope),
+    queryFn: () => DRAWER_FETCHERS[kind](scope),
     staleTime: 60_000,
   });
 }

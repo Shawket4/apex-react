@@ -24,9 +24,21 @@ import {
 /* one that round-trips an f64 exactly.                                        */
 /* -------------------------------------------------------------------------- */
 
-async function getPacked(url: string, month?: string): Promise<unknown> {
+export interface DashboardScope {
+  /** Explicit window (YYYY-MM-DD, inclusive). Null/absent = current month. */
+  from?: string | null;
+  to?: string | null;
+  /** Trips-side company scope; cash-out and owed money ignore it. */
+  company?: string | null;
+}
+
+async function getPacked(url: string, scope?: DashboardScope): Promise<unknown> {
   const response = await apiClientRust.get(url, {
-    params: { ...(month ? { month } : {}), format: 'msgpack' },
+    params: {
+      ...(scope?.from && scope?.to ? { from: scope.from, to: scope.to } : {}),
+      ...(scope?.company ? { company: scope.company } : {}),
+      format: 'msgpack',
+    },
     responseType: 'arraybuffer',
     headers: { Accept: 'application/msgpack' },
   });
@@ -34,17 +46,17 @@ async function getPacked(url: string, month?: string): Promise<unknown> {
 }
 
 export const dashboardApi = {
-  async get(month?: string): Promise<Dashboard> {
-    return dashboardSchema.parse(await getPacked('/api/v1/dashboard', month));
+  async get(scope?: DashboardScope): Promise<Dashboard> {
+    return dashboardSchema.parse(await getPacked('/api/v1/dashboard', scope));
   },
-  async revenue(month?: string): Promise<RevenueDrawer> {
-    return revenueDrawerSchema.parse(await getPacked('/api/v1/dashboard/revenue', month));
+  async revenue(scope?: DashboardScope): Promise<RevenueDrawer> {
+    return revenueDrawerSchema.parse(await getPacked('/api/v1/dashboard/revenue', scope));
   },
-  async cashOut(month?: string): Promise<CashOutDrawer> {
-    return cashOutDrawerSchema.parse(await getPacked('/api/v1/dashboard/cash-out', month));
+  async cashOut(scope?: DashboardScope): Promise<CashOutDrawer> {
+    return cashOutDrawerSchema.parse(await getPacked('/api/v1/dashboard/cash-out', scope));
   },
-  async trips(month?: string): Promise<TripsDrawer> {
-    return tripsDrawerSchema.parse(await getPacked('/api/v1/dashboard/trips', month));
+  async trips(scope?: DashboardScope): Promise<TripsDrawer> {
+    return tripsDrawerSchema.parse(await getPacked('/api/v1/dashboard/trips', scope));
   },
   async advances(): Promise<AdvancesDrawer> {
     return advancesDrawerSchema.parse(await getPacked('/api/v1/dashboard/advances'));

@@ -27,6 +27,9 @@ import {
   useTruckDay,
   type DrawerKind,
 } from '@/entities/dashboard/queries';
+import { type DashboardScope } from '@/entities/dashboard/api';
+import { useCompanies } from '@/entities/mapping/queries';
+import { useDashboardFilters, type DashboardPreset } from '@/shared/state/dashboard-filters';
 import { useEtitLive } from '@/shared/hooks/use-etit-live';
 import { usePermissions } from '@/shared/hooks/use-permissions';
 import { PERMISSION_LEVELS } from '@/shared/config/constants';
@@ -68,7 +71,12 @@ export default function DashboardPage() {
   const { atLeast } = usePermissions();
   const showMoney = atLeast(PERMISSION_LEVELS.ADMIN);
 
-  const dashboard = useDashboard();
+  const { preset, from, to, company, setPreset, setCompany } = useDashboardFilters();
+  const scope = React.useMemo(
+    () => ({ from, to, company }),
+    [from, to, company],
+  );
+  const dashboard = useDashboard(scope);
   const hasFleet = (dashboard.data?.fleet.length ?? 0) > 0;
   const live = useEtitLive(hasFleet);
 
@@ -84,14 +92,24 @@ export default function DashboardPage() {
             {format(today, 'EEEE d MMMM')}
           </h1>
           <p className="mt-0.5 text-[11.5px] text-muted-foreground">
-            {t('dashboard.subtitleMonth', {
-              month: format(today, 'MMMM yyyy'),
-            })}
+            {from && to
+              ? from === to
+                ? format(from, 'd MMMM yyyy')
+                : `${format(from, 'd MMM')} – ${format(to, 'd MMM yyyy')}`
+              : t('dashboard.subtitleMonth', { month: format(today, 'MMMM yyyy') })}
+            {company && ` · ${company}`}
             {asOf && ` · ${t('dashboard.updatedAt', { time: format(asOf, 'HH:mm') })}`}
           </p>
         </div>
         <ConnectionBadge live={live} />
       </header>
+
+      <DashboardFilterBar
+        preset={preset}
+        company={company}
+        onPreset={setPreset}
+        onCompany={setCompany}
+      />
 
       {/* ---- apex zone: figures, or an honest strip ---- */}
       {dashboard.isError ? (
@@ -106,7 +124,7 @@ export default function DashboardPage() {
           ))}
         </div>
       ) : (
-        <KpiRow data={dashboard.data} showMoney={showMoney} />
+        <KpiRow data={dashboard.data} showMoney={showMoney} scope={scope} />
       )}
 
       {/* ---- fleet + exceptions ---- */}
@@ -227,10 +245,73 @@ function ConnectionBadge({ live }: { live: ReturnType<typeof useEtitLive> }) {
 }
 
 /* -------------------------------------------------------------------------- */
+/* Global scope — one date window + company, applied to every card             */
+/* -------------------------------------------------------------------------- */
+
+const PRESETS: DashboardPreset[] = ['month', 'today', 'yesterday', 'week'];
+
+function DashboardFilterBar({
+  preset,
+  company,
+  onPreset,
+  onCompany,
+}: {
+  preset: DashboardPreset;
+  company: string | null;
+  onPreset: (p: DashboardPreset) => void;
+  onCompany: (c: string | null) => void;
+}) {
+  const { t } = useTranslation();
+  const companies = useCompanies();
+
+  return (
+    <div className="flex flex-wrap items-center gap-1.5">
+      {PRESETS.map((p) => (
+        <button
+          key={p}
+          type="button"
+          onClick={() => onPreset(p)}
+          aria-pressed={preset === p}
+          className={cn(
+            'rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors',
+            preset === p
+              ? 'border-primary bg-primary text-primary-foreground'
+              : 'bg-card text-muted-foreground hover:border-primary/50',
+          )}
+        >
+          {t(`dashboard.filters.${p}`)}
+        </button>
+      ))}
+      <select
+        value={company ?? ''}
+        onChange={(e) => onCompany(e.target.value || null)}
+        className="ms-auto h-7 rounded-full border bg-card px-2.5 text-[11px] text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        aria-label={t('dashboard.filters.company')}
+      >
+        <option value="">{t('dashboard.filters.allCompanies')}</option>
+        {(companies.data?.data ?? []).map((c) => (
+          <option key={c} value={c}>
+            {c}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
 /* KPI cards                                                                   */
 /* -------------------------------------------------------------------------- */
 
-function KpiRow({ data, showMoney }: { data: Dashboard; showMoney: boolean }) {
+function KpiRow({
+  data,
+  showMoney,
+  scope,
+}: {
+  data: Dashboard;
+  showMoney: boolean;
+  scope: DashboardScope;
+}) {
   const { t } = useTranslation();
   const [open, setOpen] = React.useState<DrawerKind | null>(null);
   const money = showMoney ? data.money : undefined;
@@ -265,7 +346,18 @@ function KpiRow({ data, showMoney }: { data: Dashboard; showMoney: boolean }) {
           title: t('dashboard.kpi.cashOut'),
           value: compactMoney(money.cash_out),
           isMoney: true,
-          detail: t('dashboard.kpi.bankLedger'),
+          detail: (
+            <span>
+              {t('dashboard.kpi.cashOutSplit', {
+                bank: compactMoney(money.cash_out_bank),
+                fuel: compactMoney(money.cash_out_fuel),
+                advances: compactMoney(money.cash_out_advances),
+              })}
+              {scope.company && (
+                <span className="ms-1 opacity-70">{t('dashboard.kpi.allCompanies')}</span>
+              )}
+            </span>
+          ),
         },
         {
           kind: 'trips',
@@ -276,12 +368,23 @@ function KpiRow({ data, showMoney }: { data: Dashboard; showMoney: boolean }) {
         },
         {
           kind: 'advances',
-          title: t('dashboard.kpi.advances'),
-          value: compactMoney(money.advances_outstanding),
+          title: t('dashboard.kpi.owed'),
+          value: compactMoney(money.owed.total),
           isMoney: true,
           detail: (
             <span className="text-destructive">
-              {t('dashboard.kpi.unpaidCount', { count: money.advances_count })}
+              {t('dashboard.kpi.owedSplit', {
+                drivers: compactMoney(
+                  String(
+                    Number(money.owed.driver_advances) + Number(money.owed.driver_loans),
+                  ),
+                ),
+                employees: compactMoney(
+                  String(
+                    Number(money.owed.employee_advances) + Number(money.owed.employee_loans),
+                  ),
+                ),
+              })}
             </span>
           ),
         },
@@ -302,6 +405,7 @@ function KpiRow({ data, showMoney }: { data: Dashboard; showMoney: boolean }) {
         <KpiCard
           key={card.kind}
           {...card}
+          scope={scope}
           isOpen={open === card.kind}
           onToggle={() => setOpen((k) => (k === card.kind ? null : card.kind))}
         />
@@ -333,6 +437,7 @@ function KpiCard({
   value,
   isMoney,
   detail,
+  scope,
   isOpen,
   onToggle,
 }: {
@@ -341,6 +446,7 @@ function KpiCard({
   value: string;
   isMoney: boolean;
   detail: React.ReactNode;
+  scope: DashboardScope;
   isOpen: boolean;
   onToggle: () => void;
 }) {
@@ -349,7 +455,7 @@ function KpiCard({
   // Intent prefetch: hovering (or focusing, or touching) the card warms the
   // drawer's exact query, so opening it renders from cache. prefetchQuery
   // dedupes, so repeated hovers cost nothing.
-  const warm = React.useCallback(() => prefetchDrawer(qc, kind), [qc, kind]);
+  const warm = React.useCallback(() => prefetchDrawer(qc, kind, scope), [qc, kind, scope]);
 
   return (
     <div className={cn('overflow-hidden rounded-xl border bg-card', isOpen && 'lg:col-span-1')}>
@@ -379,14 +485,14 @@ function KpiCard({
         </dd>
         <p className="mt-1.5 min-h-[17px] text-[11.5px] text-muted-foreground">{detail}</p>
       </button>
-      {isOpen && <KpiDrawer kind={kind} />}
+      {isOpen && <KpiDrawer kind={kind} scope={scope} />}
     </div>
   );
 }
 
-function KpiDrawer({ kind }: { kind: DrawerKind }) {
+function KpiDrawer({ kind, scope }: { kind: DrawerKind; scope: DashboardScope }) {
   const { t } = useTranslation();
-  const drawer = useDrawer(kind, undefined, true);
+  const drawer = useDrawer(kind, scope, true);
 
   if (drawer.isPending) {
     return (
@@ -421,7 +527,9 @@ function KpiDrawer({ kind }: { kind: DrawerKind }) {
     }));
   } else if ('parties' in d) {
     rows = d.parties.slice(0, 8).map((p) => ({
-      label: p.name,
+      label: `${p.name} · ${t(`dashboard.owed.${p.audience}`)}${
+        p.kind === 'loan' ? ` · ${t('dashboard.owed.loan')}` : ''
+      }`,
       value: formatNumber(Number(p.total), 0),
     }));
   }
@@ -549,6 +657,22 @@ function FleetGrid({
               <span className={cn('mt-0.5 text-[9.5px] font-semibold leading-tight', styles.text)}>
                 {statusLine(entry, status, liveVehicle)}
               </span>
+              {entry.revenue_today != null && entry.revenue_yesterday != null && (
+                <span
+                  className="mt-0.5 font-mono text-[9px] leading-tight tabular-nums text-money"
+                  title={t('dashboard.fleet.revenueHint')}
+                >
+                  {Number(entry.revenue_today) > 0 || Number(entry.revenue_yesterday) > 0 ? (
+                    <>
+                      {compactMoney(entry.revenue_today)}
+                      <span className="opacity-50"> · </span>
+                      <span className="opacity-70">{compactMoney(entry.revenue_yesterday)}</span>
+                    </>
+                  ) : (
+                    <span className="opacity-40">—</span>
+                  )}
+                </span>
+              )}
             </button>
           );
         })}
@@ -631,6 +755,18 @@ function TruckDrawer({
           {format(today, 'd MMM')}
         </span>
       </p>
+      {entry.revenue_today != null && (
+        <dl className="mb-2 space-y-1">
+          <Row
+            label={t('dashboard.truck.revenueToday')}
+            value={formatNumber(Number(entry.revenue_today), 0)}
+          />
+          <Row
+            label={t('dashboard.truck.revenueYesterday')}
+            value={formatNumber(Number(entry.revenue_yesterday ?? '0'), 0)}
+          />
+        </dl>
+      )}
       {streamDown ? (
         <dl className="space-y-1">
           <Row

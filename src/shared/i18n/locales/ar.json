@@ -137,7 +137,11 @@
       "bankLedger": "دفتر البنك، هذا الشهر",
       "acrossTrucks": "عبر {{count}} شاحنة",
       "unpaidCount": "{{count}} غير مسدد",
-      "unpaidCount_other": "{{count}} غير مسددة"
+      "unpaidCount_other": "{{count}} غير مسددة",
+      "owed": "مستحقات علينا تحصيلها",
+      "owedSplit": "السائقون {{drivers}} · الموظفون {{employees}}",
+      "cashOutSplit": "بنك {{bank}} · وقود {{fuel}} · سلف {{advances}}",
+      "allCompanies": "(كل الشركات)"
     },
     "drawer": {
       "failed": "تعذر تحميل التفاصيل.",
@@ -162,7 +166,8 @@
         "stopped": "متوقفة",
         "offline": "غير متصلة",
         "unknown": "لا إشارة"
-      }
+      },
+      "revenueHint": "الإيراد: اليوم · أمس"
     },
     "truck": {
       "lastWorked": "آخر يوم عمل",
@@ -171,7 +176,9 @@
       "moving": "حركة",
       "idling": "تشغيل واقف",
       "stops": "التوقفات",
-      "ignitions": "مرات التشغيل"
+      "ignitions": "مرات التشغيل",
+      "revenueToday": "إيراد اليوم",
+      "revenueYesterday": "إيراد أمس"
     },
     "exceptions": {
       "title": "ما يستنزف المال",
@@ -188,6 +195,19 @@
     },
     "cash": {
       "title": "المصروفات حسب الفئة"
+    },
+    "filters": {
+      "month": "هذا الشهر",
+      "today": "اليوم",
+      "yesterday": "أمس",
+      "week": "آخر ٧ أيام",
+      "company": "الشركة",
+      "allCompanies": "كل الشركات"
+    },
+    "owed": {
+      "driver": "سائق",
+      "employee": "موظف",
+      "loan": "قرض"
     }
   },
   "fuelEvents": {

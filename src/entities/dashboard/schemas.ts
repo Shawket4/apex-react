@@ -19,13 +19,30 @@ export const categoryOutSchema = z.object({
   out: z.string(),
 });
 
+export const owedBlockSchema = z.object({
+  driver_advances: z.string(),
+  driver_advances_count: z.number(),
+  driver_loans: z.string(),
+  driver_loans_count: z.number(),
+  employee_advances: z.string(),
+  employee_advances_count: z.number(),
+  employee_loans: z.string(),
+  employee_loans_count: z.number(),
+  total: z.string(),
+});
+export type OwedBlock = z.infer<typeof owedBlockSchema>;
+
 export const dashboardMoneySchema = z.object({
   revenue: z.string(),
   /** Same span of the previous month, for a like-for-like delta. */
   revenue_prev: z.string(),
+  /** Grand total out: bank ledger + cash fuel + advances/loans issued. */
   cash_out: z.string(),
-  advances_outstanding: z.string(),
-  advances_count: z.number(),
+  cash_out_bank: z.string(),
+  cash_out_fuel: z.string(),
+  cash_out_advances: z.string(),
+  /** Outstanding debt as of now — never window-scoped. */
+  owed: owedBlockSchema,
   by_category: z.array(categoryOutSchema).default([]),
 });
 
@@ -38,6 +55,9 @@ export const fleetEntrySchema = z.object({
   plate_ar: z.string(),
   last_trip_date: z.string().nullable(),
   days_idle: z.number().nullable(),
+  /** Absent below permission 4, like the money block. */
+  revenue_today: z.string().optional(),
+  revenue_yesterday: z.string().optional(),
 });
 export type FleetEntry = z.infer<typeof fleetEntrySchema>;
 
@@ -93,6 +113,7 @@ export const advancesDrawerSchema = z.object({
       z.object({
         name: z.string(),
         kind: z.string().nullable().optional(),
+        audience: z.enum(['driver', 'employee']).catch('driver'),
         total: z.string(),
         count: z.number(),
       }),

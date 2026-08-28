@@ -137,7 +137,11 @@
       "bankLedger": "bank ledger, this month",
       "acrossTrucks": "across {{count}} trucks",
       "unpaidCount": "{{count}} unpaid",
-      "unpaidCount_other": "{{count}} unpaid"
+      "unpaidCount_other": "{{count}} unpaid",
+      "owed": "Money owed",
+      "owedSplit": "Drivers {{drivers}} · Employees {{employees}}",
+      "cashOutSplit": "Bank {{bank}} · Fuel {{fuel}} · Advances {{advances}}",
+      "allCompanies": "(all companies)"
     },
     "drawer": {
       "failed": "Could not load the detail.",
@@ -162,7 +166,8 @@
         "stopped": "stopped",
         "offline": "offline",
         "unknown": "no signal"
-      }
+      },
+      "revenueHint": "Revenue: today · yesterday"
     },
     "truck": {
       "lastWorked": "Last worked",
@@ -171,7 +176,9 @@
       "moving": "Moving",
       "idling": "Idling",
       "stops": "Stops",
-      "ignitions": "Ignition starts"
+      "ignitions": "Ignition starts",
+      "revenueToday": "Revenue today",
+      "revenueYesterday": "Revenue yesterday"
     },
     "exceptions": {
       "title": "What is leaking",
@@ -188,6 +195,19 @@
     },
     "cash": {
       "title": "Cash out by category"
+    },
+    "filters": {
+      "month": "This month",
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "week": "Last 7 days",
+      "company": "Company",
+      "allCompanies": "All companies"
+    },
+    "owed": {
+      "driver": "driver",
+      "employee": "employee",
+      "loan": "loan"
     }
   },
   "fuelEvents": {
