@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 
 import {
+  formatDrawerDuration,
   tileStatus,
   type Dashboard,
   type DashboardException,
@@ -653,13 +654,22 @@ function TruckDrawer({
         <p className="text-[11px] italic text-muted-foreground">{t('dashboard.drawer.failed')}</p>
       ) : (
         <dl className="space-y-1">
-          <Row label={t('dashboard.truck.distance')} value={summary.data.totalMileage || '—'} />
-          <Row label={t('dashboard.truck.moving')} value={summary.data.totalActiveTime || '—'} />
-          <Row label={t('dashboard.truck.idling')} value={summary.data.totalIdleTime || '—'} />
-          <Row label={t('dashboard.truck.stops')} value={summary.data.numberOfStops || '—'} />
+          <Row
+            label={t('dashboard.truck.distance')}
+            value={`${summary.data.mileageKm.toFixed(1)} ${t('etit.units.km')}`}
+          />
+          <Row
+            label={t('dashboard.truck.moving')}
+            value={formatDrawerDuration(summary.data.activeSecs)}
+          />
+          <Row
+            label={t('dashboard.truck.idling')}
+            value={formatDrawerDuration(summary.data.idleSecs)}
+          />
+          <Row label={t('dashboard.truck.stops')} value={String(summary.data.stopCount)} />
           <Row
             label={t('dashboard.truck.ignitions')}
-            value={summary.data.ignitionOnCount || '—'}
+            value={String(summary.data.ignitionOnCount)}
           />
         </dl>
       )}

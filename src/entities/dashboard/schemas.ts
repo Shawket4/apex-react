@@ -128,16 +128,27 @@ export const liveFeedSchema = z.union([
   z.object({ vehicles: z.array(liveVehicleSchema) }).transform((v) => v.vehicles),
 ]);
 
+/** Computed by the proxy from the day's GPS points — deterministic, never
+ *  ETIT's lagging upstream summary. */
 export const vehicleDaySummarySchema = z.object({
-  totalMileage: z.string().optional().default(''),
-  totalActiveTime: z.string().optional().default(''),
-  totalIdleTime: z.string().optional().default(''),
-  driverName: z.string().optional().default(''),
-  numberOfStops: z.string().optional().default(''),
-  totalFuelConsumption: z.string().optional().default(''),
-  ignitionOnCount: z.string().optional().default(''),
+  mileageKm: z.number(),
+  distanceMethod: z.enum(['matched', 'raw']).catch('raw'),
+  activeSecs: z.number(),
+  idleSecs: z.number(),
+  disconnectedSecs: z.number().optional().default(0),
+  stopCount: z.number(),
+  ignitionOnCount: z.number(),
 });
 export type VehicleDaySummary = z.infer<typeof vehicleDaySummarySchema>;
+
+/** 5025 -> "1h 24m"; sub-minute -> "<1m"; 0 -> "0m". */
+export function formatDrawerDuration(secs: number): string {
+  if (secs <= 0) return '0m';
+  if (secs < 60) return '<1m';
+  const h = Math.floor(secs / 3600);
+  const m = Math.floor((secs % 3600) / 60);
+  return h > 0 ? `${h}h ${m}m` : `${m}m`;
+}
 
 /* -------------------------------------------------------------------------- */
 /* Derived                                                                     */
