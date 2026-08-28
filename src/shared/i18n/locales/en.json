@@ -1914,7 +1914,8 @@
       "geofences": "Geofences",
       "loadingTrace": "Loading GPS trace…",
       "playbackUnavailable": "GPS playback is unavailable for this trip — showing the stored route instead.",
-      "orderVerified": "Delivery order verified — driven order was already the shortest."
+      "orderVerified": "Delivery order verified — driven order was already the shortest.",
+      "optimalGhost": "Optimal pace"
     },
     "legs": {
       "type": "Type",
@@ -1926,7 +1927,9 @@
       "duration": "Duration (actual / OSRM)",
       "maxDeviation": "Max dev.",
       "night": "Night window",
-      "sentence": "Left {{from}} at {{depart}} → arrived {{to}} at {{arrive}} — {{actual}} km actual vs {{osrm}} km optimal"
+      "sentence": "Left {{from}} at {{depart}} → arrived {{to}} at {{arrive}} — {{actual}} km actual vs {{osrm}} km optimal",
+      "preview": "Preview",
+      "previewing": "Previewing"
     },
     "legType": {
       "outbound": "Outbound",
@@ -2122,6 +2125,10 @@
       "2d": "2 days",
       "7d": "7 days",
       "30d": "30 days"
-    }
+    },
+    "follow": "Follow the truck",
+    "raceOptimal": "Race optimal",
+    "raceDeltaHint": "Optimal arrival vs actual arrival",
+    "scrub": "Playback position"
   }
 }

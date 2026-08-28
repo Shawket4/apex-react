@@ -1,10 +1,11 @@
 import * as React from 'react';
-import { useEtitHistoryDay } from '@/entities/etit-vehicle/queries';
+import { useHistoryDay } from '@/features/tracking/use-history';
+import { cairoDay } from '@/features/tracking/api';
 import type {
-  EtitHistoryPoint,
-  EtitSensorEvent,
-  EtitStop,
-} from '@/entities/etit-vehicle/schemas';
+  HistoryPoint as EtitHistoryPoint,
+  SensorEvent as EtitSensorEvent,
+  Stop as EtitStop,
+} from '@/features/tracking/schemas';
 
 /* -------------------------------------------------------------------------- */
 /* Vehicle history for the replay                                              */
@@ -88,20 +89,20 @@ export function useTripPlaybackHistory(
     return out;
   }, [window]);
 
-  const q0 = useEtitHistoryDay(
-    enabled && window && days[0] ? { vehicleId: window.vehicleId, day: days[0] } : null,
+  const q0 = useHistoryDay(
+    enabled && window && days[0] ? { vehicleId: window.vehicleId, day: cairoDay(days[0]) } : null,
   );
-  const q1 = useEtitHistoryDay(
-    enabled && window && days[1] ? { vehicleId: window.vehicleId, day: days[1] } : null,
+  const q1 = useHistoryDay(
+    enabled && window && days[1] ? { vehicleId: window.vehicleId, day: cairoDay(days[1]) } : null,
   );
-  const q2 = useEtitHistoryDay(
-    enabled && window && days[2] ? { vehicleId: window.vehicleId, day: days[2] } : null,
+  const q2 = useHistoryDay(
+    enabled && window && days[2] ? { vehicleId: window.vehicleId, day: cairoDay(days[2]) } : null,
   );
-  const q3 = useEtitHistoryDay(
-    enabled && window && days[3] ? { vehicleId: window.vehicleId, day: days[3] } : null,
+  const q3 = useHistoryDay(
+    enabled && window && days[3] ? { vehicleId: window.vehicleId, day: cairoDay(days[3]) } : null,
   );
-  const q4 = useEtitHistoryDay(
-    enabled && window && days[4] ? { vehicleId: window.vehicleId, day: days[4] } : null,
+  const q4 = useHistoryDay(
+    enabled && window && days[4] ? { vehicleId: window.vehicleId, day: cairoDay(days[4]) } : null,
   );
   const queries = [q0, q1, q2, q3, q4];
 

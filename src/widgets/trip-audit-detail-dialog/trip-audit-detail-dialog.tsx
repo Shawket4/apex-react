@@ -10,6 +10,7 @@ import {
   Loader2,
   Moon,
   Play,
+  Route,
 } from 'lucide-react';
 import {
   Dialog,
@@ -39,14 +40,22 @@ import {
   type TripLeg,
   type TripMatchDetail,
 } from '@/entities/trip-audit/schemas';
-import { useEtitHistoryDay } from '@/entities/etit-vehicle/queries';
+import { useHistoryDay } from '@/features/tracking/use-history';
+import { cairoDay } from '@/features/tracking/api';
+import {
+  buildTrack,
+  ghostTrackFromPath,
+} from '@/features/tracking/playback';
+import {
+  ReplayTransport,
+  type ReplayTransportHandle,
+  type TransportTick,
+} from '@/features/tracking/components/replay-transport';
 import type {
-  EtitHistoryPoint,
-  EtitSensorEvent,
-  EtitStop,
-} from '@/entities/etit-vehicle/schemas';
-import type { PlaybackState } from '@/entities/etit-vehicle/playback';
-import { EtitPlaybackPlayer } from '@/widgets/etit-playback-player/etit-playback-player';
+  HistoryPoint as EtitHistoryPoint,
+  SensorEvent as EtitSensorEvent,
+  Stop as EtitStop,
+} from '@/features/tracking/schemas';
 import { locationApi } from '@/entities/location/api';
 import { useTerminals } from '@/entities/location/queries';
 import {
@@ -86,16 +95,6 @@ function asString(v: unknown): string | null {
   return typeof v === 'string' && v.trim() !== '' ? v : null;
 }
 
-function bearing(a: { lat: number; lng: number }, b: { lat: number; lng: number }): number {
-  const toRad = (d: number) => (d * Math.PI) / 180;
-  const toDeg = (r: number) => (r * 180) / Math.PI;
-  const dLng = toRad(b.lng - a.lng);
-  const lat1 = toRad(a.lat);
-  const lat2 = toRad(b.lat);
-  const y = Math.sin(dLng) * Math.cos(lat2);
-  const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(dLng);
-  return (toDeg(Math.atan2(y, x)) + 360) % 360;
-}
 
 interface UnplannedStop {
   flagId: number;
@@ -186,12 +185,12 @@ function useTripPlaybackHistory(detail: TripMatchDetail | null, open: boolean): 
     endDay != null &&
     formatCairoDayKeyOf(startDay) !== formatCairoDayKeyOf(endDay);
 
-  const firstQuery = useEtitHistoryDay(
-    open && window && startDay ? { vehicleId: window.vehicleId, day: startDay } : null,
+  const firstQuery = useHistoryDay(
+    open && window && startDay ? { vehicleId: window.vehicleId, day: cairoDay(startDay) } : null,
   );
-  const secondQuery = useEtitHistoryDay(
+  const secondQuery = useHistoryDay(
     open && window && crossesMidnight && endDay
-      ? { vehicleId: window.vehicleId, day: endDay }
+      ? { vehicleId: window.vehicleId, day: cairoDay(endDay) }
       : null,
   );
 
@@ -240,13 +239,7 @@ function useTripPlaybackHistory(detail: TripMatchDetail | null, open: boolean): 
 
 /** Cairo 'YYYY-MM-DD' of an instant (local midnight boundaries are Cairo's). */
 function formatCairoDayKeyOf(d: Date): string {
-  const parts = new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'Africa/Cairo',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).format(d);
-  return parts;
+  return cairoDay(d);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -390,11 +383,13 @@ function LayerChip({
 /* -------------------------------------------------------------------------- */
 
 interface PlaybackMapProps {
+  /** A leg the user asked to preview — highlights it and seeks its departure. */
+  previewLeg: TripLeg | null;
   detail: TripMatchDetail;
   history: PlaybackHistory;
 }
 
-function PlaybackMap({ detail, history }: PlaybackMapProps) {
+function PlaybackMap({ detail, history, previewLeg }: PlaybackMapProps) {
   const { t } = useTranslation();
 
   /* ---- Layer toggles (component state only) ---- */
@@ -405,43 +400,34 @@ function PlaybackMap({ detail, history }: PlaybackMapProps) {
 
   const geofences = useTripGeofences(detail, true);
 
-  /* ---- Playback state ---- */
-  const [currentMs, setCurrentMs] = React.useState(0);
-  const [playing, setPlaying] = React.useState(false);
-  const [speed, setSpeed] = React.useState(16);
-  const [playbackState, setPlaybackState] = React.useState<PlaybackState | null>(null);
-  const [playbackPrev, setPlaybackPrev] =
-    React.useState<{ lat: number; lng: number } | null>(null);
-
-  const playable = history.points.length >= 2;
-
-  // Reset the scrubber whenever a different trip's history arrives.
-  const seededKey = React.useRef<string>('');
-  React.useEffect(() => {
-    const key = `${detail.id}:${history.points.length}`;
-    if (seededKey.current === key) return;
-    seededKey.current = key;
-    setPlaying(false);
-    setPlaybackState(null);
-    setPlaybackPrev(null);
-    const first = history.points[0]?.timestamp?.getTime();
-    setCurrentMs(first ?? 0);
-  }, [detail.id, history.points]);
-
-  const handlePlaybackChange = React.useCallback(
-    (state: PlaybackState | null, prev: { lat: number; lng: number } | null) => {
-      setPlaybackState(state);
-      setPlaybackPrev(prev);
-    },
-    [],
-  );
-
-  /* ---- Map layers ---- */
+  /* ---- Playback ---- */
+  const track = React.useMemo(() => buildTrack(history.points), [history.points]);
+  const playable = track !== null;
+  const [tick, setTick] = React.useState<TransportTick | null>(null);
+  const transportRef = React.useRef<ReplayTransportHandle>(null);
 
   const sortedLegs = React.useMemo(
     () => [...detail.legs].sort((a, b) => a.seq - b.seq),
     [detail.legs],
   );
+
+  /* The optimal ghost: every leg's OSRM geometry chained, timed at the
+     OSRM pace, departing when the truck actually departed. */
+  const ghostTrack = React.useMemo(() => {
+    if (!track) return null;
+    const path = sortedLegs.flatMap((leg) => decodePolyline5(leg.osrm_geometry));
+    const secs = sortedLegs.reduce((sum, leg) => sum + (leg.osrm_secs ?? 0), 0);
+    return ghostTrackFromPath(path, track.startMs, secs);
+  }, [track, sortedLegs]);
+
+  // A leg preview seeks the clock to the leg's departure.
+  React.useEffect(() => {
+    if (!previewLeg?.depart_ts) return;
+    const ms = Date.parse(previewLeg.depart_ts);
+    if (Number.isFinite(ms)) transportRef.current?.seek(ms);
+  }, [previewLeg]);
+
+  /* ---- Map layers ---- */
 
   // Static layers only — the moving playback marker is appended in a second,
   // cheap memo so polyline decoding doesn't re-run ~30×/s during playback.
@@ -477,18 +463,20 @@ function PlaybackMap({ detail, history }: PlaybackMapProps) {
       }
     }
 
-    /* OSRM optimal — per-leg dashed green. */
+    /* OSRM optimal — per-leg dashed green. A previewed leg draws solid and
+       heavier; its siblings fade so the eye lands on it. */
     if (showOsrm) {
       sortedLegs.forEach((leg) => {
         const osrm = decodePolyline5(leg.osrm_geometry); // '' decodes to []
         if (osrm.length > 1) {
+          const previewed = previewLeg?.id === leg.id;
           lines.push({
             id: `leg-${leg.id}-osrm`,
             path: osrm,
             color: OSRM_COLOR,
-            weight: 3,
-            opacity: 0.9,
-            dashed: true,
+            weight: previewed ? 5 : 3,
+            opacity: previewLeg && !previewed ? 0.25 : 0.9,
+            dashed: !previewed,
           });
         }
       });
@@ -564,28 +552,45 @@ function PlaybackMap({ detail, history }: PlaybackMapProps) {
     playable,
     history.points,
     sortedLegs,
+    previewLeg,
     detail.flags,
     geofences,
     t,
   ]);
 
-  /* Playback marker — moving vehicle, never affects bounds. */
+  /* Playback markers — the truck (and, in a race, the optimal ghost).
+     Never affect bounds. */
   const markers = React.useMemo<MapMarker[]>(() => {
-    if (!playbackState) return staticMarkers;
-    return [
+    if (!tick || !track) return staticMarkers;
+    const limit = track.limits[tick.sample.index] || 0;
+    const speeding = limit > 0 && tick.sample.speed > limit;
+    const out: MapMarker[] = [
       ...staticMarkers,
       {
         id: 'playback-marker',
-        lat: playbackState.lat,
-        lng: playbackState.lng,
-        color: playbackState.speeding ? PLAYBACK_SPEEDING : PLAYBACK_NORMAL,
+        lat: tick.sample.lat,
+        lng: tick.sample.lng,
+        color: speeding ? PLAYBACK_SPEEDING : PLAYBACK_NORMAL,
         kind: 'vehicle',
-        heading: playbackPrev ? bearing(playbackPrev, playbackState) : 0,
+        heading: tick.sample.heading,
         affectsBounds: false,
-        title: `${Math.round(playbackState.speed)} km/h`,
+        title: `${Math.round(tick.sample.speed)} km/h`,
       },
     ];
-  }, [staticMarkers, playbackState, playbackPrev]);
+    if (tick.ghost) {
+      out.push({
+        id: 'ghost-marker',
+        lat: tick.ghost.lat,
+        lng: tick.ghost.lng,
+        color: OSRM_COLOR,
+        kind: 'vehicle',
+        heading: tick.ghost.heading,
+        affectsBounds: false,
+        title: t('tripAudit.detail.optimalGhost', 'Optimal pace'),
+      });
+    }
+    return out;
+  }, [staticMarkers, tick, track, t]);
 
   return (
     <div className="space-y-2">
@@ -657,19 +662,14 @@ function PlaybackMap({ detail, history }: PlaybackMapProps) {
       </div>
 
       {/* Scrubber / fallback note */}
-      {playable ? (
+      {playable && track ? (
         <div className="rounded-lg border bg-card">
-          <EtitPlaybackPlayer
-            points={history.points}
-            stops={history.stops}
-            sensors={history.sensors}
-            currentMs={currentMs}
-            onCurrentMsChange={setCurrentMs}
-            playing={playing}
-            onPlayingChange={setPlaying}
-            speed={speed}
-            onSpeedChange={setSpeed}
-            onStateChange={handlePlaybackChange}
+          <ReplayTransport
+            ref={transportRef}
+            track={track}
+            stopTimes={history.stops}
+            ghost={ghostTrack}
+            onTick={setTick}
           />
         </div>
       ) : (
@@ -690,14 +690,29 @@ function PlaybackMap({ detail, history }: PlaybackMapProps) {
 /* Legs as sentences                                                           */
 /* -------------------------------------------------------------------------- */
 
-function LegSentence({ leg }: { leg: TripLeg }) {
+function LegSentence({
+  leg,
+  previewed,
+  onPreview,
+}: {
+  leg: TripLeg;
+  previewed: boolean;
+  onPreview: (leg: TripLeg) => void;
+}) {
   const { t, i18n } = useTranslation();
 
   const depart = leg.depart_ts ? formatCairoTime(leg.depart_ts, i18n.language) : '—';
   const arrive = leg.arrive_ts ? formatCairoTime(leg.arrive_ts, i18n.language) : '—';
 
+  const hasOsrm = !!leg.osrm_geometry;
+
   return (
-    <li className="flex items-start gap-2.5 rounded-lg border p-3">
+    <li
+      className={cn(
+        'flex items-start gap-2.5 rounded-lg border p-3 transition-colors',
+        previewed && 'border-emerald-600/50 bg-emerald-600/5',
+      )}
+    >
       <Badge variant="secondary" className="mt-0.5 shrink-0 tabular-nums">
         {leg.seq}
       </Badge>
@@ -736,11 +751,33 @@ function LegSentence({ leg }: { leg: TripLeg }) {
           )}
         </div>
       </div>
+      {hasOsrm && (
+        <Button
+          type="button"
+          variant={previewed ? 'default' : 'outline'}
+          size="sm"
+          className="h-7 shrink-0 gap-1.5 text-xs"
+          onClick={() => onPreview(leg)}
+        >
+          <Route className="h-3.5 w-3.5" />
+          {previewed
+            ? t('tripAudit.legs.previewing', 'Previewing')
+            : t('tripAudit.legs.preview', 'Preview')}
+        </Button>
+      )}
     </li>
   );
 }
 
-function LegsList({ legs }: { legs: TripLeg[] }) {
+function LegsList({
+  legs,
+  previewLegId,
+  onPreview,
+}: {
+  legs: TripLeg[];
+  previewLegId: number | null;
+  onPreview: (leg: TripLeg) => void;
+}) {
   const { t } = useTranslation();
   const sorted = React.useMemo(() => [...legs].sort((a, b) => a.seq - b.seq), [legs]);
 
@@ -755,7 +792,12 @@ function LegsList({ legs }: { legs: TripLeg[] }) {
   return (
     <ul className="space-y-2">
       {sorted.map((leg) => (
-        <LegSentence key={leg.id} leg={leg} />
+        <LegSentence
+          key={leg.id}
+          leg={leg}
+          previewed={previewLegId === leg.id}
+          onPreview={onPreview}
+        />
       ))}
     </ul>
   );
@@ -1073,6 +1115,10 @@ interface TripAuditDetailDialogProps {
  * columns removed from the queue list live here.
  */
 export function TripAuditDetailDialog({ matchId, onOpenChange }: TripAuditDetailDialogProps) {
+  const [previewLeg, setPreviewLeg] = React.useState<TripLeg | null>(null);
+  React.useEffect(() => {
+    setPreviewLeg(null);
+  }, [matchId]);
   const { t, i18n } = useTranslation();
   const open = matchId != null;
   const { data: detail, isLoading, isError } = useTripMatch(matchId);
@@ -1141,7 +1187,7 @@ export function TripAuditDetailDialog({ matchId, onOpenChange }: TripAuditDetail
           {detail && (
             <>
               {/* Map first, full width */}
-              <PlaybackMap detail={detail} history={history} />
+              <PlaybackMap detail={detail} history={history} previewLeg={previewLeg} />
 
               {/* Summary strip — the old list columns live here now */}
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
@@ -1184,7 +1230,13 @@ export function TripAuditDetailDialog({ matchId, onOpenChange }: TripAuditDetail
                 <h3 className="text-sm font-semibold">
                   {t('tripAudit.detail.legs', 'Legs')}
                 </h3>
-                <LegsList legs={detail.legs} />
+                <LegsList
+                  legs={detail.legs}
+                  previewLegId={previewLeg?.id ?? null}
+                  onPreview={(leg) =>
+                    setPreviewLeg((prev) => (prev?.id === leg.id ? null : leg))
+                  }
+                />
               </section>
 
               <section className="space-y-2">

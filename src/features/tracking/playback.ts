@@ -5,6 +5,7 @@
  */
 
 import type { ReplayTrack } from './use-history';
+import type { HistoryPoint } from './schemas';
 
 export const SPEEDS = [1, 4, 16, 64, 256] as const;
 
@@ -50,4 +51,53 @@ export function sampleAt(track: ReplayTrack, tMs: number): ReplaySample {
       : 0;
 
   return { lng, lat, speed: track.speeds[i], heading: (heading + 360) % 360, index: i };
+}
+
+/** Build a GPU-ready track from timestamped points (must be sorted). */
+export function buildTrack(points: HistoryPoint[]): ReplayTrack | null {
+  const usable = points.filter((p) => p.timestamp);
+  if (usable.length < 2) return null;
+  const path: [number, number][] = new Array(usable.length);
+  const timesMs = new Float64Array(usable.length);
+  const speeds = new Float32Array(usable.length);
+  const limits = new Float32Array(usable.length);
+  for (let i = 0; i < usable.length; i++) {
+    path[i] = [usable[i].lng, usable[i].lat];
+    timesMs[i] = usable[i].timestamp!.getTime();
+    speeds[i] = usable[i].speed;
+    limits[i] = usable[i].speedLimit ?? 0;
+  }
+  return { path, timesMs, speeds, limits, startMs: timesMs[0], endMs: timesMs[usable.length - 1] };
+}
+
+/**
+ * A synthetic track along a geometry with time spread proportionally to
+ * segment length — the "optimal ghost": departs at `startMs`, arrives
+ * `durationSecs` later, moving at the route's implied constant pace.
+ * `path` is [lat, lng] pairs (polyline-decode order).
+ */
+export function ghostTrackFromPath(
+  latLngPath: Array<[number, number]>,
+  startMs: number,
+  durationSecs: number,
+): ReplayTrack | null {
+  if (latLngPath.length < 2 || durationSecs <= 0) return null;
+  const n = latLngPath.length;
+  const cum = new Float64Array(n);
+  for (let i = 1; i < n; i++) {
+    const dx = latLngPath[i][1] - latLngPath[i - 1][1];
+    const dy = latLngPath[i][0] - latLngPath[i - 1][0];
+    cum[i] = cum[i - 1] + Math.hypot(dx, dy);
+  }
+  const total = cum[n - 1] || 1;
+  const path: [number, number][] = new Array(n);
+  const timesMs = new Float64Array(n);
+  const kmh = 0; // ghost speed readout is derived below per segment
+  const speeds = new Float32Array(n).fill(kmh);
+  const limits = new Float32Array(n);
+  for (let i = 0; i < n; i++) {
+    path[i] = [latLngPath[i][1], latLngPath[i][0]];
+    timesMs[i] = startMs + (cum[i] / total) * durationSecs * 1000;
+  }
+  return { path, timesMs, speeds, limits, startMs, endMs: timesMs[n - 1] };
 }

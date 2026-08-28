@@ -1,4 +1,8 @@
-import type { EtitHistoryPoint, EtitSensorEvent, EtitStop } from './schemas';
+import type {
+  HistoryPoint as EtitHistoryPoint,
+  SensorEvent as EtitSensorEvent,
+  Stop as EtitStop,
+} from '@/features/tracking/schemas';
 
 /* -------------------------------------------------------------------------- */
 /* Polyline decoder                                                            */

@@ -82,6 +82,7 @@ export default function TrackingPage() {
   const [showStops, setShowStops] = React.useState(true);
   const [showIgnitions, setShowIgnitions] = React.useState(true);
   const [playing, setPlaying] = React.useState(false);
+  const [follow, setFollow] = React.useState(true);
   const [speed, setSpeed] = React.useState(16);
   const today = React.useMemo(() => cairoDay(new Date()), []);
   const [draftFrom, setDraftFrom] = React.useState(url.from ?? today);
@@ -246,6 +247,10 @@ export default function TrackingPage() {
     }
   }, []);
   React.useEffect(() => {
+    mapRef.current?.setFollow(follow);
+  }, [follow]);
+
+  React.useEffect(() => {
     const h = () => setFullscreen(!!document.fullscreenElement);
     document.addEventListener('fullscreenchange', h);
     return () => document.removeEventListener('fullscreenchange', h);
@@ -264,7 +269,13 @@ export default function TrackingPage() {
     <div ref={rootRef} className="relative h-full min-h-0 overflow-hidden bg-background">
       <TrackingMap
         ref={mapRef}
-        onSelect={(id) => writeUrl({ vehicleId: id })}
+        onSelect={(id) => {
+          writeUrl({ vehicleId: id });
+          // Auto-dismiss the panel — on a phone it covers the map you just
+          // asked to look at.
+          setPanelOpen(false);
+        }}
+        onUserPan={() => setFollow(false)}
         className="absolute inset-0"
       />
 
@@ -340,6 +351,8 @@ export default function TrackingPage() {
         onClose={() => setPanelOpen(false)}
         onSelect={(id) => {
           writeUrl({ vehicleId: id });
+          setPanelOpen(false);
+          focusVehicle(id);
         }}
         onFocus={(id) => {
           focusVehicle(id);
@@ -357,7 +370,7 @@ export default function TrackingPage() {
 
       {/* selected vehicle card (live mode) */}
       {selected && url.mode === 'live' && !composerOpen && (
-        <div className="absolute end-3 top-16 z-20">
+        <div className="absolute inset-x-2 bottom-2 z-20 flex justify-center md:inset-x-auto md:bottom-auto md:end-3 md:top-16 md:block">
           <VehicleCard
             vehicle={selected}
             live={fleet.live.get(selected.id) ?? null}
@@ -386,6 +399,8 @@ export default function TrackingPage() {
               setPlaying(false);
             }}
             onSpeed={setSpeed}
+            follow={follow}
+            onToggleFollow={() => setFollow((f) => !f)}
             onToggleStops={() => setShowStops((v) => !v)}
             onToggleIgnitions={() => setShowIgnitions((v) => !v)}
             onExit={exitHistory}

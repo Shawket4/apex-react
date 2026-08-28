@@ -1,13 +1,16 @@
 /**
- * deck.gl layer builders. Everything heavy on the map is GPU-rendered:
- * per-day trails (PathLayer), stops and ignition events (ScatterplotLayer),
- * and the animated replay tail (TripsLayer, driven by a time uniform — the
- * per-frame cost of scrubbing is one uniform update, not a re-render).
+ * deck.gl layer builders. Everything heavy on the map is GPU-rendered, but
+ * wears the app's ORIGINAL marker artwork: stops, ignition events and route
+ * endpoints render the shared marker SVGs as icon sprites, so the rebuilt
+ * page looks like the old one while a month of data stays a handful of GPU
+ * layers. The animated replay tail is a TripsLayer driven by a time uniform.
  */
 
-import { PathLayer, ScatterplotLayer } from '@deck.gl/layers';
+import { IconLayer, PathLayer } from '@deck.gl/layers';
 import { TripsLayer } from '@deck.gl/geo-layers';
 import type { Layer } from '@deck.gl/core';
+import { buildMarkerSvg, markerSize } from '@/shared/lib/maps/marker-svg';
+import type { MarkerKind } from '@/shared/lib/maps/types';
 import type { SensorEvent, Stop } from '../schemas';
 import type { DayTrail, ReplayTrack } from '../use-history';
 
@@ -23,11 +26,31 @@ export interface HistoryLayerInput {
 }
 
 const TRAIL_BLUE: [number, number, number] = [59, 130, 246];
-const STOP_AMBER: [number, number, number] = [245, 158, 11];
-const SENSOR_GREY: [number, number, number] = [107, 114, 128];
+const STOP_COLOR = '#f59e0b';
+const IGNITION_ON_COLOR = '#16a34a';
+const IGNITION_OFF_COLOR = '#6b7280';
 
 /** Replay tail length in seconds of track time. */
 const TAIL_SECS = 45 * 60;
+
+/** The original marker SVGs as deck icon descriptors (cached — the data URL
+ *  doubles as the atlas key). */
+const iconCache = new Map<string, { url: string; width: number; height: number; anchorY: number }>();
+function icon(kind: MarkerKind, color: string) {
+  const key = `${kind}:${color}`;
+  let entry = iconCache.get(key);
+  if (!entry) {
+    const size = markerSize(kind);
+    entry = {
+      url: buildMarkerSvg(color, `trk-${kind}`, kind),
+      width: size.width,
+      height: size.height,
+      anchorY: size.anchorY,
+    };
+    iconCache.set(key, entry);
+  }
+  return entry;
+}
 
 export function buildStaticLayers(input: HistoryLayerInput): Layer[] {
   const layers: Layer[] = [];
@@ -51,22 +74,37 @@ export function buildStaticLayers(input: HistoryLayerInput): Layer[] {
         updateTriggers: { getColor: input.cursorDay, getWidth: input.cursorDay },
       }),
     );
+
+    /* Route endpoints — the classic start/end pins on the whole range. */
+    const first = input.trails[0].path[0];
+    const lastTrail = input.trails[input.trails.length - 1].path;
+    const last = lastTrail[lastTrail.length - 1];
+    if (first && last) {
+      layers.push(
+        new IconLayer<{ pos: [number, number]; kind: 'route-start' | 'route-end' }>({
+          id: 'endpoints',
+          data: [
+            { pos: first, kind: 'route-start' as const },
+            { pos: last, kind: 'route-end' as const },
+          ],
+          getPosition: (d) => d.pos,
+          getIcon: (d) => icon(d.kind, d.kind === 'route-start' ? '#16a34a' : '#dc2626'),
+          getSize: (d) => markerSize(d.kind).height,
+          sizeUnits: 'pixels',
+        }),
+      );
+    }
   }
 
   if (input.showStops && input.stops.length > 0) {
     layers.push(
-      new ScatterplotLayer<Stop>({
+      new IconLayer<Stop>({
         id: 'stops',
         data: input.stops,
         getPosition: (d) => [d.lng, d.lat],
-        getFillColor: [255, 255, 255, 255],
-        getLineColor: [...STOP_AMBER, 255],
-        stroked: true,
-        getLineWidth: 3,
-        lineWidthUnits: 'pixels',
-        getRadius: 5,
-        radiusUnits: 'pixels',
-        radiusMinPixels: 4,
+        getIcon: () => icon('stop', STOP_COLOR),
+        getSize: markerSize('stop').height,
+        sizeUnits: 'pixels',
         pickable: true,
       }),
     );
@@ -74,14 +112,16 @@ export function buildStaticLayers(input: HistoryLayerInput): Layer[] {
 
   if (input.showIgnitions && input.sensors.length > 0) {
     layers.push(
-      new ScatterplotLayer<SensorEvent>({
+      new IconLayer<SensorEvent>({
         id: 'sensors',
         data: input.sensors,
         getPosition: (d) => [d.lng, d.lat],
-        getFillColor: [...SENSOR_GREY, 220],
-        getRadius: 3.5,
-        radiusUnits: 'pixels',
-        radiusMinPixels: 3,
+        getIcon: (d) =>
+          /on/i.test(d.typeName)
+            ? icon('ignition-on', IGNITION_ON_COLOR)
+            : icon('ignition-off', IGNITION_OFF_COLOR),
+        getSize: markerSize('ignition-on').height,
+        sizeUnits: 'pixels',
         pickable: true,
       }),
     );

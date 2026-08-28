@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Flame, MapPinned, Pause, Play, RotateCcw, X } from 'lucide-react';
+import { Flame, LocateFixed, MapPinned, Pause, Play, RotateCcw, X } from 'lucide-react';
 import { cn } from '@/shared/lib/cn';
 import { SPEEDS } from '../playback';
 import type { HistoryData } from '../use-history';
@@ -123,6 +123,8 @@ export function TimeDeck({
   cursor,
   playing,
   speed,
+  follow,
+  onToggleFollow,
   showStops,
   showIgnitions,
   onScrub,
@@ -138,6 +140,8 @@ export function TimeDeck({
   cursor: CursorStore;
   playing: boolean;
   speed: number;
+  follow: boolean;
+  onToggleFollow: () => void;
   showStops: boolean;
   showIgnitions: boolean;
   onScrub: (ms: number) => void;
@@ -245,6 +249,20 @@ export function TimeDeck({
               </div>
 
               <div className="ms-auto flex items-center gap-1">
+                <button
+                  type="button"
+                  aria-pressed={follow}
+                  onClick={onToggleFollow}
+                  title={t('tracking.follow', 'Follow the truck')}
+                  className={cn(
+                    'grid h-8 w-8 place-items-center rounded-lg border',
+                    follow
+                      ? 'border-primary/50 bg-primary/10 text-primary'
+                      : 'bg-background text-muted-foreground hover:bg-muted',
+                  )}
+                >
+                  <LocateFixed className="h-3.5 w-3.5" />
+                </button>
                 <button
                   type="button"
                   aria-pressed={showStops}

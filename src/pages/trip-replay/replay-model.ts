@@ -5,8 +5,8 @@ import {
   indexAtTime,
   stateAtTime,
   type PlaybackTrack,
-} from '@/entities/etit-vehicle/playback';
-import type { EtitHistoryPoint } from '@/entities/etit-vehicle/schemas';
+} from './playback-core';
+import type { HistoryPoint as EtitHistoryPoint } from '@/features/tracking/schemas';
 import {
   parseFlagDetails,
   type TripFlag,

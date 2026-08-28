@@ -1,7 +1,9 @@
 import * as React from 'react';
 import { useQueries, useQuery, type QueryClient } from '@tanstack/react-query';
 import { cairoDay, trackingApi, trackingKeys } from './api';
-import type { HistoryPoint, SensorEvent, Stop } from './schemas';
+import { buildTrack } from './playback';
+import type { SensorEvent, Stop } from './schemas';
+import type { HistoryPoint } from './schemas';
 
 /* -------------------------------------------------------------------------- */
 /* Day-chunked history.                                                        */
@@ -36,6 +38,8 @@ export interface ReplayTrack {
   timesMs: Float64Array;
   /** Speed km/h per point, for the HUD. */
   speeds: Float32Array;
+  /** Speed limit km/h per point (0 = unknown), for speeding tint. */
+  limits: Float32Array;
   startMs: number;
   endMs: number;
 }
@@ -132,15 +136,7 @@ export function useHistory(range: HistoryRange | null): HistoryData {
 
     let track: ReplayTrack | null = null;
     if (points.length >= 2) {
-      const path: [number, number][] = new Array(points.length);
-      const timesMs = new Float64Array(points.length);
-      const speeds = new Float32Array(points.length);
-      for (let i = 0; i < points.length; i++) {
-        path[i] = [points[i].lng, points[i].lat];
-        timesMs[i] = points[i].timestamp!.getTime();
-        speeds[i] = points[i].speed;
-      }
-      track = { path, timesMs, speeds, startMs: timesMs[0], endMs: timesMs[points.length - 1] };
+      track = buildTrack(points);
     }
 
     return {
@@ -156,6 +152,18 @@ export function useHistory(range: HistoryRange | null): HistoryData {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [range?.vehicleId, range?.from, range?.to, days, fingerprint]);
+}
+
+/** One Cairo day of history — for consumers (audit replay) that window a
+ *  trip rather than browse a range. Shares the range cache day-for-day. */
+export function useHistoryDay(args: { vehicleId: string; day: string } | null) {
+  return useQuery({
+    queryKey: args ? trackingKeys.day(args.vehicleId, args.day) : ['tracking', 'day', 'disabled'],
+    queryFn: () => trackingApi.historyDay(args!.vehicleId, args!.day),
+    enabled: args !== null,
+    staleTime: 5 * 60_000,
+    refetchOnWindowFocus: false,
+  });
 }
 
 export function useRangeSummary(range: HistoryRange | null) {

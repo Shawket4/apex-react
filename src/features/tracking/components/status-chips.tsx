@@ -42,7 +42,7 @@ export function StatusChips({
   }, [vehicles, live]);
 
   return (
-    <div className="pointer-events-auto flex flex-wrap items-center gap-1.5">
+    <div className="pointer-events-auto flex items-center gap-1.5 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:flex-wrap sm:overflow-visible">
       {STATUS_ORDER.map((g) => {
         const count = counts.get(g) ?? 0;
         if (count === 0) return null;
@@ -54,7 +54,7 @@ export function StatusChips({
             aria-pressed={active}
             onClick={() => onToggleGroup(active ? null : g)}
             className={cn(
-              'flex items-center gap-1.5 rounded-full border px-2.5 py-1 font-mono text-[11px] font-semibold shadow-sm backdrop-blur transition-colors',
+              'flex shrink-0 items-center gap-1.5 rounded-full border px-2 py-1 font-mono text-[11px] font-semibold shadow-sm backdrop-blur transition-colors sm:px-2.5',
               active
                 ? 'border-transparent text-white'
                 : 'border-border bg-card/90 text-foreground hover:bg-card',
@@ -65,7 +65,7 @@ export function StatusChips({
               className="h-2 w-2 rounded-full"
               style={{ background: active ? '#fff' : STATUS_COLOR[g] }}
             />
-            {t(`tracking.group.${g}`, g)}
+            <span className="hidden sm:inline">{t(`tracking.group.${g}`, g)}</span>
             <span className={cn('tabular-nums', active ? 'opacity-90' : 'text-muted-foreground')}>
               {count}
             </span>
