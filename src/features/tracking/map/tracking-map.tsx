@@ -104,6 +104,16 @@ export const TrackingMap = React.forwardRef<TrackingMapHandle, Props>(
       onSelectRef.current = onSelect;
     });
 
+    const staticLayersRef = React.useRef<ReturnType<typeof buildStaticLayers>>([]);
+
+    /** Recompute the static layers (data/toggles/cursor-day changed). */
+    const rebuildStatic = React.useCallback(() => {
+      const h = historyRef.current;
+      staticLayersRef.current = h ? buildStaticLayers(h) : [];
+    }, []);
+
+    /** Push static + tail. Per replay frame only the tail layer is new —
+     *  the cached statics diff to no-ops inside deck. */
     const pushLayers = React.useCallback(() => {
       const overlay = overlayRef.current;
       if (!overlay) return;
@@ -112,7 +122,7 @@ export const TrackingMap = React.forwardRef<TrackingMapHandle, Props>(
         overlay.setProps({ layers: [] });
         return;
       }
-      const layers = buildStaticLayers(h);
+      const layers = [...staticLayersRef.current];
       if (h.track && cursorRef.current !== null) {
         layers.push(buildTailLayer(h.track, cursorRef.current));
       }
@@ -174,6 +184,7 @@ export const TrackingMap = React.forwardRef<TrackingMapHandle, Props>(
             if (replayMarkerRef.current) replayMarkerRef.current.map = null;
             replayMarkerRef.current = null;
           }
+          rebuildStatic();
           pushLayers();
         },
         setCursor(ms) {
@@ -216,7 +227,7 @@ export const TrackingMap = React.forwardRef<TrackingMapHandle, Props>(
           map.setZoom(zoom);
         },
       }),
-      [applyLive, pushLayers],
+      [applyLive, pushLayers, rebuildStatic],
     );
 
     React.useEffect(() => {
@@ -238,6 +249,7 @@ export const TrackingMap = React.forwardRef<TrackingMapHandle, Props>(
         mapRef.current = map;
         overlayRef.current = overlay;
         readyRef.current = true;
+        rebuildStatic();
         if (pendingLiveRef.current) {
           applyLive(pendingLiveRef.current);
           pendingLiveRef.current = null;
