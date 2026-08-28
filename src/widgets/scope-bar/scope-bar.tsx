@@ -44,9 +44,9 @@ function ScopeControls({ className }: { className?: string }) {
   // Self-heal a stale company: one carried in a shared link but since renamed
   // or removed would silently filter everything to zero.
   React.useEffect(() => {
-    if (!companies.data) return;
+    if (!companies.isSuccess || companyNames.length === 0) return;
     if (company && !companyNames.includes(company)) setCompany(null);
-  }, [companies.data, company, companyNames, setCompany]);
+  }, [companies.isSuccess, company, companyNames, setCompany]);
 
   const presetOptions: PeriodPreset[] = React.useMemo(
     () =>

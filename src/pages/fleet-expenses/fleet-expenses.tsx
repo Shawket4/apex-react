@@ -7,7 +7,6 @@ import { useTranslation } from 'react-i18next';
 import { useTheme } from 'next-themes';
 import {
   ArrowDownLeft,
-  ChevronLeft,
   ChevronRight,
   Download,
   Fuel,
@@ -42,25 +41,16 @@ import { Skeleton } from '@/shared/ui/skeleton';
 import { Switch } from '@/shared/ui/switch';
 import { Label } from '@/shared/ui/label';
 import { NativeSelect } from '@/shared/ui/native-select';
-import { DateRangePicker } from '@/shared/ui/date-range-picker';
 import { cn } from '@/shared/lib/cn';
 import { formatMoney, addMoneyStrings } from '@/shared/lib/money';
-import { localParts } from '@/shared/lib/format';
 import {
-  cairoDayRange,
-  cairoInstant,
-  cairoMonthRange,
-  cairoParts,
-  cairoToday,
-  cairoYearRange,
   formatCairoDate,
   formatCairoDayShort,
-  formatCairoMonth,
 } from '@/shared/lib/cairo';
 import { themedTooltipProps, themedAxisTickProps } from '@/shared/lib/chart-theme';
 import { formatCompactNumber } from '@/shared/lib/format-number';
 import { useDebounce } from '@/shared/hooks/use-debounce';
-import { defaultLedgerRange } from '@/entities/transaction/defaults';
+import { scopeRangeToInstants, useScope, useScopeCompany } from '@/shared/scope';
 import { usePermissions } from '@/shared/hooks/use-permissions';
 
 import {
@@ -69,7 +59,6 @@ import {
   useTransactionStatistics,
 } from '@/entities/transaction/queries';
 import {
-  COMPANIES,
   PAYMENT_METHODS,
   TRANSACTION_SOURCES,
   type ByCategory,
@@ -84,34 +73,6 @@ import { CashInReview } from '@/widgets/fleet-expenses-table/cash-in-review';
 /* Range presets — all boundaries are CAIRO calendar days (D6)                 */
 /* -------------------------------------------------------------------------- */
 
-type PresetKey = 'thisMonth' | 'lastMonth' | 'last3Months' | 'thisYear' | 'all' | 'custom';
-
-function presetRange(key: Exclude<PresetKey, 'custom'>): [string | null, string | null] {
-  const today = cairoToday();
-  switch (key) {
-    case 'thisMonth':
-      return cairoMonthRange(today.y, today.m);
-    case 'lastMonth':
-      return cairoMonthRange(today.y, today.m - 1);
-    case 'last3Months': {
-      const [from] = cairoMonthRange(today.y, today.m - 2);
-      const [, to] = cairoMonthRange(today.y, today.m);
-      return [from, to];
-    }
-    case 'thisYear':
-      return cairoYearRange(today.y);
-    case 'all':
-      return [null, null];
-  }
-}
-
-const PRESET_OPTIONS: Array<Exclude<PresetKey, 'custom'>> = [
-  'thisMonth',
-  'lastMonth',
-  'last3Months',
-  'thisYear',
-  'all',
-];
 
 const ALL = '__all__';
 
@@ -129,18 +90,13 @@ export default function FleetExpensesPage() {
 
   /* ── Range: month picker by default, presets + custom as the escape hatch.
         from/to URL params stay honored so shared links keep working. ── */
-  const defaultRange = React.useMemo(() => defaultLedgerRange(), []);
-
-  const [range, setRange] = React.useState<{ from: string | null; to: string | null }>(() => {
-    if (searchParams.get('range') === 'all') return { from: null, to: null };
-    return {
-      from: searchParams.get('from') ?? defaultRange[0],
-      to: searchParams.get('to') ?? defaultRange[1],
-    };
-  });
+  // Dates + company come from the GLOBAL scope (the header bar).
+  const { range: scopeRange } = useScope();
+  const { company: scopeCompany } = useScopeCompany();
+  const range = React.useMemo(() => scopeRangeToInstants(scopeRange), [scopeRange]);
+  const company = scopeCompany ?? ALL;
 
   const [category, setCategory] = React.useState(() => searchParams.get('category') ?? '');
-  const [company, setCompany] = React.useState(() => searchParams.get('company') ?? ALL);
   const [paymentMethod, setPaymentMethod] = React.useState(
     () => searchParams.get('payment_method') ?? ALL,
   );
@@ -155,7 +111,6 @@ export default function FleetExpensesPage() {
   /** The uncategorized-tile filter — a client-side view over loaded rows,
    *  since the wire contract has no server filter for a null category. */
   const [uncatOnly, setUncatOnly] = React.useState(() => searchParams.get('uncat') === '1');
-  const [customMode, setCustomMode] = React.useState(false);
   /** The cash-in review pocket — sheet on phones, inline section on desktop. */
   const [cashInOpen, setCashInOpen] = React.useState(false);
 
@@ -163,8 +118,8 @@ export default function FleetExpensesPage() {
 
   const filters: TransactionFilters = React.useMemo(
     () => ({
-      from: range.from ?? undefined,
-      to: range.to ?? undefined,
+      from: range.from,
+      to: range.to,
       category: category || undefined,
       company: company === ALL ? undefined : company,
       payment_method: paymentMethod === ALL ? undefined : paymentMethod,
@@ -181,24 +136,27 @@ export default function FleetExpensesPage() {
 
   // Keep the URL shareable — a filtered view can be sent to someone else.
   React.useEffect(() => {
-    const next = new URLSearchParams();
-    if (range.from && range.to) {
-      next.set('from', range.from);
-      next.set('to', range.to);
-    } else {
-      next.set('range', 'all');
-    }
-    if (category) next.set('category', category);
-    if (company !== ALL) next.set('company', company);
-    if (paymentMethod !== ALL) next.set('payment_method', paymentMethod);
-    if (source !== ALL) next.set('source', source);
-    if (debouncedSearch) next.set('q', debouncedSearch);
-    if (!includeFuel) next.set('include_fuel', 'false');
-    if (!includeLoans) next.set('include_loans', 'false');
-    if (uncatOnly) next.set('uncat', '1');
-    setSearchParams(next, { replace: true });
+    setSearchParams(
+      (prev) => {
+        // Start from the CURRENT params so the global scope's keys survive.
+        const next = new URLSearchParams(prev);
+        const setOrDelete = (k: string, v: string | null) =>
+          v ? next.set(k, v) : next.delete(k);
+        setOrDelete('category', category || null);
+        setOrDelete('payment_method', paymentMethod !== ALL ? paymentMethod : null);
+        setOrDelete('source', source !== ALL ? source : null);
+        setOrDelete('q', debouncedSearch || null);
+        setOrDelete('include_fuel', includeFuel ? null : 'false');
+        setOrDelete('include_loans', includeLoans ? null : 'false');
+        setOrDelete('uncat', uncatOnly ? '1' : null);
+        next.delete('range');
+        next.delete('company');
+        return next;
+      },
+      { replace: true },
+    );
   }, [
-    range, category, company, paymentMethod, source, debouncedSearch,
+    category, paymentMethod, source, debouncedSearch,
     includeFuel, includeLoans, uncatOnly, setSearchParams,
   ]);
 
@@ -246,37 +204,6 @@ export default function FleetExpensesPage() {
     compact: <Skeleton className="h-5 w-16" />,
   };
 
-  /* ── Which preset is active, and which month the strip shows ── */
-  const activePreset: PresetKey = React.useMemo(() => {
-    for (const key of PRESET_OPTIONS) {
-      const [f, to] = presetRange(key);
-      if (f === range.from && to === range.to) return key;
-      if (key === 'all' && !range.from && !range.to) return 'all';
-    }
-    return 'custom';
-  }, [range]);
-
-  const stripMonth = React.useMemo(() => {
-    if (!range.from) return null;
-    const p = cairoParts(range.from);
-    const [f, to] = cairoMonthRange(p.y, p.m);
-    return f === range.from && to === range.to ? { y: p.y, m: p.m } : null;
-  }, [range]);
-
-  const shiftMonth = (delta: number) => {
-    const base = stripMonth ?? (range.from ? cairoParts(range.from) : cairoToday());
-    const [from, to] = cairoMonthRange(base.y, base.m + delta);
-    setRange({ from, to });
-    setCustomMode(false);
-  };
-
-  const rangeLabel = stripMonth
-    ? formatCairoMonth(stripMonth.y, stripMonth.m, i18n.language)
-    : !range.from
-      ? t('fleetExpenses.range.all')
-      : `${formatCairoDate(range.from, i18n.language)} – ${
-          range.to ? formatCairoDate(range.to, i18n.language) : ''
-        }`;
 
   /* ── Charts. Numbers below are chart GEOMETRY only (pixels are approximate
         by nature); every figure a human reads goes through formatMoney on the
@@ -381,71 +308,6 @@ export default function FleetExpensesPage() {
         </div>
       }
     >
-      {/* ── Month strip + range escape hatch ─────────────────────────────── */}
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="flex items-center gap-1 rounded-lg border bg-card px-1 py-1">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            onClick={() => shiftMonth(-1)}
-            aria-label={t('fleetExpenses.range.previousMonth')}
-          >
-            <ChevronLeft className="h-4 w-4 rtl:rotate-180" />
-          </Button>
-          <span className="min-w-28 px-1 text-center text-sm font-semibold">{rangeLabel}</span>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8"
-            onClick={() => shiftMonth(1)}
-            aria-label={t('fleetExpenses.range.nextMonth')}
-          >
-            <ChevronRight className="h-4 w-4 rtl:rotate-180" />
-          </Button>
-        </div>
-
-        <NativeSelect
-          className="w-40"
-          value={customMode ? 'custom' : activePreset}
-          aria-label={t('fleetExpenses.range.label')}
-          onChange={(e) => {
-            const key = e.target.value as PresetKey;
-            if (key === 'custom') {
-              setCustomMode(true);
-              return;
-            }
-            setCustomMode(false);
-            const [from, to] = presetRange(key);
-            setRange({ from, to });
-          }}
-        >
-          {PRESET_OPTIONS.map((key) => (
-            <option key={key} value={key}>
-              {t(`fleetExpenses.range.${key}`)}
-            </option>
-          ))}
-          <option value="custom">{t('fleetExpenses.range.custom')}</option>
-        </NativeSelect>
-
-        {(customMode || activePreset === 'custom') && (
-          <DateRangePicker
-            from={range.from}
-            to={range.to}
-            onChange={(from, to) => {
-              // The picker hands back browser-local day boundaries; re-anchor
-              // the picked calendar days to CAIRO before they hit the API.
-              const f = from ? localParts(from) : null;
-              const tp = to ? localParts(to) : null;
-              setRange({
-                from: f ? cairoInstant(f.y, f.m, f.d) : null,
-                to: tp ? cairoDayRange(tp.y, tp.m, tp.d)[1] : null,
-              });
-            }}
-          />
-        )}
-      </div>
-
       {/* ── Summary strip — cash-out only; inflows never make a tile ─────── */}
       <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
         <StatCard
@@ -737,19 +599,6 @@ export default function FleetExpensesPage() {
               {TRANSACTION_SOURCES.map((s) => (
                 <option key={s} value={s}>
                   {t(`fleetExpenses.sources.${s}`, s)}
-                </option>
-              ))}
-            </NativeSelect>
-            <NativeSelect
-              className="w-36 shrink-0"
-              value={company}
-              onChange={(e) => setCompany(e.target.value)}
-              aria-label={t('fleetExpenses.fields.company')}
-            >
-              <option value={ALL}>{t('fleetExpenses.allCompanies')}</option>
-              {COMPANIES.map((c) => (
-                <option key={c} value={c}>
-                  {c}
                 </option>
               ))}
             </NativeSelect>

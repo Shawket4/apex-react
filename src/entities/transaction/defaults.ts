@@ -4,24 +4,23 @@
  * fleet-expenses.tsx builds its state from the same pieces — one source.
  */
 
-import { cairoMonthRange, cairoToday } from '@/shared/lib/cairo';
+import {
+  currentScopeSlice,
+  readScopeCompany,
+  scopeRangeToInstants,
+} from '@/shared/scope';
 import type { TransactionFilters } from './schemas';
 
-/** The month-to-now range the ledger mounts with when the URL carries none. */
-export function defaultLedgerRange(): [string, string] {
-  const today = cairoToday();
-  return cairoMonthRange(today.y, today.m);
-}
-
-/** Mount filters of a bare navigation — every field explicit, as the page
- *  builds them, so the object shape inside the query key matches exactly. */
+/** Mount filters of a navigation — the GLOBAL scope's range as Cairo
+ *  day-boundary instants + its company, every field explicit so the object
+ *  shape inside the query key matches the page exactly. */
 export function defaultLedgerFilters(): TransactionFilters {
-  const [from, to] = defaultLedgerRange();
+  const { from, to } = scopeRangeToInstants(currentScopeSlice().range);
   return {
     from,
     to,
     category: undefined,
-    company: undefined,
+    company: readScopeCompany() ?? undefined,
     payment_method: undefined,
     source: undefined,
     q: undefined,

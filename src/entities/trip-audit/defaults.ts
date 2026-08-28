@@ -4,21 +4,16 @@
  * these same helpers for its initial state — one source, no drift.
  */
 
-import { localDateISO, localToday, toDateOnly } from '@/shared/lib/format';
+import { toDateOnly } from '@/shared/lib/format';
+import { currentScopeSlice, readScopeCompany } from '@/shared/scope';
 import type { TripAuditSummaryFilters, TripMatchFilters } from './api';
 
 export const AUDIT_STORAGE_KEY_LIMIT = 'apex:tripAudit:limit';
 export const AUDIT_LIMIT_OPTIONS = [10, 25, 50, 100];
 
-/** Default range: last 7 days (inclusive of today), as ISO instants for the picker. */
+/** The queue's mount range — the GLOBAL scope's, exactly as the page reads it. */
 export function defaultAuditRange(): { from: string; to: string } {
-  const today = localToday();
-  const startMs = new Date(today.y, today.m, today.d).getTime() - 7 * 86_400_000;
-  const start = new Date(startMs);
-  return {
-    from: localDateISO(start.getFullYear(), start.getMonth(), start.getDate()),
-    to: localDateISO(today.y, today.m, today.d, true),
-  };
+  return currentScopeSlice().range;
 }
 
 export function loadStoredAuditLimit(): number {
@@ -34,7 +29,7 @@ export function defaultTripMatchFilters(): TripMatchFilters {
     from: toDateOnly(range.from),
     to: toDateOnly(range.to),
     q: undefined,
-    company: undefined,
+    company: readScopeCompany() ?? undefined,
     status: '',
     flagged: true,
     unreviewed: true,
@@ -46,5 +41,9 @@ export function defaultTripMatchFilters(): TripMatchFilters {
 
 export function defaultAuditSummaryFilters(): TripAuditSummaryFilters {
   const range = defaultAuditRange();
-  return { from: toDateOnly(range.from), to: toDateOnly(range.to), company: undefined };
+  return {
+    from: toDateOnly(range.from),
+    to: toDateOnly(range.to),
+    company: readScopeCompany() ?? undefined,
+  };
 }

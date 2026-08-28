@@ -28,7 +28,7 @@ import {
   type DrawerKind,
 } from '@/entities/dashboard/queries';
 import { type DashboardScope } from '@/entities/dashboard/api';
-import { useScope, useScopeCompany } from '@/shared/scope';
+import { keepScopeSearch, useScope, useScopeCompany } from '@/shared/scope';
 import { cairoToday } from '@/shared/lib/cairo';
 import { useEtitLive } from '@/shared/hooks/use-etit-live';
 import { usePermissions } from '@/shared/hooks/use-permissions';
@@ -782,9 +782,16 @@ function ExceptionRow({ exception }: { exception: DashboardException }) {
       prefetchLedgerMount(qc);
     }
   };
+  // Keep the scope the count was computed under: append the global scope's
+  // params to the destination's own.
+  const scope = keepScopeSearch(exception.href.split('?')[0]).replace(/^\?/, '');
+  const scopedHref = scope
+    ? exception.href + (exception.href.includes('?') ? '&' : '?') + scope
+    : exception.href;
+
   return (
     <Link
-      to={exception.href}
+      to={scopedHref}
       onPointerEnter={warm}
       onFocus={warm}
       className="grid grid-cols-[3px_1fr_auto] items-center gap-3 rounded-lg border bg-card px-3 py-2.5 transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"

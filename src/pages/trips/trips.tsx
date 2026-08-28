@@ -25,9 +25,9 @@ import { Button } from '@/shared/ui/button';
 import { SearchInput } from '@/shared/ui/search-input';
 import { EmptyState } from '@/shared/ui/empty-state';
 import { ConfirmDialog } from '@/shared/ui/confirm-dialog';
-import { DateRangePicker } from '@/shared/ui/date-range-picker';
 import { cn } from '@/shared/lib/cn';
 import { useDebounce } from '@/shared/hooks/use-debounce';
+import { useScope, useScopeCompany } from '@/shared/scope';
 import { toDateOnly } from '@/shared/lib/format';
 import {
   useTrips,
@@ -36,7 +36,6 @@ import {
   useExportTrips,
   useExportWatanyaReport,
 } from '@/entities/trip/queries';
-import { useCompanies } from '@/entities/mapping/queries';
 import { extractErrorMessage } from '@/shared/api/errors';
 import type {
   MissingDataFilter,
@@ -51,7 +50,6 @@ import { intentProps, warmTripForm } from '@/shared/lib/prefetch';
 import { prefetchTrips } from '@/entities/trip/queries';
 import { prefetchTripStatistics } from '@/entities/trip-statistics/queries';
 import {
-  TripsCompanyFilter,
   TripsMissingDataFilter,
   TripsReceiptStatusControl,
   parseMissing,
@@ -65,11 +63,8 @@ import { TripReceiptBatchDialog } from '@/widgets/trip-receipt-batch-dialog/trip
 import { TripsStatistics } from '@/widgets/trips-statistics/trips-statistics';
 import {
   TRIPS_STORAGE_KEYS,
-  defaultTripsRange,
   isValidLimit,
   loadDefault,
-  monthEndISO,
-  monthStartISO,
 } from '@/entities/trip/defaults';
 
 /* Defaults + storage keys live in entities/trip/defaults.ts, shared with the
@@ -113,16 +108,14 @@ export default function TripsPage() {
   const [showMoreFilters, setShowMoreFilters] = React.useState(false);
   const debouncedSearch = useDebounce(search, 300);
 
-  const [from, setFrom] = React.useState<string | null>(
-    () => searchParams.get('from') ?? defaultTripsRange().from,
-  );
-  const [to, setTo] = React.useState<string | null>(
-    () => searchParams.get('to') ?? defaultTripsRange().to,
-  );
+  // Dates + company come from the GLOBAL scope (the header bar) — this page
+  // no longer owns them.
+  const { range: scopeRange } = useScope();
+  const { company: scopeCompany } = useScopeCompany();
+  const from = scopeRange.from;
+  const to = scopeRange.to;
+  const company = scopeCompany ?? '';
 
-  const [company, setCompany] = React.useState<string>(
-    () => searchParams.get('co') ?? '',
-  );
   const [missingData, setMissingData] = React.useState<MissingDataFilter>(() =>
     parseMissing(searchParams.get('md')),
   );
@@ -158,40 +151,29 @@ export default function TripsPage() {
   /* ------------------------------------------------------------------------ */
 
   React.useEffect(() => {
-    const next = new URLSearchParams();
-    if (activeTab !== 'list') next.set('tab', activeTab);
-    if (debouncedSearch) next.set('q', debouncedSearch);
-    if (from) next.set('from', from);
-    if (to) next.set('to', to);
-    if (company) next.set('co', company);
-    const md = serializeMissing(missingData);
-    if (md) next.set('md', md);
-    const rs = serializeReceiptStatus(receiptStatus);
-    if (rs) next.set('rs', rs);
-    if (page > 1) next.set('p', String(page));
-    if (limit !== 25) next.set('l', String(limit));
-    setSearchParams(next, { replace: true });
-  }, [
-    activeTab,
-    debouncedSearch,
-    from,
-    to,
-    company,
-    missingData,
-    receiptStatus,
-    page,
-    limit,
-    setSearchParams,
-  ]);
+    setSearchParams(
+      (prev) => {
+        // Start from the CURRENT params so the global scope's keys
+        // (preset/from/to/co) survive this page's own bookkeeping.
+        const next = new URLSearchParams(prev);
+        const setOrDelete = (k: string, v: string | null) =>
+          v ? next.set(k, v) : next.delete(k);
+        setOrDelete('tab', activeTab !== 'list' ? activeTab : null);
+        setOrDelete('q', debouncedSearch || null);
+        setOrDelete('md', serializeMissing(missingData));
+        setOrDelete('rs', serializeReceiptStatus(receiptStatus));
+        setOrDelete('p', page > 1 ? String(page) : null);
+        setOrDelete('l', limit !== 25 ? String(limit) : null);
+        return next;
+      },
+      { replace: true },
+    );
+  }, [activeTab, debouncedSearch, missingData, receiptStatus, page, limit, setSearchParams]);
 
   /* ------------------------------------------------------------------------ */
   /* Sync sticky bits → localStorage                                          */
   /* ------------------------------------------------------------------------ */
 
-  React.useEffect(() => {
-    if (from) window.localStorage.setItem(TRIPS_STORAGE_KEYS.from, from);
-    if (to) window.localStorage.setItem(TRIPS_STORAGE_KEYS.to, to);
-  }, [from, to]);
   React.useEffect(() => {
     window.localStorage.setItem(TRIPS_STORAGE_KEYS.limit, String(limit));
   }, [limit]);
@@ -231,8 +213,6 @@ export default function TripsPage() {
   const { data, isLoading, isError, refetch } = useTrips(listParams, {
     enabled: activeTab === 'list',
   });
-  const { data: companiesResp } = useCompanies();
-  const companies = companiesResp?.data ?? [];
 
   const trips = data?.data ?? [];
   const meta = data?.meta;
@@ -254,11 +234,8 @@ export default function TripsPage() {
 
   const handleResetFilters = () => {
     setSearch('');
-    setCompany('');
     setMissingData('');
     setReceiptStatus('');
-    setFrom(monthStartISO());
-    setTo(monthEndISO());
   };
 
   const handleConfirmDelete = async () => {
@@ -462,18 +439,8 @@ export default function TripsPage() {
           </TabsTrigger>
         </TabsList>
 
-        {/* Shared filter toolbar — both tabs respect the same date range and
-            company filter so the user keeps their context when flipping. */}
+        {/* Dates + company come from the global scope bar in the header. */}
         <div className="mt-3 space-y-2">
-          <DateRangePicker
-            from={from}
-            to={to}
-            onChange={(f, tt) => {
-              setFrom(f);
-              setTo(tt);
-            }}
-          />
-
           {/* List-only filters */}
           {activeTab === 'list' && (
             <>
@@ -485,11 +452,6 @@ export default function TripsPage() {
                   className="max-w-sm"
                 />
                 <div className="flex items-center gap-2">
-                  <TripsCompanyFilter
-                    value={company}
-                    onChange={setCompany}
-                    companies={companies}
-                  />
                   <Button
                     variant="outline"
                     size="sm"
@@ -543,27 +505,6 @@ export default function TripsPage() {
             </>
           )}
 
-          {/* Statistics-only filter — just company. Date range is shared above. */}
-          {activeTab === 'statistics' && (
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-              <TripsCompanyFilter
-                value={company}
-                onChange={setCompany}
-                companies={companies}
-              />
-              {!!company && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setCompany('')}
-                  className="h-9 gap-1.5"
-                >
-                  <FilterX className="h-3.5 w-3.5" />
-                  {t('common.clear')}
-                </Button>
-              )}
-            </div>
-          )}
         </div>
 
         <TabsContent value="list" className="mt-3 md:mt-4">

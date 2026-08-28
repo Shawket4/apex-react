@@ -22,10 +22,10 @@ import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { StatCard } from '@/shared/ui/stat-card';
 import { EmptyState } from '@/shared/ui/empty-state';
-import { DateRangePicker } from '@/shared/ui/date-range-picker';
 import { useQueryClient } from '@tanstack/react-query';
 import { useFuelEvents } from '@/entities/fuel-event/queries';
 import { useDebounce } from '@/shared/hooks/use-debounce';
+import { useScope } from '@/shared/scope';
 import { matches } from '@/shared/lib/normalize';
 import {
   firstDayOfMonth,
@@ -63,7 +63,7 @@ import {
   type SortDirection,
 } from '@/widgets/fuel-events-table/fuel-events-filters';
 import type { FuelEvent } from '@/entities/fuel-event/schemas';
-import { FUEL_STORAGE_KEYS, defaultFuelRange } from '@/entities/fuel-event/defaults';
+import { FUEL_STORAGE_KEYS } from '@/entities/fuel-event/defaults';
 import { loadDefault } from '@/entities/trip/defaults';
 import { formatCompactCurrency, formatCompactNumber } from '@/shared/lib/format-number';
 
@@ -94,12 +94,10 @@ export default function FuelEventsPage() {
   const [search, setSearch] = React.useState(() => searchParams.get('q') ?? '');
   const debouncedSearch = useDebounce(search, 200);
 
-  const [from, setFrom] = React.useState<string | null>(
-    () => searchParams.get('from') ?? defaultFuelRange().from,
-  );
-  const [to, setTo] = React.useState<string | null>(
-    () => searchParams.get('to') ?? defaultFuelRange().to,
-  );
+  // Dates come from the GLOBAL scope (the header bar).
+  const { range: scopeRange } = useScope();
+  const from = scopeRange.from;
+  const to = scopeRange.to;
 
   const [grouping, setGrouping] = React.useState<FuelEventGrouping>(() => {
     const url = searchParams.get('g');
@@ -135,29 +133,23 @@ export default function FuelEventsPage() {
   /* ------------------------------------------------------------------------ */
 
   React.useEffect(() => {
-    const next = new URLSearchParams();
-    if (debouncedSearch) next.set('q', debouncedSearch);
-    if (from) next.set('from', from);
-    if (to) next.set('to', to);
-    if (grouping !== 'vehicle') next.set('g', grouping === 'none' ? 'a' : grouping[0]);
-    const f = serializeFilters(activeFilters);
-    if (f) next.set('f', f);
-    const m = serializeMethod(methodFilter);
-    if (m) next.set('m', m);
-    if (sortKey !== 'date') next.set('s', sortKey);
-    if (sortDirection !== 'desc') next.set('d', sortDirection);
-    setSearchParams(next, { replace: true });
-  }, [
-    debouncedSearch,
-    from,
-    to,
-    grouping,
-    activeFilters,
-    methodFilter,
-    sortKey,
-    sortDirection,
-    setSearchParams,
-  ]);
+    setSearchParams(
+      (prev) => {
+        // Start from the CURRENT params so the global scope's keys survive.
+        const next = new URLSearchParams(prev);
+        const setOrDelete = (k: string, v: string | null) =>
+          v ? next.set(k, v) : next.delete(k);
+        setOrDelete('q', debouncedSearch || null);
+        setOrDelete('g', grouping !== 'vehicle' ? (grouping === 'none' ? 'a' : grouping[0]) : null);
+        setOrDelete('f', serializeFilters(activeFilters));
+        setOrDelete('m', serializeMethod(methodFilter));
+        setOrDelete('s', sortKey !== 'date' ? sortKey : null);
+        setOrDelete('d', sortDirection !== 'desc' ? sortDirection : null);
+        return next;
+      },
+      { replace: true },
+    );
+  }, [debouncedSearch, grouping, activeFilters, methodFilter, sortKey, sortDirection, setSearchParams]);
 
   /* ------------------------------------------------------------------------ */
   /* Sync state → localStorage (only the sticky bits)                         */
@@ -167,12 +159,6 @@ export default function FuelEventsPage() {
     window.localStorage.setItem(FUEL_STORAGE_KEYS.grouping, grouping);
   }, [grouping]);
 
-  React.useEffect(() => {
-    if (from) window.localStorage.setItem(FUEL_STORAGE_KEYS.from, from);
-    else window.localStorage.removeItem(FUEL_STORAGE_KEYS.from);
-    if (to) window.localStorage.setItem(FUEL_STORAGE_KEYS.to, to);
-    else window.localStorage.removeItem(FUEL_STORAGE_KEYS.to);
-  }, [from, to]);
 
   /* ------------------------------------------------------------------------ */
   /* Data pipeline                                                            */
@@ -301,16 +287,6 @@ export default function FuelEventsPage() {
         </>
       }
     >
-      {/* Toolbar row 1 — date range */}
-      <DateRangePicker
-        from={from}
-        to={to}
-        onChange={(f, tt) => {
-          setFrom(f);
-          setTo(tt);
-        }}
-      />
-
       {/* Toolbar row 2 — search + grouping */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div className="relative max-w-sm flex-1">

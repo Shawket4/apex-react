@@ -8,7 +8,7 @@
  * calendar days, matching what apex-rust stores.
  */
 
-import { cairoToday } from '@/shared/lib/cairo';
+import { cairoDayRange, cairoInstant, cairoToday } from '@/shared/lib/cairo';
 
 export const SCOPE_PRESETS = ['today', 'yesterday', '7d', '30d', 'mtd'] as const;
 export type ScopePreset = (typeof SCOPE_PRESETS)[number];
@@ -120,22 +120,18 @@ export function currentScopeSlice(): { key: string; range: ScopeRange } {
 }
 
 /**
- * Routes that consume the global scope. Only these receive the scope's search
- * params on navigation — other pages (trips, ledger) own their own `from`/`to`
- * params with different semantics, and stray scope params would corrupt them.
+ * Search string carrying the current scope to `path`. The scope is global:
+ * every module consumes it, none owns its own date/company params, so it
+ * travels on every navigation. `path` stays in the signature for call sites
+ * that may one day exclude a route.
  */
-export const SCOPE_AWARE_PATHS: ReadonlySet<string> = new Set(['/']);
-
-/** Search string carrying the current scope to `path` — '' if it doesn't consume it. */
-export function keepScopeSearch(path: string): string {
-  if (!SCOPE_AWARE_PATHS.has(path)) return '';
+export function keepScopeSearch(_path: string): string {
   const scope = readScope();
   const co = readScopeCompany();
   const params = scopeToParams(scope);
   if (co) params.set('co', co);
   else params.delete('co');
   // The default scope with no company needs no URL at all — keep bare links bare.
-  if (scope.preset === DEFAULT_PRESET && !co) return '';
   if (scope.preset === DEFAULT_PRESET) params.delete('preset');
   return params.size > 0 ? `?${params.toString()}` : '';
 }
@@ -148,4 +144,17 @@ export function keepScopeSearch(path: string): string {
 export function readScopeCompany(): string | null {
   if (typeof window === 'undefined') return null;
   return new URLSearchParams(window.location.search).get('co') || null;
+}
+
+/**
+ * A scope range as Cairo day-boundary INSTANTS (RFC3339) for endpoints that
+ * filter on timestamps rather than calendar days (the ledger).
+ */
+export function scopeRangeToInstants(range: ScopeRange): { from: string; to: string } {
+  const [fy, fm, fd] = range.from.split('-').map(Number);
+  const [ty, tm, td] = range.to.split('-').map(Number);
+  return {
+    from: cairoInstant(fy, fm - 1, fd),
+    to: cairoDayRange(ty, tm - 1, td)[1],
+  };
 }

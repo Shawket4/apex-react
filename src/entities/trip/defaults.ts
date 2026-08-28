@@ -11,6 +11,7 @@ import {
   localDateISO,
   toDateOnly,
 } from '@/shared/lib/format';
+import { currentScopeSlice, readScopeCompany } from '@/shared/scope';
 import type { TripListParams } from './schemas';
 
 export const TRIPS_STORAGE_KEYS = {
@@ -46,22 +47,15 @@ export const isValidLimit = (v: string): number | null => {
   return [10, 25, 50, 100].includes(n) ? n : null;
 };
 
-/** The date range the page mounts with when the URL carries none. */
-export function defaultTripsRange(): { from: string; to: string } {
-  return {
-    from: loadDefault(TRIPS_STORAGE_KEYS.from, null as string | null, (v) => v) ?? monthStartISO(),
-    to: loadDefault(TRIPS_STORAGE_KEYS.to, null as string | null, (v) => v) ?? monthEndISO(),
-  };
-}
-
-/** The list params (→ query key) of a bare navigation to /trips. */
+/** The list params (→ query key) of a navigation to /trips: dates + company
+ *  come from the GLOBAL scope, exactly as the page reads them. */
 export function defaultTripListParams(): TripListParams {
-  const range = defaultTripsRange();
+  const { range } = currentScopeSlice();
   return {
     page: 1,
     limit: loadDefault(TRIPS_STORAGE_KEYS.limit, 25, isValidLimit),
     search: '',
-    company: '',
+    company: readScopeCompany() ?? '',
     startDate: toDateOnly(range.from),
     endDate: toDateOnly(range.to),
     missingData: '',
@@ -69,16 +63,16 @@ export function defaultTripListParams(): TripListParams {
   };
 }
 
-/** The statistics tab's mount filters for the same bare navigation. */
+/** The statistics tab's mount filters under the same scope. */
 export function defaultStatisticsFilters(): {
   startDate?: string;
   endDate?: string;
   company?: string;
 } {
-  const range = defaultTripsRange();
+  const { range } = currentScopeSlice();
   return {
-    startDate: range.from || undefined,
-    endDate: range.to || undefined,
-    company: undefined,
+    startDate: range.from,
+    endDate: range.to,
+    company: readScopeCompany() ?? undefined,
   };
 }

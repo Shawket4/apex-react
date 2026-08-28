@@ -12,11 +12,11 @@ import { PageShell } from '@/shared/ui/page-shell';
 import { Button } from '@/shared/ui/button';
 import { NativeSelect } from '@/shared/ui/native-select';
 import { SearchInput } from '@/shared/ui/search-input';
-import { DateRangePicker } from '@/shared/ui/date-range-picker';
 import { EmptyState } from '@/shared/ui/empty-state';
 import { Popover, PopoverContent, PopoverTrigger } from '@/shared/ui/popover';
 import { Tabs, TabsList, TabsTrigger } from '@/shared/ui/tabs';
 import { useDebounce } from '@/shared/hooks/use-debounce';
+import { useScope, useScopeCompany } from '@/shared/scope';
 import { cn } from '@/shared/lib/cn';
 import { formatNumber, localToday, toDateOnly } from '@/shared/lib/format';
 import { formatCairoDateTime } from '@/shared/lib/cairo';
@@ -33,14 +33,11 @@ import {
   type TripMatch,
   type TripMatchStatus,
 } from '@/entities/trip-audit/schemas';
-import { useCompanies } from '@/entities/mapping/queries';
 import { TripAuditQueue } from '@/widgets/trip-audit-queue';
 import { TripAuditDetailDialog } from '@/widgets/trip-audit-detail-dialog';
-import { TripsCompanyFilter } from '@/widgets/trips-table/trips-filters';
 import { TripsPagination } from '@/widgets/trips-table/trips-pagination';
 import {
   AUDIT_STORAGE_KEY_LIMIT,
-  defaultAuditRange,
   loadStoredAuditLimit,
 } from '@/entities/trip-audit/defaults';
 
@@ -81,12 +78,14 @@ export default function TripAuditPage() {
   /* ---- View + filters ---- */
   const [view, setView] = React.useState<QueueView>('needs_review');
 
-  const initialRange = React.useRef(defaultAuditRange());
-  const [from, setFrom] = React.useState<string | null>(initialRange.current.from);
-  const [to, setTo] = React.useState<string | null>(initialRange.current.to);
+  // Dates + company come from the GLOBAL scope (the header bar).
+  const { range: scopeRange } = useScope();
+  const { company: scopeCompany } = useScopeCompany();
+  const from = scopeRange.from;
+  const to = scopeRange.to;
   const [search, setSearch] = React.useState('');
   const debouncedSearch = useDebounce(search, 300);
-  const [company, setCompany] = React.useState('');
+  const company = scopeCompany ?? '';
   const [status, setStatus] = React.useState<TripMatchStatus | ''>('');
   // null = each view's natural order (severity for the queue, date elsewhere).
   const [sortOverride, setSortOverride] = React.useState<TripMatchSort | null>(null);
@@ -144,8 +143,6 @@ export default function TripAuditPage() {
   const needsReviewCount = summary?.flagged_unreviewed ?? null;
 
   /* ---- Company dropdown — same source as the trips module ---- */
-  const { data: companiesResp } = useCompanies();
-  const companies = companiesResp?.data ?? [];
 
   /* ---- Scan runs ---- */
   const runsQuery = useTripAuditRuns();
@@ -167,14 +164,9 @@ export default function TripAuditPage() {
   const handleOpen = (match: TripMatch) => setSelectedId(match.id);
 
   /* ---- Secondary filters (behind the Filters button) ---- */
-  const dateChanged =
-    from !== initialRange.current.from || to !== initialRange.current.to;
-  const activeFilterCount =
-    (dateChanged ? 1 : 0) + (view === 'all' && status ? 1 : 0) + (sortOverride ? 1 : 0);
+  const activeFilterCount = (view === 'all' && status ? 1 : 0) + (sortOverride ? 1 : 0);
 
   const resetSecondaryFilters = () => {
-    setFrom(initialRange.current.from);
-    setTo(initialRange.current.to);
     setStatus('');
     setSortOverride(null);
   };
@@ -283,11 +275,6 @@ export default function TripAuditPage() {
                 )}
                 className="min-w-[180px] max-w-xs"
               />
-              <TripsCompanyFilter
-                value={company}
-                onChange={setCompany}
-                companies={companies}
-              />
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
@@ -307,19 +294,6 @@ export default function TripAuditPage() {
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent align="end" className="w-[340px] space-y-4 p-4">
-                  <div className="space-y-2">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                      {t('tripAudit.filters.dateRange', 'Date range')}
-                    </p>
-                    <DateRangePicker
-                      from={from}
-                      to={to}
-                      onChange={(f, tt) => {
-                        setFrom(f);
-                        setTo(tt);
-                      }}
-                    />
-                  </div>
                   {view === 'all' && (
                     <div className="space-y-2">
                       <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">

@@ -4,22 +4,13 @@
  * imports these same helpers for its initial state — one source, no drift.
  */
 
-import { loadDefault, monthEndISO, monthStartISO } from '@/entities/trip/defaults';
+import { currentScopeSlice } from '@/shared/scope';
 
 export const FUEL_STORAGE_KEYS = {
   grouping: 'apex:fuel-events:grouping',
-  from: 'apex:fuel-events:from',
-  to: 'apex:fuel-events:to',
 } as const;
 
-/** The date range the page mounts with when the URL carries none. */
+/** The range the page mounts with — the GLOBAL scope's, exactly. */
 export function defaultFuelRange(): { from: string; to: string } {
-  return {
-    from:
-      loadDefault(FUEL_STORAGE_KEYS.from, null as string | null, (v) => v) ??
-      monthStartISO(),
-    to:
-      loadDefault(FUEL_STORAGE_KEYS.to, null as string | null, (v) => v) ??
-      monthEndISO(),
-  };
+  return currentScopeSlice().range;
 }
