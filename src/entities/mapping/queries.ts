@@ -1,4 +1,4 @@
-import { useQuery, type UseQueryOptions } from '@tanstack/react-query';
+import { type QueryClient, useQuery, type UseQueryOptions } from '@tanstack/react-query';
 import { mappingApi } from './api';
 import type {
   CompaniesResponse,
@@ -55,5 +55,28 @@ export function useDropOffs(
     enabled: !!company && !!terminal,
     staleTime: MAPPING_STALE_TIME,
     ...options,
+  });
+}
+
+/* -------------------------------------------------------------------------- */
+/* Intent prefetch                                                             */
+/* Warmed on hover/focus/touch by surfaces that know the click is coming.      */
+/* MUST mirror the hook above key-for-key — a near-miss key is a wasted        */
+/* request the page refetches anyway.                                          */
+/* -------------------------------------------------------------------------- */
+
+export function prefetchCompanies(qc: QueryClient): void {
+  void qc.prefetchQuery({
+    queryKey: mappingKeys.companies(),
+    queryFn: () => mappingApi.companies(),
+    staleTime: MAPPING_STALE_TIME,
+  });
+}
+
+export function prefetchTerminals(qc: QueryClient, company: string): void {
+  void qc.prefetchQuery({
+    queryKey: mappingKeys.terminals(company),
+    queryFn: () => mappingApi.terminals(company),
+    staleTime: MAPPING_STALE_TIME,
   });
 }

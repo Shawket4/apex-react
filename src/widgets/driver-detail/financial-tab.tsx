@@ -1,4 +1,8 @@
 import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
+import { intentProps, preloadChunk } from '@/shared/lib/prefetch';
+import { prefetchDriverExpenses } from '@/entities/driver-expense/queries';
+import { prefetchDriverLoans } from '@/entities/driver-loan/queries';
 import { useTranslation } from 'react-i18next';
 import { DollarSign, CreditCard, FileText, ChevronRight } from 'lucide-react';
 import { Card, CardContent } from '@/shared/ui/card';
@@ -18,6 +22,7 @@ interface FinancialTabProps {
 export function FinancialTab({ driverId }: FinancialTabProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const links = [
     {
@@ -26,6 +31,10 @@ export function FinancialTab({ driverId }: FinancialTabProps) {
       label: t('drivers.financial.expenses'),
       description: t('drivers.financial.expensesDescription'),
       to: `/drivers/${driverId}/expenses`,
+      warm: () => {
+        preloadChunk('driver-expenses');
+        prefetchDriverExpenses(queryClient, driverId);
+      },
     },
     {
       key: 'loans',
@@ -33,6 +42,10 @@ export function FinancialTab({ driverId }: FinancialTabProps) {
       label: t('drivers.financial.loans'),
       description: t('drivers.financial.loansDescription'),
       to: `/drivers/${driverId}/loans`,
+      warm: () => {
+        preloadChunk('driver-loans');
+        prefetchDriverLoans(queryClient, driverId);
+      },
     },
     {
       key: 'salaries',
@@ -40,6 +53,7 @@ export function FinancialTab({ driverId }: FinancialTabProps) {
       label: t('drivers.financial.salaries'),
       description: t('drivers.financial.salariesDescription'),
       to: `/drivers/${driverId}/salaries`,
+      warm: () => {},
     },
   ];
 
@@ -52,6 +66,7 @@ export function FinancialTab({ driverId }: FinancialTabProps) {
             key={link.key}
             role="button"
             tabIndex={0}
+            {...intentProps(() => link.warm())}
             onClick={() => navigate(link.to)}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') {

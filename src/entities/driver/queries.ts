@@ -10,7 +10,6 @@ import {
   approveDriver,
   rejectDriver,
   regeneratePin,
-  getDriver,
 } from './api';
 import type {
   RegisterDriverPayload,
@@ -175,10 +174,26 @@ export function useRegeneratePin() {
 /* -------------------------------------------------------------------------- */
 
 export function prefetchDrivers(qc: QueryClient): void {
-  void qc.prefetchQuery({ queryKey: QUERY_KEYS.drivers, queryFn: getDrivers });
+  // The drivers page (and useDriver, which derives from it) reads the
+  // PROFILES key, not the plain list — warm what is actually read.
+  void qc.prefetchQuery({
+    queryKey: [...QUERY_KEYS.drivers, 'profiles'],
+    queryFn: getDriverProfiles,
+    staleTime: 5 * 60_000,
+  });
 }
 
-export function prefetchDriver(qc: QueryClient, id: number | string): void {
-  void qc.prefetchQuery({ queryKey: QUERY_KEYS.driver(id), queryFn: () => getDriver(id) });
+/** Forms' dropdown list — the plain `['drivers']` key useDrivers() reads. */
+export function prefetchDriversList(qc: QueryClient): void {
+  void qc.prefetchQuery({
+    queryKey: QUERY_KEYS.drivers,
+    queryFn: getDrivers,
+    staleTime: 5 * 60_000,
+  });
+}
+
+export function prefetchDriver(qc: QueryClient, _id?: number | string): void {
+  // useDriver(id) reads the profiles cache — there is no per-id query to warm.
+  prefetchDrivers(qc);
 }
 

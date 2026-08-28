@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { type QueryClient, useMutation, useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { apiClientRust, apiClient } from '@/shared/api/client';
 import { QUERY_KEYS } from '@/shared/config/constants';
@@ -170,4 +170,36 @@ export function findExistingParty(parties: Party[], typed: string): Party | unde
   const target = norm(typed);
   if (!target) return undefined;
   return parties.find((p) => norm(p.name) === target);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Intent prefetch                                                             */
+/* Warmed on hover/focus/touch by surfaces that know the click is coming.      */
+/* MUST mirror the hook above key-for-key — a near-miss key is a wasted        */
+/* request the page refetches anyway.                                          */
+/* -------------------------------------------------------------------------- */
+
+async function fetchCategoriesRaw() {
+  const res = await apiClientRust.get('/api/v1/categories');
+  return z.array(categorySchema).parse(res.data ?? []);
+}
+async function fetchPartiesRaw() {
+  const res = await apiClientRust.get('/api/v1/parties');
+  return z.array(partySchema).parse(res.data ?? []);
+}
+
+export function prefetchCategories(qc: QueryClient): void {
+  void qc.prefetchQuery({
+    queryKey: QUERY_KEYS.categories,
+    queryFn: fetchCategoriesRaw,
+    staleTime: 5 * 60_000,
+  });
+}
+
+export function prefetchParties(qc: QueryClient): void {
+  void qc.prefetchQuery({
+    queryKey: QUERY_KEYS.parties,
+    queryFn: fetchPartiesRaw,
+    staleTime: 60_000,
+  });
 }

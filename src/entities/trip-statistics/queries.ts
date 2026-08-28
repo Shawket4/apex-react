@@ -62,3 +62,18 @@ export function prefetchTripStatistics(qc: QueryClient, params: TripStatisticsPa
   });
 }
 
+/* -------------------------------------------------------------------------- */
+/* Intent prefetch                                                             */
+/* Warmed on hover/focus/touch by surfaces that know the click is coming.      */
+/* MUST mirror the hook above key-for-key — a near-miss key is a wasted        */
+/* request the page refetches anyway.                                          */
+/* -------------------------------------------------------------------------- */
+
+export function prefetchRouteDays(qc: QueryClient, params: RouteDaysParams): void {
+  if (!params.company) return; // the hook is disabled without a company
+  void qc.prefetchQuery({
+    queryKey: tripStatisticsKeys.routeDays(params),
+    queryFn: () => tripStatisticsApi.routeDays(params),
+    staleTime: 60_000,
+  });
+}

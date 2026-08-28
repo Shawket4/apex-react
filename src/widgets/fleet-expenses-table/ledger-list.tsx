@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
-import { intentProps, preloadChunk } from '@/shared/lib/prefetch';
+import { intentProps, warmLedgerForm } from '@/shared/lib/prefetch';
 import { prefetchTransaction } from '@/entities/transaction/queries';
 import { Fuel, HandCoins, Lock, PenLine, Split } from 'lucide-react';
 
@@ -133,7 +133,7 @@ export function LedgerList({ rows, dayTotals, canEdit }: LedgerListProps) {
   // instead of on a spinner. The chunk warms alongside it.
   const warmEdit = (row: Transaction) => {
     if (!canEdit || !row.editable) return;
-    preloadChunk('fleet-expense-edit');
+    warmLedgerForm(queryClient, 'fleet-expense-edit');
     prefetchTransaction(queryClient, row.id);
   };
 

@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { type QueryClient, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { maintStockApi } from './api';
 import type { OilCreditInput, TireCreditInput } from './schemas';
 
@@ -29,4 +29,16 @@ export function useCreditOil() {
     mutationFn: (input: OilCreditInput) => maintStockApi.creditOil(input),
     onSuccess: () => void qc.invalidateQueries({ queryKey: keys.oil }),
   });
+}
+
+/* -------------------------------------------------------------------------- */
+/* Intent prefetch                                                             */
+/* Warmed on hover/focus/touch by surfaces that know the click is coming.      */
+/* MUST mirror the hook above key-for-key — a near-miss key is a wasted        */
+/* request the page refetches anyway.                                          */
+/* -------------------------------------------------------------------------- */
+
+export function prefetchMaintStock(qc: QueryClient): void {
+  void qc.prefetchQuery({ queryKey: keys.tires, queryFn: maintStockApi.listTires });
+  void qc.prefetchQuery({ queryKey: keys.oil, queryFn: maintStockApi.listOil });
 }

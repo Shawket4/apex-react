@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { useQuery } from '@tanstack/react-query';
+import { type QueryClient, useQuery } from '@tanstack/react-query';
 import { apiClientRust } from '@/shared/api/client';
 import { QUERY_KEYS } from '@/shared/config/constants';
 
@@ -19,6 +19,24 @@ export type Vehicle = z.infer<typeof vehicleSchema>;
 
 export function useVehicles() {
   return useQuery({
+    queryKey: QUERY_KEYS.vehicles,
+    queryFn: async () => {
+      const res = await apiClientRust.get('/api/v1/vehicles');
+      return z.array(vehicleSchema).parse(res.data ?? []);
+    },
+    staleTime: 5 * 60_000,
+  });
+}
+
+/* -------------------------------------------------------------------------- */
+/* Intent prefetch                                                             */
+/* Warmed on hover/focus/touch by surfaces that know the click is coming.      */
+/* MUST mirror the hook above key-for-key — a near-miss key is a wasted        */
+/* request the page refetches anyway.                                          */
+/* -------------------------------------------------------------------------- */
+
+export function prefetchVehicles(qc: QueryClient): void {
+  void qc.prefetchQuery({
     queryKey: QUERY_KEYS.vehicles,
     queryFn: async () => {
       const res = await apiClientRust.get('/api/v1/vehicles');

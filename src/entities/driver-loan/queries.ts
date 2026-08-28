@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { type QueryClient, useMutation, useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { getDriverLoans, addDriverLoan, deleteDriverLoan } from './api';
 import type { AddLoanPayload } from './schemas';
@@ -47,5 +47,19 @@ export function useDeleteDriverLoan(driverId: number) {
     onError: (error) => {
       toast.error(extractErrorMessage(error, t('driverLoans.deleteFailed')));
     },
+  });
+}
+
+/* -------------------------------------------------------------------------- */
+/* Intent prefetch                                                             */
+/* Warmed on hover/focus/touch by surfaces that know the click is coming.      */
+/* MUST mirror the hook above key-for-key — a near-miss key is a wasted        */
+/* request the page refetches anyway.                                          */
+/* -------------------------------------------------------------------------- */
+
+export function prefetchDriverLoans(qc: QueryClient, driverId: number): void {
+  void qc.prefetchQuery({
+    queryKey: ['drivers', String(driverId), 'loans'],
+    queryFn: () => getDriverLoans(driverId),
   });
 }

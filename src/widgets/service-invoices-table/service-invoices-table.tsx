@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
-import { intentProps, preloadChunk } from '@/shared/lib/prefetch';
+import { intentProps, warmServiceInvoiceForm } from '@/shared/lib/prefetch';
 import { prefetchServiceInvoice } from '@/entities/service-invoice/queries';
 import { useNavigate } from 'react-router-dom';
 import { 
@@ -114,7 +114,7 @@ export function ServiceInvoicesTable({
                 <DropdownMenuItem
                   onClick={() => navigate(`/service-invoices/${invoice.ID}/edit`)}
                   {...intentProps(() => {
-                    preloadChunk('service-invoice-edit');
+                    warmServiceInvoiceForm(queryClient, 'service-invoice-edit');
                     prefetchServiceInvoice(queryClient, invoice.ID);
                   })}
                 >

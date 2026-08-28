@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { intentProps, preloadChunk } from '@/shared/lib/prefetch';
+import { useQueryClient } from '@tanstack/react-query';
+import { intentProps, warmServiceInvoiceForm } from '@/shared/lib/prefetch';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { 
@@ -30,6 +31,7 @@ import { ConfirmDialog } from '@/shared/ui/confirm-dialog';
 export default function ServiceInvoicesPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   
   // States
   const [selectedCar, setSelectedCar] = React.useState<Car | null>(null);
@@ -109,7 +111,7 @@ export default function ServiceInvoicesPage() {
               {t('common.back')}
             </Button>
           )}
-          <Button onClick={() => navigate('/service-invoices/new')} {...intentProps(() => preloadChunk('service-invoice-new'))}>
+          <Button onClick={() => navigate('/service-invoices/new')} {...intentProps(() => warmServiceInvoiceForm(queryClient))}>
             <Plus className="mr-2 h-4 w-4" />
             {t('serviceInvoices.newInvoice')}
           </Button>

@@ -21,7 +21,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/shared/ui/popover';
 import { format, formatCurrency, formatNumber } from '@/shared/lib/format';
 import { cn } from '@/shared/lib/cn';
 import { useQueryClient } from '@tanstack/react-query';
-import { intentProps, preloadChunk } from '@/shared/lib/prefetch';
+import { intentProps, warmTripForm } from '@/shared/lib/prefetch';
 import { prefetchParentContainers, prefetchTripDetails } from '@/entities/trip/queries';
 import { Truncate } from '@/shared/ui/truncate';
 import { ReceiptStatusBadge } from './receipt-status-badge';
@@ -558,7 +558,7 @@ function RowActions({
   // mounts the trip details. Warm each when the cursor reaches its control,
   // so the click opens onto data already in cache.
   const warmEdit = () => {
-    preloadChunk('trip-edit');
+    warmTripForm(queryClient, 'trip-edit');
     if (parentId != null) prefetchParentContainers(queryClient, parentId);
   };
   const warmMap = () => prefetchTripDetails(queryClient, head.ID);

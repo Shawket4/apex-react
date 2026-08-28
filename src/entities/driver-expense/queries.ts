@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { type QueryClient, useMutation, useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { getDriverExpenses, addDriverExpense, deleteDriverExpense } from './api';
 import type { AddExpensePayload } from './schemas';
@@ -47,5 +47,19 @@ export function useDeleteDriverExpense(driverId: number) {
     onError: (error) => {
       toast.error(extractErrorMessage(error, t('driverExpenses.deleteFailed')));
     },
+  });
+}
+
+/* -------------------------------------------------------------------------- */
+/* Intent prefetch                                                             */
+/* Warmed on hover/focus/touch by surfaces that know the click is coming.      */
+/* MUST mirror the hook above key-for-key — a near-miss key is a wasted        */
+/* request the page refetches anyway.                                          */
+/* -------------------------------------------------------------------------- */
+
+export function prefetchDriverExpenses(qc: QueryClient, driverId: number): void {
+  void qc.prefetchQuery({
+    queryKey: ['drivers', String(driverId), 'expenses'],
+    queryFn: () => getDriverExpenses(driverId),
   });
 }

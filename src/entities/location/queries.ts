@@ -1,5 +1,6 @@
 import {
   keepPreviousData,
+  type QueryClient,
   useMutation,
   useQuery,
   useQueryClient,
@@ -259,5 +260,60 @@ export function useAckSuggestion() {
       console.error(err);
       toast.error(t('locations.toast.suggestionAckError', 'Failed to update suggestion'));
     },
+  });
+}
+
+/* -------------------------------------------------------------------------- */
+/* Intent prefetch                                                             */
+/* Warmed on hover/focus/touch by surfaces that know the click is coming.      */
+/* MUST mirror the hook above key-for-key — a near-miss key is a wasted        */
+/* request the page refetches anyway.                                          */
+/* -------------------------------------------------------------------------- */
+
+const DROPOFF_LIMIT_STORAGE_KEY = 'apex:locations:limit';
+const DROPOFF_LIMIT_OPTIONS = [10, 25, 50, 100];
+
+/** The dropoff-list page size the page mounts with (localStorage-backed). */
+export function storedDropoffLimit(): number {
+  if (typeof window === 'undefined') return 25;
+  const v = parseInt(window.localStorage.getItem(DROPOFF_LIMIT_STORAGE_KEY) ?? '', 10);
+  return DROPOFF_LIMIT_OPTIONS.includes(v) ? v : 25;
+}
+
+/** Everything /locations fires on mount — the heaviest route in the app. */
+export function prefetchLocations(qc: QueryClient): void {
+  void qc.prefetchQuery({ queryKey: locationKeys.inbox(), queryFn: () => locationApi.getInbox() });
+  void qc.prefetchQuery({
+    queryKey: locationKeys.suggestions('pending'),
+    queryFn: () => locationApi.listSuggestions('pending'),
+    retry: 1,
+    staleTime: 30_000,
+  });
+  void qc.prefetchQuery({
+    queryKey: locationKeys.suggestions('auto_applied'),
+    queryFn: () => locationApi.listSuggestions('auto_applied'),
+    retry: 1,
+    staleTime: 30_000,
+  });
+  void qc.prefetchQuery({
+    queryKey: locationKeys.terminals(undefined),
+    queryFn: () => locationApi.listTerminals(undefined),
+  });
+  void qc.prefetchQuery({
+    queryKey: locationKeys.dropoffList({ page: 1, per_page: 1 }),
+    queryFn: () => locationApi.listDropoffs({ page: 1, per_page: 1 }),
+  });
+  const mainList = { q: undefined, missing: undefined, page: 1, per_page: storedDropoffLimit() };
+  void qc.prefetchQuery({
+    queryKey: locationKeys.dropoffList(mainList),
+    queryFn: () => locationApi.listDropoffs(mainList),
+  });
+}
+
+/** The fee-mappings dialog's dropoff list. */
+export function prefetchDropoffChoices(qc: QueryClient): void {
+  void qc.prefetchQuery({
+    queryKey: locationKeys.dropoffList({ per_page: 200 }),
+    queryFn: () => locationApi.listDropoffs({ per_page: 200 }),
   });
 }

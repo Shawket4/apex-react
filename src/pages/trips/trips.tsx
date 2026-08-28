@@ -28,12 +28,7 @@ import { ConfirmDialog } from '@/shared/ui/confirm-dialog';
 import { DateRangePicker } from '@/shared/ui/date-range-picker';
 import { cn } from '@/shared/lib/cn';
 import { useDebounce } from '@/shared/hooks/use-debounce';
-import {
-  firstDayOfMonth,
-  lastDayOfMonth,
-  localDateISO,
-  toDateOnly,
-} from '@/shared/lib/format';
+import { toDateOnly } from '@/shared/lib/format';
 import {
   useTrips,
   useDeleteTrip,
@@ -52,7 +47,7 @@ import type {
 import { TripsTable } from '@/widgets/trips-table/trips-table';
 import { TripsPagination } from '@/widgets/trips-table/trips-pagination';
 import { useQueryClient } from '@tanstack/react-query';
-import { intentProps, preloadChunk } from '@/shared/lib/prefetch';
+import { intentProps, warmTripForm } from '@/shared/lib/prefetch';
 import { prefetchTrips } from '@/entities/trip/queries';
 import { prefetchTripStatistics } from '@/entities/trip-statistics/queries';
 import {
@@ -68,44 +63,17 @@ import { TripReceiptDialog } from '@/widgets/trip-receipt-dialog/trip-receipt-di
 import { TripLocationDialog } from '@/widgets/trip-location-dialog/trip-location-dialog';
 import { TripReceiptBatchDialog } from '@/widgets/trip-receipt-batch-dialog/trip-receipt-batch-dialog';
 import { TripsStatistics } from '@/widgets/trips-statistics/trips-statistics';
+import {
+  TRIPS_STORAGE_KEYS,
+  defaultTripsRange,
+  isValidLimit,
+  loadDefault,
+  monthEndISO,
+  monthStartISO,
+} from '@/entities/trip/defaults';
 
-/* -------------------------------------------------------------------------- */
-/* Storage keys (sticky filter prefs across reloads)                           */
-/* -------------------------------------------------------------------------- */
-
-const STORAGE_KEY_DATE_FROM = 'apex:trips:from';
-const STORAGE_KEY_DATE_TO = 'apex:trips:to';
-const STORAGE_KEY_LIMIT = 'apex:trips:limit';
-
-/* -------------------------------------------------------------------------- */
-/* Defaults                                                                    */
-/* -------------------------------------------------------------------------- */
-
-function monthStartISO(): string {
-  const d = firstDayOfMonth();
-  return localDateISO(d.getFullYear(), d.getMonth(), d.getDate());
-}
-function monthEndISO(): string {
-  const d = lastDayOfMonth();
-  return localDateISO(d.getFullYear(), d.getMonth(), d.getDate(), true);
-}
-
-function loadDefault<T>(
-  key: string,
-  fallback: T,
-  validate: (v: string) => T | null,
-): T {
-  if (typeof window === 'undefined') return fallback;
-  const raw = window.localStorage.getItem(key);
-  if (!raw) return fallback;
-  const valid = validate(raw);
-  return valid !== null && valid !== undefined ? valid : fallback;
-}
-
-const isValidLimit = (v: string): number | null => {
-  const n = Number(v);
-  return [10, 25, 50, 100].includes(n) ? n : null;
-};
+/* Defaults + storage keys live in entities/trip/defaults.ts, shared with the
+   sidebar's data warmer so the warmed key can never drift from the mount key. */
 
 type ActiveTab = 'list' | 'statistics';
 
@@ -145,22 +113,12 @@ export default function TripsPage() {
   const [showMoreFilters, setShowMoreFilters] = React.useState(false);
   const debouncedSearch = useDebounce(search, 300);
 
-  const [from, setFrom] = React.useState<string | null>(() => {
-    const url = searchParams.get('from');
-    if (url) return url;
-    return (
-      loadDefault(STORAGE_KEY_DATE_FROM, null as string | null, (v) => v) ??
-      monthStartISO()
-    );
-  });
-  const [to, setTo] = React.useState<string | null>(() => {
-    const url = searchParams.get('to');
-    if (url) return url;
-    return (
-      loadDefault(STORAGE_KEY_DATE_TO, null as string | null, (v) => v) ??
-      monthEndISO()
-    );
-  });
+  const [from, setFrom] = React.useState<string | null>(
+    () => searchParams.get('from') ?? defaultTripsRange().from,
+  );
+  const [to, setTo] = React.useState<string | null>(
+    () => searchParams.get('to') ?? defaultTripsRange().to,
+  );
 
   const [company, setCompany] = React.useState<string>(
     () => searchParams.get('co') ?? '',
@@ -179,7 +137,7 @@ export default function TripsPage() {
   const [limit, setLimit] = React.useState<number>(() => {
     const url = searchParams.get('l');
     if (url && isValidLimit(url) != null) return Number(url);
-    return loadDefault(STORAGE_KEY_LIMIT, 25, isValidLimit);
+    return loadDefault(TRIPS_STORAGE_KEYS.limit, 25, isValidLimit);
   });
 
   // Dialog state
@@ -231,11 +189,11 @@ export default function TripsPage() {
   /* ------------------------------------------------------------------------ */
 
   React.useEffect(() => {
-    if (from) window.localStorage.setItem(STORAGE_KEY_DATE_FROM, from);
-    if (to) window.localStorage.setItem(STORAGE_KEY_DATE_TO, to);
+    if (from) window.localStorage.setItem(TRIPS_STORAGE_KEYS.from, from);
+    if (to) window.localStorage.setItem(TRIPS_STORAGE_KEYS.to, to);
   }, [from, to]);
   React.useEffect(() => {
-    window.localStorage.setItem(STORAGE_KEY_LIMIT, String(limit));
+    window.localStorage.setItem(TRIPS_STORAGE_KEYS.limit, String(limit));
   }, [limit]);
 
   /* ------------------------------------------------------------------------ */
@@ -456,7 +414,7 @@ export default function TripsPage() {
       <Button
         onClick={() => navigate('/trips/new')}
         size="sm"
-        {...intentProps(() => preloadChunk('trip-new'))}
+        {...intentProps(() => warmTripForm(queryClient))}
       >
         <Plus className="h-4 w-4" />
         <span className="hidden sm:inline">{t('trips.actions.add')}</span>
@@ -636,7 +594,7 @@ export default function TripsPage() {
                 emptyAction={
                   <Button
                     onClick={() => navigate('/trips/new')}
-                    {...intentProps(() => preloadChunk('trip-new'))}
+                    {...intentProps(() => warmTripForm(queryClient))}
                   >
                     <Plus className="h-4 w-4" />
                     {t('trips.actions.add')}

@@ -1,9 +1,11 @@
 import {
+  type QueryClient,
   keepPreviousData,
   useMutation,
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query';
+import { defaultAuditSummaryFilters, defaultTripMatchFilters } from './defaults';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
 import {
@@ -147,5 +149,28 @@ export function useRunScan() {
       queryClient.invalidateQueries({ queryKey: tripAuditKeys.all });
       toast.error(t('tripAudit.toast.scanRequestError', 'Failed to run scan'));
     },
+  });
+}
+
+/* -------------------------------------------------------------------------- */
+/* Intent prefetch                                                             */
+/* Warmed on hover/focus/touch by surfaces that know the click is coming.      */
+/* MUST mirror the hooks above key-for-key.                                    */
+/* -------------------------------------------------------------------------- */
+
+export function prefetchTripAudit(qc: QueryClient): void {
+  const filters = defaultTripMatchFilters();
+  void qc.prefetchQuery({
+    queryKey: tripAuditKeys.matchList(filters),
+    queryFn: () => tripAuditApi.listMatches(filters),
+  });
+  const summary = defaultAuditSummaryFilters();
+  void qc.prefetchQuery({
+    queryKey: tripAuditKeys.summary(summary),
+    queryFn: () => tripAuditApi.getSummary(summary),
+  });
+  void qc.prefetchQuery({
+    queryKey: tripAuditKeys.runs(),
+    queryFn: () => tripAuditApi.listRuns(),
   });
 }

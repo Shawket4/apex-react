@@ -1,5 +1,6 @@
 import * as React from 'react';
 import {
+  type QueryClient,
   useQuery,
   useQueryClient,
   type UseQueryOptions,
@@ -365,4 +366,19 @@ export function useEtitFleet() {
     liveStatuses: snapshots.data ?? [],
     isError: metadata.isError || snapshots.isError,
   };
+}
+
+/* -------------------------------------------------------------------------- */
+/* Intent prefetch                                                             */
+/* Warmed on hover/focus/touch by surfaces that know the click is coming.      */
+/* MUST mirror the hook above key-for-key — a near-miss key is a wasted        */
+/* request the page refetches anyway.                                          */
+/* -------------------------------------------------------------------------- */
+
+export function prefetchEtitVehicles(qc: QueryClient): void {
+  void qc.prefetchQuery({
+    queryKey: etitKeys.vehicles(),
+    queryFn: () => etitApi.listVehicles(),
+    staleTime: 30 * 60_000,
+  });
 }

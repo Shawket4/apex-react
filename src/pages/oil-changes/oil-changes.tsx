@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { intentProps, preloadChunk } from '@/shared/lib/prefetch';
+import { useQueryClient } from '@tanstack/react-query';
+import { intentProps, warmOilForm } from '@/shared/lib/prefetch';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
@@ -44,6 +45,7 @@ function isStatusFilter(v: string | null): v is StatusFilterValue {
 export default function OilChangesPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [search, setSearch] = React.useState(() => searchParams.get('q') ?? '');
@@ -177,7 +179,7 @@ export default function OilChangesPage() {
             <Download className="h-4 w-4" />
             <span className="hidden sm:inline">{t('common.export')}</span>
           </Button>
-          <Button onClick={() => navigate('/oil-changes/new')} size="sm" {...intentProps(() => preloadChunk('oil-change-new'))}>
+          <Button onClick={() => navigate('/oil-changes/new')} size="sm" {...intentProps(() => warmOilForm(queryClient))}>
             <Plus className="h-4 w-4" />
             <span className="hidden sm:inline">{t('oilChanges.addNew')}</span>
           </Button>
@@ -204,7 +206,7 @@ export default function OilChangesPage() {
           title={t('oilChanges.empty.title')}
           description={t('oilChanges.empty.description')}
           action={
-            <Button onClick={() => navigate('/oil-changes/new')} {...intentProps(() => preloadChunk('oil-change-new'))}>
+            <Button onClick={() => navigate('/oil-changes/new')} {...intentProps(() => warmOilForm(queryClient))}>
               <Plus className="h-4 w-4" />
               {t('oilChanges.addNew')}
             </Button>

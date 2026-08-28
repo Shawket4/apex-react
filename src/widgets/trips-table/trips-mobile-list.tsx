@@ -8,7 +8,7 @@ import { EmptyState } from '@/shared/ui/empty-state';
 import { format, formatCurrency, formatNumber } from '@/shared/lib/format';
 import { cn } from '@/shared/lib/cn';
 import { useQueryClient } from '@tanstack/react-query';
-import { intentProps, preloadChunk } from '@/shared/lib/prefetch';
+import { intentProps, warmTripForm } from '@/shared/lib/prefetch';
 import { prefetchParentContainers, prefetchTripDetails } from '@/entities/trip/queries';
 import { Truncate } from '@/shared/ui/truncate';
 import { ReceiptStatusBadge } from './receipt-status-badge';
@@ -316,7 +316,7 @@ function MobileRow({
                 to={editPath}
                 onClick={(e) => e.stopPropagation()}
                 {...intentProps(() => {
-                  preloadChunk('trip-edit');
+                  warmTripForm(queryClient, 'trip-edit');
                   if (row.parentId != null) prefetchParentContainers(queryClient, row.parentId);
                 })}
                 className="inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-[12px]

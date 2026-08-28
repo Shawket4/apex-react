@@ -1,4 +1,6 @@
 import * as React from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { intentProps, warmFuelForm } from '@/shared/lib/prefetch';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
@@ -53,6 +55,7 @@ function DetailRow({ icon, label, value }: DetailRowProps) {
 export default function FuelEventDetailsPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const params = useParams<{ id: string }>();
   const { canEditFuel, canDeleteFuel } = usePermissions();
 
@@ -127,7 +130,11 @@ export default function FuelEventDetailsPage() {
             <span className="hidden sm:inline">{t('common.back')}</span>
           </Button>
           {canEditFuel && (
-            <Button size="sm" onClick={() => navigate(`/fuel-events/${event.ID}/edit`)}>
+            <Button
+              size="sm"
+              {...intentProps(() => warmFuelForm(queryClient, 'fuel-event-edit'))}
+              onClick={() => navigate(`/fuel-events/${event.ID}/edit`)}
+            >
               <Edit className="h-4 w-4" />
               <span className="hidden sm:inline">{t('common.edit')}</span>
             </Button>

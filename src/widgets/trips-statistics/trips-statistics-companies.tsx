@@ -33,7 +33,9 @@ import type {
   RouteStat,
   TripStatisticsParams,
 } from '@/entities/trip-statistics/schemas';
-import { useRouteDays } from '@/entities/trip-statistics/queries';
+import { useQueryClient } from '@tanstack/react-query';
+import { intentProps } from '@/shared/lib/prefetch';
+import { prefetchRouteDays, useRouteDays } from '@/entities/trip-statistics/queries';
 
 interface TripsStatisticsCompaniesProps {
   companies: CompanyStat[];
@@ -648,6 +650,7 @@ function RoutesSubTable({
 }) {
   const { t } = useTranslation();
   const [expandedRoute, setExpandedRoute] = React.useState<string | null>(null);
+  const queryClient = useQueryClient();
 
   if (routes.length === 0) {
     return (
@@ -714,6 +717,19 @@ function RoutesSubTable({
                       prev === route.route_name ? null : route.route_name,
                     )
                   }
+                  // Hovering a route row warms its per-day drill-down, so the
+                  // expand renders from cache instead of a spinner.
+                  {...intentProps(() =>
+                    prefetchRouteDays(queryClient, {
+                      company: filters.company || company,
+                      startDate: filters.startDate ?? '',
+                      endDate: filters.endDate ?? '',
+                      terminal: route.terminal,
+                      dropOffPoint: route.drop_off_point,
+                      fee: route.fee,
+                      routeName: route.route_name,
+                    }),
+                  )}
                   className={cn(
                     'border-t border-border/50 cursor-pointer transition-colors hover:bg-muted/40',
                     isOpen && 'bg-muted/30',

@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { type QueryClient, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
 import { zoneApi } from './api';
@@ -96,5 +96,19 @@ export function useScanZones() {
       console.error(err);
       toast.error(t('zones.toast.scanError', 'Failed to run scan'));
     },
+  });
+}
+
+/* -------------------------------------------------------------------------- */
+/* Intent prefetch                                                             */
+/* Warmed on hover/focus/touch by surfaces that know the click is coming.      */
+/* MUST mirror the hook above key-for-key — a near-miss key is a wasted        */
+/* request the page refetches anyway.                                          */
+/* -------------------------------------------------------------------------- */
+
+export function prefetchZones(qc: QueryClient): void {
+  void qc.prefetchQuery({
+    queryKey: zoneKeys.list({ activeOnly: undefined }),
+    queryFn: () => zoneApi.listZones(undefined),
   });
 }

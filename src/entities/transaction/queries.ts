@@ -25,6 +25,7 @@ import { queryClient } from '@/shared/api/query';
 import { toast } from '@/shared/ui/toaster';
 import { extractErrorMessage } from '@/shared/api/errors';
 import type { QueryClient } from '@tanstack/react-query';
+import { defaultLedgerFilters, defaultLedgerListFilters } from './defaults';
 
 /** Invalidate every transaction-derived query after a write. */
 function invalidateAll(): void {
@@ -293,3 +294,17 @@ export function prefetchTransactionsFirstPage(qc: QueryClient, filters: Transact
   });
 }
 
+/** The ledger page's full mount: out-only list, stats on the base filters. */
+export function prefetchLedgerMount(qc: QueryClient): void {
+  const base = defaultLedgerFilters();
+  const list = defaultLedgerListFilters();
+  void qc.prefetchInfiniteQuery({
+    queryKey: QUERY_KEYS.transactionList(list),
+    queryFn: ({ pageParam }) => getTransactions(list, pageParam as string | undefined, PAGE_SIZE),
+    initialPageParam: undefined as string | undefined,
+  });
+  void qc.prefetchQuery({
+    queryKey: QUERY_KEYS.transactionStats(base),
+    queryFn: () => getTransactionStatistics(base),
+  });
+}

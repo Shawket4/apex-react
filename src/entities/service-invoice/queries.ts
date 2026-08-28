@@ -76,13 +76,14 @@ export function useSearchServiceInvoices(query: string, carId?: number | string,
 
 /** The list page's mount pair: invoices page 1 and the per-car rollup. */
 export function prefetchServiceInvoices(qc: QueryClient): void {
+  // The page mounts with limit 20 (service-invoices.tsx) — mirror it exactly.
   void qc.prefetchQuery({
-    queryKey: [...QUERY_KEYS.serviceInvoices, { carId: undefined, page: 1, limit: 10 }],
-    queryFn: () => api.getServiceInvoices(undefined, 1, 10),
+    queryKey: [...QUERY_KEYS.serviceInvoices, { carId: undefined, page: 1, limit: 20 }],
+    queryFn: () => api.getServiceInvoices(undefined, 1, 20),
   });
   void qc.prefetchQuery({
-    queryKey: [...QUERY_KEYS.serviceInvoices, 'cars', { page: 1, limit: 10 }],
-    queryFn: () => getCars(1, 10),
+    queryKey: [...QUERY_KEYS.serviceInvoices, 'cars', { page: 1, limit: 20 }],
+    queryFn: () => getCars(1, 20),
   });
 }
 

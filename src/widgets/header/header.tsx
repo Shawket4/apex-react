@@ -1,6 +1,7 @@
 import { Menu, Search } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/shared/ui/button';
+import { ScopeBar } from '@/widgets/scope-bar/scope-bar';
 
 interface HeaderProps {
   onOpenMobileMenu: () => void;
@@ -22,7 +23,9 @@ export function Header({ onOpenMobileMenu, onOpenCommandPalette }: HeaderProps) 
         <Menu className="h-5 w-5" />
       </Button>
 
-      <div className="flex-1" />
+      <div className="flex flex-1 items-center justify-center">
+        <ScopeBar />
+      </div>
 
       <Button
         variant="outline"

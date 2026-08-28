@@ -29,11 +29,16 @@ import {
 } from '@/entities/dashboard/queries';
 import { type DashboardScope } from '@/entities/dashboard/api';
 import { useCompanies } from '@/entities/mapping/queries';
-import { useDashboardFilters, type DashboardPreset } from '@/shared/state/dashboard-filters';
+import { useSearchParams } from 'react-router-dom';
+import { useScope } from '@/shared/scope';
+import { cairoToday } from '@/shared/lib/cairo';
 import { useEtitLive } from '@/shared/hooks/use-etit-live';
 import { usePermissions } from '@/shared/hooks/use-permissions';
 import { PERMISSION_LEVELS } from '@/shared/config/constants';
 import { preloadChunkForPath } from '@/shared/lib/prefetch';
+import { prefetchTrips } from '@/entities/trip/queries';
+import { defaultTripListParams } from '@/entities/trip/defaults';
+import { prefetchLedgerMount } from '@/entities/transaction/queries';
 import { Button } from '@/shared/ui/button';
 import { Skeleton } from '@/shared/ui/skeleton';
 import { format, formatNumber } from '@/shared/lib/format';
@@ -71,16 +76,37 @@ export default function DashboardPage() {
   const { atLeast } = usePermissions();
   const showMoney = atLeast(PERMISSION_LEVELS.ADMIN);
 
-  const { preset, from, to, company, setPreset, setCompany } = useDashboardFilters();
+  // Dates come from the global header scope (URL); company is the page's own
+  // dimension, also in the URL (?co=) so a filtered view survives refresh.
+  const { range } = useScope();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const company = searchParams.get('co') || null;
+  const setCompany = React.useCallback(
+    (c: string | null) => {
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          if (c) next.set('co', c);
+          else next.delete('co');
+          return next;
+        },
+        { replace: true },
+      );
+    },
+    [setSearchParams],
+  );
   const scope = React.useMemo(
-    () => ({ from, to, company }),
-    [from, to, company],
+    () => ({ from: range.from, to: range.to, company }),
+    [range.from, range.to, company],
   );
   const dashboard = useDashboard(scope);
   const hasFleet = (dashboard.data?.fleet.length ?? 0) > 0;
   const live = useEtitLive(hasFleet);
 
-  const today = new Date().toISOString().slice(0, 10);
+  // Cairo's calendar day, not UTC's — at 00:58 Cairo the UTC date is still
+  // yesterday and the headline said so.
+  const t0 = cairoToday();
+  const today = `${t0.y}-${String(t0.m + 1).padStart(2, '0')}-${String(t0.d).padStart(2, '0')}`;
   const asOf = dashboard.data?.as_of;
 
   return (
@@ -92,11 +118,9 @@ export default function DashboardPage() {
             {format(today, 'EEEE d MMMM')}
           </h1>
           <p className="mt-0.5 text-[11.5px] text-muted-foreground">
-            {from && to
-              ? from === to
-                ? format(from, 'd MMMM yyyy')
-                : `${format(from, 'd MMM')} – ${format(to, 'd MMM yyyy')}`
-              : t('dashboard.subtitleMonth', { month: format(today, 'MMMM yyyy') })}
+            {range.from === range.to
+              ? format(range.from, 'd MMMM yyyy')
+              : `${format(range.from, 'd MMM')} – ${format(range.to, 'd MMM yyyy')}`}
             {company && ` · ${company}`}
             {asOf && ` · ${t('dashboard.updatedAt', { time: format(asOf, 'HH:mm') })}`}
           </p>
@@ -104,12 +128,7 @@ export default function DashboardPage() {
         <ConnectionBadge live={live} />
       </header>
 
-      <DashboardFilterBar
-        preset={preset}
-        company={company}
-        onPreset={setPreset}
-        onCompany={setCompany}
-      />
+      <CompanyFilter company={company} onCompany={setCompany} />
 
       {/* ---- apex zone: figures, or an honest strip ---- */}
       {dashboard.isError ? (
@@ -248,17 +267,12 @@ function ConnectionBadge({ live }: { live: ReturnType<typeof useEtitLive> }) {
 /* Global scope — one date window + company, applied to every card             */
 /* -------------------------------------------------------------------------- */
 
-const PRESETS: DashboardPreset[] = ['month', 'today', 'yesterday', 'week'];
-
-function DashboardFilterBar({
-  preset,
+/* Dates live in the header's global scope bar; the page filters company only. */
+function CompanyFilter({
   company,
-  onPreset,
   onCompany,
 }: {
-  preset: DashboardPreset;
   company: string | null;
-  onPreset: (p: DashboardPreset) => void;
   onCompany: (c: string | null) => void;
 }) {
   const { t } = useTranslation();
@@ -266,22 +280,6 @@ function DashboardFilterBar({
 
   return (
     <div className="flex flex-wrap items-center gap-1.5">
-      {PRESETS.map((p) => (
-        <button
-          key={p}
-          type="button"
-          onClick={() => onPreset(p)}
-          aria-pressed={preset === p}
-          className={cn(
-            'rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors',
-            preset === p
-              ? 'border-primary bg-primary text-primary-foreground'
-              : 'bg-card text-muted-foreground hover:border-primary/50',
-          )}
-        >
-          {t(`dashboard.filters.${p}`)}
-        </button>
-      ))}
       <select
         value={company ?? ''}
         onChange={(e) => onCompany(e.target.value || null)}
@@ -818,10 +816,20 @@ function TruckDrawer({
 /* -------------------------------------------------------------------------- */
 
 function ExceptionRow({ exception }: { exception: DashboardException }) {
+  const qc = useQueryClient();
   const { t } = useTranslation();
   // Hovering the row warms the destination page's code chunk, so the click
   // lands on a page that is already downloaded.
-  const warm = () => preloadChunkForPath(exception.href);
+  const warm = () => {
+    preloadChunkForPath(exception.href);
+    // Each exception's destination mounts a known query — warm it so the
+    // click lands on a painted list.
+    if (exception.href.startsWith('/trips')) {
+      prefetchTrips(qc, { ...defaultTripListParams(), missingData: 'any' });
+    } else if (exception.href.startsWith('/fleet-expenses')) {
+      prefetchLedgerMount(qc);
+    }
+  };
   return (
     <Link
       to={exception.href}

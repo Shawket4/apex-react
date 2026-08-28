@@ -29,6 +29,7 @@ import {
 import { cn } from '@/shared/lib/cn';
 import { useQueryClient } from '@tanstack/react-query';
 import { prefetchRoute } from '@/shared/lib/prefetch';
+import { keepScopeSearch } from '@/shared/scope';
 import { Button } from '@/shared/ui/button';
 import { ScrollArea } from '@/shared/ui/scroll-area';
 import { UserMenu } from '@/widgets/user-menu/user-menu';
@@ -216,7 +217,9 @@ export function Sidebar({ collapsed, onToggleCollapse, onNavigate, className }: 
                   return (
                     <li key={item.to}>
                       <NavLink
-                        to={item.to}
+                        // Carry the global date scope across navigation, so
+                        // the page you land on reads the range you were in.
+                        to={{ pathname: item.to, search: keepScopeSearch(item.to) }}
                         onClick={onNavigate}
                         onPointerEnter={() => prefetchRoute(item.to, queryClient)}
                         onFocus={() => prefetchRoute(item.to, queryClient)}

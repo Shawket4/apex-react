@@ -1,6 +1,8 @@
 import * as React from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { intentProps, preloadChunk } from '@/shared/lib/prefetch';
+import { intentProps, preloadChunk, warmLedgerForm } from '@/shared/lib/prefetch';
+import { prefetchMessagesFirstPage } from '@/entities/raw-message/queries';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from 'next-themes';
 import {
@@ -58,6 +60,7 @@ import {
 import { themedTooltipProps, themedAxisTickProps } from '@/shared/lib/chart-theme';
 import { formatCompactNumber } from '@/shared/lib/format-number';
 import { useDebounce } from '@/shared/hooks/use-debounce';
+import { defaultLedgerRange } from '@/entities/transaction/defaults';
 import { usePermissions } from '@/shared/hooks/use-permissions';
 
 import {
@@ -122,13 +125,11 @@ export default function FleetExpensesPage() {
   const { resolvedTheme } = useTheme();
   const { canManageExpenses } = usePermissions();
   const [searchParams, setSearchParams] = useSearchParams();
+  const queryClient = useQueryClient();
 
   /* ── Range: month picker by default, presets + custom as the escape hatch.
         from/to URL params stay honored so shared links keep working. ── */
-  const defaultRange = React.useMemo(() => {
-    const today = cairoToday();
-    return cairoMonthRange(today.y, today.m);
-  }, []);
+  const defaultRange = React.useMemo(() => defaultLedgerRange(), []);
 
   const [range, setRange] = React.useState<{ from: string | null; to: string | null }>(() => {
     if (searchParams.get('range') === 'all') return { from: null, to: null };
@@ -371,7 +372,7 @@ export default function FleetExpensesPage() {
             <Button
               size="sm"
               onClick={() => navigate('/fleet-expenses/new', { state: { from: 'ledger' } })}
-              {...intentProps(() => preloadChunk('fleet-expense-new'))}
+              {...intentProps(() => warmLedgerForm(queryClient))}
             >
               <Plus className="h-4 w-4" />
               <span className="hidden sm:inline">{t('fleetExpenses.addExpense')}</span>
@@ -834,7 +835,7 @@ export default function FleetExpensesPage() {
             canManageExpenses && !uncatOnly ? (
               <Button
                 onClick={() => navigate('/fleet-expenses/new', { state: { from: 'ledger' } })}
-              {...intentProps(() => preloadChunk('fleet-expense-new'))}
+              {...intentProps(() => warmLedgerForm(queryClient))}
               >
                 <Plus className="h-4 w-4" />
                 {t('fleetExpenses.addExpense')}
@@ -851,7 +852,10 @@ export default function FleetExpensesPage() {
         {t('fleetExpenses.ignoredMessages')}{' '}
         <Link
           to="/fleet-expenses/messages"
-          {...intentProps(() => preloadChunk('fleet-expenses-messages'))}
+          {...intentProps(() => {
+            preloadChunk('fleet-expenses-messages');
+            prefetchMessagesFirstPage(queryClient);
+          })}
           className="inline-block py-1 font-semibold text-primary hover:underline"
         >
           {t('fleetExpenses.reviewLink')} ›

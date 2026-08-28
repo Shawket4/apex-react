@@ -16,3 +16,4 @@ export { intentProps, type IntentHandlers } from './intent';
 export { preloadChunk, preloadChunkForPath, chunkForPath, type ChunkKey } from './chunks';
 export { prefetchRoute, prefetchRouteData } from './routes';
 export { prefetchAnimations } from './assets';
+export * from './forms';

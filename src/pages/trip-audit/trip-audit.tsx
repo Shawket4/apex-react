@@ -18,7 +18,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/shared/ui/popover';
 import { Tabs, TabsList, TabsTrigger } from '@/shared/ui/tabs';
 import { useDebounce } from '@/shared/hooks/use-debounce';
 import { cn } from '@/shared/lib/cn';
-import { formatNumber, localDateISO, localToday, toDateOnly } from '@/shared/lib/format';
+import { formatNumber, localToday, toDateOnly } from '@/shared/lib/format';
 import { formatCairoDateTime } from '@/shared/lib/cairo';
 import {
   useRunScan,
@@ -38,24 +38,18 @@ import { TripAuditQueue } from '@/widgets/trip-audit-queue';
 import { TripAuditDetailDialog } from '@/widgets/trip-audit-detail-dialog';
 import { TripsCompanyFilter } from '@/widgets/trips-table/trips-filters';
 import { TripsPagination } from '@/widgets/trips-table/trips-pagination';
+import {
+  AUDIT_STORAGE_KEY_LIMIT,
+  defaultAuditRange,
+  loadStoredAuditLimit,
+} from '@/entities/trip-audit/defaults';
 
 /* -------------------------------------------------------------------------- */
 /* Constants + date helpers                                                    */
 /* -------------------------------------------------------------------------- */
 
-const STORAGE_KEY_LIMIT = 'apex:tripAudit:limit';
-const LIMIT_OPTIONS = [10, 25, 50, 100];
-
-/** Default range: last 7 days (inclusive of today), as ISO instants for the picker. */
-function defaultRange(): { from: string; to: string } {
-  const today = localToday();
-  const startMs = new Date(today.y, today.m, today.d).getTime() - 7 * 86_400_000;
-  const start = new Date(startMs);
-  return {
-    from: localDateISO(start.getFullYear(), start.getMonth(), start.getDate()),
-    to: localDateISO(today.y, today.m, today.d, true),
-  };
-}
+/* Limit + range defaults live in entities/trip-audit/defaults.ts, shared with
+   the sidebar's data warmer so the warmed keys can't drift from the mount. */
 
 /** Yesterday's local calendar day as 'YYYY-MM-DD' — the default scan target. */
 function yesterdayKey(): string {
@@ -63,11 +57,7 @@ function yesterdayKey(): string {
   return toDateOnly(new Date(new Date(today.y, today.m, today.d).getTime() - 86_400_000));
 }
 
-function loadStoredLimit(): number {
-  if (typeof window === 'undefined') return 25;
-  const n = Number(window.localStorage.getItem(STORAGE_KEY_LIMIT));
-  return LIMIT_OPTIONS.includes(n) ? n : 25;
-}
+
 
 /* -------------------------------------------------------------------------- */
 /* Views                                                                       */
@@ -91,7 +81,7 @@ export default function TripAuditPage() {
   /* ---- View + filters ---- */
   const [view, setView] = React.useState<QueueView>('needs_review');
 
-  const initialRange = React.useRef(defaultRange());
+  const initialRange = React.useRef(defaultAuditRange());
   const [from, setFrom] = React.useState<string | null>(initialRange.current.from);
   const [to, setTo] = React.useState<string | null>(initialRange.current.to);
   const [search, setSearch] = React.useState('');
@@ -101,7 +91,7 @@ export default function TripAuditPage() {
   // null = each view's natural order (severity for the queue, date elsewhere).
   const [sortOverride, setSortOverride] = React.useState<TripMatchSort | null>(null);
   const [page, setPage] = React.useState(1);
-  const [limit, setLimit] = React.useState<number>(loadStoredLimit);
+  const [limit, setLimit] = React.useState<number>(loadStoredAuditLimit);
 
   const effectiveSort: TripMatchSort =
     sortOverride ?? (view === 'needs_review' ? 'severity' : 'date');
@@ -112,7 +102,7 @@ export default function TripAuditPage() {
   }, [view, debouncedSearch, company, from, to, status, sortOverride]);
 
   React.useEffect(() => {
-    window.localStorage.setItem(STORAGE_KEY_LIMIT, String(limit));
+    window.localStorage.setItem(AUDIT_STORAGE_KEY_LIMIT, String(limit));
   }, [limit]);
 
   const fromDay = from ? toDateOnly(from) : undefined;

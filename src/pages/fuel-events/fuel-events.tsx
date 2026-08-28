@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { intentProps, preloadChunk } from '@/shared/lib/prefetch';
+import { intentProps, warmFuelForm } from '@/shared/lib/prefetch';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
@@ -23,16 +23,15 @@ import { Input } from '@/shared/ui/input';
 import { StatCard } from '@/shared/ui/stat-card';
 import { EmptyState } from '@/shared/ui/empty-state';
 import { DateRangePicker } from '@/shared/ui/date-range-picker';
+import { useQueryClient } from '@tanstack/react-query';
 import { useFuelEvents } from '@/entities/fuel-event/queries';
 import { useDebounce } from '@/shared/hooks/use-debounce';
 import { matches } from '@/shared/lib/normalize';
 import {
   firstDayOfMonth,
-  lastDayOfMonth,
   formatCurrency,
   formatNumber,
   daysBetween,
-  localDateISO,
   parseISO,
 } from '@/shared/lib/format';
 import { analyseEvents } from '@/shared/lib/fuel';
@@ -64,36 +63,12 @@ import {
   type SortDirection,
 } from '@/widgets/fuel-events-table/fuel-events-filters';
 import type { FuelEvent } from '@/entities/fuel-event/schemas';
+import { FUEL_STORAGE_KEYS, defaultFuelRange } from '@/entities/fuel-event/defaults';
+import { loadDefault } from '@/entities/trip/defaults';
 import { formatCompactCurrency, formatCompactNumber } from '@/shared/lib/format-number';
 
-/* -------------------------------------------------------------------------- */
-/* Storage keys                                                                */
-/* -------------------------------------------------------------------------- */
-
-const STORAGE_KEY_GROUPING = 'apex:fuel-events:grouping';
-const STORAGE_KEY_DATE_FROM = 'apex:fuel-events:from';
-const STORAGE_KEY_DATE_TO = 'apex:fuel-events:to';
-
-/* -------------------------------------------------------------------------- */
-/* Default helpers                                                             */
-/* -------------------------------------------------------------------------- */
-
-function monthStartISO(): string {
-  const d = firstDayOfMonth();
-  return localDateISO(d.getFullYear(), d.getMonth(), d.getDate());
-}
-function monthEndISO(): string {
-  const d = lastDayOfMonth();
-  return localDateISO(d.getFullYear(), d.getMonth(), d.getDate(), true);
-}
-
-function loadDefault<T>(key: string, fallback: T, validate: (v: string) => T | null): T {
-  if (typeof window === 'undefined') return fallback;
-  const raw = window.localStorage.getItem(key);
-  if (!raw) return fallback;
-  const valid = validate(raw);
-  return valid !== null && valid !== undefined ? valid : fallback;
-}
+/* Storage keys + range defaults live in entities/fuel-event/defaults.ts,
+   shared with the sidebar's data warmer so keys can't drift. */
 
 function isValidGrouping(v: string): FuelEventGrouping | null {
   return v === 'none' || v === 'vehicle' || v === 'driver' ? v : null;
@@ -114,30 +89,24 @@ export default function FuelEventsPage() {
   const navigate = useNavigate();
   const { canEditFuel } = usePermissions();
   const [searchParams, setSearchParams] = useSearchParams();
+  const queryClient = useQueryClient();
 
   const [search, setSearch] = React.useState(() => searchParams.get('q') ?? '');
   const debouncedSearch = useDebounce(search, 200);
 
-  const [from, setFrom] = React.useState<string | null>(() => {
-    const url = searchParams.get('from');
-    if (url) return url;
-    const stored = loadDefault(STORAGE_KEY_DATE_FROM, null as string | null, (v) => v);
-    return stored ?? monthStartISO();
-  });
-
-  const [to, setTo] = React.useState<string | null>(() => {
-    const url = searchParams.get('to');
-    if (url) return url;
-    const stored = loadDefault(STORAGE_KEY_DATE_TO, null as string | null, (v) => v);
-    return stored ?? monthEndISO();
-  });
+  const [from, setFrom] = React.useState<string | null>(
+    () => searchParams.get('from') ?? defaultFuelRange().from,
+  );
+  const [to, setTo] = React.useState<string | null>(
+    () => searchParams.get('to') ?? defaultFuelRange().to,
+  );
 
   const [grouping, setGrouping] = React.useState<FuelEventGrouping>(() => {
     const url = searchParams.get('g');
     if (url === 'v') return 'vehicle';
     if (url === 'd') return 'driver';
     if (url === 'a') return 'none';
-    return loadDefault(STORAGE_KEY_GROUPING, 'vehicle' as FuelEventGrouping, isValidGrouping);
+    return loadDefault(FUEL_STORAGE_KEYS.grouping, 'vehicle' as FuelEventGrouping, isValidGrouping);
   });
 
   const [activeFilters, setActiveFilters] = React.useState<Set<FuelEventStatusFilter>>(() =>
@@ -195,14 +164,14 @@ export default function FuelEventsPage() {
   /* ------------------------------------------------------------------------ */
 
   React.useEffect(() => {
-    window.localStorage.setItem(STORAGE_KEY_GROUPING, grouping);
+    window.localStorage.setItem(FUEL_STORAGE_KEYS.grouping, grouping);
   }, [grouping]);
 
   React.useEffect(() => {
-    if (from) window.localStorage.setItem(STORAGE_KEY_DATE_FROM, from);
-    else window.localStorage.removeItem(STORAGE_KEY_DATE_FROM);
-    if (to) window.localStorage.setItem(STORAGE_KEY_DATE_TO, to);
-    else window.localStorage.removeItem(STORAGE_KEY_DATE_TO);
+    if (from) window.localStorage.setItem(FUEL_STORAGE_KEYS.from, from);
+    else window.localStorage.removeItem(FUEL_STORAGE_KEYS.from);
+    if (to) window.localStorage.setItem(FUEL_STORAGE_KEYS.to, to);
+    else window.localStorage.removeItem(FUEL_STORAGE_KEYS.to);
   }, [from, to]);
 
   /* ------------------------------------------------------------------------ */
@@ -324,7 +293,7 @@ export default function FuelEventsPage() {
             <span className="hidden sm:inline">{t('common.export')}</span>
           </Button>
           {canEditFuel && (
-            <Button onClick={() => navigate('/fuel-events/new')} size="sm" {...intentProps(() => preloadChunk('fuel-event-new'))}>
+            <Button onClick={() => navigate('/fuel-events/new')} size="sm" {...intentProps(() => warmFuelForm(queryClient))}>
               <Plus className="h-4 w-4" />
               <span className="hidden sm:inline">{t('fuelEvents.addEvent')}</span>
             </Button>
@@ -497,7 +466,7 @@ export default function FuelEventsPage() {
           description={t('fuelEvents.noEventsDescription')}
           action={
             canEditFuel && (
-              <Button onClick={() => navigate('/fuel-events/new')} {...intentProps(() => preloadChunk('fuel-event-new'))}>
+              <Button onClick={() => navigate('/fuel-events/new')} {...intentProps(() => warmFuelForm(queryClient))}>
                 <Plus className="h-4 w-4" />
                 {t('fuelEvents.addEvent')}
               </Button>

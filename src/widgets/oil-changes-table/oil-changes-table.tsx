@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import { intentProps, preloadChunk } from '@/shared/lib/prefetch';
+import { intentProps, preloadChunk, warmOilForm } from '@/shared/lib/prefetch';
 import { prefetchOilChange } from '@/entities/oil-change/queries';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -170,7 +170,7 @@ export function OilChangesTable({
                   className="h-8 w-8"
                   onClick={() => navigate(`/oil-changes/${row.original.ID}/edit`)}
                   {...intentProps(() => {
-                    preloadChunk('oil-change-edit');
+                    warmOilForm(queryClient, 'oil-change-edit');
                     prefetchOilChange(queryClient, row.original.ID);
                   })}
                   aria-label={t('common.edit')}

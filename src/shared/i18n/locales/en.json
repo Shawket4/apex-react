@@ -132,8 +132,8 @@
       "advances": "Out on advances",
       "litres": "Litres hauled",
       "trucks": "Trucks worked",
-      "vsPrev": "vs same span last month",
-      "deltaPrev": "{{pct}}% vs last month",
+      "vsPrev": "vs previous span",
+      "deltaPrev": "{{pct}}% vs previous span",
       "bankLedger": "bank ledger, this month",
       "acrossTrucks": "across {{count}} trucks",
       "unpaidCount": "{{count}} unpaid",
@@ -197,10 +197,6 @@
       "title": "Cash out by category"
     },
     "filters": {
-      "month": "This month",
-      "today": "Today",
-      "yesterday": "Yesterday",
-      "week": "Last 7 days",
       "company": "Company",
       "allCompanies": "All companies"
     },
@@ -2066,5 +2062,14 @@
     "toastCreated": "Terminal created",
     "toastExtended": "Terminal '{{name}}' allowed for {{company}}",
     "unresolved": "'{{name}}' is not in {{company}}'s allowed terminals — pick one or create it."
+  },
+  "scope": {
+    "preset": {
+      "today": "Today",
+      "7d": "7 days",
+      "month": "This month",
+      "90d": "90 days",
+      "custom": "Custom"
+    }
   }
 }

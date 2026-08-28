@@ -1,4 +1,5 @@
 import { useQuery, type QueryClient } from '@tanstack/react-query';
+import { currentScopeSlice } from '@/shared/scope';
 import { dashboardApi, etitApi, type DashboardScope } from './api';
 import type {
   AdvancesDrawer,
@@ -17,19 +18,33 @@ export type DrawerData = RevenueDrawer | CashOutDrawer | TripsDrawer | AdvancesD
 /* against a near-miss key is a wasted request that the page refetches anyway. */
 /* -------------------------------------------------------------------------- */
 
-function scopeKey(scope?: DashboardScope): string {
+function scopeKeyOf(scope?: DashboardScope): string {
   if (!scope) return 'current';
-  return `${scope.from ?? ''}..${scope.to ?? ''}@${scope.company ?? 'all'}` || 'current';
+  return `${scope.from ?? ''}..${scope.to ?? ''}@${scope.company ?? 'all'}`;
 }
 
 export const dashboardKeys = {
   all: ['dashboard'] as const,
-  main: (scope?: DashboardScope) => [...dashboardKeys.all, 'main', scopeKey(scope)] as const,
+  main: (scope?: DashboardScope) => [...dashboardKeys.all, 'main', scopeKeyOf(scope)] as const,
   drawer: (kind: string, scope?: DashboardScope) =>
-    [...dashboardKeys.all, 'drawer', kind, scopeKey(scope)] as const,
+    [...dashboardKeys.all, 'drawer', kind, scopeKeyOf(scope)] as const,
   truckDay: (vehicleId: string, date: string) =>
     [...dashboardKeys.all, 'truck', vehicleId, date] as const,
 };
+
+/**
+ * The scope a bare navigation to `/` mounts with: dates from the global URL
+ * scope (the header bar), company from `?co=`. Warmers without a scope in
+ * hand (the sidebar) call this — it is exactly what the page will read.
+ */
+export function currentDashboardScope(): DashboardScope {
+  const { range } = currentScopeSlice();
+  const co =
+    typeof window !== 'undefined'
+      ? new URLSearchParams(window.location.search).get('co')
+      : null;
+  return { from: range.from, to: range.to, company: co || null };
+}
 
 /* ─── The one payload that paints the page ─── */
 
@@ -76,21 +91,24 @@ export function useTruckDay(vehicleId: string | null, date: string) {
 /* The Madar pattern: warm on INTENT (hover / focus / touchstart), against the */
 /* exact key the component will read, so opening renders from cache instead of */
 /* showing a spinner. prefetchQuery dedupes in-flight requests and respects    */
-/* staleTime, so calling these repeatedly costs nothing.                       */
+/* staleTime, so calling these repeatedly costs nothing. Callers without a     */
+/* scope in hand (the sidebar) omit it and get the current URL's scope.        */
 /* -------------------------------------------------------------------------- */
 
 export function prefetchDashboard(qc: QueryClient, scope?: DashboardScope): void {
+  const s = scope ?? currentDashboardScope();
   void qc.prefetchQuery({
-    queryKey: dashboardKeys.main(scope),
-    queryFn: () => dashboardApi.get(scope),
+    queryKey: dashboardKeys.main(s),
+    queryFn: () => dashboardApi.get(s),
     staleTime: 30_000,
   });
 }
 
 export function prefetchDrawer(qc: QueryClient, kind: DrawerKind, scope?: DashboardScope): void {
+  const s = scope ?? currentDashboardScope();
   void qc.prefetchQuery({
-    queryKey: dashboardKeys.drawer(kind, scope),
-    queryFn: () => DRAWER_FETCHERS[kind](scope),
+    queryKey: dashboardKeys.drawer(kind, s),
+    queryFn: () => DRAWER_FETCHERS[kind](s),
     staleTime: 60_000,
   });
 }

@@ -1,12 +1,24 @@
 import type { QueryClient } from '@tanstack/react-query';
 
 import { prefetchDashboard } from '@/entities/dashboard/queries';
-import { prefetchDrivers } from '@/entities/driver/queries';
+import { prefetchDrivers, prefetchDriversList } from '@/entities/driver/queries';
 import { prefetchCars } from '@/entities/car/queries';
 import { prefetchOilChanges } from '@/entities/oil-change/queries';
 import { prefetchFeeMappings } from '@/entities/fee-mapping/queries';
 import { prefetchUsers } from '@/entities/user/queries';
 import { prefetchServiceInvoices } from '@/entities/service-invoice/queries';
+import { prefetchTrips } from '@/entities/trip/queries';
+import { defaultTripListParams } from '@/entities/trip/defaults';
+import { prefetchFuelEvents } from '@/entities/fuel-event/queries';
+import { defaultFuelRange } from '@/entities/fuel-event/defaults';
+import { prefetchLedgerMount } from '@/entities/transaction/queries';
+import { prefetchCategories } from '@/entities/transaction/categories';
+import { prefetchCompanies } from '@/entities/mapping/queries';
+import { prefetchMaintStock } from '@/entities/maint-stock/queries';
+import { prefetchEtitVehicles } from '@/entities/etit-vehicle/queries';
+import { prefetchZones } from '@/entities/zone/queries';
+import { prefetchDropoffChoices, prefetchLocations } from '@/entities/location/queries';
+import { prefetchTripAudit } from '@/entities/trip-audit/queries';
 import { preloadChunkForPath } from './chunks';
 
 /* -------------------------------------------------------------------------- */
@@ -16,12 +28,10 @@ import { preloadChunkForPath } from './chunks';
 /* the user shows intent toward a PATH. Two halves, always:                    */
 /*                                                                            */
 /*   chunk — every route, via the registry.                                    */
-/*   data  — ONLY routes whose mount-time query key is deterministic from a    */
-/*           bare navigation. Trips, fuel events and the ledger derive their   */
-/*           initial key from URL/date state, so warming them from here would  */
-/*           hit a near-miss key and waste the request — their lists warm      */
-/*           in-page instead, where the live params are known (pagination      */
-/*           hover, tab hover, row hover).                                     */
+/*   data  — the queries a bare navigation to that route mounts with. Routes   */
+/*           whose initial key depends on URL/localStorage state reproduce it  */
+/*           through the entity's defaults module — the same module the page   */
+/*           itself mounts from, so the two can never drift apart.             */
 /*                                                                            */
 /* The data warmers live NEXT TO their hooks in entities/x/queries.ts, so the  */
 /* key can't drift from the page without the change being visible in review.   */
@@ -29,12 +39,35 @@ import { preloadChunkForPath } from './chunks';
 
 const DATA_WARMERS: Record<string, (qc: QueryClient) => void> = {
   '/': (qc) => prefetchDashboard(qc),
+  '/trips': (qc) => {
+    prefetchTrips(qc, defaultTripListParams());
+    prefetchCompanies(qc); // the filters bar mounts the company list
+  },
+  '/fuel-events': (qc) => prefetchFuelEvents(qc, defaultFuelRange()),
+  '/fleet-expenses': (qc) => {
+    prefetchLedgerMount(qc);
+    prefetchCategories(qc);
+  },
   '/drivers': prefetchDrivers,
-  '/cars': prefetchCars,
+  '/cars': (qc) => {
+    prefetchCars(qc);
+    prefetchDriversList(qc); // the table joins assignments on the driver list
+  },
+  '/tires': prefetchMaintStock,
   '/oil-changes': prefetchOilChanges,
-  '/fee-mappings': prefetchFeeMappings,
-  '/users': prefetchUsers,
   '/service-invoices': prefetchServiceInvoices,
+  '/fee-mappings': (qc) => {
+    prefetchFeeMappings(qc);
+    prefetchDropoffChoices(qc); // the inline add/edit form mounts its picker
+  },
+  '/users': prefetchUsers,
+  '/etit': prefetchEtitVehicles,
+  '/zones': prefetchZones,
+  '/locations': prefetchLocations,
+  '/trip-audit': (qc) => {
+    prefetchTripAudit(qc);
+    prefetchCompanies(qc); // the company filter mounts alongside the queue
+  },
 };
 
 export function prefetchRouteData(path: string, qc: QueryClient): void {
