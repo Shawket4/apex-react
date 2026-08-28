@@ -129,15 +129,45 @@ export function TrackingRangePicker({
     setToTime(endWall.slice(11, 16));
   };
 
-  const timeInput = (value: string, onChange: (v: string) => void, label: string) => (
-    <input
-      type="time"
-      value={value}
-      onChange={(e) => e.target.value && onChange(e.target.value)}
-      aria-label={label}
-      className="h-7 rounded-md border bg-background px-1.5 text-center font-mono text-[11px] tabular-nums outline-none focus-visible:ring-2 focus-visible:ring-ring"
-    />
-  );
+  /* Paired HH / MM selects instead of the browser's time widget — same
+     control on every platform, styled like the rest of the picker. */
+  const timeSelect = (value: string, onChange: (v: string) => void, label: string) => {
+    const [hh, mm] = value.split(':');
+    const set = (h: string, m: string) => onChange(`${h}:${m}`);
+    const cls =
+      'h-7 appearance-none rounded-md border bg-background px-1.5 text-center font-mono ' +
+      'text-[11px] font-semibold tabular-nums outline-none transition-colors hover:bg-muted ' +
+      'focus-visible:ring-2 focus-visible:ring-ring';
+    return (
+      <div className="flex items-center gap-0.5" dir="ltr">
+        <select
+          value={hh}
+          onChange={(e) => set(e.target.value, mm)}
+          aria-label={`${label} — ${t('tracking.hour', 'hour')}`}
+          className={cls}
+        >
+          {Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0')).map((h) => (
+            <option key={h} value={h}>
+              {h}
+            </option>
+          ))}
+        </select>
+        <span className="font-mono text-[11px] font-semibold text-muted-foreground">:</span>
+        <select
+          value={mm}
+          onChange={(e) => set(hh, e.target.value)}
+          aria-label={`${label} — ${t('tracking.minute', 'minute')}`}
+          className={cls}
+        >
+          {Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0')).map((m) => (
+            <option key={m} value={m}>
+              {m}
+            </option>
+          ))}
+        </select>
+      </div>
+    );
+  };
 
   return (
     <div className="pointer-events-auto w-full rounded-t-2xl border border-b-0 bg-card/95 p-3 shadow-2xl backdrop-blur md:mx-auto md:max-w-md">
@@ -179,7 +209,7 @@ export function TrackingRangePicker({
         <div className="flex flex-1 flex-col items-center gap-1">
           <p className="text-muted-foreground">{t('common.from', 'From')}</p>
           <p className="font-semibold">{selected.from ? fmtDay(selected.from) : '—'}</p>
-          {timeInput(fromTime, setFromTime, t('common.from', 'From'))}
+          {timeSelect(fromTime, setFromTime, t('common.from', 'From'))}
         </div>
         <div className="h-12 w-px bg-border" />
         <div className="flex flex-1 flex-col items-center gap-1">
@@ -187,7 +217,7 @@ export function TrackingRangePicker({
           <p className="font-semibold">
             {selected.to ? fmtDay(selected.to) : hovered ? fmtDay(hovered) : '—'}
           </p>
-          {timeInput(toTime, setToTime, t('common.to', 'To'))}
+          {timeSelect(toTime, setToTime, t('common.to', 'To'))}
         </div>
       </div>
 

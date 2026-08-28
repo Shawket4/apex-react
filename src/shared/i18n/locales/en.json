@@ -2132,6 +2132,8 @@
     "follow": "Follow the truck",
     "raceOptimal": "Race optimal",
     "raceDeltaHint": "Optimal arrival vs actual arrival",
-    "scrub": "Playback position"
+    "scrub": "Playback position",
+    "hour": "hour",
+    "minute": "minute"
   }
 }
