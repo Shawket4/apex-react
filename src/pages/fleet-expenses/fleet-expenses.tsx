@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { intentProps, preloadChunk } from '@/shared/lib/prefetch';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from 'next-themes';
 import {
@@ -370,6 +371,7 @@ export default function FleetExpensesPage() {
             <Button
               size="sm"
               onClick={() => navigate('/fleet-expenses/new', { state: { from: 'ledger' } })}
+              {...intentProps(() => preloadChunk('fleet-expense-new'))}
             >
               <Plus className="h-4 w-4" />
               <span className="hidden sm:inline">{t('fleetExpenses.addExpense')}</span>
@@ -832,6 +834,7 @@ export default function FleetExpensesPage() {
             canManageExpenses && !uncatOnly ? (
               <Button
                 onClick={() => navigate('/fleet-expenses/new', { state: { from: 'ledger' } })}
+              {...intentProps(() => preloadChunk('fleet-expense-new'))}
               >
                 <Plus className="h-4 w-4" />
                 {t('fleetExpenses.addExpense')}
@@ -848,6 +851,7 @@ export default function FleetExpensesPage() {
         {t('fleetExpenses.ignoredMessages')}{' '}
         <Link
           to="/fleet-expenses/messages"
+          {...intentProps(() => preloadChunk('fleet-expenses-messages'))}
           className="inline-block py-1 font-semibold text-primary hover:underline"
         >
           {t('fleetExpenses.reviewLink')} ›
@@ -867,6 +871,13 @@ export default function FleetExpensesPage() {
               variant="outline"
               size="sm"
               onClick={() => void rowsQuery.fetchNextPage()}
+              // Hovering "load more" IS the intent to read the next page, so
+              // the fetch starts before the click. fetchNextPage dedupes, so
+              // the click becomes a no-op that renders what's already coming.
+              {...intentProps(() => {
+                if (rowsQuery.hasNextPage && !rowsQuery.isFetchingNextPage)
+                  void rowsQuery.fetchNextPage({ cancelRefetch: false });
+              })}
               disabled={rowsQuery.isFetchingNextPage}
               className="w-full sm:w-auto"
             >

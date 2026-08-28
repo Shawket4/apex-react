@@ -5,6 +5,7 @@ import type {
     TripStatisticsParams,
     TripStatisticsResponse,
 } from './schemas';
+import type { QueryClient } from '@tanstack/react-query';
 
 export const tripStatisticsKeys = {
     all: ['trip-statistics'] as const,
@@ -46,3 +47,18 @@ export function useRouteDays(
         enabled: (options?.enabled ?? true) && !!params.company,
     });
 }
+
+/* -------------------------------------------------------------------------- */
+/* Intent prefetch                                                             */
+/* Warmed on hover/focus/touch by surfaces that know the click is coming.      */
+/* MUST mirror the hook above key-for-key — a near-miss key is a wasted        */
+/* request the page refetches anyway.                                          */
+/* -------------------------------------------------------------------------- */
+
+export function prefetchTripStatistics(qc: QueryClient, params: TripStatisticsParams): void {
+  void qc.prefetchQuery({
+    queryKey: tripStatisticsKeys.byParams(params),
+    queryFn: () => tripStatisticsApi.get(params),
+  });
+}
+

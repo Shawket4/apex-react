@@ -51,6 +51,10 @@ import type {
 
 import { TripsTable } from '@/widgets/trips-table/trips-table';
 import { TripsPagination } from '@/widgets/trips-table/trips-pagination';
+import { useQueryClient } from '@tanstack/react-query';
+import { intentProps, preloadChunk } from '@/shared/lib/prefetch';
+import { prefetchTrips } from '@/entities/trip/queries';
+import { prefetchTripStatistics } from '@/entities/trip-statistics/queries';
 import {
   TripsCompanyFilter,
   TripsMissingDataFilter,
@@ -250,6 +254,8 @@ export default function TripsPage() {
   /* Build query params (server-side filtering)                               */
   /* ------------------------------------------------------------------------ */
 
+  const queryClient = useQueryClient();
+
   const listParams: TripListParams = {
     page,
     limit,
@@ -447,7 +453,11 @@ export default function TripsPage() {
           {t('trips.actions.watanyaReport')}
         </span>
       </Button>
-      <Button onClick={() => navigate('/trips/new')} size="sm">
+      <Button
+        onClick={() => navigate('/trips/new')}
+        size="sm"
+        {...intentProps(() => preloadChunk('trip-new'))}
+      >
         <Plus className="h-4 w-4" />
         <span className="hidden sm:inline">{t('trips.actions.add')}</span>
       </Button>
@@ -484,7 +494,11 @@ export default function TripsPage() {
             <List className="h-3.5 w-3.5" />
             {t('trips.tabs.list')}
           </TabsTrigger>
-          <TabsTrigger value="statistics" className="gap-1.5">
+          <TabsTrigger
+            value="statistics"
+            className="gap-1.5"
+            {...intentProps(() => prefetchTripStatistics(queryClient, statisticsFilters))}
+          >
             <BarChart3 className="h-3.5 w-3.5" />
             {t('trips.tabs.statistics')}
           </TabsTrigger>
@@ -620,7 +634,10 @@ export default function TripsPage() {
                 }
                 onOpenReceiptBatch={(id) => setBatchParentId(id)}
                 emptyAction={
-                  <Button onClick={() => navigate('/trips/new')}>
+                  <Button
+                    onClick={() => navigate('/trips/new')}
+                    {...intentProps(() => preloadChunk('trip-new'))}
+                  >
                     <Plus className="h-4 w-4" />
                     {t('trips.actions.add')}
                   </Button>
@@ -632,6 +649,9 @@ export default function TripsPage() {
                 total={total}
                 limit={limit}
                 onPageChange={setPage}
+                // The warm mirrors the LIVE filters plus the intended page, so
+                // the click renders from cache instead of a spinner.
+                onIntendPage={(p) => prefetchTrips(queryClient, { ...listParams, page: p })}
                 onLimitChange={(newLimit) => {
                   setLimit(newLimit);
                   setPage(1);

@@ -3,6 +3,7 @@ import { QUERY_KEYS } from '@/shared/config/constants';
 import * as api from './api';
 import { getCars } from '@/entities/car/api';
 import type { ServiceInvoiceRequest } from './schemas';
+import type { QueryClient } from '@tanstack/react-query';
 
 export function useServiceInvoices(carId?: number | string, page = 1, limit = 10) {
   return useQuery({
@@ -65,3 +66,30 @@ export function useSearchServiceInvoices(query: string, carId?: number | string,
     staleTime: 0,
   });
 }
+
+/* -------------------------------------------------------------------------- */
+/* Intent prefetch                                                             */
+/* Warmed on hover/focus/touch by surfaces that know the click is coming.      */
+/* MUST mirror the hook above key-for-key — a near-miss key is a wasted        */
+/* request the page refetches anyway.                                          */
+/* -------------------------------------------------------------------------- */
+
+/** The list page's mount pair: invoices page 1 and the per-car rollup. */
+export function prefetchServiceInvoices(qc: QueryClient): void {
+  void qc.prefetchQuery({
+    queryKey: [...QUERY_KEYS.serviceInvoices, { carId: undefined, page: 1, limit: 10 }],
+    queryFn: () => api.getServiceInvoices(undefined, 1, 10),
+  });
+  void qc.prefetchQuery({
+    queryKey: [...QUERY_KEYS.serviceInvoices, 'cars', { page: 1, limit: 10 }],
+    queryFn: () => getCars(1, 10),
+  });
+}
+
+export function prefetchServiceInvoice(qc: QueryClient, id: number | string): void {
+  void qc.prefetchQuery({
+    queryKey: QUERY_KEYS.serviceInvoice(id),
+    queryFn: () => api.getServiceInvoice(id),
+  });
+}
+

@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { intentProps, preloadChunk } from '@/shared/lib/prefetch';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
@@ -176,7 +177,7 @@ export default function OilChangesPage() {
             <Download className="h-4 w-4" />
             <span className="hidden sm:inline">{t('common.export')}</span>
           </Button>
-          <Button onClick={() => navigate('/oil-changes/new')} size="sm">
+          <Button onClick={() => navigate('/oil-changes/new')} size="sm" {...intentProps(() => preloadChunk('oil-change-new'))}>
             <Plus className="h-4 w-4" />
             <span className="hidden sm:inline">{t('oilChanges.addNew')}</span>
           </Button>
@@ -203,7 +204,7 @@ export default function OilChangesPage() {
           title={t('oilChanges.empty.title')}
           description={t('oilChanges.empty.description')}
           action={
-            <Button onClick={() => navigate('/oil-changes/new')}>
+            <Button onClick={() => navigate('/oil-changes/new')} {...intentProps(() => preloadChunk('oil-change-new'))}>
               <Plus className="h-4 w-4" />
               {t('oilChanges.addNew')}
             </Button>

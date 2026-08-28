@@ -13,6 +13,7 @@ import type {
   TripListResponse,
   ParentContainersResponse,
 } from './schemas';
+import type { QueryClient } from '@tanstack/react-query';
 
 // -----------------------------------------------------------------------------
 // Query keys
@@ -149,3 +150,30 @@ export function useExportWatanyaReport() {
       tripApi.exportWatanyaReport(params),
   });
 }
+
+/* -------------------------------------------------------------------------- */
+/* Intent prefetch                                                             */
+/* Warmed on hover/focus/touch by surfaces that know the click is coming.      */
+/* MUST mirror the hook above key-for-key — a near-miss key is a wasted        */
+/* request the page refetches anyway.                                          */
+/* -------------------------------------------------------------------------- */
+
+export function prefetchTrips(qc: QueryClient, params: TripListParams): void {
+  void qc.prefetchQuery({
+    queryKey: tripKeys.list(params),
+    queryFn: () => tripApi.list(params),
+  });
+}
+
+export function prefetchTripDetails(qc: QueryClient, id: number): void {
+  void qc.prefetchQuery({ queryKey: tripKeys.detail(id), queryFn: () => tripApi.details(id) });
+}
+
+/** What the multi-container edit page mounts. */
+export function prefetchParentContainers(qc: QueryClient, parentId: number): void {
+  void qc.prefetchQuery({
+    queryKey: tripKeys.parent(parentId),
+    queryFn: () => tripApi.parentContainers(parentId),
+  });
+}
+

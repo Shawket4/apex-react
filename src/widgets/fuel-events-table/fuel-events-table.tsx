@@ -1,4 +1,7 @@
 import * as React from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { intentProps, preloadChunk } from '@/shared/lib/prefetch';
+import { prefetchFuelEvent } from '@/entities/fuel-event/queries';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
@@ -94,6 +97,7 @@ function FlatTable({
   map: EfficiencyMap;
   loading?: boolean;
 }) {
+  const queryClient = useQueryClient();
   const { t } = useTranslation();
   const navigate = useNavigate();
 
@@ -209,6 +213,11 @@ function FlatTable({
       data={events}
       loading={loading}
       onRowClick={(row) => navigate(`/fuel-events/${row.ID}`)}
+      // Intent: the details page mounts the event by id.
+      onRowIntent={(row) => {
+        preloadChunk('fuel-event-details');
+        prefetchFuelEvent(queryClient, row.ID);
+      }}
     />
   );
 }
@@ -242,6 +251,7 @@ function GroupCard({
   onExport,
   exporting,
 }: GroupCardProps) {
+  const queryClient = useQueryClient();
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [open, setOpen] = React.useState(defaultOpen);
@@ -391,6 +401,10 @@ function GroupCard({
                     <button
                       type="button"
                       onClick={() => navigate(`/fuel-events/${e.ID}`)}
+                      {...intentProps(() => {
+                        preloadChunk('fuel-event-details');
+                        prefetchFuelEvent(queryClient, e.ID);
+                      })}
                       className="grid w-full grid-cols-[1fr_auto] gap-x-3 gap-y-1 px-3 py-2.5 text-start transition-colors hover:bg-muted/50 md:px-4"
                     >
                       <div className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">

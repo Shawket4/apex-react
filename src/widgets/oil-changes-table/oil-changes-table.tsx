@@ -1,4 +1,7 @@
 import * as React from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { intentProps, preloadChunk } from '@/shared/lib/prefetch';
+import { prefetchOilChange } from '@/entities/oil-change/queries';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
@@ -50,6 +53,7 @@ export function OilChangesTable({
   emptyState,
 }: OilChangesTableProps) {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
 
   const columns = React.useMemo<ColumnDef<OilChangeView>[]>(
@@ -165,6 +169,10 @@ export function OilChangesTable({
                   size="icon"
                   className="h-8 w-8"
                   onClick={() => navigate(`/oil-changes/${row.original.ID}/edit`)}
+                  {...intentProps(() => {
+                    preloadChunk('oil-change-edit');
+                    prefetchOilChange(queryClient, row.original.ID);
+                  })}
                   aria-label={t('common.edit')}
                 >
                   <Edit className="h-4 w-4" />
@@ -202,6 +210,7 @@ export function OilChangesTable({
       loading={loading}
       emptyState={emptyState}
       onRowClick={(row) => onViewHistory?.(row.car_no_plate)}
+      onRowIntent={() => preloadChunk('oil-change-history')}
       footer={(data) => {
         // Footer cells must align 1:1 with the columns array above. The
         // tally line skips columns that don't reduce sensibly (text,

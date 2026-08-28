@@ -1,6 +1,9 @@
 import * as React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useQueryClient } from '@tanstack/react-query';
+import { intentProps, preloadChunk } from '@/shared/lib/prefetch';
+import { prefetchTransaction } from '@/entities/transaction/queries';
 import { Fuel, HandCoins, Lock, PenLine, Split } from 'lucide-react';
 
 import { Button } from '@/shared/ui/button';
@@ -123,6 +126,17 @@ export function LedgerList({ rows, dayTotals, canEdit }: LedgerListProps) {
     setSplitOpen(true);
   };
 
+  const queryClient = useQueryClient();
+
+  // Intent: the edit page mounts the transaction by id. Warming it on
+  // hover/focus of a row means the edit form opens pre-filled from cache
+  // instead of on a spinner. The chunk warms alongside it.
+  const warmEdit = (row: Transaction) => {
+    if (!canEdit || !row.editable) return;
+    preloadChunk('fleet-expense-edit');
+    prefetchTransaction(queryClient, row.id);
+  };
+
   const openEdit = (row: Transaction) => {
     if (!canEdit || !row.editable) return;
     navigate(`/fleet-expenses/${row.id}/edit`, { state: { from: 'ledger' } });
@@ -184,7 +198,7 @@ export function LedgerList({ rows, dayTotals, canEdit }: LedgerListProps) {
             {/* Phones ≤ lg: cards. */}
             <ul className="lg:hidden">
               {group.rows.map((row) => (
-                <li key={`${row.source}-${row.id}`}>
+                <li key={`${row.source}-${row.id}`} {...intentProps(() => warmEdit(row))}>
                   <TxnCard
                     row={row}
                     canEdit={canEdit}
@@ -201,7 +215,17 @@ export function LedgerList({ rows, dayTotals, canEdit }: LedgerListProps) {
             {/* Desktop: a table per day. table-fixed with shared widths keeps
                 columns aligned across day groups without an overflow wrapper. */}
             <table className="hidden w-full table-fixed text-sm lg:table">
-              <tbody>
+              {/* Delegated intent: rows are <tr>s rendered by TxnRow, so the
+                  warm listens once here and resolves the row from the id the
+                  <tr> stamps. */}
+              <tbody
+                onPointerOver={(e) => {
+                  const tr = (e.target as HTMLElement).closest('tr[data-txn-id]');
+                  const id = tr?.getAttribute('data-txn-id');
+                  const row = id ? group.rows.find((r) => String(r.id) === id) : undefined;
+                  if (row) warmEdit(row);
+                }}
+              >
                 {group.rows.map((row) => (
                   <TxnRow
                     key={`${row.source}-${row.id}`}
@@ -541,6 +565,7 @@ function TxnRow({
 
   return (
     <tr
+      data-txn-id={row.id}
       onClick={tappable ? onOpen : undefined}
       className={cn('border-b bg-card', tappable && 'cursor-pointer hover:bg-muted/40')}
     >

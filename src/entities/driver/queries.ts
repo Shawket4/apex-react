@@ -10,6 +10,7 @@ import {
   approveDriver,
   rejectDriver,
   regeneratePin,
+  getDriver,
 } from './api';
 import type {
   RegisterDriverPayload,
@@ -20,6 +21,7 @@ import { QUERY_KEYS } from '@/shared/config/constants';
 import { queryClient } from '@/shared/api/query';
 import { toast } from '@/shared/ui/toaster';
 import { extractErrorMessage } from '@/shared/api/errors';
+import type { QueryClient } from '@tanstack/react-query';
 
 /* ─── List (simple — used by fuel-event form) ─── */
 export function useDrivers() {
@@ -164,3 +166,19 @@ export function useRegeneratePin() {
     },
   });
 }
+
+/* -------------------------------------------------------------------------- */
+/* Intent prefetch                                                             */
+/* Warmed on hover/focus/touch by surfaces that know the click is coming.      */
+/* MUST mirror the hook above key-for-key — a near-miss key is a wasted        */
+/* request the page refetches anyway.                                          */
+/* -------------------------------------------------------------------------- */
+
+export function prefetchDrivers(qc: QueryClient): void {
+  void qc.prefetchQuery({ queryKey: QUERY_KEYS.drivers, queryFn: getDrivers });
+}
+
+export function prefetchDriver(qc: QueryClient, id: number | string): void {
+  void qc.prefetchQuery({ queryKey: QUERY_KEYS.driver(id), queryFn: () => getDriver(id) });
+}
+

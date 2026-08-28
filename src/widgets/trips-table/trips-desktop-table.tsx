@@ -20,6 +20,9 @@ import { EmptyState } from '@/shared/ui/empty-state';
 import { Popover, PopoverContent, PopoverTrigger } from '@/shared/ui/popover';
 import { format, formatCurrency, formatNumber } from '@/shared/lib/format';
 import { cn } from '@/shared/lib/cn';
+import { useQueryClient } from '@tanstack/react-query';
+import { intentProps, preloadChunk } from '@/shared/lib/prefetch';
+import { prefetchParentContainers, prefetchTripDetails } from '@/entities/trip/queries';
 import { Truncate } from '@/shared/ui/truncate';
 import { ReceiptStatusBadge } from './receipt-status-badge';
 import { ContainerRevenue, RevenueBreakdown } from './revenue-breakdown';
@@ -543,12 +546,22 @@ function RowActions({
   'onDelete' | 'onOpenReceipt' | 'onOpenMap' | 'onDeleteParent' | 'onOpenReceiptBatch'
 >) {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
   const { head, containers, isGroup, parentId } = row;
   // The ONLY trip edit route is trips/multi-container/:parentId/edit. There is
   // no trips/:id/edit, so a standalone trip has nowhere to go and gets no edit
   // action rather than a link to a 404.
   const editPath =
     parentId != null ? `/trips/multi-container/${parentId}/edit` : null;
+
+  // Intent: the edit page mounts the parent's containers; the map dialog
+  // mounts the trip details. Warm each when the cursor reaches its control,
+  // so the click opens onto data already in cache.
+  const warmEdit = () => {
+    preloadChunk('trip-edit');
+    if (parentId != null) prefetchParentContainers(queryClient, parentId);
+  };
+  const warmMap = () => prefetchTripDetails(queryClient, head.ID);
 
   return (
     <div className="flex items-center justify-end gap-1">
@@ -565,9 +578,11 @@ function RowActions({
           <IconButton label={t('trips.actions.manageReceipts')} onClick={() => onOpenReceipt(head.ID)}>
             <ImageIcon className="h-3.5 w-3.5" />
           </IconButton>
-          <IconButton label={t('trips.actions.viewOnMap')} onClick={() => onOpenMap(head.ID)}>
-            <Map className="h-3.5 w-3.5" />
-          </IconButton>
+          <span {...intentProps(warmMap)} className="contents">
+            <IconButton label={t('trips.actions.viewOnMap')} onClick={() => onOpenMap(head.ID)}>
+              <Map className="h-3.5 w-3.5" />
+            </IconButton>
+          </span>
         </>
       )}
       {editPath && (
@@ -577,6 +592,7 @@ function RowActions({
           asChild
           className="h-7 w-7"
           onClick={(e) => e.stopPropagation()}
+          {...intentProps(warmEdit)}
         >
           <Link to={editPath} aria-label={t('common.edit')} title={t('common.edit')}>
             <Edit3 className="h-3.5 w-3.5" />

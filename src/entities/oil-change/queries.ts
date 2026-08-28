@@ -11,6 +11,7 @@ import {
 import type { AddOilChangePayload, EditOilChangePayload } from './schemas';
 import { queryClient } from '@/shared/api/query';
 import { extractErrorMessage } from '@/shared/api/errors';
+import type { QueryClient } from '@tanstack/react-query';
 
 /**
  * Query key namespace for oil-change records.
@@ -82,3 +83,22 @@ export function useDeleteOilChange() {
     },
   });
 }
+
+/* -------------------------------------------------------------------------- */
+/* Intent prefetch                                                             */
+/* Warmed on hover/focus/touch by surfaces that know the click is coming.      */
+/* MUST mirror the hook above key-for-key — a near-miss key is a wasted        */
+/* request the page refetches anyway.                                          */
+/* -------------------------------------------------------------------------- */
+
+export function prefetchOilChanges(qc: QueryClient): void {
+  void qc.prefetchQuery({ queryKey: OIL_CHANGE_KEYS.all, queryFn: getOilChanges });
+}
+
+export function prefetchOilChange(qc: QueryClient, id: number | string): void {
+  void qc.prefetchQuery({
+    queryKey: OIL_CHANGE_KEYS.one(id),
+    queryFn: () => getOilChangeById(id),
+  });
+}
+

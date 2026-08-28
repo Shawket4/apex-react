@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getCars, createCar, updateCar, setCarDriver } from './api';
 import { QUERY_KEYS } from '@/shared/config/constants';
+import type { QueryClient } from '@tanstack/react-query';
 
 export function useCars() {
   return useQuery({
@@ -40,3 +41,15 @@ export function useSetCarDriver() {
     },
   });
 }
+
+/* -------------------------------------------------------------------------- */
+/* Intent prefetch                                                             */
+/* Warmed on hover/focus/touch by surfaces that know the click is coming.      */
+/* MUST mirror the hook above key-for-key — a near-miss key is a wasted        */
+/* request the page refetches anyway.                                          */
+/* -------------------------------------------------------------------------- */
+
+export function prefetchCars(qc: QueryClient): void {
+  void qc.prefetchQuery({ queryKey: QUERY_KEYS.cars, queryFn: () => getCars() });
+}
+

@@ -7,6 +7,9 @@ import { Skeleton } from '@/shared/ui/skeleton';
 import { EmptyState } from '@/shared/ui/empty-state';
 import { format, formatCurrency, formatNumber } from '@/shared/lib/format';
 import { cn } from '@/shared/lib/cn';
+import { useQueryClient } from '@tanstack/react-query';
+import { intentProps, preloadChunk } from '@/shared/lib/prefetch';
+import { prefetchParentContainers, prefetchTripDetails } from '@/entities/trip/queries';
 import { Truncate } from '@/shared/ui/truncate';
 import { ReceiptStatusBadge } from './receipt-status-badge';
 import { ContainerRevenue, RevenueBreakdown } from './revenue-breakdown';
@@ -113,6 +116,7 @@ function MobileRow({
   'onDelete' | 'onOpenReceipt' | 'onOpenMap' | 'onDeleteParent' | 'onOpenReceiptBatch'
 >) {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
   const [open, setOpen] = React.useState(false);
   const [money, setMoney] = React.useState(false);
 
@@ -297,15 +301,24 @@ function MobileRow({
                 >
                   {t('trips.actions.manageReceipts')}
                 </Action>
-                <Action icon={<Map className="h-3.5 w-3.5" />} onClick={() => onOpenMap(head.ID)}>
-                  {t('trips.actions.viewOnMap')}
-                </Action>
+                <span
+                  {...intentProps(() => prefetchTripDetails(queryClient, head.ID))}
+                  className="contents"
+                >
+                  <Action icon={<Map className="h-3.5 w-3.5" />} onClick={() => onOpenMap(head.ID)}>
+                    {t('trips.actions.viewOnMap')}
+                  </Action>
+                </span>
               </>
             )}
             {editPath && (
               <Link
                 to={editPath}
                 onClick={(e) => e.stopPropagation()}
+                {...intentProps(() => {
+                  preloadChunk('trip-edit');
+                  if (row.parentId != null) prefetchParentContainers(queryClient, row.parentId);
+                })}
                 className="inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-[12px]
                            font-medium transition-colors hover:bg-muted focus-visible:outline-none
                            focus-visible:ring-2 focus-visible:ring-ring"

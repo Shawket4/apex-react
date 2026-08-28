@@ -27,6 +27,15 @@ interface DataTableProps<TData, TValue> {
   loading?: boolean;
   emptyState?: React.ReactNode;
   onRowClick?: (row: TData) => void;
+  /**
+   * Intent prefetch: fired when the pointer enters, focus lands on, or a
+   * finger touches a row — BEFORE any click. Pages pass a warmer that
+   * preloads the destination chunk and/or the query the click would mount,
+   * so the click lands on work already done. Must be cheap to repeat (chunk
+   * imports and prefetchQuery both dedupe). Optional; rows without it behave
+   * exactly as before.
+   */
+  onRowIntent?: (row: TData) => void;
   pageSize?: number;
   className?: string;
   /**
@@ -83,6 +92,7 @@ export function DataTable<TData, TValue>({
   loading,
   emptyState,
   onRowClick,
+  onRowIntent,
   pageSize = 20,
   className,
   footer,
@@ -226,6 +236,9 @@ export function DataTable<TData, TValue>({
                             onRowClick?.(row.original);
                           }
                         }}
+                        onPointerEnter={onRowIntent ? () => onRowIntent(row.original) : undefined}
+                        onFocus={onRowIntent ? () => onRowIntent(row.original) : undefined}
+                        onTouchStart={onRowIntent ? () => onRowIntent(row.original) : undefined}
                       >
                         {row.getVisibleCells().map((cell) => (
                           <td key={cell.id} className="px-4 py-3 align-middle">

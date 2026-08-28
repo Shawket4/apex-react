@@ -1,4 +1,7 @@
 import { useTranslation } from 'react-i18next';
+import { useQueryClient } from '@tanstack/react-query';
+import { intentProps, preloadChunk } from '@/shared/lib/prefetch';
+import { prefetchServiceInvoice } from '@/entities/service-invoice/queries';
 import { useNavigate } from 'react-router-dom';
 import { 
   Eye, 
@@ -41,6 +44,7 @@ export function ServiceInvoicesTable({
   searchQuery,
 }: ServiceInvoicesTableProps) {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
 
   const columns = [
@@ -107,7 +111,13 @@ export function ServiceInvoicesTable({
                   <Eye className="mr-2 h-4 w-4" />
                   {t('common.view')}
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate(`/service-invoices/${invoice.ID}/edit`)}>
+                <DropdownMenuItem
+                  onClick={() => navigate(`/service-invoices/${invoice.ID}/edit`)}
+                  {...intentProps(() => {
+                    preloadChunk('service-invoice-edit');
+                    prefetchServiceInvoice(queryClient, invoice.ID);
+                  })}
+                >
                   <Edit className="mr-2 h-4 w-4" />
                   {t('common.edit')}
                 </DropdownMenuItem>

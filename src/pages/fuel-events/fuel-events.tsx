@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { intentProps, preloadChunk } from '@/shared/lib/prefetch';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
@@ -323,7 +324,7 @@ export default function FuelEventsPage() {
             <span className="hidden sm:inline">{t('common.export')}</span>
           </Button>
           {canEditFuel && (
-            <Button onClick={() => navigate('/fuel-events/new')} size="sm">
+            <Button onClick={() => navigate('/fuel-events/new')} size="sm" {...intentProps(() => preloadChunk('fuel-event-new'))}>
               <Plus className="h-4 w-4" />
               <span className="hidden sm:inline">{t('fuelEvents.addEvent')}</span>
             </Button>
@@ -496,7 +497,7 @@ export default function FuelEventsPage() {
           description={t('fuelEvents.noEventsDescription')}
           action={
             canEditFuel && (
-              <Button onClick={() => navigate('/fuel-events/new')}>
+              <Button onClick={() => navigate('/fuel-events/new')} {...intentProps(() => preloadChunk('fuel-event-new'))}>
                 <Plus className="h-4 w-4" />
                 {t('fuelEvents.addEvent')}
               </Button>

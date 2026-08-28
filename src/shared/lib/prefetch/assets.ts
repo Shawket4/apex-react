@@ -1,4 +1,4 @@
-import { PREFETCH_URLS } from './animations';
+import { PREFETCH_URLS } from '../animations';
 
 /**
  * Prefetches all Lottie animations and lazy-loaded Lottie JS bundle chunk in the background.

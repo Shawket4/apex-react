@@ -28,7 +28,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/shared/lib/cn';
 import { useQueryClient } from '@tanstack/react-query';
-import { prefetchRoute } from '@/shared/lib/route-prefetch';
+import { prefetchRoute } from '@/shared/lib/prefetch';
 import { Button } from '@/shared/ui/button';
 import { ScrollArea } from '@/shared/ui/scroll-area';
 import { UserMenu } from '@/widgets/user-menu/user-menu';

@@ -24,6 +24,13 @@ interface TripsPaginationProps {
   total: number;
   limit: number;
   onPageChange: (page: number) => void;
+  /**
+   * Intent prefetch: fired when the user hovers/focuses/touches a page
+   * control, BEFORE clicking it. The page passes a warmer that fetches that
+   * page's exact query, so the click renders from cache. Optional — pages
+   * that haven't wired a warmer paginate exactly as before.
+   */
+  onIntendPage?: (page: number) => void;
   onLimitChange: (limit: number) => void;
   loading?: boolean;
   className?: string;
@@ -48,12 +55,23 @@ export function TripsPagination({
   total,
   limit,
   onPageChange,
+  onIntendPage,
   onLimitChange,
   loading,
   className,
 }: TripsPaginationProps) {
   const { t } = useTranslation();
   const [jumpValue, setJumpValue] = React.useState('');
+
+  // One intent-spread per target page. Cheap to repeat: the warmer dedupes.
+  const intend = (target: number) =>
+    onIntendPage && target >= 1 && target <= pages && target !== page
+      ? {
+          onPointerEnter: () => onIntendPage(target),
+          onFocus: () => onIntendPage(target),
+          onTouchStart: () => onIntendPage(target),
+        }
+      : {};
 
   // Don't render at all when there's nothing to paginate AND results fit in
   // the smallest page size — keeps short-list pages clean.
@@ -146,6 +164,7 @@ export function TripsPagination({
             className="hidden h-8 w-8 sm:inline-flex"
             disabled={page === 1 || loading}
             onClick={() => onPageChange(1)}
+            {...intend(1)}
             aria-label={t('trips.pagination.firstPage')}
           >
             <ChevronsLeft className="h-4 w-4 rtl:rotate-180" />
@@ -156,6 +175,7 @@ export function TripsPagination({
             className="h-8 w-8"
             disabled={page === 1 || loading}
             onClick={() => onPageChange(page - 1)}
+            {...intend(page - 1)}
             aria-label={t('trips.pagination.previousPage')}
           >
             <ChevronLeft className="h-4 w-4 rtl:rotate-180" />
@@ -176,6 +196,7 @@ export function TripsPagination({
                   variant={entry === page ? 'default' : 'ghost'}
                   className="h-8 w-8 text-xs tabular-nums"
                   onClick={() => onPageChange(entry)}
+                  {...intend(entry)}
                   disabled={loading}
                 >
                   {entry}
@@ -192,6 +213,7 @@ export function TripsPagination({
             className="h-8 w-8"
             disabled={page === pages || loading}
             onClick={() => onPageChange(page + 1)}
+            {...intend(page + 1)}
             aria-label={t('trips.pagination.nextPage')}
           >
             <ChevronRight className="h-4 w-4 rtl:rotate-180" />
@@ -202,6 +224,7 @@ export function TripsPagination({
             className="hidden h-8 w-8 sm:inline-flex"
             disabled={page === pages || loading}
             onClick={() => onPageChange(pages)}
+            {...intend(pages)}
             aria-label={t('trips.pagination.lastPage')}
           >
             <ChevronsRight className="h-4 w-4 rtl:rotate-180" />

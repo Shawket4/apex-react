@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { intentProps, preloadChunk } from '@/shared/lib/prefetch';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { 
@@ -108,7 +109,7 @@ export default function ServiceInvoicesPage() {
               {t('common.back')}
             </Button>
           )}
-          <Button onClick={() => navigate('/service-invoices/new')}>
+          <Button onClick={() => navigate('/service-invoices/new')} {...intentProps(() => preloadChunk('service-invoice-new'))}>
             <Plus className="mr-2 h-4 w-4" />
             {t('serviceInvoices.newInvoice')}
           </Button>

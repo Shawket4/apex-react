@@ -11,6 +11,7 @@ import type {
   FeeMappingInput,
   SetLocationResponse,
 } from './schemas';
+import type { QueryClient } from '@tanstack/react-query';
 
 /* -------------------------------------------------------------------------- */
 /* Query keys — single source of truth for invalidation                        */
@@ -144,3 +145,15 @@ export function useBulkEnrichFeeMappings(
     ...options,
   });
 }
+
+/* -------------------------------------------------------------------------- */
+/* Intent prefetch                                                             */
+/* Warmed on hover/focus/touch by surfaces that know the click is coming.      */
+/* MUST mirror the hook above key-for-key — a near-miss key is a wasted        */
+/* request the page refetches anyway.                                          */
+/* -------------------------------------------------------------------------- */
+
+export function prefetchFeeMappings(qc: QueryClient): void {
+  void qc.prefetchQuery({ queryKey: feeMappingKeys.list(), queryFn: () => feeMappingApi.list() });
+}
+

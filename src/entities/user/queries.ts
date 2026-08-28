@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import * as api from './api';
+import type { QueryClient } from '@tanstack/react-query';
 
 export const userKeys = {
   all: ['users'] as const,
@@ -54,3 +55,15 @@ export function useDeleteUser() {
     },
   });
 }
+
+/* -------------------------------------------------------------------------- */
+/* Intent prefetch                                                             */
+/* Warmed on hover/focus/touch by surfaces that know the click is coming.      */
+/* MUST mirror the hook above key-for-key — a near-miss key is a wasted        */
+/* request the page refetches anyway.                                          */
+/* -------------------------------------------------------------------------- */
+
+export function prefetchUsers(qc: QueryClient): void {
+  void qc.prefetchQuery({ queryKey: userKeys.list(), queryFn: api.fetchUsers });
+}
+

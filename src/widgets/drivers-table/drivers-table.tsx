@@ -1,4 +1,7 @@
 import * as React from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { preloadChunk } from '@/shared/lib/prefetch';
+import { prefetchDriver } from '@/entities/driver/queries';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { type ColumnDef } from '@tanstack/react-table';
@@ -27,6 +30,7 @@ interface DriversTableProps {
 }
 
 export function DriversTable({ onAddDriver }: DriversTableProps) {
+  const queryClient = useQueryClient();
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { data: drivers = [], isLoading } = useDriverProfiles();
@@ -156,6 +160,12 @@ export function DriversTable({ onAddDriver }: DriversTableProps) {
         data={filtered}
         loading={isLoading}
         onRowClick={(row) => navigate(`/drivers/${row.ID}`)}
+        // Intent: the detail page mounts the driver by id — warm chunk + query
+        // the moment the cursor reaches the row.
+        onRowIntent={(row) => {
+          preloadChunk('driver-detail');
+          prefetchDriver(queryClient, row.ID);
+        }}
         emptyState={
           <EmptyState
             lottieSrc="/animations/no_results.json"

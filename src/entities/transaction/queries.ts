@@ -24,6 +24,7 @@ import { QUERY_KEYS } from '@/shared/config/constants';
 import { queryClient } from '@/shared/api/query';
 import { toast } from '@/shared/ui/toaster';
 import { extractErrorMessage } from '@/shared/api/errors';
+import type { QueryClient } from '@tanstack/react-query';
 
 /** Invalidate every transaction-derived query after a write. */
 function invalidateAll(): void {
@@ -263,3 +264,32 @@ export function useExportTransactions() {
     },
   });
 }
+
+/* -------------------------------------------------------------------------- */
+/* Intent prefetch                                                             */
+/* Warmed on hover/focus/touch by surfaces that know the click is coming.      */
+/* MUST mirror the hook above key-for-key — a near-miss key is a wasted        */
+/* request the page refetches anyway.                                          */
+/* -------------------------------------------------------------------------- */
+
+/** What the edit page mounts. */
+export function prefetchTransaction(qc: QueryClient, id: number): void {
+  void qc.prefetchQuery({
+    queryKey: QUERY_KEYS.transaction(id),
+    queryFn: () => getTransaction(id),
+  });
+}
+
+/** The ledger's first page + its statistics, for warming the list itself. */
+export function prefetchTransactionsFirstPage(qc: QueryClient, filters: TransactionFilters): void {
+  void qc.prefetchInfiniteQuery({
+    queryKey: QUERY_KEYS.transactionList(filters),
+    queryFn: ({ pageParam }) => getTransactions(filters, pageParam as string | undefined, PAGE_SIZE),
+    initialPageParam: undefined as string | undefined,
+  });
+  void qc.prefetchQuery({
+    queryKey: QUERY_KEYS.transactionStats(filters),
+    queryFn: () => getTransactionStatistics(filters),
+  });
+}
+

@@ -30,7 +30,7 @@ import {
 import { useEtitLive } from '@/shared/hooks/use-etit-live';
 import { usePermissions } from '@/shared/hooks/use-permissions';
 import { PERMISSION_LEVELS } from '@/shared/config/constants';
-import { preloadRouteChunk } from '@/shared/lib/route-prefetch';
+import { preloadChunkForPath } from '@/shared/lib/prefetch';
 import { Button } from '@/shared/ui/button';
 import { Skeleton } from '@/shared/ui/skeleton';
 import { format, formatNumber } from '@/shared/lib/format';
@@ -685,7 +685,7 @@ function ExceptionRow({ exception }: { exception: DashboardException }) {
   const { t } = useTranslation();
   // Hovering the row warms the destination page's code chunk, so the click
   // lands on a page that is already downloaded.
-  const warm = () => preloadRouteChunk(exception.href.split('?')[0] ?? exception.href);
+  const warm = () => preloadChunkForPath(exception.href);
   return (
     <Link
       to={exception.href}
