@@ -4,7 +4,7 @@ import { GoogleMapsOverlay } from '@deck.gl/google-maps';
 import { STATUS_COLOR, statusGroup, type LiveStatus, type Vehicle } from '../schemas';
 import { buildStaticLayers, buildTailLayer, type HistoryLayerInput } from './layers';
 import { buildMarkerSvg, markerSize } from '@/shared/lib/maps/marker-svg';
-import type { SensorEvent, Stop } from '../schemas';
+import type { SensorEvent, Stop, TripPin } from '../schemas';
 import { sampleAt } from '../playback';
 
 /* -------------------------------------------------------------------------- */
@@ -117,12 +117,12 @@ function vehicleInfoHtml(datum: LiveMarkerDatum): string {
         )}</div>`
       : '',
   ];
-  return `<div style="font:12px system-ui;display:grid;gap:2px;min-width:120px">${rows.join('')}</div>`;
+  return `<div style="font:12px system-ui;display:grid;gap:2px;min-width:120px;user-select:none">${rows.join('')}</div>`;
 }
 
 function stopInfoHtml(stop: Stop): string {
   return (
-    `<div style="font:12px system-ui;display:grid;gap:2px;max-width:220px">` +
+    `<div style="font:12px system-ui;display:grid;gap:2px;max-width:220px;user-select:none">` +
     `<div style="font-weight:700">${esc(stop.duration)}</div>` +
     (stop.address ? `<div>${esc(stop.address)}</div>` : '') +
     `<div style="color:#6b7280">${infoTimeFmt.format(stop.from)} → ${infoTimeFmt.format(stop.to)}</div>` +
@@ -130,9 +130,28 @@ function stopInfoHtml(stop: Stop): string {
   );
 }
 
+function fmtDwell(secs: number): string {
+  const h = Math.floor(secs / 3600);
+  const mm = Math.floor((secs % 3600) / 60);
+  return h > 0 ? `${h}h ${mm}m` : `${mm}m`;
+}
+
+function pinInfoHtml(pin: TripPin, kindLabel: string): string {
+  const rows = [
+    `<div style="font-weight:700">${esc(pin.name)}</div>`,
+    `<div style="color:#6b7280">${esc(kindLabel)}${pin.parentTripId ? ` · #${pin.parentTripId}` : ''}</div>`,
+    pin.arrive ? `<div>▾ ${infoTimeFmt.format(pin.arrive)}</div>` : '',
+    pin.depart ? `<div>▴ ${infoTimeFmt.format(pin.depart)}</div>` : '',
+    pin.dwellSecs != null && pin.dwellSecs > 0
+      ? `<div style="font-weight:600">${fmtDwell(pin.dwellSecs)}</div>`
+      : '',
+  ];
+  return `<div style="font:12px system-ui;display:grid;gap:2px;min-width:120px;user-select:none">${rows.join('')}</div>`;
+}
+
 function sensorInfoHtml(ev: SensorEvent): string {
   return (
-    `<div style="font:12px system-ui;display:grid;gap:2px">` +
+    `<div style="font:12px system-ui;display:grid;gap:2px;user-select:none">` +
     `<div style="font-weight:700">${esc(ev.typeName)}</div>` +
     `<div style="color:#6b7280">${infoTimeFmt.format(ev.timestamp)}</div>` +
     `</div>`
@@ -156,6 +175,7 @@ export const TrackingMap = React.forwardRef<TrackingMapHandle, Props>(
     const followRef = React.useRef(true);
     const lastPanRef = React.useRef(0);
     const lastPickRef = React.useRef<{ key: string; at: number }>({ key: '', at: 0 });
+    const pickAtRef = React.useRef(0);
     const onSelectRef = React.useRef(onSelect);
     const onUserPanRef = React.useRef(onUserPan);
     React.useEffect(() => {
@@ -330,6 +350,7 @@ export const TrackingMap = React.forwardRef<TrackingMapHandle, Props>(
           zoomControl: true,
           gestureHandling: 'greedy',
           clickableIcons: false,
+          disableDoubleClickZoom: true,
         });
         const overlay = new GoogleMapsOverlay({
           onClick: (info: {
@@ -355,18 +376,54 @@ export const TrackingMap = React.forwardRef<TrackingMapHandle, Props>(
                 ? stopInfoHtml(info.object as Stop)
                 : info.layer.id === 'sensors'
                   ? sensorInfoHtml(info.object as SensorEvent)
-                  : null;
+                  : info.layer.id === 'trip-pins'
+                    ? pinInfoHtml(info.object as TripPin, (info.object as TripPin).kind)
+                    : null;
             if (html && infoRef.current) {
+              pickAtRef.current = performance.now();
               infoRef.current.setContent(html);
               infoRef.current.setPosition({ lat, lng });
               infoRef.current.open({ map });
             }
           },
+          onHover: (info: { object?: unknown }) => {
+            // A pointer over a pickable object reads as clickable.
+            mapRef.current?.setOptions({
+              draggableCursor: info.object ? 'pointer' : null,
+            });
+          },
         });
         overlay.setMap(map);
         infoRef.current = new google.maps.InfoWindow({ headerDisabled: true });
-        map.addListener('click', () => infoRef.current?.close());
+        map.addListener('click', () => {
+          // The map click that accompanies a deck pick must not close the
+          // tooltip the pick just opened.
+          if (performance.now() - pickAtRef.current > 250) infoRef.current?.close();
+        });
         map.addListener('dragstart', () => onUserPanRef.current?.());
+        // Double-press on a picked object flies in (native dblclick zoom is
+        // off, and Google swallows the second click, so we pick manually).
+        map.addListener('dblclick', (e: google.maps.MapMouseEvent) => {
+          const dom = e.domEvent as MouseEvent | undefined;
+          const el = containerRef.current;
+          if (!dom || !el) return;
+          const rect = el.getBoundingClientRect();
+          try {
+            const picked = overlay.pickObject({
+              x: dom.clientX - rect.left,
+              y: dom.clientY - rect.top,
+              radius: 12,
+            }) as { coordinate?: number[] } | null;
+            if (picked?.coordinate) {
+              infoRef.current?.close();
+              const [lng, lat] = picked.coordinate;
+              map.panTo({ lat, lng });
+              map.setZoom(Math.max(map.getZoom() ?? 0, 16));
+            }
+          } catch {
+            /* picking unavailable — ignore */
+          }
+        });
         mapRef.current = map;
         overlayRef.current = overlay;
         readyRef.current = true;

@@ -74,11 +74,27 @@ export const sensorEventSchema = z.object({
 });
 export type SensorEvent = z.output<typeof sensorEventSchema>;
 
+/** A place visit from the trip audit's matched legs — terminal departures,
+ *  drop-off/garage dwells. Served inline with history so the tracking map
+ *  and the audit can never disagree. */
+export const tripPinSchema = z.object({
+  name: z.string(),
+  kind: z.string(),
+  lat: z.number(),
+  lng: z.number(),
+  arrive: iso.optional(),
+  depart: iso.optional(),
+  dwellSecs: z.number().nullish(),
+  parentTripId: z.number().nullish(),
+});
+export type TripPin = z.output<typeof tripPinSchema>;
+
 export const historyDaySchema = z.object({
   points: z.array(historyPointSchema),
   stops: z.array(stopSchema),
   sensors: z.array(sensorEventSchema),
   geometry: z.string(),
+  pins: z.array(tripPinSchema).optional().default([]),
 });
 export type HistoryDay = z.output<typeof historyDaySchema>;
 

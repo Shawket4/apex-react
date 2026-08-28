@@ -93,8 +93,12 @@ export const etitApi = {
     if (!apiClientEtit) throw new Error('etit not configured');
     const { data } = await apiClientEtit.get(
       `/api/v1/vehicles/${encodeURIComponent(vehicleId)}/history/summary`,
-      { params: { date } },
+      {
+        params: { date, format: 'msgpack' },
+        responseType: 'arraybuffer',
+        headers: { Accept: 'application/msgpack' },
+      },
     );
-    return vehicleDaySummarySchema.parse(data);
+    return vehicleDaySummarySchema.parse(msgpackDecode(new Uint8Array(data as ArrayBuffer)));
   },
 };

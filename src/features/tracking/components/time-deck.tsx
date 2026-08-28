@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Flame, LocateFixed, MapPinned, Pause, Play, RotateCcw, X } from 'lucide-react';
 import { cn } from '@/shared/lib/cn';
-import { SPEEDS } from '../playback';
+import { indexAt, SPEEDS } from '../playback';
 import type { HistoryData } from '../use-history';
 import type { RangeSummary } from '../schemas';
 
@@ -44,11 +44,6 @@ const timeFmt = new Intl.DateTimeFormat('en-GB', {
   minute: '2-digit',
   second: '2-digit',
 });
-const dayFmt = new Intl.DateTimeFormat('en-GB', {
-  timeZone: 'Africa/Cairo',
-  day: 'numeric',
-  month: 'short',
-});
 
 function fmtSecs(secs: number): string {
   if (secs <= 0) return '0m';
@@ -59,24 +54,58 @@ function fmtSecs(secs: number): string {
 
 /** The 60fps half: cursor readout + scrubber. Isolated so playback re-renders
  *  only this subtree. */
+const fullFmt = new Intl.DateTimeFormat('en-GB', {
+  timeZone: 'Africa/Cairo',
+  hour12: false,
+  weekday: 'short',
+  day: 'numeric',
+  month: 'short',
+  year: 'numeric',
+  hour: '2-digit',
+  minute: '2-digit',
+  second: '2-digit',
+});
+
 function ScrubRow({
   cursor,
-  startMs,
-  endMs,
+  track,
   stops,
   onScrub,
 }: {
   cursor: CursorStore;
-  startMs: number;
-  endMs: number;
+  track: NonNullable<HistoryData['track']>;
   stops: Array<{ from: Date }>;
   onScrub: (ms: number) => void;
 }) {
+  const { t } = useTranslation();
+  const startMs = track.startMs;
+  const endMs = track.endMs;
   const value = React.useSyncExternalStore(cursor.subscribe, cursor.get);
   const span = Math.max(1, endMs - startMs);
   const pct = Math.min(100, Math.max(0, ((value - startMs) / span) * 100));
 
+  // The full state line: complete Cairo timestamp + the speed at the cursor.
+  const idx = indexAt(track.timesMs, value || startMs);
+  const speed = track.speeds[idx] ?? 0;
+  const limit = track.limits[idx] ?? 0;
+  const speeding = limit > 0 && speed > limit;
+
   return (
+    <div className="space-y-1.5">
+    <div className="flex items-center justify-between gap-3 px-0.5">
+      <span className="font-mono text-[11px] font-semibold tabular-nums">
+        {fullFmt.format(new Date(value || startMs))}
+      </span>
+      <span
+        className={cn(
+          'rounded-md px-1.5 py-0.5 font-mono text-[11px] font-bold tabular-nums',
+          speeding ? 'bg-destructive/10 text-destructive' : 'bg-muted text-foreground',
+        )}
+      >
+        {Math.round(speed)} {t('tracking.kmh', 'km/h')}
+        {limit > 0 && <span className="ms-1 font-normal text-muted-foreground">/ {Math.round(limit)}</span>}
+      </span>
+    </div>
     <div className="flex items-center gap-3">
       <span className="w-[74px] shrink-0 text-end font-mono text-[11px] font-semibold tabular-nums">
         {timeFmt.format(new Date(value || startMs))}
@@ -113,6 +142,7 @@ function ScrubRow({
       <span className="w-[74px] shrink-0 font-mono text-[10px] text-muted-foreground tabular-nums">
         {timeFmt.format(new Date(endMs))}
       </span>
+    </div>
     </div>
   );
 }
@@ -207,8 +237,7 @@ export function TimeDeck({
           <>
             <ScrubRow
               cursor={cursor}
-              startMs={track.startMs}
-              endMs={track.endMs}
+              track={track}
               stops={showStops ? history.stops : []}
               onScrub={onScrub}
             />
@@ -312,94 +341,3 @@ export function TimeDeck({
   );
 }
 
-/* -------------------------------------------------------------------------- */
-/* Range composer — shown before a range is loaded.                            */
-/* -------------------------------------------------------------------------- */
-
-export function RangeComposer({
-  from,
-  to,
-  onChange,
-  onLoad,
-  onIntendLoad,
-  onCancel,
-}: {
-  from: string;
-  to: string;
-  onChange: (from: string, to: string) => void;
-  onLoad: () => void;
-  onIntendLoad?: () => void;
-  onCancel: () => void;
-}) {
-  const { t } = useTranslation();
-  const today = React.useMemo(() => {
-    const p = new Intl.DateTimeFormat('en-CA', { timeZone: 'Africa/Cairo' }).format(new Date());
-    return p;
-  }, []);
-
-  const quick = (days: number) => {
-    const end = Date.parse(`${today}T12:00:00Z`);
-    const start = new Date(end - (days - 1) * 86_400_000).toISOString().slice(0, 10);
-    onChange(start, today);
-  };
-
-  return (
-    <div className="pointer-events-auto w-full rounded-t-2xl border border-b-0 bg-card/95 p-3 shadow-2xl backdrop-blur md:mx-auto md:max-w-xl">
-      <div className="mb-2 flex flex-wrap items-center gap-1.5">
-        {[
-          [t('tracking.range.today', 'Today'), 1],
-          [t('tracking.range.2d', '2 days'), 2],
-          [t('tracking.range.7d', '7 days'), 7],
-          [t('tracking.range.30d', '30 days'), 30],
-        ].map(([label, days]) => (
-          <button
-            key={label as string}
-            type="button"
-            onClick={() => quick(days as number)}
-            className="rounded-full border bg-background px-2.5 py-1 text-[11px] font-medium text-muted-foreground hover:bg-muted"
-          >
-            {label as string}
-          </button>
-        ))}
-        <button
-          type="button"
-          onClick={onCancel}
-          aria-label={t('common.close', 'Close')}
-          className="ms-auto grid h-7 w-7 place-items-center rounded-md text-muted-foreground hover:bg-muted"
-        >
-          <X className="h-3.5 w-3.5" />
-        </button>
-      </div>
-      <div className="flex flex-wrap items-center gap-2">
-        <input
-          type="date"
-          value={from}
-          max={to}
-          onChange={(e) => e.target.value && onChange(e.target.value, to)}
-          className="h-9 flex-1 rounded-lg border bg-background px-2 font-mono text-xs outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        />
-        <span className="text-muted-foreground">→</span>
-        <input
-          type="date"
-          value={to}
-          min={from}
-          max={today}
-          onChange={(e) => e.target.value && onChange(from, e.target.value)}
-          className="h-9 flex-1 rounded-lg border bg-background px-2 font-mono text-xs outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        />
-        <button
-          type="button"
-          onClick={onLoad}
-          onPointerEnter={onIntendLoad}
-          onFocus={onIntendLoad}
-          className="h-9 rounded-lg bg-primary px-4 text-xs font-semibold text-primary-foreground shadow hover:bg-primary/90"
-        >
-          {t('tracking.load', 'Load history')}
-        </button>
-      </div>
-      <p className="mt-1.5 text-center text-[10px] text-muted-foreground">
-        {dayFmt.format(new Date(`${from}T12:00:00Z`))} → {dayFmt.format(new Date(`${to}T12:00:00Z`))}
-      </p>
-    </div>
-  );
-}

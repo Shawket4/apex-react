@@ -4,7 +4,6 @@ import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
 import { List, Maximize2, Minimize2, RefreshCw } from 'lucide-react';
 import { cn } from '@/shared/lib/cn';
-import { cairoDay } from './api';
 import { parseTrackingUrl, writeTrackingUrl, type TrackingUrl } from './url';
 import { useLiveFleet } from './use-live-fleet';
 import {
@@ -18,11 +17,8 @@ import { StatusChips } from './components/status-chips';
 import { groupOf } from './components/status-chips';
 import { FleetPanel } from './components/fleet-panel';
 import { VehicleCard } from './components/vehicle-card';
-import {
-  createCursorStore,
-  RangeComposer,
-  TimeDeck,
-} from './components/time-deck';
+import { createCursorStore, TimeDeck } from './components/time-deck';
+import { TrackingRangePicker } from './components/range-picker';
 import type { StatusGroup } from './schemas';
 
 /* -------------------------------------------------------------------------- */
@@ -84,9 +80,6 @@ export default function TrackingPage() {
   const [playing, setPlaying] = React.useState(false);
   const [follow, setFollow] = React.useState(true);
   const [speed, setSpeed] = React.useState(16);
-  const today = React.useMemo(() => cairoDay(new Date()), []);
-  const [draftFrom, setDraftFrom] = React.useState(url.from ?? today);
-  const [draftTo, setDraftTo] = React.useState(url.to ?? today);
 
   React.useEffect(() => {
     try {
@@ -168,6 +161,7 @@ export default function TrackingPage() {
             track: history.track,
             stops: history.stops,
             sensors: history.sensors,
+            pins: history.pins,
             cursorDay,
             showStops,
             showIgnitions,
@@ -224,11 +218,14 @@ export default function TrackingPage() {
     setComposerOpen(true);
   }, []);
 
-  const loadRange = React.useCallback(() => {
-    setComposerOpen(false);
-    setPlaying(false);
-    writeUrl({ mode: 'history', from: draftFrom, to: draftTo, cursorMs: null });
-  }, [draftFrom, draftTo, writeUrl]);
+  const loadRange = React.useCallback(
+    (fromWall: string, toWall: string) => {
+      setComposerOpen(false);
+      setPlaying(false);
+      writeUrl({ mode: 'history', from: fromWall, to: toWall, cursorMs: null });
+    },
+    [writeUrl],
+  );
 
   const exitHistory = React.useCallback(() => {
     setPlaying(false);
@@ -406,17 +403,11 @@ export default function TrackingPage() {
             onExit={exitHistory}
           />
         ) : composerOpen && selected ? (
-          <RangeComposer
-            from={draftFrom}
-            to={draftTo}
-            onChange={(f, to2) => {
-              setDraftFrom(f);
-              setDraftTo(to2);
-            }}
+          <TrackingRangePicker
+            initialFrom={url.from}
+            initialTo={url.to}
             onLoad={loadRange}
-            onIntendLoad={() =>
-              selected && prefetchHistoryDays(qc, selected.id, draftFrom, draftTo)
-            }
+            onIntendLoad={(f, to2) => prefetchHistoryDays(qc, selected.id, f, to2)}
             onCancel={() => setComposerOpen(false)}
           />
         ) : null}

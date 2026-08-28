@@ -1,3 +1,4 @@
+import { decode as msgpackDecode } from '@msgpack/msgpack';
 import { apiClientEtit } from '@/shared/api/client';
 import { env } from '@/shared/config/env';
 import {
@@ -36,6 +37,36 @@ export function cairoDay(date: Date): string {
   return cairoWall(date).slice(0, 10);
 }
 
+/**
+ * Parse a Cairo wall string — `YYYY-MM-DD` or `YYYY-MM-DDTHH:mm` — to the
+ * UTC instant it names. Day-only strings resolve to the day's start, or its
+ * last second when `end` is set. Guess-and-correct absorbs DST.
+ */
+export function parseCairoWall(wall: string, end = false): Date {
+  const [dayPart, timePart] = wall.split('T');
+  const [y, mo, d] = dayPart.split('-').map(Number);
+  const [hh, mm, ss] = timePart
+    ? [...timePart.split(':').map(Number), 0]
+    : end
+      ? [23, 59, 59]
+      : [0, 0, 0];
+  const wanted = Date.UTC(y, mo - 1, d, hh, mm, ss ?? 0);
+  let guess = wanted;
+  for (let i = 0; i < 2; i++) {
+    const p = cairoWall(new Date(guess));
+    const seen = Date.UTC(
+      Number(p.slice(0, 4)),
+      Number(p.slice(5, 7)) - 1,
+      Number(p.slice(8, 10)),
+      Number(p.slice(11, 13)),
+      Number(p.slice(14, 16)),
+      Number(p.slice(17, 19)),
+    );
+    guess += wanted - seen;
+  }
+  return new Date(guess);
+}
+
 export const trackingApi = {
   async vehicles(): Promise<Vehicle[]> {
     const res = await apiClientEtit.get(`${PREFIX}/vehicles`);
@@ -56,22 +87,29 @@ export const trackingApi = {
     ).toString();
   },
 
-  /** One Cairo calendar day of history — the unit of caching and fetching. */
+  /** One Cairo calendar day of history — the unit of caching and fetching.
+   *  MessagePack on the wire: a day is ~64 KB as JSON, much less packed. */
   async historyDay(vehicleId: string, day: string, refresh?: boolean): Promise<HistoryDay> {
-    const params = new URLSearchParams({ date: day });
+    const params = new URLSearchParams({ date: day, format: 'msgpack' });
     if (refresh) params.set('refresh', 'true');
     const res = await apiClientEtit.get(
       `${PREFIX}/vehicles/${encodeURIComponent(vehicleId)}/history?${params}`,
+      { responseType: 'arraybuffer', headers: { Accept: 'application/msgpack' } },
     );
-    return historyDaySchema.parse(res.data);
+    return historyDaySchema.parse(msgpackDecode(new Uint8Array(res.data as ArrayBuffer)));
   },
 
   async rangeSummary(vehicleId: string, from: Date, to: Date): Promise<RangeSummary> {
-    const params = new URLSearchParams({ from: cairoWall(from), to: cairoWall(to) });
+    const params = new URLSearchParams({
+      from: cairoWall(from),
+      to: cairoWall(to),
+      format: 'msgpack',
+    });
     const res = await apiClientEtit.get(
       `${PREFIX}/vehicles/${encodeURIComponent(vehicleId)}/history/summary?${params}`,
+      { responseType: 'arraybuffer', headers: { Accept: 'application/msgpack' } },
     );
-    return rangeSummarySchema.parse(res.data);
+    return rangeSummarySchema.parse(msgpackDecode(new Uint8Array(res.data as ArrayBuffer)));
   },
 };
 

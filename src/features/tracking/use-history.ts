@@ -1,8 +1,8 @@
 import * as React from 'react';
 import { useQueries, useQuery, type QueryClient } from '@tanstack/react-query';
-import { cairoDay, trackingApi, trackingKeys } from './api';
+import { cairoDay, parseCairoWall, trackingApi, trackingKeys } from './api';
 import { buildTrack } from './playback';
-import type { SensorEvent, Stop } from './schemas';
+import type { SensorEvent, Stop, TripPin } from './schemas';
 import type { HistoryPoint } from './schemas';
 
 /* -------------------------------------------------------------------------- */
@@ -18,7 +18,7 @@ import type { HistoryPoint } from './schemas';
 
 export interface HistoryRange {
   vehicleId: string;
-  /** Cairo day strings, inclusive. */
+  /** Cairo wall strings — `YYYY-MM-DD` or `YYYY-MM-DDTHH:mm`, inclusive. */
   from: string;
   to: string;
 }
@@ -54,6 +54,8 @@ export interface HistoryData {
   track: ReplayTrack | null;
   stops: Stop[];
   sensors: SensorEvent[];
+  /** Audit-matched place visits (terminals, drop-offs, garages). */
+  pins: TripPin[];
   /** True until the FIRST day lands. */
   isLoading: boolean;
   isError: boolean;
@@ -75,7 +77,7 @@ export function daysCovering(from: string, to: string): string[] {
 
 export function useHistory(range: HistoryRange | null): HistoryData {
   const days = React.useMemo(
-    () => (range ? daysCovering(range.from, range.to) : []),
+    () => (range ? daysCovering(range.from.slice(0, 10), range.to.slice(0, 10)) : []),
     [range?.from, range?.to], // eslint-disable-line react-hooks/exhaustive-deps
   );
 
@@ -111,6 +113,7 @@ export function useHistory(range: HistoryRange | null): HistoryData {
         track: null,
         stops: [],
         sensors: [],
+        pins: [],
         isLoading: days.length > 0 && !dayRows.every((d) => d.status === 'error'),
         isError: days.length > 0 && dayRows.every((d) => d.status === 'error'),
       };
@@ -120,6 +123,8 @@ export function useHistory(range: HistoryRange | null): HistoryData {
     const points: HistoryPoint[] = [];
     const stops: Stop[] = [];
     const sensors: SensorEvent[] = [];
+    const pins: TripPin[] = [];
+    const pinSeen = new Set<string>();
 
     days.forEach((day, i) => {
       const data = queries[i]?.data;
@@ -130,13 +135,34 @@ export function useHistory(range: HistoryRange | null): HistoryData {
       for (const p of data.points) if (p.timestamp) points.push(p);
       stops.push(...data.stops);
       sensors.push(...data.sensors);
+      // A visit can straddle two fetched days — dedupe by identity.
+      for (const pin of data.pins) {
+        const key = `${pin.parentTripId ?? ''}:${pin.kind}:${pin.name}:${pin.arrive?.getTime() ?? ''}:${pin.depart?.getTime() ?? ''}`;
+        if (pinSeen.has(key)) continue;
+        pinSeen.add(key);
+        pins.push(pin);
+      }
     });
 
-    points.sort((a, b) => a.timestamp!.getTime() - b.timestamp!.getTime());
+    // Whole days are fetched for cacheability; a sub-day range trims here.
+    const fromMs = parseCairoWall(range.from).getTime();
+    const toMs = parseCairoWall(range.to, true).getTime();
+    const trimmedPoints = points.filter((p) => {
+      const t = p.timestamp!.getTime();
+      return t >= fromMs && t <= toMs;
+    });
+    const trimmedStops = stops.filter(
+      (s2) => s2.to.getTime() >= fromMs && s2.from.getTime() <= toMs,
+    );
+    const trimmedSensors = sensors.filter((s2) => {
+      const t = s2.timestamp.getTime();
+      return t >= fromMs && t <= toMs;
+    });
+    trimmedPoints.sort((a, b) => a.timestamp!.getTime() - b.timestamp!.getTime());
 
     let track: ReplayTrack | null = null;
-    if (points.length >= 2) {
-      track = buildTrack(points);
+    if (trimmedPoints.length >= 2) {
+      track = buildTrack(trimmedPoints);
     }
 
     return {
@@ -145,8 +171,9 @@ export function useHistory(range: HistoryRange | null): HistoryData {
       totalCount: days.length,
       trails,
       track,
-      stops,
-      sensors,
+      stops: trimmedStops,
+      sensors: trimmedSensors,
+      pins,
       isLoading: false,
       isError: false,
     };
@@ -174,8 +201,8 @@ export function useRangeSummary(range: HistoryRange | null) {
     queryFn: () =>
       trackingApi.rangeSummary(
         range!.vehicleId,
-        new Date(`${range!.from}T00:00:00+02:00`),
-        new Date(Date.parse(`${range!.to}T00:00:00+02:00`) + DAY_MS - 1000),
+        parseCairoWall(range!.from),
+        parseCairoWall(range!.to, true),
       ),
     enabled: range !== null,
     staleTime: 5 * 60_000,
@@ -190,7 +217,7 @@ export function prefetchHistoryDays(
   from: string,
   to: string,
 ): void {
-  for (const day of daysCovering(from, to)) {
+  for (const day of daysCovering(from.slice(0, 10), to.slice(0, 10))) {
     void qc.prefetchQuery({
       queryKey: trackingKeys.day(vehicleId, day),
       queryFn: () => trackingApi.historyDay(vehicleId, day),

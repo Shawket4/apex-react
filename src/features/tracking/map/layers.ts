@@ -11,7 +11,7 @@ import { TripsLayer } from '@deck.gl/geo-layers';
 import type { Layer } from '@deck.gl/core';
 import { buildMarkerSvg, markerSize } from '@/shared/lib/maps/marker-svg';
 import type { MarkerKind } from '@/shared/lib/maps/types';
-import type { SensorEvent, Stop } from '../schemas';
+import type { SensorEvent, Stop, TripPin } from '../schemas';
 import type { DayTrail, ReplayTrack } from '../use-history';
 
 export interface HistoryLayerInput {
@@ -19,6 +19,8 @@ export interface HistoryLayerInput {
   track: ReplayTrack | null;
   stops: Stop[];
   sensors: SensorEvent[];
+  /** Audit-matched place visits — terminals, drop-offs, garages. */
+  pins: TripPin[];
   /** Cairo day under the replay cursor — its trail draws full-strength. */
   cursorDay: string | null;
   showStops: boolean;
@@ -29,6 +31,12 @@ const TRAIL_BLUE: [number, number, number] = [59, 130, 246];
 const STOP_COLOR = '#f59e0b';
 const IGNITION_ON_COLOR = '#16a34a';
 const IGNITION_OFF_COLOR = '#6b7280';
+/** Audit pin palette by visit kind. */
+const PIN_COLORS: Record<string, string> = {
+  terminal: '#1f3a5f',
+  dropoff: '#d97706',
+  garage: '#6b7280',
+};
 
 /** Replay tail length in seconds of track time. */
 const TAIL_SECS = 45 * 60;
@@ -121,6 +129,20 @@ export function buildStaticLayers(input: HistoryLayerInput): Layer[] {
             ? icon('ignition-on', IGNITION_ON_COLOR)
             : icon('ignition-off', IGNITION_OFF_COLOR),
         getSize: markerSize('ignition-on').height,
+        sizeUnits: 'pixels',
+        pickable: true,
+      }),
+    );
+  }
+
+  if (input.pins.length > 0) {
+    layers.push(
+      new IconLayer<TripPin>({
+        id: 'trip-pins',
+        data: input.pins,
+        getPosition: (d) => [d.lng, d.lat],
+        getIcon: (d) => icon('pin', PIN_COLORS[d.kind] ?? PIN_COLORS.dropoff),
+        getSize: markerSize('pin').height,
         sizeUnits: 'pixels',
         pickable: true,
       }),

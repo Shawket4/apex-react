@@ -15,14 +15,15 @@
 export interface TrackingUrl {
   vehicleId: string | null;
   mode: 'live' | 'history';
-  /** Cairo day strings, inclusive. Present iff mode === 'history'. */
+  /** Cairo wall strings — `YYYY-MM-DD` or `YYYY-MM-DDTHH:mm`, inclusive.
+   *  Present iff mode === 'history'. */
   from: string | null;
   to: string | null;
   /** Replay cursor, epoch ms — restored once on load. */
   cursorMs: number | null;
 }
 
-const DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
+const WALL_RE = /^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2})?$/;
 
 export function parseTrackingUrl(params: URLSearchParams): TrackingUrl {
   const vehicleId = params.get('v');
@@ -33,8 +34,8 @@ export function parseTrackingUrl(params: URLSearchParams): TrackingUrl {
     vehicleId !== null &&
     from !== null &&
     to !== null &&
-    DAY_RE.test(from) &&
-    DAY_RE.test(to) &&
+    WALL_RE.test(from) &&
+    WALL_RE.test(to) &&
     from <= to;
 
   const tRaw = params.get('t');

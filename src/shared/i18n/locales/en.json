@@ -2124,7 +2124,10 @@
       "today": "Today",
       "2d": "2 days",
       "7d": "7 days",
-      "30d": "30 days"
+      "30d": "30 days",
+      "lastHour": "Last hour",
+      "last3h": "Last 3 hours",
+      "yesterday": "Yesterday"
     },
     "follow": "Follow the truck",
     "raceOptimal": "Race optimal",
