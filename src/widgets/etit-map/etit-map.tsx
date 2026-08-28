@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { MapView } from '@/shared/ui/map-view';
 import { DEFAULT_MAP_CENTER, isValidCoordinate } from '@/shared/lib/coords';
-import type { MapMarker } from '@/shared/lib/maps/types';
+import type { MapMarker, MapPolyline } from '@/shared/lib/maps/types';
 import { formatCairo } from '@/entities/etit-vehicle/cairo';
 import {
   classifyStatus,
@@ -64,6 +64,12 @@ export interface EtitMapProps {
   focusedVehicleId?: string | null;
   focusBump?: number;
   route?: Array<[number, number]>;
+  /** Per-day trails (dimmed past days, highlighted cursor day). When present
+   *  they replace the single `route` stack; `route` still drives markers and
+   *  bounds. */
+  dayTrails?: MapPolyline[];
+  /** Render dayTrails on the WebGL overlay (wide ranges). */
+  gpuTrails?: boolean;
   stops?: EtitStop[];
   sensors?: EtitSensorEvent[];
   showStops?: boolean;
@@ -99,6 +105,8 @@ function EtitMapBase({
   focusedVehicleId = null,
   focusBump = 0,
   route = [],
+  dayTrails,
+  gpuTrails = false,
   stops = [],
   sensors = [],
   showStops = true,
@@ -306,7 +314,9 @@ function EtitMapBase({
     <MapView
       markers={markers}
       route={route}
-      suppressRoute={route.length === 0}
+      suppressRoute={route.length === 0 || (dayTrails?.length ?? 0) > 0}
+      polylines={dayTrails && !gpuTrails ? dayTrails : undefined}
+      gpuTrail={dayTrails && gpuTrails ? dayTrails : undefined}
       centerFallback={centerFallback}
       className={className}
       height={height}

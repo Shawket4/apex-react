@@ -96,6 +96,14 @@ export interface MapViewProps {
    * non-empty. Used when only one of two endpoints is valid.
    */
   suppressRoute?: boolean;
+  /**
+   * GPU-rendered trails (deck.gl) for wide history ranges. The Google
+   * provider draws these on a WebGL overlay — flat cost at hundreds of
+   * thousands of vertices; the Leaflet provider falls back to rendering
+   * them as ordinary `polylines`. They do NOT participate in auto-fit
+   * (pass `route` for the bounds).
+   */
+  gpuTrail?: MapPolyline[];
   /** Initial centre when there are no markers/route to fit to. */
   centerFallback?: [number, number];
   /** Container height; passes through to the wrapping div. */

@@ -39,6 +39,24 @@ export interface EtitVehicleListProps {
 
 type StatusFilter = 'all' | 'online' | 'moving' | 'idling' | 'offline';
 
+type GroupKey =
+  | 'moving'
+  | 'idling'
+  | 'stoppedIgnitionOff'
+  | 'geofenceViolation'
+  | 'offline'
+  | 'unknown';
+
+/** Section order: activity first, dead metal last. */
+const GROUP_ORDER: GroupKey[] = [
+  'moving',
+  'idling',
+  'stoppedIgnitionOff',
+  'geofenceViolation',
+  'unknown',
+  'offline',
+];
+
 /* -------------------------------------------------------------------------- */
 /* Vehicle Row                                                                 */
 /*                                                                             */
@@ -218,6 +236,21 @@ function EtitVehicleListBase({
       });
   }, [vehicles, debouncedSearch, filter, liveById]);
 
+  // Grouped presentation: same rows, scannable — status headers replace the
+  // old online-first flat sort.
+  const grouped = React.useMemo(() => {
+    const m = new Map<GroupKey, EtitVehicle[]>();
+    for (const v of filtered) {
+      const status = liveById.get(v.id)?.status ?? v.status;
+      const g = classifyStatus(status) as GroupKey;
+      const key: GroupKey = GROUP_ORDER.includes(g) ? g : 'unknown';
+      if (!m.has(key)) m.set(key, []);
+      m.get(key)!.push(v);
+    }
+    for (const list of m.values()) list.sort((a, b) => a.plate.localeCompare(b.plate));
+    return m;
+  }, [filtered, liveById]);
+
   const counts = React.useMemo(() => {
     const visible = vehicles.filter((v) =>
       debouncedSearch.trim() ? matches(`${v.plate} ${v.codename}`, debouncedSearch) : true,
@@ -349,26 +382,42 @@ function EtitVehicleListBase({
           </div>
         ) : (
           <ul className="space-y-0.5 p-2">
-            {filtered.map((v) => {
-              const live = liveById.get(v.id);
-              const status = live?.status ?? v.status;
-              const group = classifyStatus(status);
+            {GROUP_ORDER.map((groupKey) => {
+              const members = grouped.get(groupKey);
+              if (!members || members.length === 0) return null;
               return (
-                <VehicleRow
-                  key={v.id}
-                  vehicleId={v.id}
-                  displayName={v.plate || v.codename}
-                  isActive={activeId === v.id}
-                  isVisible={visibleIds.has(v.id)}
-                  isOnline={isEtitOnline(status)}
-                  groupColor={ETIT_STATUS_COLOR[group]}
-                  statusLabel={live?.statusLabel ?? v.statusLabel}
-                  speed={live?.speed ?? v.speed}
-                  lastSeen={live?.timestamp ?? v.lastLocationAt}
-                  onActivate={onActivate}
-                  onToggleVisible={onToggleVisible}
-                  onFocus={onFocus}
-                />
+                <React.Fragment key={groupKey}>
+                  <li
+                    className="flex items-center gap-1.5 px-2 pb-0.5 pt-2 font-mono text-[9px] font-semibold uppercase tracking-widest"
+                    style={{ color: ETIT_STATUS_COLOR[groupKey] }}
+                    aria-hidden
+                  >
+                    {t(`etit.list.group.${groupKey}`)}
+                    <span className="font-normal text-muted-foreground">· {members.length}</span>
+                  </li>
+                  {members.map((v) => {
+                    const live = liveById.get(v.id);
+                    const status = live?.status ?? v.status;
+                    const group = classifyStatus(status);
+                    return (
+                      <VehicleRow
+                        key={v.id}
+                        vehicleId={v.id}
+                        displayName={v.plate || v.codename}
+                        isActive={activeId === v.id}
+                        isVisible={visibleIds.has(v.id)}
+                        isOnline={isEtitOnline(status)}
+                        groupColor={ETIT_STATUS_COLOR[group]}
+                        statusLabel={live?.statusLabel ?? v.statusLabel}
+                        speed={live?.speed ?? v.speed}
+                        lastSeen={live?.timestamp ?? v.lastLocationAt}
+                        onActivate={onActivate}
+                        onToggleVisible={onToggleVisible}
+                        onFocus={onFocus}
+                      />
+                    );
+                  })}
+                </React.Fragment>
               );
             })}
           </ul>

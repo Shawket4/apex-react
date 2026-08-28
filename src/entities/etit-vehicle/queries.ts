@@ -64,7 +64,10 @@ export function useEtitLive({ streamConnected, ...options }: UseEtitLiveOptions 
   return useQuery<EtitLiveStatus[]>({
     queryKey: etitKeys.live(),
     queryFn: () => etitApi.listLive(),
-    refetchInterval: streamConnected ? false : 30_000,
+    // No interval, ever: the stream is the live channel. With it down the
+    // page shows the last honest snapshot and a manual Refresh; returning
+    // to the tab refetches once (focus recovery, not polling).
+    refetchInterval: false,
     refetchOnWindowFocus: !streamConnected,
     staleTime: streamConnected ? Infinity : 10_000,
     ...options,

@@ -196,6 +196,7 @@ export function GoogleMapView({
   circles = [],
   route = [],
   polylines = [],
+  gpuTrail = [],
   centerFallback = [30.0444, 31.2357],
   onMapClick,
   onMarkerClick,
@@ -361,6 +362,81 @@ export function GoogleMapView({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  /* -------- GPU trails (deck.gl WebGL overlay) -------------------------- */
+  /* Wide history ranges render their trails on a deck.gl PathLayer instead
+     of DOM/SVG polylines — flat cost at hundreds of thousands of vertices.
+     The modules load lazily on first use, so pages that never pass gpuTrail
+     never download deck.gl. */
+
+  const gpuOverlayRef = React.useRef<{
+    overlay: import('@deck.gl/google-maps').GoogleMapsOverlay;
+    PathLayer: typeof import('@deck.gl/layers').PathLayer;
+  } | null>(null);
+
+  React.useEffect(() => {
+    const map = mapRef.current;
+    if (!mapReady || !map) return;
+
+    if (gpuTrail.length === 0) {
+      gpuOverlayRef.current?.overlay.setProps({ layers: [] });
+      return;
+    }
+
+    let cancelled = false;
+    const render = async () => {
+      if (!gpuOverlayRef.current) {
+        const [{ GoogleMapsOverlay }, { PathLayer }] = await Promise.all([
+          import('@deck.gl/google-maps'),
+          import('@deck.gl/layers'),
+        ]);
+        if (cancelled) return;
+        const overlay = new GoogleMapsOverlay({});
+        overlay.setMap(map);
+        gpuOverlayRef.current = { overlay, PathLayer };
+      }
+      const { overlay, PathLayer } = gpuOverlayRef.current;
+      const hex = (c: string): [number, number, number] => {
+        const v = c.replace('#', '');
+        return [
+          parseInt(v.slice(0, 2), 16),
+          parseInt(v.slice(2, 4), 16),
+          parseInt(v.slice(4, 6), 16),
+        ];
+      };
+      overlay.setProps({
+        layers: [
+          new PathLayer({
+            id: 'gpu-trails',
+            data: gpuTrail.filter((p) => p.path.length > 1),
+            getPath: (d: (typeof gpuTrail)[number]) =>
+              d.path.map(([lat, lng]) => [lng, lat] as [number, number]),
+            getColor: (d: (typeof gpuTrail)[number]) => {
+              const [r, gg, b] = hex(d.color ?? '#3b82f6');
+              return [r, gg, b, Math.round((d.opacity ?? 0.85) * 255)];
+            },
+            getWidth: (d: (typeof gpuTrail)[number]) => d.weight ?? 4,
+            widthUnits: 'pixels',
+            widthMinPixels: 2,
+            capRounded: true,
+            jointRounded: true,
+          }),
+        ],
+      });
+    };
+    void render();
+    return () => {
+      cancelled = true;
+    };
+  }, [mapReady, gpuTrail]);
+
+  React.useEffect(
+    () => () => {
+      gpuOverlayRef.current?.overlay.finalize();
+      gpuOverlayRef.current = null;
+    },
+    [],
+  );
 
   /* -------- Sync markers + polylines ----------------------------------- */
 

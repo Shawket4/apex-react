@@ -156,6 +156,7 @@ export function LeafletMapView({
   circles = [],
   route = [],
   polylines = [],
+  gpuTrail = [],
   suppressRoute = false,
   centerFallback = DEFAULT_MAP_CENTER,
   height = 400,
@@ -313,7 +314,9 @@ export function LeafletMapView({
     extraPolylinesRef.current.forEach((p) => p.remove());
     extraPolylinesRef.current = [];
 
-    for (const p of polylines) {
+    // No WebGL path on Leaflet: GPU trails degrade to ordinary polylines
+    // (canvas-rendered, fine at this provider's fallback scale).
+    for (const p of [...polylines, ...gpuTrail]) {
       if (p.path.length < 2) continue;
       const line = L.polyline(p.path, {
         color: p.color ?? '#3b82f6',
@@ -323,7 +326,7 @@ export function LeafletMapView({
       }).addTo(map);
       extraPolylinesRef.current.push(line);
     }
-  }, [mapReady, polylines]);
+  }, [mapReady, polylines, gpuTrail]);
 
   /* ---- Sync markers --------------------------------------------------- */
 

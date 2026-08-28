@@ -18,18 +18,12 @@ import { EmptyState } from '@/shared/ui/empty-state';
 import { useIsDesktop } from '@/shared/hooks/use-media-query';
 import { extractErrorMessage } from '@/shared/api/errors';
 import { cn } from '@/shared/lib/cn';
-import {
-  decodePolyline,
-  type PlaybackState,
-} from '@/entities/etit-vehicle/playback';
-import { defaultCairoTodayRange } from '@/entities/etit-vehicle/cairo';
-import {
-  etitKeys,
-  useEtitFleet,
-  useEtitHistoryRange,
-  useEtitTripSummary,
-} from '@/entities/etit-vehicle/queries';
-import { useQueryClient } from '@tanstack/react-query';
+import { type PlaybackState } from '@/entities/etit-vehicle/playback';
+import { defaultCairoTodayRange, formatCairoDate } from '@/entities/etit-vehicle/cairo';
+import { useEtitFleet, useEtitTripSummary } from '@/entities/etit-vehicle/queries';
+import { useSearchParams } from 'react-router-dom';
+import { parseEtitUrl, serializeEtitUrl, type EtitUrlState } from './etit-url';
+import { useEtitHistoryDays } from '@/entities/etit-vehicle/history-days';
 import { EtitMap } from '@/widgets/etit-map/etit-map';
 import { EtitVehicleList } from '@/widgets/etit-vehicle-list/etit-vehicle-list';
 import { EtitVehicleHistorySelector } from '@/widgets/etit-vehicle-history-selector/etit-vehicle-history-selector';
@@ -119,7 +113,6 @@ function MobileTabButton({
 export function EtitPage() {
   const { t } = useTranslation();
   const isDesktop = useIsDesktop();
-  const queryClient = useQueryClient();
   const containerRef = React.useRef<HTMLDivElement>(null);
 
   const [mobileListOpen, setMobileListOpen] = React.useState(false);
@@ -162,8 +155,28 @@ export function EtitPage() {
     setVisibleIds(new Set());
   }, []);
 
-  /* ---- Selection & Layout ---- */
-  const [activeId, setActiveId] = React.useState<string | null>(null);
+  /* ---- Selection & mode live in the URL — shareable, refresh-proof ---- */
+  const [searchParams, setSearchParams] = useSearchParams();
+  const urlState = React.useMemo(() => parseEtitUrl(searchParams), [searchParams]);
+  const activeId = urlState.vehicleId;
+
+  const writeUrl = React.useCallback(
+    (patch: Partial<EtitUrlState>) => {
+      setSearchParams(
+        (prev) => serializeEtitUrl({ ...parseEtitUrl(prev), ...patch }, prev),
+        { replace: true },
+      );
+    },
+    [setSearchParams],
+  );
+  const setActiveId = React.useCallback(
+    (id: string | null) => {
+      // Deselecting also leaves history mode — a range without a truck is
+      // not a representable view.
+      writeUrl(id === null ? { vehicleId: null, mode: 'live', from: null, to: null, cursorMs: null } : { vehicleId: id });
+    },
+    [writeUrl],
+  );
   const [focusBump, setFocusBump] = React.useState(0);
   const [focusedId, setFocusedId] = React.useState<string | null>(null);
   const [isFullScreen, setIsFullScreen] = React.useState(false);
@@ -260,12 +273,29 @@ export function EtitPage() {
     return () => document.removeEventListener('fullscreenchange', h);
   }, []);
 
-  /* ---- History range ---- */
+  /* ---- History range — the URL owns what's loaded; the picker owns the
+          draft the user is still composing. ---- */
   const [range, setRange] = React.useState(defaultCairoTodayRange());
-  const [loadedRange, setLoadedRange] =
-    React.useState<{ from: Date; to: Date; refresh?: boolean } | null>(null);
+  const [forceRefresh, setForceRefresh] = React.useState(false);
 
-  const historyQuery = useEtitHistoryRange(
+  // Keep the picker in sync when the page opens on a history link.
+  React.useEffect(() => {
+    if (urlState.mode === 'history' && urlState.from && urlState.to) {
+      setRange({ from: urlState.from, to: urlState.to });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const loadedRange = React.useMemo(
+    () =>
+      urlState.mode === 'history' && urlState.from && urlState.to
+        ? { from: urlState.from, to: urlState.to, refresh: forceRefresh || undefined }
+        : null,
+    [urlState.mode, urlState.from, urlState.to, forceRefresh],
+  );
+
+  // Day-chunked: whole Cairo days in parallel, trail streams in as days land.
+  const historyDays = useEtitHistoryDays(
     activeId && loadedRange ? { vehicleId: activeId, ...loadedRange } : null,
   );
   const summaryQuery = useEtitTripSummary(
@@ -274,18 +304,16 @@ export function EtitPage() {
 
   const handleLoadHistory = React.useCallback(
     (refresh?: boolean) => {
-      setLoadedRange({ ...range, refresh });
+      setForceRefresh(!!refresh);
+      writeUrl({ mode: 'history', from: range.from, to: range.to, cursorMs: null });
     },
-    [range],
+    [range, writeUrl],
   );
 
   const clearHistory = React.useCallback(() => {
-    setLoadedRange(null);
-    if (activeId) {
-      queryClient.removeQueries({ queryKey: etitKeys.historyRange(activeId, '', '') });
-      queryClient.removeQueries({ queryKey: etitKeys.summary(activeId, '', '') });
-    }
-  }, [activeId, queryClient]);
+    setForceRefresh(false);
+    writeUrl({ mode: 'live', from: null, to: null, cursorMs: null });
+  }, [writeUrl]);
 
   /* ---- DELIBERATELY NOT collapsing the left panel when history loads.
    *      The previous version did, hiding the vehicle history selector
@@ -315,17 +343,31 @@ export function EtitPage() {
     setCurrentMs(ts);
   }, []);
 
-  // When history finishes loading or changes, reset playback
+  // When the first day lands, seat the cursor: on the URL's `t` when the
+  // link carried one, else on the range's first point. Later days landing
+  // must not yank a cursor the user already moved.
+  const cursorSeededRef = React.useRef(false);
   React.useEffect(() => {
-    if (historyQuery.data) {
-      const startMs = historyQuery.data.points[0]?.timestamp?.getTime() ?? 0;
-      setCurrentMs(startMs);
-      setPlaying(false);
+    if (!loadedRange) {
+      cursorSeededRef.current = false;
+      return;
     }
-  }, [historyQuery.data]);
+    if (!historyDays.merged || cursorSeededRef.current) return;
+    cursorSeededRef.current = true;
+    const startMs = historyDays.merged.points[0]?.timestamp?.getTime() ?? 0;
+    setCurrentMs(urlState.cursorMs ?? startMs);
+    setPlaying(false);
+  }, [loadedRange, historyDays.merged, urlState.cursorMs]);
+
+  // Pausing writes the cursor into the URL, so the moment is shareable.
+  // (Never while playing — that would rewrite history 60×/s.)
+  React.useEffect(() => {
+    if (!loadedRange || playing || !cursorSeededRef.current) return;
+    if (currentMs > 0) writeUrl({ cursorMs: currentMs });
+  }, [playing, currentMs, loadedRange, writeUrl]);
 
   /* ---- Errors & Status ---- */
-  const error = fleetQuery.error || historyQuery.error || summaryQuery.error;
+  const error = fleetQuery.error || (historyDays.isError ? new Error(t('etit.historyFailed', 'History failed to load')) : null) || summaryQuery.error;
   const liveLabel = fleetQuery.liveConnected 
     ? t('etit.header.live') 
     : fleetQuery.isLoading
@@ -418,10 +460,36 @@ export function EtitPage() {
       }}
       onClearHistory={clearHistory}
       isHistoryLoaded={!!loadedRange}
-      loading={historyQuery.isLoading || summaryQuery.isLoading}
+      loading={historyDays.isLoading || summaryQuery.isLoading}
       onDatePickerOpenChange={handleDatePickerOpenChange}
       className="h-full w-full"
     />
+  );
+
+  /** Loaded-days strip — one cell per Cairo day, green as each day lands. */
+  const dayStripNode = loadedRange && historyDays.totalCount > 1 && (
+    <div className="shrink-0 border-t px-3 py-2.5">
+      <div className="flex items-center justify-between font-mono text-[9px] uppercase tracking-widest text-muted-foreground">
+        <span>{t('etit.range.loadedDays', 'Loaded days')}</span>
+        <span className="tabular-nums">
+          {historyDays.loadedCount}/{historyDays.totalCount}
+        </span>
+      </div>
+      <div className="mt-1.5 flex gap-0.5">
+        {historyDays.days.map((d) => (
+          <div
+            key={d.label}
+            title={d.label}
+            className={cn(
+              'h-1.5 min-w-1 flex-1 rounded-sm transition-colors',
+              d.status === 'loaded' && 'bg-success',
+              d.status === 'pending' && 'bg-muted animate-pulse',
+              d.status === 'error' && 'bg-destructive',
+            )}
+          />
+        ))}
+      </div>
+    </div>
   );
 
   const floatingStatsNode = (
@@ -434,11 +502,30 @@ export function EtitPage() {
     />
   );
 
+  /* Per-day trails: the day under the replay cursor draws full-strength,
+     the rest dim. Past ~3 days the trails move to the WebGL overlay. */
+  const cursorDayLabel = React.useMemo(
+    () => (currentMs > 0 ? formatCairoDate(new Date(currentMs)) : null),
+    [currentMs],
+  );
+  const dayTrails = React.useMemo(() => {
+    if (historyDays.dayRoutes.length === 0) return undefined;
+    if (historyDays.dayRoutes.length === 1) return undefined; // single day: keep the halo stack
+    return historyDays.dayRoutes.map((d) => ({
+      id: `day-${d.label}`,
+      path: d.path,
+      color: '#3b82f6',
+      opacity: d.label === cursorDayLabel ? 0.95 : 0.3,
+      weight: d.label === cursorDayLabel ? 4 : 3,
+    }));
+  }, [historyDays.dayRoutes, cursorDayLabel]);
+  const useGpuTrails = historyDays.dayRoutes.length > 3;
+
   const playbackPlayerNode = (
     <EtitPlaybackPlayer
-      points={historyQuery.data?.points ?? []}
-      stops={historyQuery.data?.stops ?? []}
-      sensors={historyQuery.data?.sensors ?? []}
+      points={historyDays.merged?.points ?? []}
+      stops={historyDays.merged?.stops ?? []}
+      sensors={historyDays.merged?.sensors ?? []}
       currentMs={currentMs}
       onCurrentMsChange={setCurrentMs}
       playing={playing}
@@ -529,8 +616,15 @@ export function EtitPage() {
             )}
             style={{ width: leftCollapsed ? 0 : leftWidth }}
           >
-            <div className="h-full w-full overflow-hidden">
-              {activeId ? vehicleSelector : vehicleList}
+            <div className="flex h-full w-full flex-col overflow-hidden">
+              {activeId ? (
+                <>
+                  <div className="min-h-0 flex-1">{vehicleSelector}</div>
+                  {dayStripNode}
+                </>
+              ) : (
+                vehicleList
+              )}
             </div>
             {!leftCollapsed && (
               <div
@@ -564,7 +658,10 @@ export function EtitPage() {
               )}
             >
               {activeId ? (
-                vehicleSelector
+                <div className="flex h-full flex-col">
+                  <div className="min-h-0 flex-1">{vehicleSelector}</div>
+                  {dayStripNode}
+                </div>
               ) : (
                 <div className="flex h-full flex-col">
                   <div className="flex h-14 items-center justify-between border-b px-4">
@@ -591,9 +688,11 @@ export function EtitPage() {
             activeVehicleId={activeId}
             focusedVehicleId={focusedId}
             focusBump={focusBump}
-            route={historyQuery.data ? decodePolyline(historyQuery.data.geometry) : []}
-            stops={historyQuery.data?.stops}
-            sensors={historyQuery.data?.sensors}
+            route={historyDays.route}
+            dayTrails={dayTrails}
+            gpuTrails={useGpuTrails}
+            stops={historyDays.merged?.stops}
+            sensors={historyDays.merged?.sensors}
             showStops={showStops}
             showIgnitions={showIgnitions}
             playback={playbackState}
@@ -695,7 +794,7 @@ export function EtitPage() {
           )}
 
           {/* Loading overlay */}
-          {(historyQuery.isLoading || summaryQuery.isLoading) && (
+          {historyDays.isLoading && (
             <div className="absolute inset-0 z-[2000] flex flex-col items-center justify-center bg-background/60 backdrop-blur-md transition-all animate-in fade-in duration-500">
               <div className="relative flex flex-col items-center gap-2 p-6 rounded-3xl bg-card/40 shadow-2xl ring-1 ring-white/10 border border-white/5">
                 <EmptyState

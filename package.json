@@ -14,6 +14,9 @@
     "tauri:build": "tauri build"
   },
   "dependencies": {
+    "@deck.gl/core": "^9.3.11",
+    "@deck.gl/google-maps": "^9.3.11",
+    "@deck.gl/layers": "^9.3.11",
     "@googlemaps/js-api-loader": "^2.0.2",
     "@hookform/resolvers": "^3.9.1",
     "@lottiefiles/dotlottie-react": "^0.19.2",
