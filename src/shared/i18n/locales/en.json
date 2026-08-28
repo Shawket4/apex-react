@@ -181,9 +181,9 @@
         "label": "Trips earning nothing",
         "hint": "Unmapped route or unregistered driver"
       },
-      "transfers_unreviewed": {
-        "label": "Transfers not reviewed",
-        "hint": "Money in, unexplained"
+      "transactions_unreviewed": {
+        "label": "Transactions not reviewed",
+        "hint": "No category — money moved, unexplained"
       }
     },
     "cash": {
