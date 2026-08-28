@@ -10,10 +10,11 @@
 
 import { cairoToday } from '@/shared/lib/cairo';
 
-export const SCOPE_PRESETS = ['today', '7d', 'month', '90d'] as const;
+export const SCOPE_PRESETS = ['today', 'yesterday', '7d', '30d', 'mtd'] as const;
 export type ScopePreset = (typeof SCOPE_PRESETS)[number];
 
-export const DEFAULT_PRESET: ScopePreset = 'month';
+/** Month-to-date: apex bills monthly, so the month is the natural resting scope. */
+export const DEFAULT_PRESET: ScopePreset = 'mtd';
 
 export type Scope =
   | { preset: ScopePreset }
@@ -66,12 +67,16 @@ export function rangeForScope(scope: Scope): ScopeRange {
   switch (scope.preset) {
     case 'today':
       return { from: today, to: today };
+    case 'yesterday': {
+      const y = fmt(t.y, t.m, t.d - 1);
+      return { from: y, to: y };
+    }
     case '7d':
       return { from: fmt(t.y, t.m, t.d - 6), to: today };
-    case 'month':
+    case '30d':
+      return { from: fmt(t.y, t.m, t.d - 29), to: today };
+    case 'mtd':
       return { from: fmt(t.y, t.m, 1), to: today };
-    case '90d':
-      return { from: fmt(t.y, t.m, t.d - 89), to: today };
   }
 }
 
@@ -125,8 +130,22 @@ export const SCOPE_AWARE_PATHS: ReadonlySet<string> = new Set(['/']);
 export function keepScopeSearch(path: string): string {
   if (!SCOPE_AWARE_PATHS.has(path)) return '';
   const scope = readScope();
+  const co = readScopeCompany();
   const params = scopeToParams(scope);
-  // A default preset needs no URL at all — keep bare links bare.
-  if (scope.preset === DEFAULT_PRESET) return '';
-  return `?${params.toString()}`;
+  if (co) params.set('co', co);
+  else params.delete('co');
+  // The default scope with no company needs no URL at all — keep bare links bare.
+  if (scope.preset === DEFAULT_PRESET && !co) return '';
+  if (scope.preset === DEFAULT_PRESET) params.delete('preset');
+  return params.size > 0 ? `?${params.toString()}` : '';
+}
+
+/* -------------------------------------------------------------------------- */
+/* Company — the second scope dimension (Madar's branch, ours is company).     */
+/* Lives in the same URL under `co`; null means all companies.                 */
+/* -------------------------------------------------------------------------- */
+
+export function readScopeCompany(): string | null {
+  if (typeof window === 'undefined') return null;
+  return new URLSearchParams(window.location.search).get('co') || null;
 }

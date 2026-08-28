@@ -28,9 +28,7 @@ import {
   type DrawerKind,
 } from '@/entities/dashboard/queries';
 import { type DashboardScope } from '@/entities/dashboard/api';
-import { useCompanies } from '@/entities/mapping/queries';
-import { useSearchParams } from 'react-router-dom';
-import { useScope } from '@/shared/scope';
+import { useScope, useScopeCompany } from '@/shared/scope';
 import { cairoToday } from '@/shared/lib/cairo';
 import { useEtitLive } from '@/shared/hooks/use-etit-live';
 import { usePermissions } from '@/shared/hooks/use-permissions';
@@ -79,22 +77,7 @@ export default function DashboardPage() {
   // Dates come from the global header scope (URL); company is the page's own
   // dimension, also in the URL (?co=) so a filtered view survives refresh.
   const { range } = useScope();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const company = searchParams.get('co') || null;
-  const setCompany = React.useCallback(
-    (c: string | null) => {
-      setSearchParams(
-        (prev) => {
-          const next = new URLSearchParams(prev);
-          if (c) next.set('co', c);
-          else next.delete('co');
-          return next;
-        },
-        { replace: true },
-      );
-    },
-    [setSearchParams],
-  );
+  const { company } = useScopeCompany();
   const scope = React.useMemo(
     () => ({ from: range.from, to: range.to, company }),
     [range.from, range.to, company],
@@ -127,8 +110,6 @@ export default function DashboardPage() {
         </div>
         <ConnectionBadge live={live} />
       </header>
-
-      <CompanyFilter company={company} onCompany={setCompany} />
 
       {/* ---- apex zone: figures, or an honest strip ---- */}
       {dashboard.isError ? (
@@ -267,35 +248,6 @@ function ConnectionBadge({ live }: { live: ReturnType<typeof useEtitLive> }) {
 /* Global scope — one date window + company, applied to every card             */
 /* -------------------------------------------------------------------------- */
 
-/* Dates live in the header's global scope bar; the page filters company only. */
-function CompanyFilter({
-  company,
-  onCompany,
-}: {
-  company: string | null;
-  onCompany: (c: string | null) => void;
-}) {
-  const { t } = useTranslation();
-  const companies = useCompanies();
-
-  return (
-    <div className="flex flex-wrap items-center gap-1.5">
-      <select
-        value={company ?? ''}
-        onChange={(e) => onCompany(e.target.value || null)}
-        className="ms-auto h-7 rounded-full border bg-card px-2.5 text-[11px] text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        aria-label={t('dashboard.filters.company')}
-      >
-        <option value="">{t('dashboard.filters.allCompanies')}</option>
-        {(companies.data?.data ?? []).map((c) => (
-          <option key={c} value={c}>
-            {c}
-          </option>
-        ))}
-      </select>
-    </div>
-  );
-}
 
 /* -------------------------------------------------------------------------- */
 /* KPI cards                                                                   */

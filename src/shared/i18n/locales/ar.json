@@ -66,7 +66,8 @@
     "add": "إضافة",
     "previous": "السابق",
     "next": "التالي",
-    "filters": "فلاتر"
+    "filters": "فلاتر",
+    "apply": "تطبيق"
   },
   "nav": {
     "overview": "نظرة عامة",
@@ -1238,7 +1239,15 @@
       "shownOnMap": "على الخريطة: {{shown}}/{{total}}",
       "hideAll": "إخفاء الكل",
       "showOnMap": "عرض {{name}} على الخريطة",
-      "hideFromMap": "إخفاء {{name}} من الخريطة"
+      "hideFromMap": "إخفاء {{name}} من الخريطة",
+      "group": {
+        "moving": "متحركة",
+        "idling": "متوقفة بالمحرك",
+        "stoppedIgnitionOff": "متوقفة",
+        "geofenceViolation": "خرق نطاق",
+        "unknown": "غير معروفة",
+        "offline": "غير متصلة"
+      }
     },
     "controls": {
       "noVehicle": "اختر مركبة",
@@ -1298,13 +1307,15 @@
         "today": "اليوم",
         "yesterday": "أمس",
         "last7d": "آخر 7 أيام"
-      }
+      },
+      "loadedDays": "الأيام المحملة"
     },
     "mobile": {
       "controls": "السجل",
       "playback": "التشغيل"
     },
-    "loadingHistory": "جاري تحميل بيانات السجل..."
+    "loadingHistory": "جاري تحميل بيانات السجل...",
+    "historyFailed": "تعذر تحميل السجل"
   },
   "users": {
     "title": "إدارة المستخدمين",
@@ -2074,10 +2085,12 @@
   "scope": {
     "preset": {
       "today": "اليوم",
-      "7d": "٧ أيام",
-      "month": "هذا الشهر",
-      "90d": "٩٠ يومًا",
+      "yesterday": "أمس",
+      "7d": "آخر ٧ أيام",
+      "30d": "آخر ٣٠ يومًا",
+      "mtd": "الشهر حتى الآن",
       "custom": "مدة مخصصة"
-    }
+    },
+    "allCompanies": "كل الشركات"
   }
 }

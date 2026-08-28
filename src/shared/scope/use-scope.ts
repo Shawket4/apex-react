@@ -51,3 +51,27 @@ export function useScope(): UseScope {
 
   return { scope, range, key, setPreset, setCustom };
 }
+
+/** The company half of the scope — URL-backed, `replace` navigation. */
+export function useScopeCompany(): {
+  company: string | null;
+  setCompany: (c: string | null) => void;
+} {
+  const [params, setParams] = useSearchParams();
+  const company = params.get('co') || null;
+  const setCompany = React.useCallback(
+    (c: string | null) => {
+      setParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          if (c) next.set('co', c);
+          else next.delete('co');
+          return next;
+        },
+        { replace: true },
+      );
+    },
+    [setParams],
+  );
+  return { company, setCompany };
+}

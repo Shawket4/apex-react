@@ -66,7 +66,8 @@
     "add": "Add",
     "previous": "Previous",
     "next": "Next",
-    "filters": "Filters"
+    "filters": "Filters",
+    "apply": "Apply"
   },
   "nav": {
     "overview": "Overview",
@@ -1238,7 +1239,15 @@
       "shownOnMap": "On map: {{shown}}/{{total}}",
       "hideAll": "Hide all",
       "showOnMap": "Show {{name}} on map",
-      "hideFromMap": "Hide {{name}} from map"
+      "hideFromMap": "Hide {{name}} from map",
+      "group": {
+        "moving": "Moving",
+        "idling": "Idling",
+        "stoppedIgnitionOff": "Stopped",
+        "geofenceViolation": "Geofence",
+        "unknown": "Unknown",
+        "offline": "Offline"
+      }
     },
     "controls": {
       "noVehicle": "Select a vehicle",
@@ -1298,13 +1307,15 @@
         "today": "Today",
         "yesterday": "Yesterday",
         "last7d": "Last 7 days"
-      }
+      },
+      "loadedDays": "Loaded days"
     },
     "mobile": {
       "controls": "History",
       "playback": "Playback"
     },
-    "loadingHistory": "Loading history data..."
+    "loadingHistory": "Loading history data...",
+    "historyFailed": "History failed to load"
   },
   "users": {
     "title": "User Management",
@@ -2066,10 +2077,12 @@
   "scope": {
     "preset": {
       "today": "Today",
-      "7d": "7 days",
-      "month": "This month",
-      "90d": "90 days",
+      "yesterday": "Yesterday",
+      "7d": "Last 7 days",
+      "30d": "Last 30 days",
+      "mtd": "Month to date",
       "custom": "Custom"
-    }
+    },
+    "allCompanies": "All companies"
   }
 }
