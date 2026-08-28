@@ -204,6 +204,7 @@ function CompanyCard({
           groups={company.details ?? []}
           routes={company.route_details ?? []}
           company={company.company}
+          companyTotalTrips={company.total_trips}
           filters={filters}
           hasFinancialAccess={hasFinancialAccess}
         />
@@ -323,16 +324,56 @@ function CompanyPie({
 /* Group table — drillable to routes via row expansion                         */
 /* -------------------------------------------------------------------------- */
 
+/**
+ * The trips total under a company's group table.
+ *
+ * Shows the company's real count, and — only when the groups add up to
+ * something else — says why in the same breath. A trip that delivers to two
+ * routes is counted by each route it served and once by the company, so the
+ * parts legitimately exceed the whole. Left unexplained it just looks like one
+ * of the two numbers is broken, which is how this was reported.
+ */
+function TripsTotal({ rows, companyTotal }: { rows: GroupStat[]; companyTotal: number }) {
+  const { t } = useTranslation();
+  const summed = rows.reduce((sum, r) => sum + (r.total_trips || 0), 0);
+  const overlap = summed - companyTotal;
+
+  if (overlap <= 0) {
+    return <span className="text-xs sm:text-sm">{formatNumber(companyTotal, 0)}</span>;
+  }
+
+  return (
+    <span
+      className="text-xs sm:text-sm"
+      title={t('trips.statistics.multiRouteHint', { count: overlap })}
+    >
+      {formatNumber(companyTotal, 0)}
+      <span className="ms-1 font-normal text-muted-foreground">
+        {t('trips.statistics.multiRouteNote', { count: overlap })}
+      </span>
+    </span>
+  );
+}
+
 function CompanyGroupTable({
   groups,
   routes,
   company,
+  companyTotalTrips,
   filters,
   hasFinancialAccess,
 }: {
   groups: GroupStat[];
   routes: RouteStat[];
   company: string;
+  /**
+   * The company's real trip count, which is NOT the sum of the group counts.
+   *
+   * A trip delivering to two routes touched both groups, so each group counts
+   * it once while the company counts it once overall. Both are right; adding
+   * the groups up is what is wrong, and the footer used to do exactly that.
+   */
+  companyTotalTrips: number;
   filters: TripStatisticsParams;
   hasFinancialAccess: boolean;
 }) {
@@ -498,12 +539,7 @@ function CompanyGroupTable({
         <span className="font-bold text-xs sm:text-sm">
           {t('trips.statistics.carTable.totals')}
         </span>,
-        <span className="text-xs sm:text-sm">
-          {formatNumber(
-            rows.reduce((s, r) => s + (r.total_trips || 0), 0),
-            0,
-          )}
-        </span>,
+        <TripsTotal rows={rows} companyTotal={companyTotalTrips} />,
         <span className="text-xs sm:text-sm">
           {formatNumber(
             rows.reduce((s, r) => s + (r.total_volume || 0), 0),
@@ -522,12 +558,7 @@ function CompanyGroupTable({
       <span className="font-bold text-xs sm:text-sm">
         {t('trips.statistics.carTable.totals')}
       </span>,
-      <span className="text-xs sm:text-sm">
-        {formatNumber(
-          rows.reduce((s, r) => s + (r.total_trips || 0), 0),
-          0,
-        )}
-      </span>,
+      <TripsTotal rows={rows} companyTotal={companyTotalTrips} />,
       <span className="text-xs sm:text-sm">
         {formatNumber(
           rows.reduce((s, r) => s + (r.total_volume || 0), 0),
