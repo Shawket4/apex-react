@@ -20,6 +20,7 @@ import { EmptyState } from '@/shared/ui/empty-state';
 import { Popover, PopoverContent, PopoverTrigger } from '@/shared/ui/popover';
 import { format, formatCurrency, formatNumber } from '@/shared/lib/format';
 import { cn } from '@/shared/lib/cn';
+import { Truncate } from '@/shared/ui/truncate';
 import { ReceiptStatusBadge } from './receipt-status-badge';
 import { RevenueBreakdown } from './revenue-breakdown';
 import { DROP_SEPARATOR, type TripRow } from './trip-row';
@@ -235,9 +236,19 @@ function Row({
                 {containers.length}
               </span>
             )}
-            <span className="font-mono text-[13px] font-medium tabular-nums">
-              #{head.receipt_no || '—'}
-            </span>
+            {/* A group has no receipt of its own — each container carries
+                one, and showing the first child's number would present one
+                trip's paperwork as the whole group's. The numbers themselves
+                are one click away in the expanded list. */}
+            {row.receiptNo ? (
+              <span className="font-mono text-[13px] font-medium tabular-nums">
+                #{row.receiptNo}
+              </span>
+            ) : (
+              <span className="whitespace-nowrap text-[12.5px] text-muted-foreground">
+                {t('trips.mobile.receiptCount', { count: containers.length })}
+              </span>
+            )}
           </div>
         </Td>
 
@@ -246,9 +257,7 @@ function Row({
         </Td>
 
         <Td className="hidden max-w-[130px] lg:table-cell">
-          <span className="block truncate text-[13px]" title={row.company}>
-            {row.company}
-          </span>
+          <Truncate className="text-[13px]">{row.company}</Truncate>
         </Td>
 
         <Td className="hidden max-w-[230px] lg:table-cell">
@@ -309,16 +318,12 @@ function Route({ origin, drops }: { origin: string; drops: string[] }) {
   return (
     <div className="flex items-center gap-1.5 text-[13px]">
       <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-success" aria-hidden />
-      <span className="truncate" dir="auto" title={origin}>
-        {origin}
-      </span>
+      <Truncate dir="auto">{origin}</Truncate>
       <span className="shrink-0 text-muted-foreground" aria-hidden>
         →
       </span>
       <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-destructive" aria-hidden />
-      <span className="truncate" dir="auto" title={to}>
-        {to}
-      </span>
+      <Truncate dir="auto">{to}</Truncate>
     </div>
   );
 }
@@ -328,15 +333,13 @@ function VehicleDriver({ trip }: { trip: Trip }) {
     <div className="min-w-0 space-y-0.5">
       <div className="flex items-center gap-1.5">
         <Truck className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
-        <span className="truncate font-mono text-[12.5px]" dir="auto" title={trip.car_no_plate}>
+        <Truncate className="font-mono text-[12.5px]" dir="auto">
           {trip.car_no_plate}
-        </span>
+        </Truncate>
       </div>
       <div className="flex items-center gap-1.5 text-[11.5px] text-muted-foreground">
         <User className="h-3 w-3 shrink-0" aria-hidden />
-        <span className="truncate" dir="auto" title={trip.driver_name}>
-          {trip.driver_name}
-        </span>
+        <Truncate dir="auto">{trip.driver_name}</Truncate>
       </div>
     </div>
   );
@@ -435,9 +438,7 @@ function Expanded({
                 </span>
               </td>
               <td className="max-w-0 py-1.5 pe-3">
-                <span className="block truncate" dir="auto">
-                  {c.drop_off_point}
-                </span>
+                <Truncate dir="auto">{c.drop_off_point}</Truncate>
               </td>
               <td className="py-1.5 pe-3 font-mono tabular-nums">#{c.receipt_no || '—'}</td>
               <td className="py-1.5 pe-3 text-end font-mono tabular-nums">
@@ -479,8 +480,8 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       <dt className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
         {label}
       </dt>
-      <dd className="mt-0.5 truncate font-medium" dir="auto">
-        {children}
+      <dd className="mt-0.5 font-medium">
+        <Truncate dir="auto">{children}</Truncate>
       </dd>
     </div>
   );

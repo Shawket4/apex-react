@@ -39,6 +39,16 @@ export interface TripRow {
   /** Distinct drop-offs, in order. One entry for the common case. */
   drops: string[];
 
+  /**
+   * The row's receipt number, or undefined for a real multi-drop group.
+   *
+   * A parent trip has NO receipt of its own — each container carries one. The
+   * first container's number is not the group's identity, and presenting it as
+   * such shows one arbitrary child's paperwork as though it covered the whole
+   * trip. Groups show a count instead and list the actual numbers on expand.
+   */
+  receiptNo?: string;
+
   litres: number;
   km: number;
 
@@ -67,6 +77,8 @@ export function toRow(item: TripListItem): TripRow | null {
     company: head.company ?? '',
     origin: head.terminal ?? '',
     drops: [...new Set(containers.map((c) => c.drop_off_point).filter(Boolean))],
+
+    receiptNo: containers.length === 1 ? head.receipt_no || undefined : undefined,
 
     litres: containers.reduce((sum, c) => sum + (c.tank_capacity || 0), 0),
     km: containers.reduce((sum, c) => sum + (c.mileage || c.distance || 0), 0),

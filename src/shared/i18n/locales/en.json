@@ -909,7 +909,9 @@
       "drops": "{{count}} drop",
       "drops_other": "{{count}} drops",
       "containers": "{{count}} container",
-      "containers_other": "{{count}} containers"
+      "containers_other": "{{count}} containers",
+      "receiptCount": "{{count}} receipt",
+      "receiptCount_other": "{{count}} receipts"
     }
   },
   "oilChanges": {

@@ -7,6 +7,7 @@ import { Skeleton } from '@/shared/ui/skeleton';
 import { EmptyState } from '@/shared/ui/empty-state';
 import { format, formatCurrency, formatNumber } from '@/shared/lib/format';
 import { cn } from '@/shared/lib/cn';
+import { Truncate } from '@/shared/ui/truncate';
 import { ReceiptStatusBadge } from './receipt-status-badge';
 import { RevenueBreakdown } from './revenue-breakdown';
 import { DROP_SEPARATOR, groupByDate, type TripRow } from './trip-row';
@@ -145,12 +146,20 @@ function MobileRow({
                 {containers.length}
               </span>
             )}
-            <span className="truncate font-mono text-[13px] font-medium tabular-nums">
-              #{head.receipt_no || '—'}
-            </span>
+            {/* A group has no receipt of its own; the containers' numbers
+                are listed on expand. */}
+            {row.receiptNo ? (
+              <span className="truncate font-mono text-[13px] font-medium tabular-nums">
+                #{row.receiptNo}
+              </span>
+            ) : (
+              <span className="truncate text-[12.5px] text-muted-foreground">
+                {t('trips.mobile.receiptCount', { count: containers.length })}
+              </span>
+            )}
           </span>
           <span className="flex shrink-0 items-center gap-1.5 text-[11px] text-muted-foreground">
-            <span className="max-w-[110px] truncate">{row.company}</span>
+            <Truncate className="max-w-[110px]">{row.company}</Truncate>
             <ChevronDown
               aria-hidden
               className={cn('h-3.5 w-3.5 transition-transform', open && 'rotate-180')}
@@ -160,16 +169,16 @@ function MobileRow({
 
         <div className="mt-1 flex items-center gap-1.5 text-[13.5px] font-medium">
           <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-success" aria-hidden />
-          <span className="min-w-0 truncate" dir="auto">
+          <Truncate className="min-w-0" dir="auto">
             {row.origin}
-          </span>
+          </Truncate>
           <span className="shrink-0 text-muted-foreground" aria-hidden>
             →
           </span>
           <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-destructive" aria-hidden />
-          <span className="min-w-0 truncate" dir="auto">
+          <Truncate className="min-w-0" dir="auto">
             {row.drops.join(DROP_SEPARATOR)}
-          </span>
+          </Truncate>
         </div>
 
         <div className="mt-1.5 flex items-baseline justify-between gap-3">
@@ -232,12 +241,18 @@ function MobileRow({
                     key={c.ID}
                     className="flex items-baseline justify-between gap-3 text-[12.5px]"
                   >
-                    <span className="flex min-w-0 items-baseline gap-1.5">
-                      <span className="shrink-0 rounded border px-1 font-mono text-[10px] text-muted-foreground">
-                        {i + 1}
+                    <span className="flex min-w-0 flex-col gap-0.5">
+                      <span className="flex min-w-0 items-baseline gap-1.5">
+                        <span className="shrink-0 rounded border px-1 font-mono text-[10px] text-muted-foreground">
+                          {i + 1}
+                        </span>
+                        <Truncate dir="auto">{c.drop_off_point}</Truncate>
                       </span>
-                      <span className="truncate" dir="auto">
-                        {c.drop_off_point}
+                      {/* The container's own receipt number. The desktop
+                          expanded table has always shown this; the phone did
+                          not, so a group's receipts were unreachable there. */}
+                      <span className="ps-6 font-mono text-[11px] tabular-nums text-muted-foreground">
+                        #{c.receipt_no || '—'}
                       </span>
                     </span>
                     <span className="flex shrink-0 items-baseline gap-2.5">
@@ -311,8 +326,8 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
       <dt className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
         {label}
       </dt>
-      <dd className="mt-0.5 truncate font-medium" dir="auto">
-        {children}
+      <dd className="mt-0.5 font-medium">
+        <Truncate dir="auto">{children}</Truncate>
       </dd>
     </div>
   );

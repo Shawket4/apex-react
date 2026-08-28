@@ -909,7 +909,9 @@
       "drops": "{{count}} تفريغ",
       "drops_other": "{{count}} نقاط تفريغ",
       "containers": "{{count}} حاوية",
-      "containers_other": "{{count}} حاويات"
+      "containers_other": "{{count}} حاويات",
+      "receiptCount": "{{count}} إيصال",
+      "receiptCount_other": "{{count}} إيصالات"
     }
   },
   "oilChanges": {

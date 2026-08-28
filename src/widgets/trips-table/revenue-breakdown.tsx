@@ -4,6 +4,7 @@ import type { TFunction } from 'i18next';
 import type { Trip } from '@/entities/trip/schemas';
 import { formatCurrency, formatNumber } from '@/shared/lib/format';
 import { cn } from '@/shared/lib/cn';
+import { Truncate } from '@/shared/ui/truncate';
 
 /* -------------------------------------------------------------------------- */
 /* What a trip earned, and what it was charged on                              */
@@ -44,15 +45,54 @@ export function sumRevenue(
  * they live in the backend's revenue module, and duplicating them on the
  * client is exactly how Go and Rust came to bill TAQA differently.
  */
-export function feeBasis(trip: Trip, t: TFunction): string {
-  if (DISTANCE_BILLED.has(trip.company)) {
-    return `${formatNumber(trip.mileage || trip.distance || 0, 0)} km`;
+export interface ChargeLine {
+  key: string;
+  /** e.g. "39,000 L · band 1", or "211 km" for the distance-billed companies. */
+  label: string;
+  /** Summed base revenue for the containers on this rate. */
+  revenue?: number;
+  /** How many containers collapsed into this line. */
+  count: number;
+}
+
+/**
+ * Containers on the SAME rate collapse into one line with volumes summed.
+ *
+ * A trip dropping 13,000 L and 26,000 L at the same band was charged on
+ * 39,000 L at that band. Listing that as two identical-rate lines describes the
+ * paperwork rather than the charge, and makes a three-drop trip look like three
+ * different prices.
+ */
+export function chargeLines(containers: Trip[], t: TFunction): ChargeLine[] {
+  const groups = new Map<
+    string,
+    { company: string; fee: number; litres: number; km: number; revenue?: number; count: number }
+  >();
+
+  for (const c of containers) {
+    const fee = c.fee ?? 0;
+    const key = `${c.company}|${fee}`;
+    const g = groups.get(key) ?? { company: c.company, fee, litres: 0, km: 0, count: 0 };
+    g.litres += c.tank_capacity || 0;
+    g.km += c.mileage || c.distance || 0;
+    g.count += 1;
+    if (c.revenue != null) g.revenue = (g.revenue ?? 0) + c.revenue;
+    groups.set(key, g);
   }
-  const volume = formatNumber(trip.tank_capacity || 0, 0);
-  if (trip.company === 'Watanya') {
-    return t('trips.revenue.atBand', { volume, band: trip.fee ?? 0 });
-  }
-  return t('trips.revenue.atRate', { volume, rate: formatNumber(trip.fee ?? 0, 2) });
+
+  return [...groups.entries()].map(([key, g]) => ({
+    key,
+    label: DISTANCE_BILLED.has(g.company)
+      ? `${formatNumber(g.km, 0)} km`
+      : g.company === 'Watanya'
+        ? t('trips.revenue.atBand', { volume: formatNumber(g.litres, 0), band: g.fee })
+        : t('trips.revenue.atRate', {
+            volume: formatNumber(g.litres, 0),
+            rate: formatNumber(g.fee, 2),
+          }),
+    revenue: g.revenue,
+    count: g.count,
+  }));
 }
 
 function Line({
@@ -99,7 +139,7 @@ export function RevenueBreakdown({ containers }: { containers: Trip[] }) {
   // same number twice. Petrol Arrows is always in that state, so this is the
   // common case rather than an edge one.
   const hasParts = rental !== 0 || vat !== 0;
-  const multi = containers.length > 1;
+  const lines = chargeLines(containers, t);
 
   return (
     <div className="text-start text-[12.5px]">
@@ -122,22 +162,20 @@ export function RevenueBreakdown({ containers }: { containers: Trip[] }) {
         <dt className="text-[10.5px] font-semibold uppercase tracking-wider text-muted-foreground">
           {t('trips.revenue.chargedOn')}
         </dt>
-        {containers.map((c, i) => (
+        {lines.map((line) => (
           <Line
-            key={c.ID}
+            key={line.key}
             label={
               <span className="flex min-w-0 items-baseline gap-1.5">
-                {multi && (
+                {line.count > 1 && (
                   <span className="shrink-0 rounded border px-1 font-mono text-[10px]">
-                    {i + 1}
+                    ×{line.count}
                   </span>
                 )}
-                <span className="truncate" dir="auto">
-                  {feeBasis(c, t)}
-                </span>
+                <Truncate dir="auto">{line.label}</Truncate>
               </span>
             }
-            value={c.revenue != null ? formatCurrency(c.revenue) : '—'}
+            value={line.revenue != null ? formatCurrency(line.revenue) : '—'}
           />
         ))}
       </dl>
