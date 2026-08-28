@@ -701,11 +701,16 @@ function ExceptionRow({ exception }: { exception: DashboardException }) {
         aria-hidden
       />
       <span className="min-w-0">
+        {/* The backend may ship a new exception before this bundle knows its
+            copy. A humanized key beats rendering the raw i18n path — which is
+            exactly what a deploy-order skew put on screen once. */}
         <span className="block text-[13px] font-medium leading-snug">
-          {t(`dashboard.exceptions.${exception.key}.label`)}
+          {t(`dashboard.exceptions.${exception.key}.label`, {
+            defaultValue: exception.key.replace(/_/g, ' '),
+          })}
         </span>
         <span className="mt-0.5 block text-[11px] text-muted-foreground">
-          {t(`dashboard.exceptions.${exception.key}.hint`)}
+          {t(`dashboard.exceptions.${exception.key}.hint`, { defaultValue: '' })}
         </span>
       </span>
       <span
