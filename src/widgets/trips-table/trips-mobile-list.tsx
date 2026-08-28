@@ -184,7 +184,13 @@ function MobileRow({
         <div className="mt-1.5 flex items-baseline justify-between gap-3">
           <span className="flex min-w-0 items-center gap-2 text-[11px] text-muted-foreground">
             <span className="tabular-nums">{formatNumber(row.litres, 0)} L</span>
-            <span className="tabular-nums">{formatNumber(row.km, 0)} km</span>
+            {/* Flagged, because it is a furthest-drop figure and not a total —
+                see TripRow.km. */}
+            <span className="tabular-nums" title={row.kmIsMax ? t('trips.mobile.maxDistanceHint') : undefined}>
+              {row.kmIsMax
+                ? t('trips.mobile.maxDistance', { km: formatNumber(row.km, 0) })
+                : `${formatNumber(row.km, 0)} km`}
+            </span>
             {!isGroup && <ReceiptStatusBadge trip={head} compact />}
           </span>
 

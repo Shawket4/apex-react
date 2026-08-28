@@ -357,8 +357,15 @@ function DistanceMoney({ row, showRevenue }: { row: TripRow; showRevenue: boolea
 
   return (
     <div className="space-y-0.5">
-      <div className="whitespace-nowrap font-mono text-[12.5px] tabular-nums">
-        {formatNumber(row.km, 1)} km
+      {/* A furthest-drop figure for a multi-drop trip, not a total, and
+          labelled so nobody reads it as one. */}
+      <div
+        className="whitespace-nowrap font-mono text-[12.5px] tabular-nums"
+        title={row.kmIsMax ? t('trips.mobile.maxDistanceHint') : undefined}
+      >
+        {row.kmIsMax
+          ? t('trips.mobile.maxDistance', { km: formatNumber(row.km, 1) })
+          : `${formatNumber(row.km, 1)} km`}
       </div>
       {canSee ? (
         <Popover>

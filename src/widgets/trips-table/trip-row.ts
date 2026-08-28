@@ -50,7 +50,19 @@ export interface TripRow {
   receiptNo?: string;
 
   litres: number;
+
+  /**
+   * Distance for the row.
+   *
+   * For a multi-drop trip this is the FURTHEST drop, not the sum of its drops:
+   * one truck makes one journey, however many containers it carries, so adding
+   * each container's mapped distance counts the same road several times. The
+   * real shape bears this out — every multi-container TAQA group in 2026 is two
+   * containers going to the same place, so summing simply doubled it.
+   */
   km: number;
+  /** True when `km` is a furthest-drop figure rather than a single distance. */
+  kmIsMax: boolean;
 
   /** Undefined below permission 4 — never zero, which would read as "earned nothing". */
   revenue?: number;
@@ -81,7 +93,8 @@ export function toRow(item: TripListItem): TripRow | null {
     receiptNo: containers.length === 1 ? head.receipt_no || undefined : undefined,
 
     litres: containers.reduce((sum, c) => sum + (c.tank_capacity || 0), 0),
-    km: containers.reduce((sum, c) => sum + (c.mileage || c.distance || 0), 0),
+    km: Math.max(...containers.map((c) => c.mileage || c.distance || 0), 0),
+    kmIsMax: containers.length > 1,
 
     revenue: sumRevenue(containers, 'allocated_total'),
     fee: containers.reduce((sum, c) => sum + (c.fee || 0), 0),

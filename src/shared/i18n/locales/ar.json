@@ -911,7 +911,9 @@
       "containers": "{{count}} حاوية",
       "containers_other": "{{count}} حاويات",
       "receiptCount": "{{count}} إيصال",
-      "receiptCount_other": "{{count}} إيصالات"
+      "receiptCount_other": "{{count}} إيصالات",
+      "maxDistance": "أقصى {{km}} كم",
+      "maxDistanceHint": "أبعد نقطة تفريغ. الشاحنة تقوم برحلة واحدة مهما بلغ عدد الحاويات."
     }
   },
   "oilChanges": {

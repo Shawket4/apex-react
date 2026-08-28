@@ -911,7 +911,9 @@
       "containers": "{{count}} container",
       "containers_other": "{{count}} containers",
       "receiptCount": "{{count}} receipt",
-      "receiptCount_other": "{{count}} receipts"
+      "receiptCount_other": "{{count}} receipts",
+      "maxDistance": "max {{km}} km",
+      "maxDistanceHint": "The furthest drop. One truck makes one journey, however many containers it carries."
     }
   },
   "oilChanges": {
