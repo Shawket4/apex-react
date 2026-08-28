@@ -2134,6 +2134,7 @@
     "raceDeltaHint": "Optimal arrival vs actual arrival",
     "scrub": "Playback position",
     "hour": "hour",
-    "minute": "minute"
+    "minute": "minute",
+    "mapType": "Satellite"
   }
 }

@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
-import { List, Maximize2, Minimize2, RefreshCw } from 'lucide-react';
+import { Layers, List, Maximize2, Minimize2, RefreshCw } from 'lucide-react';
 import { cn } from '@/shared/lib/cn';
 import { parseTrackingUrl, writeTrackingUrl, type TrackingUrl } from './url';
 import { useLiveFleet } from './use-live-fleet';
@@ -73,6 +73,7 @@ export default function TrackingPage() {
   const [panelOpen, setPanelOpen] = React.useState(false);
   const [composerOpen, setComposerOpen] = React.useState(false);
   const [fullscreen, setFullscreen] = React.useState(false);
+  const [satellite, setSatellite] = React.useState(false);
   const [activeGroup, setActiveGroup] = React.useState<StatusGroup | null>(null);
   const [hiddenIds, setHiddenIds] = React.useState<Set<string>>(loadHidden);
   const [showStops, setShowStops] = React.useState(true);
@@ -327,6 +328,25 @@ export default function TrackingPage() {
               </button>
             )}
           </div>
+          <button
+            type="button"
+            aria-pressed={satellite}
+            onClick={() =>
+              setSatellite((s) => {
+                mapRef.current?.setMapType(s ? 'roadmap' : 'hybrid');
+                return !s;
+              })
+            }
+            aria-label={t('tracking.mapType', 'Satellite')}
+            className={cn(
+              'grid h-9 w-9 place-items-center rounded-full border shadow backdrop-blur',
+              satellite
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-card/90 hover:bg-card',
+            )}
+          >
+            <Layers className="h-4 w-4" />
+          </button>
           <button
             type="button"
             onClick={toggleFullscreen}

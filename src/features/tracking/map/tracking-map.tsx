@@ -28,6 +28,8 @@ export interface TrackingMapHandle {
   setHistory(input: HistoryLayerInput | null): void;
   /** Camera follows the replay marker while playing. */
   setFollow(on: boolean): void;
+  /** Basemap: streets or satellite hybrid. */
+  setMapType(type: 'roadmap' | 'hybrid'): void;
   setCursor(ms: number | null): void;
   setLive(data: LiveMarkerDatum[]): void;
   fitTo(coords: [number, number][]): void;
@@ -286,6 +288,9 @@ export const TrackingMap = React.forwardRef<TrackingMapHandle, Props>(
         },
         setFollow(on) {
           followRef.current = on;
+        },
+        setMapType(type) {
+          mapRef.current?.setMapTypeId(type);
         },
         setCursor(ms) {
           cursorRef.current = ms;
