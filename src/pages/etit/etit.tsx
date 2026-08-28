@@ -20,10 +20,15 @@ import { extractErrorMessage } from '@/shared/api/errors';
 import { cn } from '@/shared/lib/cn';
 import { type PlaybackState } from '@/entities/etit-vehicle/playback';
 import { defaultCairoTodayRange, formatCairoDate } from '@/entities/etit-vehicle/cairo';
-import { useEtitFleet, useEtitTripSummary } from '@/entities/etit-vehicle/queries';
+import {
+  prefetchEtitHistoryDays,
+  useEtitFleet,
+  useEtitTripSummary,
+} from '@/entities/etit-vehicle/queries';
+import { useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
 import { parseEtitUrl, serializeEtitUrl, type EtitUrlState } from './etit-url';
-import { useEtitHistoryDays } from '@/entities/etit-vehicle/history-days';
+import { cairoDaysCovering, useEtitHistoryDays } from '@/entities/etit-vehicle/history-days';
 import { EtitMap } from '@/widgets/etit-map/etit-map';
 import { EtitVehicleList } from '@/widgets/etit-vehicle-list/etit-vehicle-list';
 import { EtitVehicleHistorySelector } from '@/widgets/etit-vehicle-history-selector/etit-vehicle-history-selector';
@@ -113,6 +118,7 @@ function MobileTabButton({
 export function EtitPage() {
   const { t } = useTranslation();
   const isDesktop = useIsDesktop();
+  const qc = useQueryClient();
   const containerRef = React.useRef<HTMLDivElement>(null);
 
   const [mobileListOpen, setMobileListOpen] = React.useState(false);
@@ -454,6 +460,11 @@ export function EtitPage() {
       range={range}
       onRangeChange={setRange}
       onLoad={handleLoadHistory}
+      onIntendLoad={() => {
+        if (activeId) {
+          prefetchEtitHistoryDays(qc, activeId, cairoDaysCovering(range.from, range.to));
+        }
+      }}
       onBack={() => {
         setActiveId(null);
         if (loadedRange) clearHistory();

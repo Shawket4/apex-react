@@ -385,3 +385,19 @@ export function prefetchEtitVehicles(qc: QueryClient): void {
     staleTime: 30 * 60_000,
   });
 }
+
+/** Warm every day of a range on intent toward "Load history" — the click
+ *  then renders from cache. Mirrors history-days.ts key-for-key. */
+export function prefetchEtitHistoryDays(
+  qc: QueryClient,
+  vehicleId: string,
+  days: Date[],
+): void {
+  for (const day of days) {
+    void qc.prefetchQuery({
+      queryKey: etitKeys.historyDay(vehicleId, day.toISOString(), undefined),
+      queryFn: () => etitApi.historyForDay({ vehicleId, day }),
+      staleTime: 5 * 60_000,
+    });
+  }
+}

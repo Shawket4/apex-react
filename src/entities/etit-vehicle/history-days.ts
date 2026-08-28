@@ -45,7 +45,7 @@ export interface HistoryDaysResult {
 
 const DAY_MS = 86_400_000;
 
-function cairoDaysCovering(from: Date, to: Date): Date[] {
+export function cairoDaysCovering(from: Date, to: Date): Date[] {
   const days: Date[] = [];
   // Walk in UTC-day steps from the Cairo start-of-day containing `from`;
   // re-anchoring each step to Cairo start-of-day absorbs DST shifts.

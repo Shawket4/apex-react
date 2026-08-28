@@ -11,6 +11,8 @@ interface EtitVehicleHistorySelectorProps {
   range: { from: Date; to: Date };
   onRangeChange: (range: { from: Date; to: Date }) => void;
   onLoad: (refresh?: boolean) => void;
+  /** Intent toward the Load button — warms the range's day queries. */
+  onIntendLoad?: () => void;
   onBack: () => void;
   onClearHistory?: () => void;
   isHistoryLoaded?: boolean;
@@ -24,6 +26,7 @@ export function EtitVehicleHistorySelector({
   range,
   onRangeChange,
   onLoad,
+  onIntendLoad,
   onBack,
   onClearHistory,
   isHistoryLoaded,
@@ -108,6 +111,8 @@ export function EtitVehicleHistorySelector({
         <Button
           size="lg"
           className="w-full gap-2 shadow-lg shadow-primary/20 transition-all active:scale-[0.98] select-none"
+          onPointerEnter={onIntendLoad}
+          onFocus={onIntendLoad}
           onPointerDown={handlePointerDown}
           onPointerUp={handlePointerUp}
           onPointerCancel={handlePointerCancel}
