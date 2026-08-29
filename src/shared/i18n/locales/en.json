@@ -142,11 +142,14 @@
       "owed": "Advances & loans",
       "owedSplit": "Drivers {{drivers}} · Employees {{employees}}",
       "cashOutSplit": "Bank {{bank}} · Fuel {{fuel}} · Advances {{advances}}",
-      "allCompanies": "(all companies)"
+      "allCompanies": "(all companies)",
+      "fuel": "Fuel today",
+      "fuelDetail": "{{liters}} L · {{count}} events"
     },
     "drawer": {
       "failed": "Could not load the detail.",
-      "largest": "Largest payments"
+      "largest": "Largest payments",
+      "latestFuel": "Latest events"
     },
     "fleet": {
       "title": "The fleet",

@@ -3,6 +3,7 @@ import { apiClientEtit, apiClientRust } from '@/shared/api/client';
 import { env } from '@/shared/config/env';
 import {
   advancesDrawerSchema,
+  fuelDrawerSchema,
   cashOutDrawerSchema,
   dashboardSchema,
   liveFeedSchema,
@@ -10,6 +11,7 @@ import {
   tripsDrawerSchema,
   vehicleDaySummarySchema,
   type AdvancesDrawer,
+  type FuelDrawer,
   type CashOutDrawer,
   type Dashboard,
   type LiveVehicle,
@@ -60,6 +62,9 @@ export const dashboardApi = {
   },
   async advances(): Promise<AdvancesDrawer> {
     return advancesDrawerSchema.parse(await getPacked('/api/v1/dashboard/advances'));
+  },
+  async fuel(scope?: DashboardScope): Promise<FuelDrawer> {
+    return fuelDrawerSchema.parse(await getPacked('/api/v1/dashboard/fuel', scope));
   },
 };
 

@@ -317,6 +317,16 @@ function KpiRow({
           detail: t('dashboard.kpi.acrossTrucks', { count: data.month.trucks }),
         },
         {
+          kind: 'fuel',
+          title: t('dashboard.kpi.fuel'),
+          value: compactMoney(data.fuel?.today ?? '0'),
+          isMoney: true,
+          detail: t('dashboard.kpi.fuelDetail', {
+            liters: formatNumber(data.fuel?.today_liters ?? 0, 0),
+            count: data.fuel?.today_events ?? 0,
+          }),
+        },
+        {
           kind: 'advances',
           title: t('dashboard.kpi.owed'),
           value: compactMoney(money.owed.total),
@@ -350,7 +360,7 @@ function KpiRow({
       ];
 
   return (
-    <div className={cn('grid grid-cols-2 gap-3', money ? 'lg:grid-cols-4' : 'lg:grid-cols-3')}>
+    <div className={cn('grid grid-cols-2 gap-3', money ? 'lg:grid-cols-5' : 'lg:grid-cols-3')}>
       {cards.map((card) => (
         <KpiCard
           key={card.kind}
@@ -475,6 +485,48 @@ function KpiDrawer({ kind, scope }: { kind: DrawerKind; scope: DashboardScope })
       label: c.name,
       value: formatNumber(c.trips, 0),
     }));
+  } else if (kind === 'fuel' && 'events' in d) {
+    return (
+      <div className="border-t bg-muted/40 p-3">
+        <dl className="space-y-1 text-[12px]">
+          {d.by_method.map((m) => (
+            <div key={m.method} className="flex items-baseline justify-between gap-3">
+              <dt className="text-muted-foreground">{m.method}</dt>
+              <dd className="m-0 font-mono tabular-nums">
+                {formatNumber(Number(m.spend), 0)}
+                <span className="ms-1 text-[10px] text-muted-foreground">
+                  {formatNumber(m.liters, 0)} L
+                </span>
+              </dd>
+            </div>
+          ))}
+        </dl>
+        <p className="mb-1 mt-2.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+          {t('dashboard.drawer.latestFuel')}
+        </p>
+        <div className="space-y-1 text-[12px]">
+          {d.events.slice(0, 8).map((e) => (
+            <Link
+              key={e.id}
+              to={`/fuel-events/${e.id}`}
+              className="flex items-baseline justify-between gap-3 rounded-md px-1 py-0.5 transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <span className="min-w-0 truncate text-muted-foreground" dir="auto">
+                <span className="font-mono tabular-nums text-foreground">{e.plate_no}</span>
+                {' · '}
+                {e.driver_name || e.method}
+              </span>
+              <span className="shrink-0 font-mono tabular-nums text-money">
+                {formatNumber(Number(e.price), 0)}
+                <span className="ms-1 text-[10px] text-muted-foreground">
+                  {formatNumber(e.liters, 0)} L
+                </span>
+              </span>
+            </Link>
+          ))}
+        </div>
+      </div>
+    );
   } else if ('parties' in d) {
     rows = d.parties.slice(0, 8).map((p) => ({
       label: `${p.name} · ${t(`dashboard.owed.${p.audience}`)}${

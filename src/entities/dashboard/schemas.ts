@@ -69,10 +69,34 @@ export const dashboardExceptionSchema = z.object({
 });
 export type DashboardException = z.infer<typeof dashboardExceptionSchema>;
 
+export const fuelEventSchema = z.object({
+  id: z.number(),
+  plate_no: z.string(),
+  plate_ar: z.string(),
+  driver_name: z.string(),
+  date: z.string(),
+  time: z.string(),
+  liters: z.number(),
+  price_per_liter: z.string(),
+  price: z.string(),
+  method: z.string(),
+  fuel_rate: z.number(),
+});
+export type DashboardFuelEvent = z.infer<typeof fuelEventSchema>;
+
+/** Consumption view — every event counts regardless of payment method. */
+export const fuelBlockSchema = z.object({
+  today: z.string(),
+  today_liters: z.number(),
+  today_events: z.number(),
+  recent: z.array(fuelEventSchema).default([]),
+});
+
 export const dashboardSchema = z.object({
   as_of: z.string(),
   month: dashboardMonthSchema,
   money: dashboardMoneySchema.optional(),
+  fuel: fuelBlockSchema.optional(),
   fleet: z.array(fleetEntrySchema).default([]),
   exceptions: z.array(dashboardExceptionSchema).default([]),
 });
@@ -106,6 +130,17 @@ export const tripsDrawerSchema = z.object({
   daily: z.array(z.object({ date: z.string(), trips: z.number() })).default([]),
 });
 export type TripsDrawer = z.infer<typeof tripsDrawerSchema>;
+
+export const fuelDrawerSchema = z.object({
+  window_spend: z.string(),
+  window_liters: z.number(),
+  window_events: z.number(),
+  by_method: z
+    .array(z.object({ method: z.string(), spend: z.string(), liters: z.number() }))
+    .default([]),
+  events: z.array(fuelEventSchema).default([]),
+});
+export type FuelDrawer = z.infer<typeof fuelDrawerSchema>;
 
 export const advancesDrawerSchema = z.object({
   parties: z

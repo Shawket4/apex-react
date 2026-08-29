@@ -2,6 +2,7 @@ import { useQuery, type QueryClient } from '@tanstack/react-query';
 import { currentScopeSlice } from '@/shared/scope';
 import { dashboardApi, etitApi, type DashboardScope } from './api';
 import type {
+  FuelDrawer,
   AdvancesDrawer,
   CashOutDrawer,
   RevenueDrawer,
@@ -9,7 +10,7 @@ import type {
 } from './schemas';
 
 /** What any drawer can hold — the component narrows by `kind`. */
-export type DrawerData = RevenueDrawer | CashOutDrawer | TripsDrawer | AdvancesDrawer;
+export type DrawerData = RevenueDrawer | CashOutDrawer | TripsDrawer | AdvancesDrawer | FuelDrawer;
 
 /* -------------------------------------------------------------------------- */
 /* Keys                                                                        */
@@ -63,8 +64,9 @@ const DRAWER_FETCHERS: Record<string, (scope?: DashboardScope) => Promise<Drawer
   'cash-out': (scope?: DashboardScope) => dashboardApi.cashOut(scope),
   trips: (scope?: DashboardScope) => dashboardApi.trips(scope),
   advances: () => dashboardApi.advances(),
+  fuel: (scope?: DashboardScope) => dashboardApi.fuel(scope),
 };
-export type DrawerKind = 'revenue' | 'cash-out' | 'trips' | 'advances';
+export type DrawerKind = 'revenue' | 'cash-out' | 'trips' | 'advances' | 'fuel';
 
 export function useDrawer(kind: DrawerKind, scope: DashboardScope | undefined, enabled: boolean) {
   return useQuery({

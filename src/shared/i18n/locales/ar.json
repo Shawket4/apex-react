@@ -142,11 +142,14 @@
       "owed": "سلف وقروض",
       "owedSplit": "السائقون {{drivers}} · الموظفون {{employees}}",
       "cashOutSplit": "بنك {{bank}} · وقود {{fuel}} · سلف {{advances}}",
-      "allCompanies": "(كل الشركات)"
+      "allCompanies": "(كل الشركات)",
+      "fuel": "وقود اليوم",
+      "fuelDetail": "{{liters}} لتر · {{count}} عملية"
     },
     "drawer": {
       "failed": "تعذر تحميل التفاصيل.",
-      "largest": "أكبر المدفوعات"
+      "largest": "أكبر المدفوعات",
+      "latestFuel": "أحدث العمليات"
     },
     "fleet": {
       "title": "الأسطول",
