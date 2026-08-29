@@ -640,11 +640,6 @@ function FuelPanel({ scope }: { scope: DashboardScope }) {
                   </div>
                   <span className={cn('text-xs font-medium', a?.className)}>
                     {formatNumber(displayRate, 1)} {t('fuelEvents.efficiency.unit')}
-                    {a?.status === 'excluded' && (
-                      <span className="ms-1 text-[10px] text-muted-foreground">
-                        ({t('fuelEvents.efficiency.excluded')})
-                      </span>
-                    )}
                   </span>
                 </Link>
               </li>
