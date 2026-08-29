@@ -79,7 +79,7 @@ export interface ExcelExportConfig {
 // ── Palette ──────────────────────────────────────────────────────────────────
 
 const PALETTE = {
-    brand: 'FF1E40AF', // petrol blue — matches Apex primary
+    brand: 'FF1B396A', // petrol blue — matches Apex primary
     brandLight: 'FF3B6FE0',
     white: 'FFFFFFFF',
     rowEven: 'FFF9FAFB',

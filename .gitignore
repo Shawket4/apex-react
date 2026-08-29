@@ -23,3 +23,11 @@ src-tauri/gen/android/buildSrc/build/
 src-tauri/gen/android/app/release.keystore
 src-tauri/gen/android/key.properties
 .claude/
+
+# UI audit / Playwright (never commit a session)
+e2e/storageState.json
+e2e/test-results/
+e2e/report/
+
+# skills installed by `npx skills add` (SHAs recorded in .audit/PLAN.md)
+.agents/

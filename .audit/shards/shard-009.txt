@@ -1,0 +1,10 @@
+# shard-009  loc=1469  files=8
+# groups: widgets/fee-mappings
+71	src/widgets/fee-mappings/accuracy-badge.tsx
+139	src/widgets/fee-mappings/fee-mappings-bulk-enrich-dialog.tsx
+249	src/widgets/fee-mappings/fee-mappings-excel.ts
+130	src/widgets/fee-mappings/fee-mappings-filters.tsx
+332	src/widgets/fee-mappings/fee-mappings-form.tsx
+234	src/widgets/fee-mappings/fee-mappings-location-dialog.tsx
+119	src/widgets/fee-mappings/fee-mappings-stats.tsx
+195	src/widgets/fee-mappings/fee-mappings-table.tsx

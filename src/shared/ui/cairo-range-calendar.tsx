@@ -148,7 +148,7 @@ export function CairoRangeCalendar({
                 onMouseEnter={() => !isFuture && onHover({ y: year, m: month, d })}
                 onMouseLeave={() => onHover(undefined)}
                 className={cn(
-                  'flex h-8 w-8 items-center justify-center rounded-full text-xs font-medium',
+                  'flex h-8 w-8 items-center justify-center rounded-full text-xs font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                   isFuture && 'cursor-not-allowed text-muted-foreground/30',
                   !isFuture && !isStart && !isEnd && 'hover:bg-muted',
                   isToday && !isStart && !isEnd && 'border border-primary text-primary',

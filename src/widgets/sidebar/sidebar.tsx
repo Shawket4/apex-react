@@ -177,8 +177,8 @@ export function Sidebar({ collapsed, onToggleCollapse, onNavigate, className }: 
       {/* Brand */}
       <div
         className={cn(
-          'flex h-16 shrink-0 items-center gap-2 border-b transition-all duration-200 ease-out',
-          collapsed ? 'justify-center px-2' : 'px-4 gap-3',
+          'flex h-16 shrink-0 items-center border-b transition-all duration-200 ease-out',
+          collapsed ? 'justify-center px-2' : 'gap-3 px-4',
         )}
       >
         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground transition-all duration-200">
@@ -186,8 +186,8 @@ export function Sidebar({ collapsed, onToggleCollapse, onNavigate, className }: 
         </div>
         <div
           className={cn(
-            'min-w-0 flex-grow transition-all duration-200 ease-out overflow-hidden origin-left',
-            collapsed ? 'max-w-0 opacity-0 pointer-events-none invisible' : 'max-w-40 opacity-100 ml-2'
+            'min-w-0 flex-grow transition-all duration-200 ease-out overflow-hidden origin-left rtl:origin-right',
+            collapsed ? 'max-w-0 opacity-0 pointer-events-none invisible' : 'max-w-40 opacity-100'
           )}
         >
           <p className="truncate text-sm font-semibold leading-tight">{t('common.appName')}</p>
@@ -201,7 +201,7 @@ export function Sidebar({ collapsed, onToggleCollapse, onNavigate, className }: 
           {visibleSections.map((section) => (
             <div key={section.titleKey} className="space-y-1">
               <h3 className={cn(
-                "px-2 pt-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground transition-all duration-200 ease-out overflow-hidden origin-left",
+                "px-2 pt-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground transition-all duration-200 ease-out overflow-hidden origin-left rtl:origin-right",
                 collapsed ? "max-h-0 opacity-0 my-0 py-0" : "max-h-8 opacity-100",
               )}>
                 {t(section.titleKey)}
@@ -225,7 +225,7 @@ export function Sidebar({ collapsed, onToggleCollapse, onNavigate, className }: 
                         onFocus={() => prefetchRoute(item.to, queryClient)}
                         onTouchStart={() => prefetchRoute(item.to, queryClient)}
                         className={cn(
-                          'flex items-center rounded-md text-sm font-medium transition-all duration-200 ease-out',
+                          'flex items-center rounded-md text-sm font-medium transition-all duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                           active
                             ? 'bg-primary/10 text-primary'
                             : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
@@ -235,7 +235,7 @@ export function Sidebar({ collapsed, onToggleCollapse, onNavigate, className }: 
                       >
                         <Icon className="h-4 w-4 shrink-0 transition-transform duration-200" />
                         <span className={cn(
-                          'truncate transition-all duration-200 ease-out origin-left',
+                          'truncate transition-all duration-200 ease-out origin-left rtl:origin-right',
                           collapsed ? 'max-w-0 opacity-0 pointer-events-none invisible' : 'max-w-40 opacity-100',
                         )}>
                           {t(item.labelKey)}
@@ -274,7 +274,7 @@ export function Sidebar({ collapsed, onToggleCollapse, onNavigate, className }: 
               size="icon"
               onClick={onToggleCollapse}
               className="h-8 w-8 shrink-0 transition-transform duration-200"
-              aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              aria-label={collapsed ? t('common.expandSidebar') : t('common.collapseSidebar')}
             >
               <ChevronLeft
                 className={cn(

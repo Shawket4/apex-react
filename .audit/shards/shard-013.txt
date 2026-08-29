@@ -1,0 +1,17 @@
+# shard-013  loc=2346  files=15
+# groups: entities/location, pages/locations, widgets/locations-dropoff-dialog, widgets/locations-dropoffs-table, widgets/locations-map-picker, widgets/locations-needs-attention
+174	src/entities/location/api.ts
+3	src/entities/location/index.ts
+319	src/entities/location/queries.ts
+214	src/entities/location/schemas.ts
+389	src/pages/locations/locations.tsx
+1	src/widgets/locations-dropoff-dialog/index.ts
+243	src/widgets/locations-dropoff-dialog/locations-dropoff-dialog.tsx
+105	src/widgets/locations-dropoffs-table/columns.tsx
+2	src/widgets/locations-dropoffs-table/index.ts
+40	src/widgets/locations-dropoffs-table/locations-dropoffs-table.tsx
+28	src/widgets/locations-dropoffs-table/pin-source-badge.tsx
+1	src/widgets/locations-map-picker/index.ts
+126	src/widgets/locations-map-picker/locations-map-picker.tsx
+1	src/widgets/locations-needs-attention/index.ts
+700	src/widgets/locations-needs-attention/locations-needs-attention.tsx

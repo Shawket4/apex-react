@@ -21,7 +21,7 @@ export function LanguageToggle() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" aria-label={t('settings.language')}>
+        <Button variant="ghost" size="icon" className="h-8 w-8" aria-label={t('settings.language')}>
           <Languages className="h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>

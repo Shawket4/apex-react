@@ -72,7 +72,7 @@ export function UserMenu({ collapsed = false }: UserMenuProps) {
                 {roleLabel(user.permission)}
               </p>
             </div>
-            <ChevronsUpDown className="h-4 w-4 text-muted-foreground shrink-0 ml-1" />
+            <ChevronsUpDown className="h-4 w-4 text-muted-foreground shrink-0 ms-1" />
           </div>
         </Button>
       </DropdownMenuTrigger>

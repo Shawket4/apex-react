@@ -1,0 +1,343 @@
+
+> apex-fleet-dashboard@1.0.0 build
+> tsc --noEmit && vite build
+
+vite v6.4.2 building for production...
+transforming...
+(node:22869) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+✓ 4479 modules transformed.
+Export "WebGLDevice" of module "node_modules/@luma.gl/webgl/dist/adapter/webgl-device.js" was reexported through module "node_modules/@luma.gl/webgl/dist/index.js" while both modules are dependencies of each other and will end up in different chunks by current Rollup settings. This scenario is not well supported at the moment as it will produce a circular dependency between chunks and will likely lead to broken execution order.
+Either change the import in "node_modules/@deck.gl/core/dist/lib/layer.js" to point directly to the exporting module or reconfigure "output.manualChunks" to ensure these modules end up in the same chunk.
+Export "WebGLDevice" of module "node_modules/@luma.gl/webgl/dist/adapter/webgl-device.js" was reexported through module "node_modules/@luma.gl/webgl/dist/index.js" while both modules are dependencies of each other and will end up in different chunks by current Rollup settings. This scenario is not well supported at the moment as it will produce a circular dependency between chunks and will likely lead to broken execution order.
+Either change the import in "node_modules/@deck.gl/google-maps/dist/google-maps-overlay.js" to point directly to the exporting module or reconfigure "output.manualChunks" to ensure these modules end up in the same chunk.
+rendering chunks...
+computing gzip size...
+dist/index.html                                    2.30 kB │ gzip:   0.83 kB
+dist/assets/coins-DJa-Ovm5.lottie                  6.71 kB
+dist/assets/construction-Bdc0-wW0.lottie          12.63 kB
+dist/assets/no_results-BP7_B7ZI.json              27.71 kB │ gzip:   4.33 kB
+dist/assets/leaflet-vendor-Dgihpmma.css           15.04 kB │ gzip:   6.38 kB
+dist/assets/index-CFhNVTwA.css                    80.54 kB │ gzip:  14.28 kB
+dist/assets/types-D77Yii4j.js                      0.07 kB │ gzip:   0.08 kB
+dist/assets/intent-mLge3IOa.js                     0.08 kB │ gzip:   0.09 kB
+dist/assets/use-debounce-3StTZXHY.js               0.20 kB │ gzip:   0.18 kB
+dist/assets/filter-BFbq4rOy.js                     0.33 kB │ gzip:   0.26 kB
+dist/assets/arrow-left-BOrqKmhP.js                 0.33 kB │ gzip:   0.27 kB
+dist/assets/circle-check-BAVqN165.js               0.34 kB │ gzip:   0.27 kB
+dist/assets/clock-DskPcIR6.js                      0.35 kB │ gzip:   0.27 kB
+dist/assets/circle-check-big-tp0eJJxF.js           0.36 kB │ gzip:   0.28 kB
+dist/assets/polyline-CNpfgNLH.js                   0.36 kB │ gzip:   0.22 kB
+dist/assets/info-lDhQ0op0.js                       0.37 kB │ gzip:   0.28 kB
+dist/assets/rotate-ccw-C5NV0YWp.js                 0.37 kB │ gzip:   0.28 kB
+dist/assets/trending-up-QeXiqsge.js                0.37 kB │ gzip:   0.28 kB
+dist/assets/lock-Mvjrkx4-.js                       0.38 kB │ gzip:   0.29 kB
+dist/assets/trending-down-DVLHYGwu.js              0.38 kB │ gzip:   0.28 kB
+dist/assets/forms-jcRU1K1o.js                      0.39 kB │ gzip:   0.22 kB
+dist/assets/dollar-sign-BZC03Ux1.js                0.39 kB │ gzip:   0.29 kB
+dist/assets/ellipsis-CuFKRbAT.js                   0.39 kB │ gzip:   0.26 kB
+dist/assets/filter-x-CgxOVl-c.js                   0.40 kB │ gzip:   0.30 kB
+dist/assets/copy-BCpaLRJh.js                       0.40 kB │ gzip:   0.30 kB
+dist/assets/separator-D0w6QsKw.js                  0.40 kB │ gzip:   0.28 kB
+dist/assets/history-CFI4iOUs.js                    0.41 kB │ gzip:   0.30 kB
+dist/assets/arrow-right-left-CY8mf9EE.js           0.42 kB │ gzip:   0.30 kB
+dist/assets/circle-alert-BoPc_mTq.js               0.42 kB │ gzip:   0.29 kB
+dist/assets/download-DonypdAV.js                   0.43 kB │ gzip:   0.32 kB
+dist/assets/triangle-alert-bzgFxL0G.js             0.43 kB │ gzip:   0.31 kB
+dist/assets/pencil-BQBiBTKr.js                     0.45 kB │ gzip:   0.32 kB
+dist/assets/pen-line-DrBmT3a-.js                   0.45 kB │ gzip:   0.32 kB
+dist/assets/inbox-Xq91wStg.js                      0.46 kB │ gzip:   0.33 kB
+dist/assets/house-BsT7xVy1.js                      0.46 kB │ gzip:   0.32 kB
+dist/assets/hash-l9-E2KWi.js                       0.47 kB │ gzip:   0.30 kB
+dist/assets/list-Cnyl24dp.js                       0.47 kB │ gzip:   0.29 kB
+dist/assets/format-number-bZ3UbHER.js              0.47 kB │ gzip:   0.28 kB
+dist/assets/square-pen-CtpJtJrU.js                 0.49 kB │ gzip:   0.34 kB
+dist/assets/refresh-cw-DEao3UN6.js                 0.49 kB │ gzip:   0.32 kB
+dist/assets/tag-D8zl4BIJ.js                        0.50 kB │ gzip:   0.35 kB
+dist/assets/save-CNPC4Tcw.js                       0.50 kB │ gzip:   0.33 kB
+dist/assets/textarea-C7wSpl3v.js                   0.51 kB │ gzip:   0.34 kB
+dist/assets/layout-grid-CwS5ygQa.js                0.51 kB │ gzip:   0.30 kB
+dist/assets/shield-alert-0VwR2pUX.js               0.52 kB │ gzip:   0.36 kB
+dist/assets/crosshair-8BZtn2_K.js                  0.52 kB │ gzip:   0.32 kB
+dist/assets/trash-2-Dd5PdeOV.js                    0.53 kB │ gzip:   0.34 kB
+dist/assets/file-spreadsheet-XvZvSjqM.js           0.54 kB │ gzip:   0.33 kB
+dist/assets/coords-B0qtKJY7.js                     0.54 kB │ gzip:   0.33 kB
+dist/assets/phone-BxTUDlrE.js                      0.56 kB │ gzip:   0.36 kB
+dist/assets/play-A6G7z9hX.js                       0.63 kB │ gzip:   0.32 kB
+dist/assets/map-pin-off-CnztX2S1.js                0.64 kB │ gzip:   0.42 kB
+dist/assets/sparkles-xa-vm1fy.js                   0.68 kB │ gzip:   0.40 kB
+dist/assets/native-select-BjJuSOa6.js              0.70 kB │ gzip:   0.44 kB
+dist/assets/fleet-expense-edit-C6ocbnmz.js         0.89 kB │ gzip:   0.48 kB
+dist/assets/fleet-expense-new-DXHWl7l2.js          0.89 kB │ gzip:   0.48 kB
+dist/assets/switch-2Ws-3puS.js                     0.90 kB │ gzip:   0.47 kB
+dist/assets/page-shell-DETzfH1r.js                 0.96 kB │ gzip:   0.46 kB
+dist/assets/tabs-8V8NS8kn.js                       0.99 kB │ gzip:   0.46 kB
+dist/assets/not-found-H_nfA9EM.js                  1.00 kB │ gzip:   0.56 kB
+dist/assets/search-input-CzKxx7pD.js               1.02 kB │ gzip:   0.61 kB
+dist/assets/service-invoice-new-HVtgvJd6.js        1.03 kB │ gzip:   0.60 kB
+dist/assets/service-invoice-edit-AXJxDVKQ.js       1.29 kB │ gzip:   0.72 kB
+dist/assets/trip-new-gKRrNqQM.js                   1.33 kB │ gzip:   0.70 kB
+dist/assets/chart-theme-CVAOZAD-.js                1.39 kB │ gzip:   0.73 kB
+dist/assets/checkbox-C7OzbeH7.js                   1.46 kB │ gzip:   0.74 kB
+dist/assets/queries-B9OwYYRV.js                    1.48 kB │ gzip:   0.74 kB
+dist/assets/placeholder-n-UCBLQM.js                1.50 kB │ gzip:   0.71 kB
+dist/assets/maps-vendor-DmSeETPQ.js                1.53 kB │ gzip:   0.85 kB
+dist/assets/fuel-event-new-DTjKaVU-.js             1.58 kB │ gzip:   0.85 kB
+dist/assets/stat-card-DFxK5b4i.js                  1.66 kB │ gzip:   0.70 kB
+dist/assets/oil-change-new-DUMjC4mj.js             1.67 kB │ gzip:   0.87 kB
+dist/assets/queries-CAwximny.js                    1.72 kB │ gzip:   0.78 kB
+dist/assets/trip-edit-DwI9LfSP.js                  1.73 kB │ gzip:   0.84 kB
+dist/assets/normalize-8bJDhc8r.js                  1.77 kB │ gzip:   0.87 kB
+dist/assets/confirm-dialog-CLzjv4K7.js             1.82 kB │ gzip:   0.89 kB
+dist/assets/queries-znacup-M.js                    2.06 kB │ gzip:   0.91 kB
+dist/assets/terminal-select-B6LMxMqe.js            2.19 kB │ gzip:   1.13 kB
+dist/assets/fuel-event-edit-DzTlHVm8.js            2.33 kB │ gzip:   1.14 kB
+dist/assets/searchable-select-CR3Wjpg9.js          2.66 kB │ gzip:   1.26 kB
+dist/assets/oil-change-edit-D4_j7cCb.js            2.73 kB │ gzip:   1.30 kB
+dist/assets/route-error-C6pl9VGB.js                2.82 kB │ gzip:   1.23 kB
+dist/assets/map-view-DliUWSZA.js                   3.41 kB │ gzip:   1.57 kB
+dist/assets/driver-loan-new-Co8kYpqd.js            3.54 kB │ gzip:   1.43 kB
+dist/assets/oil-changes-excel-Crk1xzt1.js          3.56 kB │ gzip:   1.36 kB
+dist/assets/fuel-G7RU-qv6.js                       3.68 kB │ gzip:   1.20 kB
+dist/assets/driver-form-4m5dkOMD.js                3.82 kB │ gzip:   1.13 kB
+dist/assets/leaflet-adapter-D9EKno0J.js            3.95 kB │ gzip:   1.90 kB
+dist/assets/driver-expense-new-iFNu0SRM.js         4.07 kB │ gzip:   1.49 kB
+dist/assets/drivers-BpZH8BHJ.js                    4.22 kB │ gzip:   1.76 kB
+dist/assets/trips-pagination-CL8fPzZu.js           4.35 kB │ gzip:   1.55 kB
+dist/assets/date-picker-Di0cw11M.js                4.52 kB │ gzip:   1.92 kB
+dist/assets/data-table-D40aVMmc.js                 4.82 kB │ gzip:   2.12 kB
+dist/assets/excel-DrwLAx2s.js                      5.30 kB │ gzip:   2.40 kB
+dist/assets/google-adapter-CRDYWbAi.js             5.39 kB │ gzip:   2.04 kB
+dist/assets/fleet-expenses-messages-D4BjWspU.js    5.54 kB │ gzip:   2.16 kB
+dist/assets/tires-O7U9Nx5-.js                      5.98 kB │ gzip:   1.48 kB
+dist/assets/driver-expenses-DJJEhk3F.js            6.26 kB │ gzip:   2.34 kB
+dist/assets/fuel-event-details-BF6spvFA.js         6.59 kB │ gzip:   2.12 kB
+dist/assets/marker-svg-y0u3LMbk.js                 6.81 kB │ gzip:   2.34 kB
+dist/assets/settings-CG8ap6Ej.js                   6.94 kB │ gzip:   2.70 kB
+dist/assets/oil-change-history-c28UNXCL.js         7.66 kB │ gzip:   2.59 kB
+dist/assets/service-invoices-b56N6jAN.js           7.83 kB │ gzip:   2.74 kB
+dist/assets/service-invoice-form-BtmYIKnB.js       8.27 kB │ gzip:   2.48 kB
+dist/assets/zones-CUVU-NZq.js                      8.66 kB │ gzip:   3.20 kB
+dist/assets/driver-loans-7osrP352.js               8.75 kB │ gzip:   3.32 kB
+dist/assets/fuel-event-form-BCrE9Zjl.js            8.86 kB │ gzip:   2.59 kB
+dist/assets/oil-change-form-jroDqLUv.js            9.44 kB │ gzip:   2.82 kB
+dist/assets/leaflet-provider-Bv1emKAI.js          10.90 kB │ gzip:   4.17 kB
+dist/assets/service-invoice-details-DC8rghZS.js   10.91 kB │ gzip:   3.10 kB
+dist/assets/oil-changes-B_7rhiVq.js               11.04 kB │ gzip:   3.65 kB
+dist/assets/cars-DGszeOGO.js                      12.17 kB │ gzip:   3.81 kB
+dist/assets/users-BYnzS8o8.js                     12.49 kB │ gzip:   3.95 kB
+dist/assets/fleet-expense-form-DFTAqfUY.js        13.85 kB │ gzip:   4.48 kB
+dist/assets/split-editor-Pgjf9JQ8.js              14.56 kB │ gzip:   5.20 kB
+dist/assets/msgpack-vendor-BTykDCWU.js            14.67 kB │ gzip:   4.39 kB
+dist/assets/google-provider-OnmGpQ0J.js           14.91 kB │ gzip:   5.54 kB
+dist/assets/date-vendor-B4U0aIQH.js               23.05 kB │ gzip:   6.75 kB
+dist/assets/dashboard-Dhl2L1KU.js                 23.63 kB │ gzip:   6.78 kB
+dist/assets/driver-detail-BbOGsXUK.js             25.45 kB │ gzip:   6.78 kB
+dist/assets/fee-mappings-eXT-ke6n.js              26.55 kB │ gzip:   7.66 kB
+dist/assets/fuel-events-BK5_1qr9.js               29.12 kB │ gzip:   8.82 kB
+dist/assets/fleet-expenses-DYFL7BDx.js            30.41 kB │ gzip:   9.02 kB
+dist/assets/time-deck-SjheTV_o.js                 30.88 kB │ gzip:   8.96 kB
+dist/assets/trip-form-a7sEmho9.js                 31.96 kB │ gzip:   9.06 kB
+dist/assets/tracking-page-C00_UWZz.js             36.86 kB │ gzip:  12.89 kB
+dist/assets/trip-audit-CIDaKuKa.js                39.98 kB │ gzip:  12.65 kB
+dist/assets/locations-BwdyzQiv.js                 40.86 kB │ gzip:  10.84 kB
+dist/assets/trip-replay-DqrAE_hY.js               43.69 kB │ gzip:  13.94 kB
+dist/assets/i18n-vendor-4CCzP6aL.js               56.45 kB │ gzip:  17.44 kB
+dist/assets/form-vendor-BSWRyNmX.js               89.53 kB │ gzip:  24.75 kB
+dist/assets/query-vendor-BaDHXwYj.js             100.78 kB │ gzip:  27.97 kB
+dist/assets/trips-BVe5xOh7.js                    115.62 kB │ gzip:  26.68 kB
+dist/assets/index-Dx_ndciH.js                    145.81 kB │ gzip:  43.96 kB
+dist/assets/index-hCZSGbfP.js                    149.24 kB │ gzip:  37.64 kB
+dist/assets/leaflet-vendor-DWd6LdVB.js           150.06 kB │ gzip:  43.52 kB
+dist/assets/ui-vendor-CgYNC7pC.js                159.40 kB │ gzip:  38.04 kB
+dist/assets/path-layer-Bw3hkeff.js               166.86 kB │ gzip:  48.33 kB
+dist/assets/react-vendor-BJhN1HjN.js             309.07 kB │ gzip:  99.76 kB
+dist/assets/assert-Dsgx9esz.js                   328.22 kB │ gzip:  94.76 kB
+dist/assets/index-DF-12z79.js                    333.19 kB │ gzip:  37.16 kB
+dist/assets/chart-vendor-DAZ-tWMg.js             420.99 kB │ gzip: 113.32 kB
+dist/assets/index-CSob0V4h.js                    459.57 kB │ gzip: 139.74 kB
+dist/assets/exceljs-vendor-C7v4ND4E.js           940.20 kB │ gzip: 269.87 kB
+✓ built in 12.55s
+
+✨ [vite-plugin-compression]:algorithm=gzip - compressed file successfully: 
+dist//Users/shawket/React/apex-react/assets/cars-DGszeOGO.js.gz                      11.88kb / gzip: 3.71kb
+dist//Users/shawket/React/apex-react/assets/checkbox-C7OzbeH7.js.gz                  1.42kb / gzip: 0.72kb
+dist//Users/shawket/React/apex-react/assets/confirm-dialog-CLzjv4K7.js.gz            1.78kb / gzip: 0.87kb
+dist//Users/shawket/React/apex-react/assets/dashboard-Dhl2L1KU.js.gz                 23.08kb / gzip: 6.61kb
+dist//Users/shawket/React/apex-react/assets/data-table-D40aVMmc.js.gz                4.71kb / gzip: 2.07kb
+dist//Users/shawket/React/apex-react/assets/date-picker-Di0cw11M.js.gz               4.41kb / gzip: 1.87kb
+dist//Users/shawket/React/apex-react/assets/date-vendor-B4U0aIQH.js.gz               22.51kb / gzip: 6.59kb
+dist//Users/shawket/React/apex-react/assets/driver-detail-BbOGsXUK.js.gz             24.86kb / gzip: 6.59kb
+dist//Users/shawket/React/apex-react/assets/driver-expense-new-iFNu0SRM.js.gz        3.97kb / gzip: 1.46kb
+dist//Users/shawket/React/apex-react/assets/driver-expenses-DJJEhk3F.js.gz           6.11kb / gzip: 2.28kb
+dist//Users/shawket/React/apex-react/assets/driver-form-4m5dkOMD.js.gz               3.73kb / gzip: 1.10kb
+dist//Users/shawket/React/apex-react/assets/driver-loan-new-Co8kYpqd.js.gz           3.46kb / gzip: 1.40kb
+dist//Users/shawket/React/apex-react/assets/drivers-BpZH8BHJ.js.gz                   4.12kb / gzip: 1.71kb
+dist//Users/shawket/React/apex-react/assets/excel-DrwLAx2s.js.gz                     5.17kb / gzip: 2.34kb
+dist//Users/shawket/React/apex-react/assets/fee-mappings-eXT-ke6n.js.gz              25.93kb / gzip: 7.45kb
+dist//Users/shawket/React/apex-react/assets/fleet-expense-form-DFTAqfUY.js.gz        13.53kb / gzip: 4.37kb
+dist//Users/shawket/React/apex-react/assets/fleet-expenses-DYFL7BDx.js.gz            29.70kb / gzip: 8.78kb
+dist//Users/shawket/React/apex-react/assets/fleet-expenses-messages-D4BjWspU.js.gz   5.41kb / gzip: 2.11kb
+dist//Users/shawket/React/apex-react/assets/chart-theme-CVAOZAD-.js.gz               1.36kb / gzip: 0.71kb
+dist//Users/shawket/React/apex-react/assets/fuel-G7RU-qv6.js.gz                      3.60kb / gzip: 1.17kb
+dist//Users/shawket/React/apex-react/assets/fuel-event-details-BF6spvFA.js.gz        6.43kb / gzip: 2.07kb
+dist//Users/shawket/React/apex-react/assets/fuel-event-edit-DzTlHVm8.js.gz           2.28kb / gzip: 1.11kb
+dist//Users/shawket/React/apex-react/assets/fuel-event-form-BCrE9Zjl.js.gz           8.65kb / gzip: 2.53kb
+dist//Users/shawket/React/apex-react/assets/fuel-event-new-DTjKaVU-.js.gz            1.54kb / gzip: 0.83kb
+dist//Users/shawket/React/apex-react/assets/fuel-events-BK5_1qr9.js.gz               28.43kb / gzip: 8.58kb
+dist//Users/shawket/React/apex-react/assets/google-adapter-CRDYWbAi.js.gz            5.27kb / gzip: 1.98kb
+dist//Users/shawket/React/apex-react/assets/google-provider-OnmGpQ0J.js.gz           14.56kb / gzip: 5.40kb
+dist//Users/shawket/React/apex-react/assets/index-CFhNVTwA.css.gz                    78.65kb / gzip: 13.86kb
+dist//Users/shawket/React/apex-react/assets/leaflet-provider-Bv1emKAI.js.gz          10.64kb / gzip: 4.07kb
+dist//Users/shawket/React/apex-react/assets/leaflet-adapter-D9EKno0J.js.gz           3.85kb / gzip: 1.86kb
+dist//Users/shawket/React/apex-react/assets/leaflet-vendor-Dgihpmma.css.gz           14.68kb / gzip: 6.22kb
+dist//Users/shawket/React/apex-react/assets/locations-BwdyzQiv.js.gz                 39.90kb / gzip: 10.54kb
+dist//Users/shawket/React/apex-react/assets/map-view-DliUWSZA.js.gz                  3.33kb / gzip: 1.53kb
+dist//Users/shawket/React/apex-react/assets/marker-svg-y0u3LMbk.js.gz                6.65kb / gzip: 2.28kb
+dist//Users/shawket/React/apex-react/assets/msgpack-vendor-BTykDCWU.js.gz            14.33kb / gzip: 4.27kb
+dist//Users/shawket/React/apex-react/assets/maps-vendor-DmSeETPQ.js.gz               1.50kb / gzip: 0.83kb
+dist//Users/shawket/React/apex-react/assets/no_results-BP7_B7ZI.json.gz              27.06kb / gzip: 4.15kb
+dist//Users/shawket/React/apex-react/assets/normalize-8bJDhc8r.js.gz                 1.73kb / gzip: 0.84kb
+dist//Users/shawket/React/apex-react/assets/oil-change-edit-D4_j7cCb.js.gz           2.67kb / gzip: 1.27kb
+dist//Users/shawket/React/apex-react/assets/oil-change-history-c28UNXCL.js.gz        7.48kb / gzip: 2.53kb
+dist//Users/shawket/React/apex-react/assets/oil-change-new-DUMjC4mj.js.gz            1.63kb / gzip: 0.85kb
+dist//Users/shawket/React/apex-react/assets/oil-changes-B_7rhiVq.js.gz               10.78kb / gzip: 3.56kb
+dist//Users/shawket/React/apex-react/assets/oil-changes-excel-Crk1xzt1.js.gz         3.48kb / gzip: 1.33kb
+dist//Users/shawket/React/apex-react/assets/oil-change-form-jroDqLUv.js.gz           9.22kb / gzip: 2.75kb
+dist//Users/shawket/React/apex-react/assets/placeholder-n-UCBLQM.js.gz               1.47kb / gzip: 0.69kb
+dist//Users/shawket/React/apex-react/assets/queries-B9OwYYRV.js.gz                   1.45kb / gzip: 0.72kb
+dist//Users/shawket/React/apex-react/assets/queries-CAwximny.js.gz                   1.68kb / gzip: 0.76kb
+dist//Users/shawket/React/apex-react/assets/queries-znacup-M.js.gz                   2.01kb / gzip: 0.89kb
+dist//Users/shawket/React/apex-react/assets/route-error-C6pl9VGB.js.gz               2.76kb / gzip: 1.20kb
+dist//Users/shawket/React/apex-react/assets/searchable-select-CR3Wjpg9.js.gz         2.60kb / gzip: 1.23kb
+dist//Users/shawket/React/apex-react/assets/service-invoice-details-DC8rghZS.js.gz   10.65kb / gzip: 3.02kb
+dist//Users/shawket/React/apex-react/assets/service-invoice-edit-AXJxDVKQ.js.gz      1.26kb / gzip: 0.70kb
+dist//Users/shawket/React/apex-react/assets/service-invoice-form-BtmYIKnB.js.gz      8.08kb / gzip: 2.42kb
+dist//Users/shawket/React/apex-react/assets/service-invoices-b56N6jAN.js.gz          7.65kb / gzip: 2.68kb
+dist//Users/shawket/React/apex-react/assets/service-invoice-new-HVtgvJd6.js.gz       1.01kb / gzip: 0.59kb
+dist//Users/shawket/React/apex-react/assets/settings-CG8ap6Ej.js.gz                  6.77kb / gzip: 2.63kb
+dist//Users/shawket/React/apex-react/assets/split-editor-Pgjf9JQ8.js.gz              14.22kb / gzip: 5.07kb
+dist//Users/shawket/React/apex-react/assets/terminal-select-B6LMxMqe.js.gz           2.14kb / gzip: 1.10kb
+dist//Users/shawket/React/apex-react/assets/stat-card-DFxK5b4i.js.gz                 1.62kb / gzip: 0.68kb
+dist//Users/shawket/React/apex-react/assets/time-deck-SjheTV_o.js.gz                 30.15kb / gzip: 8.74kb
+dist//Users/shawket/React/apex-react/assets/tires-O7U9Nx5-.js.gz                     5.84kb / gzip: 1.45kb
+dist//Users/shawket/React/apex-react/assets/tracking-page-C00_UWZz.js.gz             36.00kb / gzip: 12.58kb
+dist//Users/shawket/React/apex-react/assets/trip-edit-DwI9LfSP.js.gz                 1.69kb / gzip: 0.82kb
+dist//Users/shawket/React/apex-react/assets/trip-form-a7sEmho9.js.gz                 31.21kb / gzip: 8.82kb
+dist//Users/shawket/React/apex-react/assets/driver-loans-7osrP352.js.gz              8.55kb / gzip: 3.23kb
+dist//Users/shawket/React/apex-react/assets/trip-audit-CIDaKuKa.js.gz                39.04kb / gzip: 12.33kb
+dist//Users/shawket/React/apex-react/assets/trip-replay-DqrAE_hY.js.gz               42.66kb / gzip: 13.59kb
+dist//Users/shawket/React/apex-react/assets/trips-pagination-CL8fPzZu.js.gz          4.25kb / gzip: 1.51kb
+dist//Users/shawket/React/apex-react/assets/users-BYnzS8o8.js.gz                     12.20kb / gzip: 3.85kb
+dist//Users/shawket/React/apex-react/assets/trip-new-gKRrNqQM.js.gz                  1.29kb / gzip: 0.68kb
+dist//Users/shawket/React/apex-react/assets/zones-CUVU-NZq.js.gz                     8.45kb / gzip: 3.13kb
+dist//Users/shawket/React/apex-react/index.html.gz                                   2.25kb / gzip: 0.80kb
+dist//Users/shawket/React/apex-react/assets/form-vendor-BSWRyNmX.js.gz               87.44kb / gzip: 24.14kb
+dist//Users/shawket/React/apex-react/assets/i18n-vendor-4CCzP6aL.js.gz               55.13kb / gzip: 17.00kb
+dist//Users/shawket/React/apex-react/assets/query-vendor-BaDHXwYj.js.gz              98.42kb / gzip: 27.24kb
+dist//Users/shawket/React/apex-react/assets/trips-BVe5xOh7.js.gz                     112.91kb / gzip: 25.90kb
+dist//Users/shawket/React/apex-react/assets/index-Dx_ndciH.js.gz                     142.39kb / gzip: 42.81kb
+dist//Users/shawket/React/apex-react/assets/index-hCZSGbfP.js.gz                     145.75kb / gzip: 36.68kb
+dist//Users/shawket/React/apex-react/assets/leaflet-vendor-DWd6LdVB.js.gz            146.54kb / gzip: 42.30kb
+dist//Users/shawket/React/apex-react/assets/path-layer-Bw3hkeff.js.gz                162.95kb / gzip: 47.13kb
+dist//Users/shawket/React/apex-react/assets/index-DF-12z79.js.gz                     325.38kb / gzip: 34.99kb
+dist//Users/shawket/React/apex-react/assets/ui-vendor-CgYNC7pC.js.gz                 155.66kb / gzip: 37.08kb
+dist//Users/shawket/React/apex-react/assets/assert-Dsgx9esz.js.gz                    320.53kb / gzip: 92.36kb
+dist//Users/shawket/React/apex-react/assets/chart-vendor-DAZ-tWMg.js.gz              411.13kb / gzip: 110.37kb
+dist//Users/shawket/React/apex-react/assets/react-vendor-BJhN1HjN.js.gz              301.83kb / gzip: 97.27kb
+dist//Users/shawket/React/apex-react/assets/index-CSob0V4h.js.gz                     448.80kb / gzip: 135.99kb
+dist//Users/shawket/React/apex-react/assets/exceljs-vendor-C7v4ND4E.js.gz            918.17kb / gzip: 262.14kb
+
+
+
+✨ [vite-plugin-compression]:algorithm=brotliCompress - compressed file successfully: 
+dist//Users/shawket/React/apex-react/assets/chart-theme-CVAOZAD-.js.br               1.36kb / brotliCompress: 0.64kb
+dist//Users/shawket/React/apex-react/assets/checkbox-C7OzbeH7.js.br                  1.42kb / brotliCompress: 0.64kb
+dist//Users/shawket/React/apex-react/assets/confirm-dialog-CLzjv4K7.js.br            1.78kb / brotliCompress: 0.78kb
+dist//Users/shawket/React/apex-react/assets/date-picker-Di0cw11M.js.br               4.41kb / brotliCompress: 1.67kb
+dist//Users/shawket/React/apex-react/assets/cars-DGszeOGO.js.br                      11.88kb / brotliCompress: 3.35kb
+dist//Users/shawket/React/apex-react/assets/data-table-D40aVMmc.js.br                4.71kb / brotliCompress: 1.83kb
+dist//Users/shawket/React/apex-react/assets/dashboard-Dhl2L1KU.js.br                 23.08kb / brotliCompress: 5.98kb
+dist//Users/shawket/React/apex-react/assets/driver-expense-new-iFNu0SRM.js.br        3.97kb / brotliCompress: 1.29kb
+dist//Users/shawket/React/apex-react/assets/date-vendor-B4U0aIQH.js.br               22.51kb / brotliCompress: 5.95kb
+dist//Users/shawket/React/apex-react/assets/driver-form-4m5dkOMD.js.br               3.73kb / brotliCompress: 0.98kb
+dist//Users/shawket/React/apex-react/assets/driver-loan-new-Co8kYpqd.js.br           3.46kb / brotliCompress: 1.25kb
+dist//Users/shawket/React/apex-react/assets/driver-expenses-DJJEhk3F.js.br           6.11kb / brotliCompress: 2.05kb
+dist//Users/shawket/React/apex-react/assets/drivers-BpZH8BHJ.js.br                   4.12kb / brotliCompress: 1.53kb
+dist//Users/shawket/React/apex-react/assets/driver-detail-BbOGsXUK.js.br             24.86kb / brotliCompress: 5.91kb
+dist//Users/shawket/React/apex-react/assets/excel-DrwLAx2s.js.br                     5.17kb / brotliCompress: 2.09kb
+dist//Users/shawket/React/apex-react/assets/driver-loans-7osrP352.js.br              8.55kb / brotliCompress: 2.93kb
+dist//Users/shawket/React/apex-react/assets/fleet-expense-form-DFTAqfUY.js.br        13.53kb / brotliCompress: 3.94kb
+dist//Users/shawket/React/apex-react/assets/fleet-expenses-messages-D4BjWspU.js.br   5.41kb / brotliCompress: 1.92kb
+dist//Users/shawket/React/apex-react/assets/fee-mappings-eXT-ke6n.js.br              25.93kb / brotliCompress: 6.67kb
+dist//Users/shawket/React/apex-react/assets/fuel-G7RU-qv6.js.br                      3.60kb / brotliCompress: 1.04kb
+dist//Users/shawket/React/apex-react/assets/fleet-expenses-DYFL7BDx.js.br            29.70kb / brotliCompress: 7.93kb
+dist//Users/shawket/React/apex-react/assets/fuel-event-edit-DzTlHVm8.js.br           2.28kb / brotliCompress: 0.99kb
+dist//Users/shawket/React/apex-react/assets/fuel-event-details-BF6spvFA.js.br        6.43kb / brotliCompress: 1.87kb
+dist//Users/shawket/React/apex-react/assets/fuel-event-new-DTjKaVU-.js.br            1.54kb / brotliCompress: 0.74kb
+dist//Users/shawket/React/apex-react/assets/fuel-event-form-BCrE9Zjl.js.br           8.65kb / brotliCompress: 2.29kb
+dist//Users/shawket/React/apex-react/assets/google-adapter-CRDYWbAi.js.br            5.27kb / brotliCompress: 1.81kb
+dist//Users/shawket/React/apex-react/assets/google-provider-OnmGpQ0J.js.br           14.56kb / brotliCompress: 4.82kb
+dist//Users/shawket/React/apex-react/assets/fuel-events-BK5_1qr9.js.br               28.43kb / brotliCompress: 7.70kb
+dist//Users/shawket/React/apex-react/assets/i18n-vendor-4CCzP6aL.js.br               55.13kb / brotliCompress: 15.38kb
+dist//Users/shawket/React/apex-react/assets/index-CFhNVTwA.css.br                    78.65kb / brotliCompress: 11.27kb
+dist//Users/shawket/React/apex-react/assets/leaflet-adapter-D9EKno0J.js.br           3.85kb / brotliCompress: 1.69kb
+dist//Users/shawket/React/apex-react/assets/leaflet-provider-Bv1emKAI.js.br          10.64kb / brotliCompress: 3.58kb
+dist//Users/shawket/React/apex-react/assets/leaflet-vendor-Dgihpmma.css.br           14.68kb / brotliCompress: 5.53kb
+dist//Users/shawket/React/apex-react/assets/maps-vendor-DmSeETPQ.js.br               1.50kb / brotliCompress: 0.70kb
+dist//Users/shawket/React/apex-react/assets/map-view-DliUWSZA.js.br                  3.33kb / brotliCompress: 1.37kb
+dist//Users/shawket/React/apex-react/assets/marker-svg-y0u3LMbk.js.br                6.65kb / brotliCompress: 1.95kb
+dist//Users/shawket/React/apex-react/assets/msgpack-vendor-BTykDCWU.js.br            14.33kb / brotliCompress: 3.86kb
+dist//Users/shawket/React/apex-react/assets/normalize-8bJDhc8r.js.br                 1.73kb / brotliCompress: 0.64kb
+dist//Users/shawket/React/apex-react/assets/oil-change-edit-D4_j7cCb.js.br           2.67kb / brotliCompress: 1.14kb
+dist//Users/shawket/React/apex-react/assets/oil-change-history-c28UNXCL.js.br        7.48kb / brotliCompress: 2.28kb
+dist//Users/shawket/React/apex-react/assets/oil-change-new-DUMjC4mj.js.br            1.63kb / brotliCompress: 0.76kb
+dist//Users/shawket/React/apex-react/assets/oil-changes-excel-Crk1xzt1.js.br         3.48kb / brotliCompress: 1.17kb
+dist//Users/shawket/React/apex-react/assets/oil-change-form-jroDqLUv.js.br           9.22kb / brotliCompress: 2.46kb
+dist//Users/shawket/React/apex-react/assets/placeholder-n-UCBLQM.js.br               1.47kb / brotliCompress: 0.58kb
+dist//Users/shawket/React/apex-react/assets/locations-BwdyzQiv.js.br                 39.90kb / brotliCompress: 9.44kb
+dist//Users/shawket/React/apex-react/assets/no_results-BP7_B7ZI.json.br              27.06kb / brotliCompress: 3.46kb
+dist//Users/shawket/React/apex-react/assets/queries-B9OwYYRV.js.br                   1.45kb / brotliCompress: 0.64kb
+dist//Users/shawket/React/apex-react/assets/queries-CAwximny.js.br                   1.68kb / brotliCompress: 0.68kb
+dist//Users/shawket/React/apex-react/assets/queries-znacup-M.js.br                   2.01kb / brotliCompress: 0.77kb
+dist//Users/shawket/React/apex-react/assets/oil-changes-B_7rhiVq.js.br               10.78kb / brotliCompress: 3.20kb
+dist//Users/shawket/React/apex-react/assets/route-error-C6pl9VGB.js.br               2.76kb / brotliCompress: 1.03kb
+dist//Users/shawket/React/apex-react/assets/searchable-select-CR3Wjpg9.js.br         2.60kb / brotliCompress: 1.09kb
+dist//Users/shawket/React/apex-react/assets/service-invoice-edit-AXJxDVKQ.js.br      1.26kb / brotliCompress: 0.61kb
+dist//Users/shawket/React/apex-react/assets/service-invoice-details-DC8rghZS.js.br   10.65kb / brotliCompress: 2.67kb
+dist//Users/shawket/React/apex-react/assets/service-invoice-new-HVtgvJd6.js.br       1.01kb / brotliCompress: 0.51kb
+dist//Users/shawket/React/apex-react/assets/service-invoice-form-BtmYIKnB.js.br      8.08kb / brotliCompress: 2.16kb
+dist//Users/shawket/React/apex-react/assets/service-invoices-b56N6jAN.js.br          7.65kb / brotliCompress: 2.33kb
+dist//Users/shawket/React/apex-react/assets/settings-CG8ap6Ej.js.br                  6.77kb / brotliCompress: 2.34kb
+dist//Users/shawket/React/apex-react/assets/stat-card-DFxK5b4i.js.br                 1.62kb / brotliCompress: 0.59kb
+dist//Users/shawket/React/apex-react/assets/terminal-select-B6LMxMqe.js.br           2.14kb / brotliCompress: 0.98kb
+dist//Users/shawket/React/apex-react/assets/split-editor-Pgjf9JQ8.js.br              14.22kb / brotliCompress: 4.64kb
+dist//Users/shawket/React/apex-react/assets/tires-O7U9Nx5-.js.br                     5.84kb / brotliCompress: 1.29kb
+dist//Users/shawket/React/apex-react/assets/time-deck-SjheTV_o.js.br                 30.15kb / brotliCompress: 8.00kb
+dist//Users/shawket/React/apex-react/assets/trip-edit-DwI9LfSP.js.br                 1.69kb / brotliCompress: 0.73kb
+dist//Users/shawket/React/apex-react/assets/tracking-page-C00_UWZz.js.br             36.00kb / brotliCompress: 11.33kb
+dist//Users/shawket/React/apex-react/assets/trip-new-gKRrNqQM.js.br                  1.29kb / brotliCompress: 0.63kb
+dist//Users/shawket/React/apex-react/assets/trip-audit-CIDaKuKa.js.br                39.04kb / brotliCompress: 11.17kb
+dist//Users/shawket/React/apex-react/assets/trip-form-a7sEmho9.js.br                 31.21kb / brotliCompress: 8.03kb
+dist//Users/shawket/React/apex-react/assets/trips-pagination-CL8fPzZu.js.br          4.25kb / brotliCompress: 1.35kb
+dist//Users/shawket/React/apex-react/assets/users-BYnzS8o8.js.br                     12.20kb / brotliCompress: 3.39kb
+dist//Users/shawket/React/apex-react/assets/trip-replay-DqrAE_hY.js.br               42.66kb / brotliCompress: 12.34kb
+dist//Users/shawket/React/apex-react/index.html.br                                   2.25kb / brotliCompress: 0.59kb
+dist//Users/shawket/React/apex-react/assets/zones-CUVU-NZq.js.br                     8.45kb / brotliCompress: 2.83kb
+dist//Users/shawket/React/apex-react/assets/form-vendor-BSWRyNmX.js.br               87.44kb / brotliCompress: 21.86kb
+dist//Users/shawket/React/apex-react/assets/index-hCZSGbfP.js.br                     145.75kb / brotliCompress: 32.00kb
+dist//Users/shawket/React/apex-react/assets/query-vendor-BaDHXwYj.js.br              98.42kb / brotliCompress: 24.26kb
+dist//Users/shawket/React/apex-react/assets/trips-BVe5xOh7.js.br                     112.91kb / brotliCompress: 22.49kb
+dist//Users/shawket/React/apex-react/assets/ui-vendor-CgYNC7pC.js.br                 155.66kb / brotliCompress: 30.63kb
+dist//Users/shawket/React/apex-react/assets/index-DF-12z79.js.br                     325.38kb / brotliCompress: 28.47kb
+dist//Users/shawket/React/apex-react/assets/index-Dx_ndciH.js.br                     142.39kb / brotliCompress: 37.77kb
+dist//Users/shawket/React/apex-react/assets/leaflet-vendor-DWd6LdVB.js.br            146.54kb / brotliCompress: 37.00kb
+dist//Users/shawket/React/apex-react/assets/path-layer-Bw3hkeff.js.br                162.95kb / brotliCompress: 41.31kb
+dist//Users/shawket/React/apex-react/assets/assert-Dsgx9esz.js.br                    320.53kb / brotliCompress: 78.59kb
+dist//Users/shawket/React/apex-react/assets/index-CSob0V4h.js.br                     448.80kb / brotliCompress: 111.80kb
+dist//Users/shawket/React/apex-react/assets/react-vendor-BJhN1HjN.js.br              301.83kb / brotliCompress: 84.74kb
+dist//Users/shawket/React/apex-react/assets/chart-vendor-DAZ-tWMg.js.br              411.13kb / brotliCompress: 90.13kb
+dist//Users/shawket/React/apex-react/assets/exceljs-vendor-C7v4ND4E.js.br            918.17kb / brotliCompress: 213.22kb
+
+
+build exit=0

@@ -1,0 +1,12 @@
+# shard-008  loc=1632  files=10
+# groups: pages/driver-loans, pages/drivers, widgets/drivers-table, pages/error, entities/fee-mapping, pages/fee-mappings
+212	src/pages/driver-loans/driver-loan-new.tsx
+410	src/pages/driver-loans/driver-loans.tsx
+60	src/pages/drivers/drivers.tsx
+188	src/widgets/drivers-table/drivers-table.tsx
+31	src/pages/error/not-found.tsx
+100	src/pages/error/route-error.tsx
+83	src/entities/fee-mapping/api.ts
+159	src/entities/fee-mapping/queries.ts
+137	src/entities/fee-mapping/schemas.ts
+252	src/pages/fee-mappings/fee-mappings.tsx

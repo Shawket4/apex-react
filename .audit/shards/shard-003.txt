@@ -1,0 +1,23 @@
+# shard-003  loc=2385  files=21
+# groups: shared/types, shared/ui
+20	src/shared/types/index.ts
+44	src/shared/ui/avatar.tsx
+30	src/shared/ui/badge.tsx
+52	src/shared/ui/button.tsx
+167	src/shared/ui/cairo-range-calendar.tsx
+54	src/shared/ui/card.tsx
+82	src/shared/ui/chart-card.tsx
+25	src/shared/ui/checkbox.tsx
+107	src/shared/ui/collapsible-section.tsx
+147	src/shared/ui/command.tsx
+106	src/shared/ui/confirm-dialog.tsx
+311	src/shared/ui/data-table.tsx
+194	src/shared/ui/date-picker.tsx
+287	src/shared/ui/date-range-picker.tsx
+115	src/shared/ui/dialog.tsx
+199	src/shared/ui/draggable.tsx
+170	src/shared/ui/dropdown-menu.tsx
+59	src/shared/ui/empty-state.tsx
+170	src/shared/ui/form.tsx
+28	src/shared/ui/input.tsx
+18	src/shared/ui/label.tsx

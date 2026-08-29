@@ -1,0 +1,23 @@
+# shard-015  loc=2419  files=21
+# groups: pages/oil-changes, widgets/oil-changes-table, pages/placeholder, entities/raw-message, entities/receipt, entities/receipt-batch, widgets/scope-bar, widgets/service-cars-table
+120	src/pages/oil-changes/oil-change-edit.tsx
+409	src/pages/oil-changes/oil-change-history.tsx
+67	src/pages/oil-changes/oil-change-new.tsx
+319	src/pages/oil-changes/oil-changes.tsx
+56	src/widgets/oil-changes-table/oil-change-status-badge.tsx
+205	src/widgets/oil-changes-table/oil-changes-excel.ts
+128	src/widgets/oil-changes-table/oil-changes-filters.tsx
+255	src/widgets/oil-changes-table/oil-changes-table.tsx
+46	src/pages/placeholder/placeholder.tsx
+32	src/entities/raw-message/api.ts
+49	src/entities/raw-message/queries.ts
+61	src/entities/raw-message/schemas.ts
+32	src/entities/receipt/api.ts
+80	src/entities/receipt/queries.ts
+49	src/entities/receipt/schemas.ts
+32	src/entities/receipt-batch/api.ts
+59	src/entities/receipt-batch/queries.ts
+27	src/entities/receipt-batch/schemas.ts
+119	src/widgets/scope-bar/scope-bar.tsx
+188	src/widgets/scope-bar/scope-date-picker.tsx
+86	src/widgets/service-cars-table/service-cars-table.tsx

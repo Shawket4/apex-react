@@ -1,0 +1,7 @@
+# shard-027  loc=1836  files=5
+# groups: widgets/trips-statistics
+600	src/widgets/trips-statistics/trips-statistics-excel.ts
+304	src/widgets/trips-statistics/trips-statistics-routes.tsx
+252	src/widgets/trips-statistics/trips-statistics-summary.tsx
+451	src/widgets/trips-statistics/trips-statistics-timeline.tsx
+229	src/widgets/trips-statistics/trips-statistics.tsx

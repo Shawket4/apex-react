@@ -132,6 +132,7 @@ export function ScopeDatePicker({
               variant={preset === p.value ? 'default' : 'outline'}
               size="sm"
               className="h-7 text-xs"
+              aria-pressed={preset === p.value}
               onClick={() => pickPreset(p.value)}
             >
               {p.label}

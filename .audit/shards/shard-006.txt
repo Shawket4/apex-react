@@ -1,0 +1,13 @@
+# shard-006  loc=2368  files=11
+# groups: entities/dashboard, pages/dashboard, entities/driver, entities/driver-analytics, pages/driver-detail
+141	src/entities/dashboard/api.ts
+139	src/entities/dashboard/queries.ts
+231	src/entities/dashboard/schemas.ts
+1038	src/pages/dashboard/dashboard.tsx
+106	src/entities/driver/api.ts
+199	src/entities/driver/queries.ts
+103	src/entities/driver/schemas.ts
+18	src/entities/driver-analytics/api.ts
+27	src/entities/driver-analytics/queries.ts
+107	src/entities/driver-analytics/schemas.ts
+259	src/pages/driver-detail/driver-detail.tsx

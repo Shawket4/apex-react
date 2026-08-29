@@ -1,0 +1,212 @@
+
+Running 46 tests using 1 worker
+
+[WebServer] (node:42843) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   1 [chromium] › e2e/visual.spec.ts:82:5 › public routes › login (1.8s)
+  ✓   2 [chromium] › e2e/visual.spec.ts:82:5 › public routes › not-found (2.0s)
+  ✓   3 [chromium] › e2e/visual.spec.ts:82:5 › public routes › not-found-catchall (1.9s)
+  ✓   4 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › dashboard (3.3s)
+  ✓   5 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › fuel-events (2.6s)
+  ✓   6 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › fuel-events-new (2.1s)
+  ✓   7 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › fuel-event-details (2.0s)
+  ✓   8 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › fuel-event-edit (2.6s)
+  ✓   9 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › trips (2.7s)
+  ✓  10 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › trips-new (2.1s)
+  ✓  11 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › trips-multi-container-edit (2.7s)
+  ✓  12 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › trips-parent-route-summary (2.8s)
+  ✓  13 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › oil-changes (2.6s)
+  ✓  14 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › oil-changes-new (2.4s)
+  ✓  15 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › oil-change-edit (2.3s)
+  ✘  16 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › oil-change-history (2.8s)
+  ✓  17 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › service-invoices (2.7s)
+  ✓  18 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › service-invoices-new (2.2s)
+  ✓  19 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › service-invoice-details (2.4s)
+  ✓  20 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › service-invoice-edit (2.3s)
+  ✓  21 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › trucks (1.8s)
+  ✓  22 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › cars (2.3s)
+  ✓  23 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › tires (1.9s)
+  ✓  24 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › tablets (1.9s)
+  ✓  25 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › speed-violations (1.9s)
+  ✓  26 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › drivers (2.3s)
+  ✘  27 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › driver-detail (2.6s)
+  ✓  28 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › driver-expenses (2.7s)
+  ✓  29 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › driver-expenses-new (2.0s)
+  ✓  30 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › driver-loans (2.7s)
+  ✓  31 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › driver-loans-new (2.1s)
+  ✓  32 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › vendors (2.2s)
+  ✓  33 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › fleet-expenses (3.1s)
+  ✓  34 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › fleet-expenses-messages (2.8s)
+  ✓  35 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › fleet-expenses-review-redirect (2.5s)
+  ✓  36 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › fleet-expenses-new (2.6s)
+  ✓  37 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › fleet-expense-edit (2.1s)
+  ✓  38 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › fee-mappings (2.6s)
+  ✓  39 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › etit (2.6s)
+  ✓  40 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › zones (1.8s)
+  ✘  41 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › locations (3.3s)
+  ✓  42 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › trip-audit (2.6s)
+  ✓  43 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › trip-replay (1.9s)
+  ✓  44 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › users (2.0s)
+  ✓  45 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › logs (2.0s)
+  ✓  46 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › settings (1.8s)
+
+
+  1) [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › oil-change-history ──────────────
+
+    Error: expect(page).toHaveScreenshot(expected) failed
+
+      Expected an image 1440px by 1037px, received 1440px by 1039px. 26114 pixels (ratio 0.02 of all image pixels) are different.
+
+      Snapshot: oil-change-history.png
+
+    Call log:
+      - Expect "toHaveScreenshot(oil-change-history.png)" with timeout 5000ms
+        - verifying given screenshot expectation
+      - taking page screenshot
+        - disabled all CSS animations
+      - waiting for fonts to load...
+      - fonts loaded
+      - Expected an image 1440px by 1037px, received 1440px by 1039px. 26114 pixels (ratio 0.02 of all image pixels) are different.
+      - waiting 100ms before taking screenshot
+      - taking page screenshot
+        - disabled all CSS animations
+      - waiting for fonts to load...
+      - fonts loaded
+      - captured a stable screenshot
+      - Expected an image 1440px by 1037px, received 1440px by 1039px. 26114 pixels (ratio 0.02 of all image pixels) are different.
+
+
+      69 |   }
+      70 |   await expandViewportToContent(page);
+    > 71 |   await expect(page).toHaveScreenshot(`${route.name}.png`, {
+         |                      ^
+      72 |     fullPage: true,
+      73 |     maxDiffPixelRatio: 0.01,
+      74 |   });
+        at screenshotRoute (/Users/shawket/React/apex-react/e2e/visual.spec.ts:71:22)
+        at /Users/shawket/React/apex-react/e2e/visual.spec.ts:93:7
+
+    attachment #1: oil-change-history (image/png) ──────────────────────────────────────────────────
+    Expected: e2e/__screenshots__/chromium/oil-change-history.png
+    Received: e2e/test-results/visual-authenticated-routes-oil-change-history-chromium/oil-change-history-actual.png
+    Diff:     e2e/test-results/visual-authenticated-routes-oil-change-history-chromium/oil-change-history-diff.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: e2e/test-results/visual-authenticated-routes-oil-change-history-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    e2e/test-results/visual-authenticated-routes-oil-change-history-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace e2e/test-results/visual-authenticated-routes-oil-change-history-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › driver-detail ───────────────────
+
+    Error: expect(page).toHaveScreenshot(expected) failed
+
+      18761 pixels (ratio 0.02 of all image pixels) are different.
+
+      Snapshot: driver-detail.png
+
+    Call log:
+      - Expect "toHaveScreenshot(driver-detail.png)" with timeout 5000ms
+        - verifying given screenshot expectation
+      - taking page screenshot
+        - disabled all CSS animations
+      - waiting for fonts to load...
+      - fonts loaded
+      - 18761 pixels (ratio 0.02 of all image pixels) are different.
+      - waiting 100ms before taking screenshot
+      - taking page screenshot
+        - disabled all CSS animations
+      - waiting for fonts to load...
+      - fonts loaded
+      - captured a stable screenshot
+      - 18761 pixels (ratio 0.02 of all image pixels) are different.
+
+
+      69 |   }
+      70 |   await expandViewportToContent(page);
+    > 71 |   await expect(page).toHaveScreenshot(`${route.name}.png`, {
+         |                      ^
+      72 |     fullPage: true,
+      73 |     maxDiffPixelRatio: 0.01,
+      74 |   });
+        at screenshotRoute (/Users/shawket/React/apex-react/e2e/visual.spec.ts:71:22)
+        at /Users/shawket/React/apex-react/e2e/visual.spec.ts:93:7
+
+    attachment #1: driver-detail (image/png) ───────────────────────────────────────────────────────
+    Expected: e2e/__screenshots__/chromium/driver-detail.png
+    Received: e2e/test-results/visual-authenticated-routes-driver-detail-chromium/driver-detail-actual.png
+    Diff:     e2e/test-results/visual-authenticated-routes-driver-detail-chromium/driver-detail-diff.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: e2e/test-results/visual-authenticated-routes-driver-detail-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    e2e/test-results/visual-authenticated-routes-driver-detail-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace e2e/test-results/visual-authenticated-routes-driver-detail-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › locations ───────────────────────
+
+    Error: expect(page).toHaveScreenshot(expected) failed
+
+      Expected an image 1440px by 2137px, received 1440px by 2237px. 39184 pixels (ratio 0.02 of all image pixels) are different.
+
+      Snapshot: locations.png
+
+    Call log:
+      - Expect "toHaveScreenshot(locations.png)" with timeout 5000ms
+        - verifying given screenshot expectation
+      - taking page screenshot
+        - disabled all CSS animations
+      - waiting for fonts to load...
+      - fonts loaded
+      - Expected an image 1440px by 2137px, received 1440px by 2237px. 39184 pixels (ratio 0.02 of all image pixels) are different.
+      - waiting 100ms before taking screenshot
+      - taking page screenshot
+        - disabled all CSS animations
+      - waiting for fonts to load...
+      - fonts loaded
+      - captured a stable screenshot
+      - Expected an image 1440px by 2137px, received 1440px by 2237px. 39184 pixels (ratio 0.02 of all image pixels) are different.
+
+
+      69 |   }
+      70 |   await expandViewportToContent(page);
+    > 71 |   await expect(page).toHaveScreenshot(`${route.name}.png`, {
+         |                      ^
+      72 |     fullPage: true,
+      73 |     maxDiffPixelRatio: 0.01,
+      74 |   });
+        at screenshotRoute (/Users/shawket/React/apex-react/e2e/visual.spec.ts:71:22)
+        at /Users/shawket/React/apex-react/e2e/visual.spec.ts:93:7
+
+    attachment #1: locations (image/png) ───────────────────────────────────────────────────────────
+    Expected: e2e/__screenshots__/chromium/locations.png
+    Received: e2e/test-results/visual-authenticated-routes-locations-chromium/locations-actual.png
+    Diff:     e2e/test-results/visual-authenticated-routes-locations-chromium/locations-diff.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: e2e/test-results/visual-authenticated-routes-locations-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    e2e/test-results/visual-authenticated-routes-locations-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace e2e/test-results/visual-authenticated-routes-locations-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3 failed
+    [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › oil-change-history ───────────────
+    [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › driver-detail ────────────────────
+    [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › locations ────────────────────────
+  43 passed (1.9m)
+exit=1

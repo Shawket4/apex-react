@@ -1,0 +1,6 @@
+# shard-022  loc=2349  files=4
+# groups: widgets/trip-form, widgets/trip-location-dialog
+276	src/widgets/trip-form/drop-off-picker-modal.tsx
+276	src/widgets/trip-form/duplicate-comparison-dialog.tsx
+1331	src/widgets/trip-form/trip-form.tsx
+466	src/widgets/trip-location-dialog/trip-location-dialog.tsx

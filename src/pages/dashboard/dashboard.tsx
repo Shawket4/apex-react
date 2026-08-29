@@ -121,9 +121,9 @@ export default function DashboardPage() {
           onRetry={() => void dashboard.refetch()}
         />
       ) : dashboard.isPending ? (
-        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-[92px] rounded-xl" />
+        <div className={cn('grid grid-cols-2 gap-3', showMoney ? 'lg:grid-cols-4' : 'lg:grid-cols-3')}>
+          {Array.from({ length: showMoney ? 4 : 3 }).map((_, i) => (
+            <Skeleton key={i} className="h-[92px] rounded-lg" />
           ))}
         </div>
       ) : (
@@ -132,7 +132,7 @@ export default function DashboardPage() {
 
       {/* ---- fleet + exceptions ---- */}
       <div className="grid gap-3 lg:grid-cols-[1.6fr_1fr]">
-        <section className="overflow-hidden rounded-xl border bg-card">
+        <section className="overflow-hidden rounded-lg border bg-card">
           <PanelHead
             title={t('dashboard.fleet.title')}
             aside={
@@ -164,15 +164,21 @@ export default function DashboardPage() {
           </div>
         </section>
 
-        <section className="overflow-hidden rounded-xl border bg-card">
+        <section className="overflow-hidden rounded-lg border bg-card">
           <PanelHead title={t('dashboard.exceptions.title')} />
           <div className="p-3">
             {dashboard.isError ? (
               <p className="py-6 text-center text-xs text-muted-foreground">
                 {t('dashboard.exceptions.unavailable')}
               </p>
+            ) : dashboard.isPending ? (
+              <div className="grid gap-2">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <Skeleton key={i} className="h-12 rounded-lg" />
+                ))}
+              </div>
             ) : dashboard.data && dashboard.data.exceptions.length === 0 ? (
-              <p className="py-6 text-center text-[13px] text-muted-foreground">
+              <p className="py-6 text-center text-xs text-muted-foreground">
                 {t('dashboard.exceptions.allClear')}
               </p>
             ) : (
@@ -191,7 +197,7 @@ export default function DashboardPage() {
 
       {/* ---- cash out by category (money only) ---- */}
       {showMoney && dashboard.data?.money && dashboard.data.money.by_category.length > 0 && (
-        <section className="overflow-hidden rounded-xl border bg-card">
+        <section className="overflow-hidden rounded-lg border bg-card">
           <PanelHead
             title={t('dashboard.cash.title')}
             aside={format(today, 'MMMM')}
@@ -237,15 +243,6 @@ function ConnectionBadge({ live }: { live: ReturnType<typeof useEtitLive> }) {
         : state === 'connecting'
           ? t('dashboard.conn.connecting')
           : t('dashboard.conn.notLive')}
-      {state === 'down' && (
-        <button
-          type="button"
-          onClick={live.refresh}
-          className="underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        >
-          {t('dashboard.conn.refresh')}
-        </button>
-      )}
     </span>
   );
 }
@@ -378,7 +375,7 @@ function KpiRow({
 
 function StaticKpi({ title, value }: { title: string; value: string }) {
   return (
-    <div className="rounded-xl border bg-card p-3">
+    <div className="rounded-lg border bg-card p-3">
       <dt className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
         {title}
       </dt>
@@ -414,7 +411,7 @@ function KpiCard({
   const warm = React.useCallback(() => prefetchDrawer(qc, kind, scope), [qc, kind, scope]);
 
   return (
-    <div className={cn('overflow-hidden rounded-xl border bg-card', isOpen && 'lg:col-span-1')}>
+    <div className={cn('overflow-hidden rounded-lg border bg-card', isOpen && 'lg:col-span-1')}>
       <button
         type="button"
         onClick={onToggle}
@@ -428,7 +425,7 @@ function KpiCard({
           {title}
           <ChevronDown
             aria-hidden
-            className={cn('h-3 w-3 shrink-0 transition-transform', isOpen && 'rotate-180')}
+            className={cn('h-3 w-3 shrink-0 transition-transform duration-200', isOpen && 'rotate-180')}
           />
         </dt>
         <dd
@@ -453,15 +450,15 @@ function KpiDrawer({ kind, scope }: { kind: DrawerKind; scope: DashboardScope })
   if (drawer.isPending) {
     return (
       <div className="space-y-2 border-t bg-muted/40 p-3">
-        <Skeleton className="h-3.5 w-3/4" />
-        <Skeleton className="h-3.5 w-2/3" />
-        <Skeleton className="h-3.5 w-4/5" />
+        <Skeleton className="h-3.5 w-3/4 rounded-sm" />
+        <Skeleton className="h-3.5 w-2/3 rounded-sm" />
+        <Skeleton className="h-3.5 w-4/5 rounded-sm" />
       </div>
     );
   }
   if (drawer.isError) {
     return (
-      <p className="border-t bg-muted/40 p-3 text-xs text-muted-foreground">
+      <p className="border-t bg-muted/40 px-3 py-6 text-center text-xs text-muted-foreground">
         {t('dashboard.drawer.failed')}
       </p>
     );
@@ -504,12 +501,12 @@ function KpiDrawer({ kind, scope }: { kind: DrawerKind; scope: DashboardScope })
       </dl>
       {kind === 'cash-out' && 'largest' in d && d.largest.length > 0 && (
         <>
-          <p className="mb-1 mt-2.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+          <p className="mb-1.5 mt-3.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
             {t('dashboard.drawer.largest')}
           </p>
           <dl className="space-y-1 text-[12px]">
             {d.largest.map((p, i) => (
-              <div key={i} className="flex items-baseline justify-between gap-3">
+              <div key={i} className="flex items-baseline justify-between gap-3 border-b border-dashed border-border/60 pb-1 last:border-b-0 last:pb-0">
                 <dt className="min-w-0 truncate text-muted-foreground" dir="auto">
                   {p.label}
                 </dt>
@@ -566,7 +563,7 @@ function FuelPanel({ scope }: { scope: DashboardScope }) {
   const drawer = totals.data && 'window_spend' in totals.data ? totals.data : null;
 
   return (
-    <section className="overflow-hidden rounded-xl border bg-card">
+    <section className="overflow-hidden rounded-lg border bg-card">
       <PanelHead
         title={t('dashboard.fuelPanel.title')}
         aside={
@@ -593,13 +590,13 @@ function FuelPanel({ scope }: { scope: DashboardScope }) {
       {events.isPending ? (
         <div className="space-y-2 p-3">
           {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-10 w-full" />
+            <Skeleton key={i} className="h-10 w-full rounded-none" />
           ))}
         </div>
       ) : events.isError ? (
-        <p className="p-3 text-xs text-muted-foreground">{t('dashboard.drawer.failed')}</p>
+        <p className="px-3 py-6 text-center text-xs text-muted-foreground">{t('dashboard.drawer.failed')}</p>
       ) : loaded.length === 0 ? (
-        <p className="p-3 text-xs text-muted-foreground">{t('dashboard.fuelPanel.empty')}</p>
+        <p className="px-3 py-6 text-center text-xs text-muted-foreground">{t('dashboard.fuelPanel.empty')}</p>
       ) : (
         <ul className="max-h-[420px] divide-y overflow-y-auto">
           {loaded.map((e) => {
@@ -613,10 +610,11 @@ function FuelPanel({ scope }: { scope: DashboardScope }) {
                   state={{ from: `${window.location.pathname}${window.location.search}` }}
                   onPointerEnter={() => prefetchFuelEvent(qc, e.ID)}
                   onFocus={() => prefetchFuelEvent(qc, e.ID)}
+                  onTouchStart={() => prefetchFuelEvent(qc, e.ID)}
                   className="grid w-full grid-cols-[1fr_auto] gap-x-3 gap-y-1 px-3 py-2.5 text-start transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring md:px-4"
                 >
                   <div className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
-                    <span className="shrink-0">{format(e.date, 'MMM d, yyyy')}</span>
+                    <span className="shrink-0">{format(e.date, 'd MMM yyyy')}</span>
                     <span>·</span>
                     <span className="shrink-0 font-mono tabular-nums text-foreground">
                       {e.car_no_plate}
@@ -627,11 +625,11 @@ function FuelPanel({ scope }: { scope: DashboardScope }) {
                         <span className="truncate">{e.driver_name}</span>
                       </>
                     )}
-                    <span className="ms-1 shrink-0 rounded-full bg-muted px-1.5 py-0.5 text-[9.5px]">
+                    <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[10.5px] font-medium">
                       {e.method}
                     </span>
                   </div>
-                  <span className="text-sm font-semibold tabular-nums text-money">
+                  <span className="font-mono text-sm font-semibold tabular-nums text-money">
                     {formatNumber(e.price, 0)}
                   </span>
                   <div className="flex items-center gap-3 text-xs text-muted-foreground">
@@ -648,11 +646,11 @@ function FuelPanel({ scope }: { scope: DashboardScope }) {
           <li ref={sentinelRef} aria-hidden className="h-px" />
           {isFetchingNextPage && (
             <li className="p-3">
-              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full rounded-none" />
             </li>
           )}
           {!hasNextPage && loaded.length > 0 && (
-            <li className="p-2 text-center text-[10.5px] text-muted-foreground">
+            <li className="p-3 text-center text-[10.5px] text-muted-foreground">
               {t('dashboard.fuelPanel.end', { count: total })}
             </li>
           )}
@@ -730,11 +728,12 @@ function FleetGrid({
               onClick={() => setSelected(isSelected ? null : entry)}
               onPointerEnter={warm}
               onFocus={warm}
+              onTouchStart={warm}
               aria-pressed={isSelected}
               className={cn(
                 'relative flex flex-col items-center gap-px rounded-lg border bg-card px-1.5 pb-1.5 pt-2 text-center transition-colors hover:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                 styles.tile,
-                isSelected && 'border-primary bg-accent',
+                isSelected && 'border-primary bg-primary/10 text-primary',
               )}
             >
               <span
@@ -803,7 +802,7 @@ function FleetGrid({
       <div className="mt-3 flex flex-wrap gap-3 text-[11px] text-muted-foreground">
         {(['moving', 'idling', 'stopped', 'offline'] as const).map((s) => (
           <span key={s} className="flex items-center gap-1.5">
-            <i className={cn('h-2 w-2 rounded-full', STATUS_STYLES[s].dot)} aria-hidden />
+            <i className={cn('h-1.5 w-1.5 rounded-full', STATUS_STYLES[s].dot)} aria-hidden />
             {t(`dashboard.fleet.status.${s}`)}
           </span>
         ))}
@@ -830,8 +829,10 @@ function TruckDrawer({
 
   const Row = ({ label, value }: { label: string; value: React.ReactNode }) => (
     <div className="flex items-baseline justify-between gap-3 border-b border-dashed border-border/60 pb-1 last:border-b-0 last:pb-0">
-      <dt className="text-muted-foreground">{label}</dt>
-      <dd className="m-0 font-mono tabular-nums" dir="auto">
+      <dt className="min-w-0 truncate text-muted-foreground" dir="auto">
+        {label}
+      </dt>
+      <dd className="m-0 shrink-0 font-mono tabular-nums" dir="auto">
         {value}
       </dd>
     </div>
@@ -876,11 +877,11 @@ function TruckDrawer({
         </dl>
       ) : summary.isPending ? (
         <div className="space-y-2">
-          <Skeleton className="h-3.5 w-2/3" />
-          <Skeleton className="h-3.5 w-1/2" />
+          <Skeleton className="h-3.5 w-2/3 rounded-sm" />
+          <Skeleton className="h-3.5 w-1/2 rounded-sm" />
         </div>
       ) : summary.isError ? (
-        <p className="text-[11px] italic text-muted-foreground">{t('dashboard.drawer.failed')}</p>
+        <p className="py-6 text-center text-xs text-muted-foreground">{t('dashboard.drawer.failed')}</p>
       ) : (
         <dl className="space-y-1">
           <Row
@@ -937,6 +938,7 @@ function ExceptionRow({ exception }: { exception: DashboardException }) {
       to={scopedHref}
       onPointerEnter={warm}
       onFocus={warm}
+      onTouchStart={warm}
       className="grid grid-cols-[3px_1fr_auto] items-center gap-3 rounded-lg border bg-card px-3 py-2.5 transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
       <span
@@ -1018,7 +1020,7 @@ function DegradedStrip({
   return (
     <div
       className={cn(
-        'flex items-start gap-2 rounded-lg border border-dashed border-warning/60 bg-warning/10 px-3 py-2.5 text-[12.5px]',
+        'flex items-start gap-2 rounded-lg border border-dashed border-warning/40 bg-warning/10 px-3 py-2.5 text-[12.5px]',
         compact && 'mb-3',
       )}
     >
@@ -1028,9 +1030,9 @@ function DegradedStrip({
         variant="outline"
         size="sm"
         onClick={onRetry}
-        className="ms-auto h-7 shrink-0 gap-1.5 border-warning/60 px-2.5 text-[11.5px] text-warning hover:text-warning"
+        className="ms-auto h-7 shrink-0 gap-1.5 border-warning/40 px-2.5 text-xs text-warning hover:text-warning"
       >
-        <RefreshCw className="h-3 w-3" />
+        <RefreshCw aria-hidden />
         {t('dashboard.conn.refresh')}
       </Button>
     </div>

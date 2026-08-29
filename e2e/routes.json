@@ -1,0 +1,366 @@
+{
+  "$comment": "Derived from src/app/router/index.tsx (react-router-dom v7 createBrowserRouter). Dynamic routes carry real prod IDs picked from GET list responses on 2026-08-29 (see `resolved_from`); keep `template` so they can be re-pointed if a record disappears. minPermission: 1 viewer, 2 editor, 3 manager, 4 admin (src/shared/config/constants.ts). Routes with auth:false are rendered without storageState.",
+  "routes": [
+    {
+      "name": "login",
+      "path": "/login",
+      "auth": false,
+      "note": "Redirects to / when already authenticated, so it runs with an empty storage state."
+    },
+    {
+      "name": "not-found",
+      "path": "/404",
+      "auth": false,
+      "note": "NotFoundPage, rendered outside Layout."
+    },
+    {
+      "name": "not-found-catchall",
+      "path": "/__no-such-route__",
+      "auth": false,
+      "note": "`*` -> <Navigate to=/404>. Same page as not-found; kept as a probe for the catch-all."
+    },
+    {
+      "name": "dashboard",
+      "path": "/",
+      "auth": true,
+      "minPermission": 1
+    },
+    {
+      "name": "fuel-events",
+      "path": "/fuel-events",
+      "auth": true,
+      "minPermission": 1
+    },
+    {
+      "name": "fuel-events-new",
+      "path": "/fuel-events/new",
+      "auth": true,
+      "minPermission": 3
+    },
+    {
+      "name": "fuel-event-details",
+      "path": "/fuel-events/1857",
+      "template": "/fuel-events/:id",
+      "unresolved": [
+        "id (fuel event ID)"
+      ],
+      "auth": true,
+      "minPermission": 1,
+      "resolved_from": "GET list endpoint, 2026-08-29"
+    },
+    {
+      "name": "fuel-event-edit",
+      "path": "/fuel-events/1857/edit",
+      "template": "/fuel-events/:id/edit",
+      "unresolved": [
+        "id (fuel event ID)"
+      ],
+      "auth": true,
+      "minPermission": 3,
+      "resolved_from": "GET list endpoint, 2026-08-29"
+    },
+    {
+      "name": "trips",
+      "path": "/trips",
+      "auth": true,
+      "minPermission": 1,
+      "note": "Also has ?tab=statistics (default tab is list)."
+    },
+    {
+      "name": "trips-new",
+      "path": "/trips/new",
+      "auth": true,
+      "minPermission": 1
+    },
+    {
+      "name": "trips-multi-container-edit",
+      "path": "/trips/multi-container/6005/edit",
+      "template": "/trips/multi-container/:parentId/edit",
+      "unresolved": [
+        "parentId (trip parent ID)"
+      ],
+      "auth": true,
+      "minPermission": 1,
+      "resolved_from": "GET list endpoint, 2026-08-29"
+    },
+    {
+      "name": "trips-parent-route-summary",
+      "path": "/trips/parent/6005/route-summary",
+      "template": "/trips/parent/:parentId/route-summary",
+      "unresolved": [
+        "parentId (trip parent ID)"
+      ],
+      "auth": true,
+      "minPermission": 1,
+      "note": "Renders TrackingPage.",
+      "resolved_from": "GET list endpoint, 2026-08-29"
+    },
+    {
+      "name": "oil-changes",
+      "path": "/oil-changes",
+      "auth": true,
+      "minPermission": 1
+    },
+    {
+      "name": "oil-changes-new",
+      "path": "/oil-changes/new",
+      "auth": true,
+      "minPermission": 1
+    },
+    {
+      "name": "oil-change-edit",
+      "path": "/oil-changes/2/edit",
+      "template": "/oil-changes/:id/edit",
+      "unresolved": [
+        "id (oil change ID)"
+      ],
+      "auth": true,
+      "minPermission": 1,
+      "resolved_from": "GET list endpoint, 2026-08-29"
+    },
+    {
+      "name": "oil-change-history",
+      "path": "/oil-changes/car/%D9%81%20%D9%85%20%D8%B3%209247",
+      "template": "/oil-changes/car/:carId",
+      "unresolved": [
+        "carId (car number plate, URL-encoded)"
+      ],
+      "auth": true,
+      "minPermission": 1,
+      "resolved_from": "GET list endpoint, 2026-08-29"
+    },
+    {
+      "name": "service-invoices",
+      "path": "/service-invoices",
+      "auth": true,
+      "minPermission": 1
+    },
+    {
+      "name": "service-invoices-new",
+      "path": "/service-invoices/new",
+      "auth": true,
+      "minPermission": 1
+    },
+    {
+      "name": "service-invoice-details",
+      "path": "/service-invoices/321",
+      "template": "/service-invoices/:id",
+      "unresolved": [
+        "id (service invoice ID)"
+      ],
+      "auth": true,
+      "minPermission": 1,
+      "resolved_from": "GET list endpoint, 2026-08-29"
+    },
+    {
+      "name": "service-invoice-edit",
+      "path": "/service-invoices/321/edit",
+      "template": "/service-invoices/:id/edit",
+      "unresolved": [
+        "id (service invoice ID)"
+      ],
+      "auth": true,
+      "minPermission": 1,
+      "resolved_from": "GET list endpoint, 2026-08-29"
+    },
+    {
+      "name": "trucks",
+      "path": "/trucks",
+      "auth": true,
+      "minPermission": 1,
+      "note": "Placeholder page."
+    },
+    {
+      "name": "cars",
+      "path": "/cars",
+      "auth": true,
+      "minPermission": 1
+    },
+    {
+      "name": "tires",
+      "path": "/tires",
+      "auth": true,
+      "minPermission": 4
+    },
+    {
+      "name": "tablets",
+      "path": "/tablets",
+      "auth": true,
+      "minPermission": 1,
+      "note": "Placeholder page."
+    },
+    {
+      "name": "speed-violations",
+      "path": "/speed-violations",
+      "auth": true,
+      "minPermission": 1,
+      "note": "Placeholder page."
+    },
+    {
+      "name": "drivers",
+      "path": "/drivers",
+      "auth": true,
+      "minPermission": 1
+    },
+    {
+      "name": "driver-detail",
+      "path": "/drivers/1",
+      "template": "/drivers/:id",
+      "unresolved": [
+        "id (driver ID)"
+      ],
+      "auth": true,
+      "minPermission": 1,
+      "resolved_from": "GET list endpoint, 2026-08-29"
+    },
+    {
+      "name": "driver-expenses",
+      "path": "/drivers/1/expenses",
+      "template": "/drivers/:id/expenses",
+      "unresolved": [
+        "id (driver ID)"
+      ],
+      "auth": true,
+      "minPermission": 1,
+      "resolved_from": "GET list endpoint, 2026-08-29"
+    },
+    {
+      "name": "driver-expenses-new",
+      "path": "/drivers/1/expenses/new",
+      "template": "/drivers/:id/expenses/new",
+      "unresolved": [
+        "id (driver ID)"
+      ],
+      "auth": true,
+      "minPermission": 3,
+      "resolved_from": "GET list endpoint, 2026-08-29"
+    },
+    {
+      "name": "driver-loans",
+      "path": "/drivers/1/loans",
+      "template": "/drivers/:id/loans",
+      "unresolved": [
+        "id (driver ID)"
+      ],
+      "auth": true,
+      "minPermission": 1,
+      "resolved_from": "GET list endpoint, 2026-08-29"
+    },
+    {
+      "name": "driver-loans-new",
+      "path": "/drivers/1/loans/new",
+      "template": "/drivers/:id/loans/new",
+      "unresolved": [
+        "id (driver ID)"
+      ],
+      "auth": true,
+      "minPermission": 3,
+      "resolved_from": "GET list endpoint, 2026-08-29"
+    },
+    {
+      "name": "vendors",
+      "path": "/vendors",
+      "auth": true,
+      "minPermission": 1,
+      "note": "Placeholder page."
+    },
+    {
+      "name": "fleet-expenses",
+      "path": "/fleet-expenses",
+      "auth": true,
+      "minPermission": 4
+    },
+    {
+      "name": "fleet-expenses-messages",
+      "path": "/fleet-expenses/messages",
+      "auth": true,
+      "minPermission": 4
+    },
+    {
+      "name": "fleet-expenses-review-redirect",
+      "path": "/fleet-expenses/review",
+      "auth": true,
+      "minPermission": 4,
+      "note": "<Navigate to=/fleet-expenses/messages replace>."
+    },
+    {
+      "name": "fleet-expenses-new",
+      "path": "/fleet-expenses/new",
+      "auth": true,
+      "minPermission": 4
+    },
+    {
+      "name": "fleet-expense-edit",
+      "path": "/fleet-expenses/527/edit",
+      "template": "/fleet-expenses/:id/edit",
+      "unresolved": [
+        "id (transaction ID)"
+      ],
+      "auth": true,
+      "minPermission": 4,
+      "resolved_from": "GET list endpoint, 2026-08-29"
+    },
+    {
+      "name": "fee-mappings",
+      "path": "/fee-mappings",
+      "auth": true,
+      "minPermission": 3
+    },
+    {
+      "name": "etit",
+      "path": "/etit",
+      "auth": true,
+      "minPermission": 1,
+      "note": "Live tracking; polls continuously, so networkidle may never settle."
+    },
+    {
+      "name": "zones",
+      "path": "/zones",
+      "auth": true,
+      "minPermission": 3
+    },
+    {
+      "name": "locations",
+      "path": "/locations",
+      "auth": true,
+      "minPermission": 3
+    },
+    {
+      "name": "trip-audit",
+      "path": "/trip-audit",
+      "auth": true,
+      "minPermission": 3
+    },
+    {
+      "name": "trip-replay",
+      "path": "/trip-audit/31562/replay",
+      "template": "/trip-audit/:id/replay",
+      "unresolved": [
+        "id (trip audit ID)"
+      ],
+      "auth": true,
+      "minPermission": 3,
+      "note": "Full-screen replay takeover.",
+      "resolved_from": "GET list endpoint, 2026-08-29"
+    },
+    {
+      "name": "users",
+      "path": "/users",
+      "auth": true,
+      "minPermission": 3
+    },
+    {
+      "name": "logs",
+      "path": "/logs",
+      "auth": true,
+      "minPermission": 4,
+      "note": "Placeholder page."
+    },
+    {
+      "name": "settings",
+      "path": "/settings",
+      "auth": true,
+      "minPermission": 1
+    }
+  ]
+}

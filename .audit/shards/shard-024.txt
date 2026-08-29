@@ -1,0 +1,9 @@
+# shard-024  loc=2383  files=7
+# groups: pages/trip-replay, widgets/trip-replay-hud
+268	src/pages/trip-replay/playback-core.ts
+369	src/pages/trip-replay/replay-engine.ts
+646	src/pages/trip-replay/replay-model.ts
+642	src/pages/trip-replay/trip-replay.tsx
+159	src/pages/trip-replay/use-trip-playback-history.ts
+2	src/widgets/trip-replay-hud/index.ts
+297	src/widgets/trip-replay-hud/trip-replay-hud.tsx

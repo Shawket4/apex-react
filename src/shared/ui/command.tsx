@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { Command as CommandPrimitive } from 'cmdk';
 import { Search } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/shared/lib/cn';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from './dialog';
 
@@ -23,19 +24,25 @@ interface CommandDialogProps extends React.ComponentProps<typeof Dialog> {
   children: React.ReactNode;
 }
 
-const CommandDialog = ({ children, ...props }: CommandDialogProps) => (
+const CommandDialog = ({ children, ...props }: CommandDialogProps) => {
+  const { t } = useTranslation();
+  return (
   <Dialog {...props}>
     <DialogContent className="overflow-hidden p-0 shadow-lg">
-      <DialogTitle className="sr-only">Command Palette</DialogTitle>
+      <DialogTitle className="sr-only">{t('commandPalette.title')}</DialogTitle>
       <DialogDescription className="sr-only">
-        Search for actions, drivers, and pages.
+        {t('commandPalette.description')}
       </DialogDescription>
-      <Command className="[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-muted-foreground [&_[cmdk-group]]:px-2 [&_[cmdk-input-wrapper]_svg]:h-5 [&_[cmdk-input-wrapper]_svg]:w-5 [&_[cmdk-input]]:h-12 [&_[cmdk-item]]:px-2 [&_[cmdk-item]]:py-3 [&_[cmdk-item]_svg]:h-5 [&_[cmdk-item]_svg]:w-5">
+      {/* Item padding, input height and item icon size are owned by the
+          palette widget's own classes; descendant rules here would out-rank
+          them by specificity, so only group chrome and the search icon are set. */}
+      <Command className="[&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:text-muted-foreground [&_[cmdk-group]]:px-2 [&_[cmdk-input-wrapper]_svg]:h-5 [&_[cmdk-input-wrapper]_svg]:w-5">
         {children}
       </Command>
     </DialogContent>
   </Dialog>
-);
+  );
+};
 
 const CommandInput = React.forwardRef<
   React.ElementRef<typeof CommandPrimitive.Input>,

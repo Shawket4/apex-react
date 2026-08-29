@@ -18,6 +18,9 @@
     "createSuccess": "تم الإنشاء بنجاح",
     "confirm": "تأكيد",
     "close": "إغلاق",
+    "openMenu": "فتح القائمة",
+    "expandSidebar": "توسيع الشريط الجانبي",
+    "collapseSidebar": "طي الشريط الجانبي",
     "exit": "خروج",
     "back": "رجوع",
     "actions": "إجراءات",
@@ -1121,6 +1124,8 @@
     }
   },
   "commandPalette": {
+    "title": "لوحة الأوامر",
+    "description": "ابحث عن الإجراءات والسائقين والصفحات.",
     "quickAddTrip": "إضافة رحلة سريعة",
     "selectCompany": "اختر الشركة",
     "goBack": "للرجوع",

@@ -18,6 +18,9 @@
     "createSuccess": "Created successfully",
     "confirm": "Confirm",
     "close": "Close",
+    "openMenu": "Open menu",
+    "expandSidebar": "Expand sidebar",
+    "collapseSidebar": "Collapse sidebar",
     "exit": "Exit",
     "back": "Back",
     "actions": "Actions",
@@ -1121,6 +1124,8 @@
     }
   },
   "commandPalette": {
+    "title": "Command palette",
+    "description": "Search for actions, drivers, and pages.",
     "quickAddTrip": "Quick Add Trip",
     "selectCompany": "Select Company",
     "goBack": "to go back",

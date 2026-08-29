@@ -1,0 +1,11 @@
+# shard-011  loc=2480  files=9
+# groups: widgets/fleet-expenses-table, entities/fuel-event, widgets/fuel-event-form
+243	src/widgets/fleet-expenses-table/cash-in-review.tsx
+657	src/widgets/fleet-expenses-table/ledger-list.tsx
+320	src/widgets/fleet-expenses-table/party-picker.tsx
+481	src/widgets/fleet-expenses-table/split-editor.tsx
+47	src/entities/fuel-event/api.ts
+16	src/entities/fuel-event/defaults.ts
+105	src/entities/fuel-event/queries.ts
+115	src/entities/fuel-event/schemas.ts
+496	src/widgets/fuel-event-form/fuel-event-form.tsx

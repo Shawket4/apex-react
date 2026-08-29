@@ -1,0 +1,1433 @@
+
+Running 46 tests using 1 worker
+
+  ✘   1 [chromium] › e2e/visual.spec.ts:82:5 › public routes › login (1.9s)
+  ✘   2 [chromium] › e2e/visual.spec.ts:82:5 › public routes › not-found (2.4s)
+  ✘   3 [chromium] › e2e/visual.spec.ts:82:5 › public routes › not-found-catchall (2.1s)
+  ✘   4 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › dashboard (2.8s)
+  ✘   5 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › fuel-events (2.8s)
+  ✘   6 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › fuel-events-new (2.3s)
+  ✘   7 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › fuel-event-details (2.2s)
+  ✘   8 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › fuel-event-edit (2.4s)
+  ✘   9 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › trips (2.7s)
+  ✘  10 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › trips-new (1.9s)
+  ✘  11 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › trips-multi-container-edit (2.6s)
+  ✘  12 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › trips-parent-route-summary (2.9s)
+  ✘  13 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › oil-changes (3.0s)
+  ✘  14 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › oil-changes-new (2.5s)
+  ✘  15 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › oil-change-edit (2.5s)
+  ✘  16 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › oil-change-history (2.5s)
+  ✘  17 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › service-invoices (2.6s)
+  ✘  18 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › service-invoices-new (2.5s)
+  ✘  19 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › service-invoice-details (2.7s)
+  ✘  20 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › service-invoice-edit (2.6s)
+  ✘  21 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › trucks (2.3s)
+  ✘  22 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › cars (2.7s)
+  ✘  23 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › tires (2.0s)
+  ✘  24 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › tablets (2.3s)
+  ✘  25 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › speed-violations (2.3s)
+  ✘  26 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › drivers (2.6s)
+  ✘  27 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › driver-detail (2.2s)
+  ✘  28 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › driver-expenses (3.2s)
+  ✘  29 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › driver-expenses-new (2.2s)
+  ✘  30 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › driver-loans (3.0s)
+  ✘  31 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › driver-loans-new (2.2s)
+  ✘  32 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › vendors (2.4s)
+  ✘  33 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › fleet-expenses (3.5s)
+  ✘  34 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › fleet-expenses-messages (3.0s)
+  ✘  35 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › fleet-expenses-review-redirect (2.8s)
+  ✘  36 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › fleet-expenses-new (2.3s)
+  ✘  37 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › fleet-expense-edit (2.4s)
+  ✘  38 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › fee-mappings (3.0s)
+  ✘  39 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › etit (2.9s)
+  ✘  40 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › zones (2.1s)
+  ✘  41 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › locations (2.8s)
+  ✘  42 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › trip-audit (2.2s)
+  ✘  43 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › trip-replay (2.8s)
+  ✘  44 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › users (2.3s)
+  ✘  45 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › logs (2.2s)
+  ✘  46 [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › settings (2.1s)
+
+
+  1) [chromium] › e2e/visual.spec.ts:82:5 › public routes › login ──────────────────────────────────
+
+    Error: A snapshot doesn't exist at /Users/shawket/React/apex-react/e2e/__screenshots__/chromium/login.png, writing actual.
+
+      69 |   }
+      70 |   await expandViewportToContent(page);
+    > 71 |   await expect(page).toHaveScreenshot(`${route.name}.png`, {
+         |   ^
+      72 |     fullPage: true,
+      73 |     maxDiffPixelRatio: 0.01,
+      74 |   });
+        at screenshotRoute (/Users/shawket/React/apex-react/e2e/visual.spec.ts:71:3)
+        at /Users/shawket/React/apex-react/e2e/visual.spec.ts:84:7
+
+    attachment #1: login (image/png) ───────────────────────────────────────────────────────────────
+    Expected: e2e/__screenshots__/chromium/login.png
+    Received: e2e/test-results/visual-public-routes-login-chromium/login-actual.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: e2e/test-results/visual-public-routes-login-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    e2e/test-results/visual-public-routes-login-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace e2e/test-results/visual-public-routes-login-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [chromium] › e2e/visual.spec.ts:82:5 › public routes › not-found ──────────────────────────────
+
+    Error: A snapshot doesn't exist at /Users/shawket/React/apex-react/e2e/__screenshots__/chromium/not-found.png, writing actual.
+
+      69 |   }
+      70 |   await expandViewportToContent(page);
+    > 71 |   await expect(page).toHaveScreenshot(`${route.name}.png`, {
+         |   ^
+      72 |     fullPage: true,
+      73 |     maxDiffPixelRatio: 0.01,
+      74 |   });
+        at screenshotRoute (/Users/shawket/React/apex-react/e2e/visual.spec.ts:71:3)
+        at /Users/shawket/React/apex-react/e2e/visual.spec.ts:84:7
+
+    attachment #1: not-found (image/png) ───────────────────────────────────────────────────────────
+    Expected: e2e/__screenshots__/chromium/not-found.png
+    Received: e2e/test-results/visual-public-routes-not-found-chromium/not-found-actual.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: e2e/test-results/visual-public-routes-not-found-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    e2e/test-results/visual-public-routes-not-found-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace e2e/test-results/visual-public-routes-not-found-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) [chromium] › e2e/visual.spec.ts:82:5 › public routes › not-found-catchall ─────────────────────
+
+    Error: A snapshot doesn't exist at /Users/shawket/React/apex-react/e2e/__screenshots__/chromium/not-found-catchall.png, writing actual.
+
+      69 |   }
+      70 |   await expandViewportToContent(page);
+    > 71 |   await expect(page).toHaveScreenshot(`${route.name}.png`, {
+         |   ^
+      72 |     fullPage: true,
+      73 |     maxDiffPixelRatio: 0.01,
+      74 |   });
+        at screenshotRoute (/Users/shawket/React/apex-react/e2e/visual.spec.ts:71:3)
+        at /Users/shawket/React/apex-react/e2e/visual.spec.ts:84:7
+
+    attachment #1: not-found-catchall (image/png) ──────────────────────────────────────────────────
+    Expected: e2e/__screenshots__/chromium/not-found-catchall.png
+    Received: e2e/test-results/visual-public-routes-not-found-catchall-chromium/not-found-catchall-actual.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: e2e/test-results/visual-public-routes-not-found-catchall-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    e2e/test-results/visual-public-routes-not-found-catchall-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace e2e/test-results/visual-public-routes-not-found-catchall-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4) [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › dashboard ───────────────────────
+
+    Error: A snapshot doesn't exist at /Users/shawket/React/apex-react/e2e/__screenshots__/chromium/dashboard.png, writing actual.
+
+      69 |   }
+      70 |   await expandViewportToContent(page);
+    > 71 |   await expect(page).toHaveScreenshot(`${route.name}.png`, {
+         |   ^
+      72 |     fullPage: true,
+      73 |     maxDiffPixelRatio: 0.01,
+      74 |   });
+        at screenshotRoute (/Users/shawket/React/apex-react/e2e/visual.spec.ts:71:3)
+        at /Users/shawket/React/apex-react/e2e/visual.spec.ts:93:7
+
+    attachment #1: dashboard (image/png) ───────────────────────────────────────────────────────────
+    Expected: e2e/__screenshots__/chromium/dashboard.png
+    Received: e2e/test-results/visual-authenticated-routes-dashboard-chromium/dashboard-actual.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: e2e/test-results/visual-authenticated-routes-dashboard-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    e2e/test-results/visual-authenticated-routes-dashboard-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace e2e/test-results/visual-authenticated-routes-dashboard-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  5) [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › fuel-events ─────────────────────
+
+    Error: A snapshot doesn't exist at /Users/shawket/React/apex-react/e2e/__screenshots__/chromium/fuel-events.png, writing actual.
+
+      69 |   }
+      70 |   await expandViewportToContent(page);
+    > 71 |   await expect(page).toHaveScreenshot(`${route.name}.png`, {
+         |   ^
+      72 |     fullPage: true,
+      73 |     maxDiffPixelRatio: 0.01,
+      74 |   });
+        at screenshotRoute (/Users/shawket/React/apex-react/e2e/visual.spec.ts:71:3)
+        at /Users/shawket/React/apex-react/e2e/visual.spec.ts:93:7
+
+    attachment #1: fuel-events (image/png) ─────────────────────────────────────────────────────────
+    Expected: e2e/__screenshots__/chromium/fuel-events.png
+    Received: e2e/test-results/visual-authenticated-routes-fuel-events-chromium/fuel-events-actual.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: e2e/test-results/visual-authenticated-routes-fuel-events-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    e2e/test-results/visual-authenticated-routes-fuel-events-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace e2e/test-results/visual-authenticated-routes-fuel-events-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  6) [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › fuel-events-new ─────────────────
+
+    Error: A snapshot doesn't exist at /Users/shawket/React/apex-react/e2e/__screenshots__/chromium/fuel-events-new.png, writing actual.
+
+      69 |   }
+      70 |   await expandViewportToContent(page);
+    > 71 |   await expect(page).toHaveScreenshot(`${route.name}.png`, {
+         |   ^
+      72 |     fullPage: true,
+      73 |     maxDiffPixelRatio: 0.01,
+      74 |   });
+        at screenshotRoute (/Users/shawket/React/apex-react/e2e/visual.spec.ts:71:3)
+        at /Users/shawket/React/apex-react/e2e/visual.spec.ts:93:7
+
+    attachment #1: fuel-events-new (image/png) ─────────────────────────────────────────────────────
+    Expected: e2e/__screenshots__/chromium/fuel-events-new.png
+    Received: e2e/test-results/visual-authenticated-routes-fuel-events-new-chromium/fuel-events-new-actual.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: e2e/test-results/visual-authenticated-routes-fuel-events-new-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    e2e/test-results/visual-authenticated-routes-fuel-events-new-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace e2e/test-results/visual-authenticated-routes-fuel-events-new-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  7) [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › fuel-event-details ──────────────
+
+    Error: A snapshot doesn't exist at /Users/shawket/React/apex-react/e2e/__screenshots__/chromium/fuel-event-details.png, writing actual.
+
+      69 |   }
+      70 |   await expandViewportToContent(page);
+    > 71 |   await expect(page).toHaveScreenshot(`${route.name}.png`, {
+         |   ^
+      72 |     fullPage: true,
+      73 |     maxDiffPixelRatio: 0.01,
+      74 |   });
+        at screenshotRoute (/Users/shawket/React/apex-react/e2e/visual.spec.ts:71:3)
+        at /Users/shawket/React/apex-react/e2e/visual.spec.ts:93:7
+
+    attachment #1: fuel-event-details (image/png) ──────────────────────────────────────────────────
+    Expected: e2e/__screenshots__/chromium/fuel-event-details.png
+    Received: e2e/test-results/visual-authenticated-routes-fuel-event-details-chromium/fuel-event-details-actual.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: e2e/test-results/visual-authenticated-routes-fuel-event-details-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    e2e/test-results/visual-authenticated-routes-fuel-event-details-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace e2e/test-results/visual-authenticated-routes-fuel-event-details-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  8) [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › fuel-event-edit ─────────────────
+
+    Error: A snapshot doesn't exist at /Users/shawket/React/apex-react/e2e/__screenshots__/chromium/fuel-event-edit.png, writing actual.
+
+      69 |   }
+      70 |   await expandViewportToContent(page);
+    > 71 |   await expect(page).toHaveScreenshot(`${route.name}.png`, {
+         |   ^
+      72 |     fullPage: true,
+      73 |     maxDiffPixelRatio: 0.01,
+      74 |   });
+        at screenshotRoute (/Users/shawket/React/apex-react/e2e/visual.spec.ts:71:3)
+        at /Users/shawket/React/apex-react/e2e/visual.spec.ts:93:7
+
+    attachment #1: fuel-event-edit (image/png) ─────────────────────────────────────────────────────
+    Expected: e2e/__screenshots__/chromium/fuel-event-edit.png
+    Received: e2e/test-results/visual-authenticated-routes-fuel-event-edit-chromium/fuel-event-edit-actual.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: e2e/test-results/visual-authenticated-routes-fuel-event-edit-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    e2e/test-results/visual-authenticated-routes-fuel-event-edit-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace e2e/test-results/visual-authenticated-routes-fuel-event-edit-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  9) [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › trips ───────────────────────────
+
+    Error: A snapshot doesn't exist at /Users/shawket/React/apex-react/e2e/__screenshots__/chromium/trips.png, writing actual.
+
+      69 |   }
+      70 |   await expandViewportToContent(page);
+    > 71 |   await expect(page).toHaveScreenshot(`${route.name}.png`, {
+         |   ^
+      72 |     fullPage: true,
+      73 |     maxDiffPixelRatio: 0.01,
+      74 |   });
+        at screenshotRoute (/Users/shawket/React/apex-react/e2e/visual.spec.ts:71:3)
+        at /Users/shawket/React/apex-react/e2e/visual.spec.ts:93:7
+
+    attachment #1: trips (image/png) ───────────────────────────────────────────────────────────────
+    Expected: e2e/__screenshots__/chromium/trips.png
+    Received: e2e/test-results/visual-authenticated-routes-trips-chromium/trips-actual.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: e2e/test-results/visual-authenticated-routes-trips-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    e2e/test-results/visual-authenticated-routes-trips-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace e2e/test-results/visual-authenticated-routes-trips-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  10) [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › trips-new ──────────────────────
+
+    Error: A snapshot doesn't exist at /Users/shawket/React/apex-react/e2e/__screenshots__/chromium/trips-new.png, writing actual.
+
+      69 |   }
+      70 |   await expandViewportToContent(page);
+    > 71 |   await expect(page).toHaveScreenshot(`${route.name}.png`, {
+         |   ^
+      72 |     fullPage: true,
+      73 |     maxDiffPixelRatio: 0.01,
+      74 |   });
+        at screenshotRoute (/Users/shawket/React/apex-react/e2e/visual.spec.ts:71:3)
+        at /Users/shawket/React/apex-react/e2e/visual.spec.ts:93:7
+
+    attachment #1: trips-new (image/png) ───────────────────────────────────────────────────────────
+    Expected: e2e/__screenshots__/chromium/trips-new.png
+    Received: e2e/test-results/visual-authenticated-routes-trips-new-chromium/trips-new-actual.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: e2e/test-results/visual-authenticated-routes-trips-new-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    e2e/test-results/visual-authenticated-routes-trips-new-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace e2e/test-results/visual-authenticated-routes-trips-new-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  11) [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › trips-multi-container-edit ─────
+
+    Error: A snapshot doesn't exist at /Users/shawket/React/apex-react/e2e/__screenshots__/chromium/trips-multi-container-edit.png, writing actual.
+
+      69 |   }
+      70 |   await expandViewportToContent(page);
+    > 71 |   await expect(page).toHaveScreenshot(`${route.name}.png`, {
+         |   ^
+      72 |     fullPage: true,
+      73 |     maxDiffPixelRatio: 0.01,
+      74 |   });
+        at screenshotRoute (/Users/shawket/React/apex-react/e2e/visual.spec.ts:71:3)
+        at /Users/shawket/React/apex-react/e2e/visual.spec.ts:93:7
+
+    attachment #1: trips-multi-container-edit (image/png) ──────────────────────────────────────────
+    Expected: e2e/__screenshots__/chromium/trips-multi-container-edit.png
+    Received: e2e/test-results/visual-authenticated-routes-trips-multi-container-edit-chromium/trips-multi-container-edit-actual.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: e2e/test-results/visual-authenticated-routes-trips-multi-container-edit-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    e2e/test-results/visual-authenticated-routes-trips-multi-container-edit-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace e2e/test-results/visual-authenticated-routes-trips-multi-container-edit-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  12) [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › trips-parent-route-summary ─────
+
+    Error: A snapshot doesn't exist at /Users/shawket/React/apex-react/e2e/__screenshots__/chromium/trips-parent-route-summary.png, writing actual.
+
+      69 |   }
+      70 |   await expandViewportToContent(page);
+    > 71 |   await expect(page).toHaveScreenshot(`${route.name}.png`, {
+         |   ^
+      72 |     fullPage: true,
+      73 |     maxDiffPixelRatio: 0.01,
+      74 |   });
+        at screenshotRoute (/Users/shawket/React/apex-react/e2e/visual.spec.ts:71:3)
+        at /Users/shawket/React/apex-react/e2e/visual.spec.ts:93:7
+
+    attachment #1: trips-parent-route-summary (image/png) ──────────────────────────────────────────
+    Expected: e2e/__screenshots__/chromium/trips-parent-route-summary.png
+    Received: e2e/test-results/visual-authenticated-routes-trips-parent-route-summary-chromium/trips-parent-route-summary-actual.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: e2e/test-results/visual-authenticated-routes-trips-parent-route-summary-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    e2e/test-results/visual-authenticated-routes-trips-parent-route-summary-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace e2e/test-results/visual-authenticated-routes-trips-parent-route-summary-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  13) [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › oil-changes ────────────────────
+
+    Error: A snapshot doesn't exist at /Users/shawket/React/apex-react/e2e/__screenshots__/chromium/oil-changes.png, writing actual.
+
+      69 |   }
+      70 |   await expandViewportToContent(page);
+    > 71 |   await expect(page).toHaveScreenshot(`${route.name}.png`, {
+         |   ^
+      72 |     fullPage: true,
+      73 |     maxDiffPixelRatio: 0.01,
+      74 |   });
+        at screenshotRoute (/Users/shawket/React/apex-react/e2e/visual.spec.ts:71:3)
+        at /Users/shawket/React/apex-react/e2e/visual.spec.ts:93:7
+
+    attachment #1: oil-changes (image/png) ─────────────────────────────────────────────────────────
+    Expected: e2e/__screenshots__/chromium/oil-changes.png
+    Received: e2e/test-results/visual-authenticated-routes-oil-changes-chromium/oil-changes-actual.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: e2e/test-results/visual-authenticated-routes-oil-changes-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    e2e/test-results/visual-authenticated-routes-oil-changes-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace e2e/test-results/visual-authenticated-routes-oil-changes-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  14) [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › oil-changes-new ────────────────
+
+    Error: A snapshot doesn't exist at /Users/shawket/React/apex-react/e2e/__screenshots__/chromium/oil-changes-new.png, writing actual.
+
+      69 |   }
+      70 |   await expandViewportToContent(page);
+    > 71 |   await expect(page).toHaveScreenshot(`${route.name}.png`, {
+         |   ^
+      72 |     fullPage: true,
+      73 |     maxDiffPixelRatio: 0.01,
+      74 |   });
+        at screenshotRoute (/Users/shawket/React/apex-react/e2e/visual.spec.ts:71:3)
+        at /Users/shawket/React/apex-react/e2e/visual.spec.ts:93:7
+
+    attachment #1: oil-changes-new (image/png) ─────────────────────────────────────────────────────
+    Expected: e2e/__screenshots__/chromium/oil-changes-new.png
+    Received: e2e/test-results/visual-authenticated-routes-oil-changes-new-chromium/oil-changes-new-actual.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: e2e/test-results/visual-authenticated-routes-oil-changes-new-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    e2e/test-results/visual-authenticated-routes-oil-changes-new-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace e2e/test-results/visual-authenticated-routes-oil-changes-new-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  15) [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › oil-change-edit ────────────────
+
+    Error: A snapshot doesn't exist at /Users/shawket/React/apex-react/e2e/__screenshots__/chromium/oil-change-edit.png, writing actual.
+
+      69 |   }
+      70 |   await expandViewportToContent(page);
+    > 71 |   await expect(page).toHaveScreenshot(`${route.name}.png`, {
+         |   ^
+      72 |     fullPage: true,
+      73 |     maxDiffPixelRatio: 0.01,
+      74 |   });
+        at screenshotRoute (/Users/shawket/React/apex-react/e2e/visual.spec.ts:71:3)
+        at /Users/shawket/React/apex-react/e2e/visual.spec.ts:93:7
+
+    attachment #1: oil-change-edit (image/png) ─────────────────────────────────────────────────────
+    Expected: e2e/__screenshots__/chromium/oil-change-edit.png
+    Received: e2e/test-results/visual-authenticated-routes-oil-change-edit-chromium/oil-change-edit-actual.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: e2e/test-results/visual-authenticated-routes-oil-change-edit-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    e2e/test-results/visual-authenticated-routes-oil-change-edit-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace e2e/test-results/visual-authenticated-routes-oil-change-edit-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  16) [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › oil-change-history ─────────────
+
+    Error: A snapshot doesn't exist at /Users/shawket/React/apex-react/e2e/__screenshots__/chromium/oil-change-history.png, writing actual.
+
+      69 |   }
+      70 |   await expandViewportToContent(page);
+    > 71 |   await expect(page).toHaveScreenshot(`${route.name}.png`, {
+         |   ^
+      72 |     fullPage: true,
+      73 |     maxDiffPixelRatio: 0.01,
+      74 |   });
+        at screenshotRoute (/Users/shawket/React/apex-react/e2e/visual.spec.ts:71:3)
+        at /Users/shawket/React/apex-react/e2e/visual.spec.ts:93:7
+
+    attachment #1: oil-change-history (image/png) ──────────────────────────────────────────────────
+    Expected: e2e/__screenshots__/chromium/oil-change-history.png
+    Received: e2e/test-results/visual-authenticated-routes-oil-change-history-chromium/oil-change-history-actual.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: e2e/test-results/visual-authenticated-routes-oil-change-history-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    e2e/test-results/visual-authenticated-routes-oil-change-history-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace e2e/test-results/visual-authenticated-routes-oil-change-history-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  17) [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › service-invoices ───────────────
+
+    Error: A snapshot doesn't exist at /Users/shawket/React/apex-react/e2e/__screenshots__/chromium/service-invoices.png, writing actual.
+
+      69 |   }
+      70 |   await expandViewportToContent(page);
+    > 71 |   await expect(page).toHaveScreenshot(`${route.name}.png`, {
+         |   ^
+      72 |     fullPage: true,
+      73 |     maxDiffPixelRatio: 0.01,
+      74 |   });
+        at screenshotRoute (/Users/shawket/React/apex-react/e2e/visual.spec.ts:71:3)
+        at /Users/shawket/React/apex-react/e2e/visual.spec.ts:93:7
+
+    attachment #1: service-invoices (image/png) ────────────────────────────────────────────────────
+    Expected: e2e/__screenshots__/chromium/service-invoices.png
+    Received: e2e/test-results/visual-authenticated-routes-service-invoices-chromium/service-invoices-actual.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: e2e/test-results/visual-authenticated-routes-service-invoices-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    e2e/test-results/visual-authenticated-routes-service-invoices-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace e2e/test-results/visual-authenticated-routes-service-invoices-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  18) [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › service-invoices-new ───────────
+
+    Error: A snapshot doesn't exist at /Users/shawket/React/apex-react/e2e/__screenshots__/chromium/service-invoices-new.png, writing actual.
+
+      69 |   }
+      70 |   await expandViewportToContent(page);
+    > 71 |   await expect(page).toHaveScreenshot(`${route.name}.png`, {
+         |   ^
+      72 |     fullPage: true,
+      73 |     maxDiffPixelRatio: 0.01,
+      74 |   });
+        at screenshotRoute (/Users/shawket/React/apex-react/e2e/visual.spec.ts:71:3)
+        at /Users/shawket/React/apex-react/e2e/visual.spec.ts:93:7
+
+    attachment #1: service-invoices-new (image/png) ────────────────────────────────────────────────
+    Expected: e2e/__screenshots__/chromium/service-invoices-new.png
+    Received: e2e/test-results/visual-authenticated-routes-service-invoices-new-chromium/service-invoices-new-actual.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: e2e/test-results/visual-authenticated-routes-service-invoices-new-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    e2e/test-results/visual-authenticated-routes-service-invoices-new-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace e2e/test-results/visual-authenticated-routes-service-invoices-new-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  19) [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › service-invoice-details ────────
+
+    Error: A snapshot doesn't exist at /Users/shawket/React/apex-react/e2e/__screenshots__/chromium/service-invoice-details.png, writing actual.
+
+      69 |   }
+      70 |   await expandViewportToContent(page);
+    > 71 |   await expect(page).toHaveScreenshot(`${route.name}.png`, {
+         |   ^
+      72 |     fullPage: true,
+      73 |     maxDiffPixelRatio: 0.01,
+      74 |   });
+        at screenshotRoute (/Users/shawket/React/apex-react/e2e/visual.spec.ts:71:3)
+        at /Users/shawket/React/apex-react/e2e/visual.spec.ts:93:7
+
+    attachment #1: service-invoice-details (image/png) ─────────────────────────────────────────────
+    Expected: e2e/__screenshots__/chromium/service-invoice-details.png
+    Received: e2e/test-results/visual-authenticated-routes-service-invoice-details-chromium/service-invoice-details-actual.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: e2e/test-results/visual-authenticated-routes-service-invoice-details-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    e2e/test-results/visual-authenticated-routes-service-invoice-details-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace e2e/test-results/visual-authenticated-routes-service-invoice-details-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  20) [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › service-invoice-edit ───────────
+
+    Error: A snapshot doesn't exist at /Users/shawket/React/apex-react/e2e/__screenshots__/chromium/service-invoice-edit.png, writing actual.
+
+      69 |   }
+      70 |   await expandViewportToContent(page);
+    > 71 |   await expect(page).toHaveScreenshot(`${route.name}.png`, {
+         |   ^
+      72 |     fullPage: true,
+      73 |     maxDiffPixelRatio: 0.01,
+      74 |   });
+        at screenshotRoute (/Users/shawket/React/apex-react/e2e/visual.spec.ts:71:3)
+        at /Users/shawket/React/apex-react/e2e/visual.spec.ts:93:7
+
+    attachment #1: service-invoice-edit (image/png) ────────────────────────────────────────────────
+    Expected: e2e/__screenshots__/chromium/service-invoice-edit.png
+    Received: e2e/test-results/visual-authenticated-routes-service-invoice-edit-chromium/service-invoice-edit-actual.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: e2e/test-results/visual-authenticated-routes-service-invoice-edit-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    e2e/test-results/visual-authenticated-routes-service-invoice-edit-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace e2e/test-results/visual-authenticated-routes-service-invoice-edit-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  21) [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › trucks ─────────────────────────
+
+    Error: A snapshot doesn't exist at /Users/shawket/React/apex-react/e2e/__screenshots__/chromium/trucks.png, writing actual.
+
+      69 |   }
+      70 |   await expandViewportToContent(page);
+    > 71 |   await expect(page).toHaveScreenshot(`${route.name}.png`, {
+         |   ^
+      72 |     fullPage: true,
+      73 |     maxDiffPixelRatio: 0.01,
+      74 |   });
+        at screenshotRoute (/Users/shawket/React/apex-react/e2e/visual.spec.ts:71:3)
+        at /Users/shawket/React/apex-react/e2e/visual.spec.ts:93:7
+
+    attachment #1: trucks (image/png) ──────────────────────────────────────────────────────────────
+    Expected: e2e/__screenshots__/chromium/trucks.png
+    Received: e2e/test-results/visual-authenticated-routes-trucks-chromium/trucks-actual.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: e2e/test-results/visual-authenticated-routes-trucks-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    e2e/test-results/visual-authenticated-routes-trucks-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace e2e/test-results/visual-authenticated-routes-trucks-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  22) [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › cars ───────────────────────────
+
+    Error: A snapshot doesn't exist at /Users/shawket/React/apex-react/e2e/__screenshots__/chromium/cars.png, writing actual.
+
+      69 |   }
+      70 |   await expandViewportToContent(page);
+    > 71 |   await expect(page).toHaveScreenshot(`${route.name}.png`, {
+         |   ^
+      72 |     fullPage: true,
+      73 |     maxDiffPixelRatio: 0.01,
+      74 |   });
+        at screenshotRoute (/Users/shawket/React/apex-react/e2e/visual.spec.ts:71:3)
+        at /Users/shawket/React/apex-react/e2e/visual.spec.ts:93:7
+
+    attachment #1: cars (image/png) ────────────────────────────────────────────────────────────────
+    Expected: e2e/__screenshots__/chromium/cars.png
+    Received: e2e/test-results/visual-authenticated-routes-cars-chromium/cars-actual.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: e2e/test-results/visual-authenticated-routes-cars-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    e2e/test-results/visual-authenticated-routes-cars-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace e2e/test-results/visual-authenticated-routes-cars-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  23) [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › tires ──────────────────────────
+
+    Error: A snapshot doesn't exist at /Users/shawket/React/apex-react/e2e/__screenshots__/chromium/tires.png, writing actual.
+
+      69 |   }
+      70 |   await expandViewportToContent(page);
+    > 71 |   await expect(page).toHaveScreenshot(`${route.name}.png`, {
+         |   ^
+      72 |     fullPage: true,
+      73 |     maxDiffPixelRatio: 0.01,
+      74 |   });
+        at screenshotRoute (/Users/shawket/React/apex-react/e2e/visual.spec.ts:71:3)
+        at /Users/shawket/React/apex-react/e2e/visual.spec.ts:93:7
+
+    attachment #1: tires (image/png) ───────────────────────────────────────────────────────────────
+    Expected: e2e/__screenshots__/chromium/tires.png
+    Received: e2e/test-results/visual-authenticated-routes-tires-chromium/tires-actual.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: e2e/test-results/visual-authenticated-routes-tires-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    e2e/test-results/visual-authenticated-routes-tires-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace e2e/test-results/visual-authenticated-routes-tires-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  24) [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › tablets ────────────────────────
+
+    Error: A snapshot doesn't exist at /Users/shawket/React/apex-react/e2e/__screenshots__/chromium/tablets.png, writing actual.
+
+      69 |   }
+      70 |   await expandViewportToContent(page);
+    > 71 |   await expect(page).toHaveScreenshot(`${route.name}.png`, {
+         |   ^
+      72 |     fullPage: true,
+      73 |     maxDiffPixelRatio: 0.01,
+      74 |   });
+        at screenshotRoute (/Users/shawket/React/apex-react/e2e/visual.spec.ts:71:3)
+        at /Users/shawket/React/apex-react/e2e/visual.spec.ts:93:7
+
+    attachment #1: tablets (image/png) ─────────────────────────────────────────────────────────────
+    Expected: e2e/__screenshots__/chromium/tablets.png
+    Received: e2e/test-results/visual-authenticated-routes-tablets-chromium/tablets-actual.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: e2e/test-results/visual-authenticated-routes-tablets-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    e2e/test-results/visual-authenticated-routes-tablets-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace e2e/test-results/visual-authenticated-routes-tablets-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  25) [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › speed-violations ───────────────
+
+    Error: A snapshot doesn't exist at /Users/shawket/React/apex-react/e2e/__screenshots__/chromium/speed-violations.png, writing actual.
+
+      69 |   }
+      70 |   await expandViewportToContent(page);
+    > 71 |   await expect(page).toHaveScreenshot(`${route.name}.png`, {
+         |   ^
+      72 |     fullPage: true,
+      73 |     maxDiffPixelRatio: 0.01,
+      74 |   });
+        at screenshotRoute (/Users/shawket/React/apex-react/e2e/visual.spec.ts:71:3)
+        at /Users/shawket/React/apex-react/e2e/visual.spec.ts:93:7
+
+    attachment #1: speed-violations (image/png) ────────────────────────────────────────────────────
+    Expected: e2e/__screenshots__/chromium/speed-violations.png
+    Received: e2e/test-results/visual-authenticated-routes-speed-violations-chromium/speed-violations-actual.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: e2e/test-results/visual-authenticated-routes-speed-violations-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    e2e/test-results/visual-authenticated-routes-speed-violations-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace e2e/test-results/visual-authenticated-routes-speed-violations-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  26) [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › drivers ────────────────────────
+
+    Error: A snapshot doesn't exist at /Users/shawket/React/apex-react/e2e/__screenshots__/chromium/drivers.png, writing actual.
+
+      69 |   }
+      70 |   await expandViewportToContent(page);
+    > 71 |   await expect(page).toHaveScreenshot(`${route.name}.png`, {
+         |   ^
+      72 |     fullPage: true,
+      73 |     maxDiffPixelRatio: 0.01,
+      74 |   });
+        at screenshotRoute (/Users/shawket/React/apex-react/e2e/visual.spec.ts:71:3)
+        at /Users/shawket/React/apex-react/e2e/visual.spec.ts:93:7
+
+    attachment #1: drivers (image/png) ─────────────────────────────────────────────────────────────
+    Expected: e2e/__screenshots__/chromium/drivers.png
+    Received: e2e/test-results/visual-authenticated-routes-drivers-chromium/drivers-actual.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: e2e/test-results/visual-authenticated-routes-drivers-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    e2e/test-results/visual-authenticated-routes-drivers-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace e2e/test-results/visual-authenticated-routes-drivers-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  27) [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › driver-detail ──────────────────
+
+    Error: A snapshot doesn't exist at /Users/shawket/React/apex-react/e2e/__screenshots__/chromium/driver-detail.png, writing actual.
+
+      69 |   }
+      70 |   await expandViewportToContent(page);
+    > 71 |   await expect(page).toHaveScreenshot(`${route.name}.png`, {
+         |   ^
+      72 |     fullPage: true,
+      73 |     maxDiffPixelRatio: 0.01,
+      74 |   });
+        at screenshotRoute (/Users/shawket/React/apex-react/e2e/visual.spec.ts:71:3)
+        at /Users/shawket/React/apex-react/e2e/visual.spec.ts:93:7
+
+    attachment #1: driver-detail (image/png) ───────────────────────────────────────────────────────
+    Expected: e2e/__screenshots__/chromium/driver-detail.png
+    Received: e2e/test-results/visual-authenticated-routes-driver-detail-chromium/driver-detail-actual.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: e2e/test-results/visual-authenticated-routes-driver-detail-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    e2e/test-results/visual-authenticated-routes-driver-detail-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace e2e/test-results/visual-authenticated-routes-driver-detail-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  28) [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › driver-expenses ────────────────
+
+    Error: A snapshot doesn't exist at /Users/shawket/React/apex-react/e2e/__screenshots__/chromium/driver-expenses.png, writing actual.
+
+      69 |   }
+      70 |   await expandViewportToContent(page);
+    > 71 |   await expect(page).toHaveScreenshot(`${route.name}.png`, {
+         |   ^
+      72 |     fullPage: true,
+      73 |     maxDiffPixelRatio: 0.01,
+      74 |   });
+        at screenshotRoute (/Users/shawket/React/apex-react/e2e/visual.spec.ts:71:3)
+        at /Users/shawket/React/apex-react/e2e/visual.spec.ts:93:7
+
+    attachment #1: driver-expenses (image/png) ─────────────────────────────────────────────────────
+    Expected: e2e/__screenshots__/chromium/driver-expenses.png
+    Received: e2e/test-results/visual-authenticated-routes-driver-expenses-chromium/driver-expenses-actual.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: e2e/test-results/visual-authenticated-routes-driver-expenses-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    e2e/test-results/visual-authenticated-routes-driver-expenses-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace e2e/test-results/visual-authenticated-routes-driver-expenses-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  29) [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › driver-expenses-new ────────────
+
+    Error: A snapshot doesn't exist at /Users/shawket/React/apex-react/e2e/__screenshots__/chromium/driver-expenses-new.png, writing actual.
+
+      69 |   }
+      70 |   await expandViewportToContent(page);
+    > 71 |   await expect(page).toHaveScreenshot(`${route.name}.png`, {
+         |   ^
+      72 |     fullPage: true,
+      73 |     maxDiffPixelRatio: 0.01,
+      74 |   });
+        at screenshotRoute (/Users/shawket/React/apex-react/e2e/visual.spec.ts:71:3)
+        at /Users/shawket/React/apex-react/e2e/visual.spec.ts:93:7
+
+    attachment #1: driver-expenses-new (image/png) ─────────────────────────────────────────────────
+    Expected: e2e/__screenshots__/chromium/driver-expenses-new.png
+    Received: e2e/test-results/visual-authenticated-routes-driver-expenses-new-chromium/driver-expenses-new-actual.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: e2e/test-results/visual-authenticated-routes-driver-expenses-new-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    e2e/test-results/visual-authenticated-routes-driver-expenses-new-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace e2e/test-results/visual-authenticated-routes-driver-expenses-new-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  30) [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › driver-loans ───────────────────
+
+    Error: A snapshot doesn't exist at /Users/shawket/React/apex-react/e2e/__screenshots__/chromium/driver-loans.png, writing actual.
+
+      69 |   }
+      70 |   await expandViewportToContent(page);
+    > 71 |   await expect(page).toHaveScreenshot(`${route.name}.png`, {
+         |   ^
+      72 |     fullPage: true,
+      73 |     maxDiffPixelRatio: 0.01,
+      74 |   });
+        at screenshotRoute (/Users/shawket/React/apex-react/e2e/visual.spec.ts:71:3)
+        at /Users/shawket/React/apex-react/e2e/visual.spec.ts:93:7
+
+    attachment #1: driver-loans (image/png) ────────────────────────────────────────────────────────
+    Expected: e2e/__screenshots__/chromium/driver-loans.png
+    Received: e2e/test-results/visual-authenticated-routes-driver-loans-chromium/driver-loans-actual.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: e2e/test-results/visual-authenticated-routes-driver-loans-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    e2e/test-results/visual-authenticated-routes-driver-loans-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace e2e/test-results/visual-authenticated-routes-driver-loans-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  31) [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › driver-loans-new ───────────────
+
+    Error: A snapshot doesn't exist at /Users/shawket/React/apex-react/e2e/__screenshots__/chromium/driver-loans-new.png, writing actual.
+
+      69 |   }
+      70 |   await expandViewportToContent(page);
+    > 71 |   await expect(page).toHaveScreenshot(`${route.name}.png`, {
+         |   ^
+      72 |     fullPage: true,
+      73 |     maxDiffPixelRatio: 0.01,
+      74 |   });
+        at screenshotRoute (/Users/shawket/React/apex-react/e2e/visual.spec.ts:71:3)
+        at /Users/shawket/React/apex-react/e2e/visual.spec.ts:93:7
+
+    attachment #1: driver-loans-new (image/png) ────────────────────────────────────────────────────
+    Expected: e2e/__screenshots__/chromium/driver-loans-new.png
+    Received: e2e/test-results/visual-authenticated-routes-driver-loans-new-chromium/driver-loans-new-actual.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: e2e/test-results/visual-authenticated-routes-driver-loans-new-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    e2e/test-results/visual-authenticated-routes-driver-loans-new-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace e2e/test-results/visual-authenticated-routes-driver-loans-new-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  32) [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › vendors ────────────────────────
+
+    Error: A snapshot doesn't exist at /Users/shawket/React/apex-react/e2e/__screenshots__/chromium/vendors.png, writing actual.
+
+      69 |   }
+      70 |   await expandViewportToContent(page);
+    > 71 |   await expect(page).toHaveScreenshot(`${route.name}.png`, {
+         |   ^
+      72 |     fullPage: true,
+      73 |     maxDiffPixelRatio: 0.01,
+      74 |   });
+        at screenshotRoute (/Users/shawket/React/apex-react/e2e/visual.spec.ts:71:3)
+        at /Users/shawket/React/apex-react/e2e/visual.spec.ts:93:7
+
+    attachment #1: vendors (image/png) ─────────────────────────────────────────────────────────────
+    Expected: e2e/__screenshots__/chromium/vendors.png
+    Received: e2e/test-results/visual-authenticated-routes-vendors-chromium/vendors-actual.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: e2e/test-results/visual-authenticated-routes-vendors-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    e2e/test-results/visual-authenticated-routes-vendors-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace e2e/test-results/visual-authenticated-routes-vendors-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  33) [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › fleet-expenses ─────────────────
+
+    Error: A snapshot doesn't exist at /Users/shawket/React/apex-react/e2e/__screenshots__/chromium/fleet-expenses.png, writing actual.
+
+      69 |   }
+      70 |   await expandViewportToContent(page);
+    > 71 |   await expect(page).toHaveScreenshot(`${route.name}.png`, {
+         |   ^
+      72 |     fullPage: true,
+      73 |     maxDiffPixelRatio: 0.01,
+      74 |   });
+        at screenshotRoute (/Users/shawket/React/apex-react/e2e/visual.spec.ts:71:3)
+        at /Users/shawket/React/apex-react/e2e/visual.spec.ts:93:7
+
+    attachment #1: fleet-expenses (image/png) ──────────────────────────────────────────────────────
+    Expected: e2e/__screenshots__/chromium/fleet-expenses.png
+    Received: e2e/test-results/visual-authenticated-routes-fleet-expenses-chromium/fleet-expenses-actual.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: e2e/test-results/visual-authenticated-routes-fleet-expenses-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    e2e/test-results/visual-authenticated-routes-fleet-expenses-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace e2e/test-results/visual-authenticated-routes-fleet-expenses-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  34) [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › fleet-expenses-messages ────────
+
+    Error: A snapshot doesn't exist at /Users/shawket/React/apex-react/e2e/__screenshots__/chromium/fleet-expenses-messages.png, writing actual.
+
+      69 |   }
+      70 |   await expandViewportToContent(page);
+    > 71 |   await expect(page).toHaveScreenshot(`${route.name}.png`, {
+         |   ^
+      72 |     fullPage: true,
+      73 |     maxDiffPixelRatio: 0.01,
+      74 |   });
+        at screenshotRoute (/Users/shawket/React/apex-react/e2e/visual.spec.ts:71:3)
+        at /Users/shawket/React/apex-react/e2e/visual.spec.ts:93:7
+
+    attachment #1: fleet-expenses-messages (image/png) ─────────────────────────────────────────────
+    Expected: e2e/__screenshots__/chromium/fleet-expenses-messages.png
+    Received: e2e/test-results/visual-authenticated-routes-fleet-expenses-messages-chromium/fleet-expenses-messages-actual.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: e2e/test-results/visual-authenticated-routes-fleet-expenses-messages-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    e2e/test-results/visual-authenticated-routes-fleet-expenses-messages-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace e2e/test-results/visual-authenticated-routes-fleet-expenses-messages-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  35) [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › fleet-expenses-review-redirect ─
+
+    Error: A snapshot doesn't exist at /Users/shawket/React/apex-react/e2e/__screenshots__/chromium/fleet-expenses-review-redirect.png, writing actual.
+
+      69 |   }
+      70 |   await expandViewportToContent(page);
+    > 71 |   await expect(page).toHaveScreenshot(`${route.name}.png`, {
+         |   ^
+      72 |     fullPage: true,
+      73 |     maxDiffPixelRatio: 0.01,
+      74 |   });
+        at screenshotRoute (/Users/shawket/React/apex-react/e2e/visual.spec.ts:71:3)
+        at /Users/shawket/React/apex-react/e2e/visual.spec.ts:93:7
+
+    attachment #1: fleet-expenses-review-redirect (image/png) ──────────────────────────────────────
+    Expected: e2e/__screenshots__/chromium/fleet-expenses-review-redirect.png
+    Received: e2e/test-results/visual-authenticated-routes-fleet-expenses-review-redirect-chromium/fleet-expenses-review-redirect-actual.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: e2e/test-results/visual-authenticated-routes-fleet-expenses-review-redirect-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    e2e/test-results/visual-authenticated-routes-fleet-expenses-review-redirect-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace e2e/test-results/visual-authenticated-routes-fleet-expenses-review-redirect-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  36) [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › fleet-expenses-new ─────────────
+
+    Error: A snapshot doesn't exist at /Users/shawket/React/apex-react/e2e/__screenshots__/chromium/fleet-expenses-new.png, writing actual.
+
+      69 |   }
+      70 |   await expandViewportToContent(page);
+    > 71 |   await expect(page).toHaveScreenshot(`${route.name}.png`, {
+         |   ^
+      72 |     fullPage: true,
+      73 |     maxDiffPixelRatio: 0.01,
+      74 |   });
+        at screenshotRoute (/Users/shawket/React/apex-react/e2e/visual.spec.ts:71:3)
+        at /Users/shawket/React/apex-react/e2e/visual.spec.ts:93:7
+
+    attachment #1: fleet-expenses-new (image/png) ──────────────────────────────────────────────────
+    Expected: e2e/__screenshots__/chromium/fleet-expenses-new.png
+    Received: e2e/test-results/visual-authenticated-routes-fleet-expenses-new-chromium/fleet-expenses-new-actual.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: e2e/test-results/visual-authenticated-routes-fleet-expenses-new-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    e2e/test-results/visual-authenticated-routes-fleet-expenses-new-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace e2e/test-results/visual-authenticated-routes-fleet-expenses-new-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  37) [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › fleet-expense-edit ─────────────
+
+    Error: A snapshot doesn't exist at /Users/shawket/React/apex-react/e2e/__screenshots__/chromium/fleet-expense-edit.png, writing actual.
+
+      69 |   }
+      70 |   await expandViewportToContent(page);
+    > 71 |   await expect(page).toHaveScreenshot(`${route.name}.png`, {
+         |   ^
+      72 |     fullPage: true,
+      73 |     maxDiffPixelRatio: 0.01,
+      74 |   });
+        at screenshotRoute (/Users/shawket/React/apex-react/e2e/visual.spec.ts:71:3)
+        at /Users/shawket/React/apex-react/e2e/visual.spec.ts:93:7
+
+    attachment #1: fleet-expense-edit (image/png) ──────────────────────────────────────────────────
+    Expected: e2e/__screenshots__/chromium/fleet-expense-edit.png
+    Received: e2e/test-results/visual-authenticated-routes-fleet-expense-edit-chromium/fleet-expense-edit-actual.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: e2e/test-results/visual-authenticated-routes-fleet-expense-edit-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    e2e/test-results/visual-authenticated-routes-fleet-expense-edit-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace e2e/test-results/visual-authenticated-routes-fleet-expense-edit-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  38) [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › fee-mappings ───────────────────
+
+    Error: A snapshot doesn't exist at /Users/shawket/React/apex-react/e2e/__screenshots__/chromium/fee-mappings.png, writing actual.
+
+      69 |   }
+      70 |   await expandViewportToContent(page);
+    > 71 |   await expect(page).toHaveScreenshot(`${route.name}.png`, {
+         |   ^
+      72 |     fullPage: true,
+      73 |     maxDiffPixelRatio: 0.01,
+      74 |   });
+        at screenshotRoute (/Users/shawket/React/apex-react/e2e/visual.spec.ts:71:3)
+        at /Users/shawket/React/apex-react/e2e/visual.spec.ts:93:7
+
+    attachment #1: fee-mappings (image/png) ────────────────────────────────────────────────────────
+    Expected: e2e/__screenshots__/chromium/fee-mappings.png
+    Received: e2e/test-results/visual-authenticated-routes-fee-mappings-chromium/fee-mappings-actual.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: e2e/test-results/visual-authenticated-routes-fee-mappings-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    e2e/test-results/visual-authenticated-routes-fee-mappings-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace e2e/test-results/visual-authenticated-routes-fee-mappings-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  39) [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › etit ───────────────────────────
+
+    Error: A snapshot doesn't exist at /Users/shawket/React/apex-react/e2e/__screenshots__/chromium/etit.png, writing actual.
+
+      69 |   }
+      70 |   await expandViewportToContent(page);
+    > 71 |   await expect(page).toHaveScreenshot(`${route.name}.png`, {
+         |   ^
+      72 |     fullPage: true,
+      73 |     maxDiffPixelRatio: 0.01,
+      74 |   });
+        at screenshotRoute (/Users/shawket/React/apex-react/e2e/visual.spec.ts:71:3)
+        at /Users/shawket/React/apex-react/e2e/visual.spec.ts:93:7
+
+    attachment #1: etit (image/png) ────────────────────────────────────────────────────────────────
+    Expected: e2e/__screenshots__/chromium/etit.png
+    Received: e2e/test-results/visual-authenticated-routes-etit-chromium/etit-actual.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: e2e/test-results/visual-authenticated-routes-etit-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    e2e/test-results/visual-authenticated-routes-etit-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace e2e/test-results/visual-authenticated-routes-etit-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  40) [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › zones ──────────────────────────
+
+    Error: A snapshot doesn't exist at /Users/shawket/React/apex-react/e2e/__screenshots__/chromium/zones.png, writing actual.
+
+      69 |   }
+      70 |   await expandViewportToContent(page);
+    > 71 |   await expect(page).toHaveScreenshot(`${route.name}.png`, {
+         |   ^
+      72 |     fullPage: true,
+      73 |     maxDiffPixelRatio: 0.01,
+      74 |   });
+        at screenshotRoute (/Users/shawket/React/apex-react/e2e/visual.spec.ts:71:3)
+        at /Users/shawket/React/apex-react/e2e/visual.spec.ts:93:7
+
+    attachment #1: zones (image/png) ───────────────────────────────────────────────────────────────
+    Expected: e2e/__screenshots__/chromium/zones.png
+    Received: e2e/test-results/visual-authenticated-routes-zones-chromium/zones-actual.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: e2e/test-results/visual-authenticated-routes-zones-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    e2e/test-results/visual-authenticated-routes-zones-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace e2e/test-results/visual-authenticated-routes-zones-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  41) [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › locations ──────────────────────
+
+    Error: A snapshot doesn't exist at /Users/shawket/React/apex-react/e2e/__screenshots__/chromium/locations.png, writing actual.
+
+      69 |   }
+      70 |   await expandViewportToContent(page);
+    > 71 |   await expect(page).toHaveScreenshot(`${route.name}.png`, {
+         |   ^
+      72 |     fullPage: true,
+      73 |     maxDiffPixelRatio: 0.01,
+      74 |   });
+        at screenshotRoute (/Users/shawket/React/apex-react/e2e/visual.spec.ts:71:3)
+        at /Users/shawket/React/apex-react/e2e/visual.spec.ts:93:7
+
+    attachment #1: locations (image/png) ───────────────────────────────────────────────────────────
+    Expected: e2e/__screenshots__/chromium/locations.png
+    Received: e2e/test-results/visual-authenticated-routes-locations-chromium/locations-actual.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: e2e/test-results/visual-authenticated-routes-locations-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    e2e/test-results/visual-authenticated-routes-locations-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace e2e/test-results/visual-authenticated-routes-locations-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  42) [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › trip-audit ─────────────────────
+
+    Error: A snapshot doesn't exist at /Users/shawket/React/apex-react/e2e/__screenshots__/chromium/trip-audit.png, writing actual.
+
+      69 |   }
+      70 |   await expandViewportToContent(page);
+    > 71 |   await expect(page).toHaveScreenshot(`${route.name}.png`, {
+         |   ^
+      72 |     fullPage: true,
+      73 |     maxDiffPixelRatio: 0.01,
+      74 |   });
+        at screenshotRoute (/Users/shawket/React/apex-react/e2e/visual.spec.ts:71:3)
+        at /Users/shawket/React/apex-react/e2e/visual.spec.ts:93:7
+
+    attachment #1: trip-audit (image/png) ──────────────────────────────────────────────────────────
+    Expected: e2e/__screenshots__/chromium/trip-audit.png
+    Received: e2e/test-results/visual-authenticated-routes-trip-audit-chromium/trip-audit-actual.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: e2e/test-results/visual-authenticated-routes-trip-audit-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    e2e/test-results/visual-authenticated-routes-trip-audit-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace e2e/test-results/visual-authenticated-routes-trip-audit-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  43) [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › trip-replay ────────────────────
+
+    Error: A snapshot doesn't exist at /Users/shawket/React/apex-react/e2e/__screenshots__/chromium/trip-replay.png, writing actual.
+
+      69 |   }
+      70 |   await expandViewportToContent(page);
+    > 71 |   await expect(page).toHaveScreenshot(`${route.name}.png`, {
+         |   ^
+      72 |     fullPage: true,
+      73 |     maxDiffPixelRatio: 0.01,
+      74 |   });
+        at screenshotRoute (/Users/shawket/React/apex-react/e2e/visual.spec.ts:71:3)
+        at /Users/shawket/React/apex-react/e2e/visual.spec.ts:93:7
+
+    attachment #1: trip-replay (image/png) ─────────────────────────────────────────────────────────
+    Expected: e2e/__screenshots__/chromium/trip-replay.png
+    Received: e2e/test-results/visual-authenticated-routes-trip-replay-chromium/trip-replay-actual.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: e2e/test-results/visual-authenticated-routes-trip-replay-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    e2e/test-results/visual-authenticated-routes-trip-replay-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace e2e/test-results/visual-authenticated-routes-trip-replay-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  44) [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › users ──────────────────────────
+
+    Error: A snapshot doesn't exist at /Users/shawket/React/apex-react/e2e/__screenshots__/chromium/users.png, writing actual.
+
+      69 |   }
+      70 |   await expandViewportToContent(page);
+    > 71 |   await expect(page).toHaveScreenshot(`${route.name}.png`, {
+         |   ^
+      72 |     fullPage: true,
+      73 |     maxDiffPixelRatio: 0.01,
+      74 |   });
+        at screenshotRoute (/Users/shawket/React/apex-react/e2e/visual.spec.ts:71:3)
+        at /Users/shawket/React/apex-react/e2e/visual.spec.ts:93:7
+
+    attachment #1: users (image/png) ───────────────────────────────────────────────────────────────
+    Expected: e2e/__screenshots__/chromium/users.png
+    Received: e2e/test-results/visual-authenticated-routes-users-chromium/users-actual.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: e2e/test-results/visual-authenticated-routes-users-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    e2e/test-results/visual-authenticated-routes-users-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace e2e/test-results/visual-authenticated-routes-users-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  45) [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › logs ───────────────────────────
+
+    Error: A snapshot doesn't exist at /Users/shawket/React/apex-react/e2e/__screenshots__/chromium/logs.png, writing actual.
+
+      69 |   }
+      70 |   await expandViewportToContent(page);
+    > 71 |   await expect(page).toHaveScreenshot(`${route.name}.png`, {
+         |   ^
+      72 |     fullPage: true,
+      73 |     maxDiffPixelRatio: 0.01,
+      74 |   });
+        at screenshotRoute (/Users/shawket/React/apex-react/e2e/visual.spec.ts:71:3)
+        at /Users/shawket/React/apex-react/e2e/visual.spec.ts:93:7
+
+    attachment #1: logs (image/png) ────────────────────────────────────────────────────────────────
+    Expected: e2e/__screenshots__/chromium/logs.png
+    Received: e2e/test-results/visual-authenticated-routes-logs-chromium/logs-actual.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: e2e/test-results/visual-authenticated-routes-logs-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    e2e/test-results/visual-authenticated-routes-logs-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace e2e/test-results/visual-authenticated-routes-logs-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  46) [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › settings ───────────────────────
+
+    Error: A snapshot doesn't exist at /Users/shawket/React/apex-react/e2e/__screenshots__/chromium/settings.png, writing actual.
+
+      69 |   }
+      70 |   await expandViewportToContent(page);
+    > 71 |   await expect(page).toHaveScreenshot(`${route.name}.png`, {
+         |   ^
+      72 |     fullPage: true,
+      73 |     maxDiffPixelRatio: 0.01,
+      74 |   });
+        at screenshotRoute (/Users/shawket/React/apex-react/e2e/visual.spec.ts:71:3)
+        at /Users/shawket/React/apex-react/e2e/visual.spec.ts:93:7
+
+    attachment #1: settings (image/png) ────────────────────────────────────────────────────────────
+    Expected: e2e/__screenshots__/chromium/settings.png
+    Received: e2e/test-results/visual-authenticated-routes-settings-chromium/settings-actual.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: e2e/test-results/visual-authenticated-routes-settings-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    e2e/test-results/visual-authenticated-routes-settings-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace e2e/test-results/visual-authenticated-routes-settings-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  46 failed
+    [chromium] › e2e/visual.spec.ts:82:5 › public routes › login ───────────────────────────────────
+    [chromium] › e2e/visual.spec.ts:82:5 › public routes › not-found ───────────────────────────────
+    [chromium] › e2e/visual.spec.ts:82:5 › public routes › not-found-catchall ──────────────────────
+    [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › dashboard ────────────────────────
+    [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › fuel-events ──────────────────────
+    [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › fuel-events-new ──────────────────
+    [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › fuel-event-details ───────────────
+    [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › fuel-event-edit ──────────────────
+    [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › trips ────────────────────────────
+    [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › trips-new ────────────────────────
+    [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › trips-multi-container-edit ───────
+    [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › trips-parent-route-summary ───────
+    [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › oil-changes ──────────────────────
+    [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › oil-changes-new ──────────────────
+    [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › oil-change-edit ──────────────────
+    [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › oil-change-history ───────────────
+    [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › service-invoices ─────────────────
+    [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › service-invoices-new ─────────────
+    [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › service-invoice-details ──────────
+    [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › service-invoice-edit ─────────────
+    [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › trucks ───────────────────────────
+    [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › cars ─────────────────────────────
+    [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › tires ────────────────────────────
+    [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › tablets ──────────────────────────
+    [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › speed-violations ─────────────────
+    [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › drivers ──────────────────────────
+    [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › driver-detail ────────────────────
+    [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › driver-expenses ──────────────────
+    [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › driver-expenses-new ──────────────
+    [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › driver-loans ─────────────────────
+    [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › driver-loans-new ─────────────────
+    [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › vendors ──────────────────────────
+    [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › fleet-expenses ───────────────────
+    [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › fleet-expenses-messages ──────────
+    [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › fleet-expenses-review-redirect ───
+    [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › fleet-expenses-new ───────────────
+    [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › fleet-expense-edit ───────────────
+    [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › fee-mappings ─────────────────────
+    [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › etit ─────────────────────────────
+    [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › zones ────────────────────────────
+    [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › locations ────────────────────────
+    [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › trip-audit ───────────────────────
+    [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › trip-replay ──────────────────────
+    [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › users ────────────────────────────
+    [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › logs ─────────────────────────────
+    [chromium] › e2e/visual.spec.ts:91:5 › authenticated routes › settings ─────────────────────────
+exit=1

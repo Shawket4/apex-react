@@ -100,7 +100,7 @@ function Breadcrumb({ page }: { page: Page }) {
   }
 
   return (
-    <div className="flex items-center gap-2 border-b border-border bg-muted/30 px-4 py-2.5">
+    <div className="flex items-center gap-2 border-b border-border bg-muted/40 px-4 py-2.5">
       <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10">
         <Icon className="h-3.5 w-3.5 text-primary" />
       </div>
@@ -111,7 +111,7 @@ function Breadcrumb({ page }: { page: Page }) {
         <span className="font-semibold text-foreground">{subTitle}</span>
       </div>
 
-      <div className="ml-auto flex items-center gap-1 text-[11px] text-muted-foreground">
+      <div className="ms-auto flex items-center gap-1 text-[11px] text-muted-foreground">
         <Kbd>⌫</Kbd>
         <span>{t('commandPalette.goBack')}</span>
       </div>
@@ -124,7 +124,7 @@ function Breadcrumb({ page }: { page: Page }) {
 function PaletteFooter({ page }: { page: Page }) {
   const { t } = useTranslation();
   return (
-    <div className="flex items-center gap-4 border-t border-border bg-muted/20 px-4 py-2.5 text-[11px] text-muted-foreground">
+    <div className="flex items-center gap-4 border-t border-border bg-muted/40 px-4 py-2.5 text-[11px] text-muted-foreground">
       <span className="flex items-center gap-1.5">
         <Kbd>↑↓</Kbd>
         <span>{t('commandPalette.navigate')}</span>
@@ -139,7 +139,7 @@ function PaletteFooter({ page }: { page: Page }) {
           <span>{t('commandPalette.back')}</span>
         </span>
       )}
-      <span className="ml-auto flex items-center gap-1.5">
+      <span className="ms-auto flex items-center gap-1.5">
         <Kbd>esc</Kbd>
         <span>{page.type !== 'root' ? t('commandPalette.back') : t('commandPalette.close')}</span>
       </span>
@@ -302,7 +302,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
               >
                 <Plus className="h-4 w-4 shrink-0 text-muted-foreground" />
                 <span>{t('commandPalette.quickAddTrip')}</span>
-                <ChevronRight className="ml-auto h-3.5 w-3.5 shrink-0 text-muted-foreground opacity-0 transition-opacity group-aria-selected:opacity-100" />
+                <ChevronRight className="ms-auto h-3.5 w-3.5 shrink-0 text-muted-foreground opacity-0 transition-opacity group-aria-selected:opacity-100" />
               </CommandItem>
             </CommandGroup>
             <CommandSeparator />
@@ -326,7 +326,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
               >
                 <Plus className="h-4 w-4 shrink-0 text-muted-foreground" />
                 <span>{t('fuelEvents.addEvent')}</span>
-                <ChevronRight className="ml-auto h-3.5 w-3.5 shrink-0 text-muted-foreground opacity-0 transition-opacity group-aria-selected:opacity-100" />
+                <ChevronRight className="ms-auto h-3.5 w-3.5 shrink-0 text-muted-foreground opacity-0 transition-opacity group-aria-selected:opacity-100" />
               </CommandItem>
             </CommandGroup>
             <CommandSeparator />
@@ -352,7 +352,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                     >
                       <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
                       <span>{t(item.labelKey)}</span>
-                      <ChevronRight className="ml-auto h-3.5 w-3.5 shrink-0 text-muted-foreground opacity-0 transition-opacity group-aria-selected:opacity-100" />
+                      <ChevronRight className="ms-auto h-3.5 w-3.5 shrink-0 text-muted-foreground opacity-0 transition-opacity group-aria-selected:opacity-100" />
                     </CommandItem>
                   );
                 })}
@@ -380,7 +380,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                           {driver.mobile_number}
                         </span>
                       )}
-                      <span className="ml-1 flex shrink-0 items-center gap-0.5 text-[11px] text-muted-foreground opacity-0 transition-opacity group-aria-selected:opacity-100">
+                      <span className="ms-1 flex shrink-0 items-center gap-0.5 text-[11px] text-muted-foreground opacity-0 transition-opacity group-aria-selected:opacity-100">
                         actions <ChevronRight className="h-3 w-3" />
                       </span>
                     </CommandItem>
@@ -422,7 +422,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                   </div>
                   <Badge
                     variant="outline"
-                    className="ml-auto shrink-0 border-primary/25 px-2 py-0.5 text-[10px] text-primary/60 opacity-0 transition-opacity group-aria-selected:opacity-100"
+                    className="ms-auto shrink-0 border-primary/25 px-2 py-0.5 text-[10px] text-primary/60 opacity-0 transition-opacity group-aria-selected:opacity-100"
                   >
                     create
                   </Badge>
@@ -446,7 +446,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                   </div>
                   <Badge
                     variant="outline"
-                    className="ml-auto shrink-0 border-primary/25 px-2 py-0.5 text-[10px] text-primary/60 opacity-0 transition-opacity group-aria-selected:opacity-100"
+                    className="ms-auto shrink-0 border-primary/25 px-2 py-0.5 text-[10px] text-primary/60 opacity-0 transition-opacity group-aria-selected:opacity-100"
                   >
                     create
                   </Badge>
@@ -467,7 +467,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
               >
                 <CreditCard className="h-4 w-4 shrink-0 text-muted-foreground" />
                 <span>{t('driverLoans.title')}</span>
-                <ChevronRight className="ml-auto h-3.5 w-3.5 shrink-0 text-muted-foreground opacity-0 transition-opacity group-aria-selected:opacity-100" />
+                <ChevronRight className="ms-auto h-3.5 w-3.5 shrink-0 text-muted-foreground opacity-0 transition-opacity group-aria-selected:opacity-100" />
               </CommandItem>
 
               <CommandItem
@@ -479,7 +479,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
               >
                 <Receipt className="h-4 w-4 shrink-0 text-muted-foreground" />
                 <span>{t('driverExpenses.title')}</span>
-                <ChevronRight className="ml-auto h-3.5 w-3.5 shrink-0 text-muted-foreground opacity-0 transition-opacity group-aria-selected:opacity-100" />
+                <ChevronRight className="ms-auto h-3.5 w-3.5 shrink-0 text-muted-foreground opacity-0 transition-opacity group-aria-selected:opacity-100" />
               </CommandItem>
 
               <CommandItem
@@ -491,7 +491,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
               >
                 <User className="h-4 w-4 shrink-0 text-muted-foreground" />
                 <span>{t('nav.overview')}</span>
-                <ChevronRight className="ml-auto h-3.5 w-3.5 shrink-0 text-muted-foreground opacity-0 transition-opacity group-aria-selected:opacity-100" />
+                <ChevronRight className="ms-auto h-3.5 w-3.5 shrink-0 text-muted-foreground opacity-0 transition-opacity group-aria-selected:opacity-100" />
               </CommandItem>
             </CommandGroup>
           </>
@@ -511,7 +511,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
               >
                 <Navigation className="h-4 w-4 shrink-0 text-muted-foreground" />
                 <span>{company}</span>
-                <ChevronRight className="ml-auto h-3.5 w-3.5 shrink-0 text-muted-foreground opacity-0 transition-opacity group-aria-selected:opacity-100" />
+                <ChevronRight className="ms-auto h-3.5 w-3.5 shrink-0 text-muted-foreground opacity-0 transition-opacity group-aria-selected:opacity-100" />
               </CommandItem>
             ))}
           </CommandGroup>
@@ -533,7 +533,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
               >
                 <MapPin className="h-4 w-4 shrink-0 text-muted-foreground" />
                 <span>{terminal}</span>
-                <ChevronRight className="ml-auto h-3.5 w-3.5 shrink-0 text-muted-foreground opacity-0 transition-opacity group-aria-selected:opacity-100" />
+                <ChevronRight className="ms-auto h-3.5 w-3.5 shrink-0 text-muted-foreground opacity-0 transition-opacity group-aria-selected:opacity-100" />
               </CommandItem>
             ))}
           </CommandGroup>
@@ -552,7 +552,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
               >
                 <Car className="h-4 w-4 shrink-0 text-muted-foreground" />
                 <span>{car.car_no_plate}</span>
-                <ChevronRight className="ml-auto h-3.5 w-3.5 shrink-0 text-muted-foreground opacity-0 transition-opacity group-aria-selected:opacity-100" />
+                <ChevronRight className="ms-auto h-3.5 w-3.5 shrink-0 text-muted-foreground opacity-0 transition-opacity group-aria-selected:opacity-100" />
               </CommandItem>
             ))}
           </CommandGroup>

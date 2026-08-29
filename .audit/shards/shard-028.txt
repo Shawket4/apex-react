@@ -1,0 +1,15 @@
+# shard-028  loc=2483  files=13
+# groups: widgets/trips-table, entities/user, widgets/user-form-dialog, widgets/user-menu
+59	src/widgets/trips-table/receipt-status-badge.tsx
+229	src/widgets/trips-table/revenue-breakdown.tsx
+113	src/widgets/trips-table/trip-row.ts
+627	src/widgets/trips-table/trips-desktop-table.tsx
+256	src/widgets/trips-table/trips-filters.tsx
+391	src/widgets/trips-table/trips-mobile-list.tsx
+253	src/widgets/trips-table/trips-pagination.tsx
+82	src/widgets/trips-table/trips-table.tsx
+33	src/entities/user/api.ts
+69	src/entities/user/queries.ts
+42	src/entities/user/schemas.ts
+230	src/widgets/user-form-dialog/user-form-dialog.tsx
+99	src/widgets/user-menu/user-menu.tsx

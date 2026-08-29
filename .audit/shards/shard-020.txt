@@ -1,0 +1,8 @@
+# shard-020  loc=1265  files=6
+# groups: entities/trip-audit, pages/trip-audit
+136	src/entities/trip-audit/api.ts
+49	src/entities/trip-audit/defaults.ts
+3	src/entities/trip-audit/index.ts
+176	src/entities/trip-audit/queries.ts
+369	src/entities/trip-audit/schemas.ts
+532	src/pages/trip-audit/trip-audit.tsx

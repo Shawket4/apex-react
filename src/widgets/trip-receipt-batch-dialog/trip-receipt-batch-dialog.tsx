@@ -15,6 +15,7 @@ import { useParentContainers } from '@/entities/trip/queries';
 import { type ReceiptImage } from '@/entities/trip/schemas';
 import { receiptBatchApi } from '@/entities/receipt-batch/api';
 import { cn } from '@/shared/lib/cn';
+import { OVERLAY_Z } from '@/shared/ui/z-index';
 
 interface TripReceiptBatchDialogProps {
   parentId: number | null;
@@ -127,7 +128,7 @@ export function TripReceiptBatchDialog({
       {/* Lightbox */}
       {enlargedIndex != null && images[enlargedIndex] && (
         <div
-          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 p-4"
+          className={`fixed inset-0 ${OVERLAY_Z} flex items-center justify-center bg-black/90 p-4 pointer-events-auto`}
           onClick={() => setEnlargedIndex(null)}
         >
           <button

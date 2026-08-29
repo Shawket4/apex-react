@@ -1,0 +1,10 @@
+# shard-018  loc=2457  files=8
+# groups: features/tracking/components, features/tracking/map
+188	src/features/tracking/components/fleet-panel.tsx
+254	src/features/tracking/components/range-picker.tsx
+254	src/features/tracking/components/replay-transport.tsx
+77	src/features/tracking/components/status-chips.tsx
+662	src/features/tracking/components/time-deck.tsx
+95	src/features/tracking/components/vehicle-card.tsx
+373	src/features/tracking/map/layers.ts
+554	src/features/tracking/map/tracking-map.tsx

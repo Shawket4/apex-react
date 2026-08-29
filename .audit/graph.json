@@ -1,0 +1,2220 @@
+{
+  "app/console-silencer.ts": [],
+  "app/index.css": [],
+  "app/main.tsx": [
+    "app/console-silencer.ts",
+    "app/index.css",
+    "app/providers/index.tsx",
+    "app/router/index.tsx",
+    "shared/i18n/index.ts",
+    "shared/lib/prefetch/index.ts"
+  ],
+  "app/providers/index.tsx": [
+    "shared/api/client.ts",
+    "shared/api/query.ts",
+    "shared/auth/store.ts",
+    "shared/config/constants.ts",
+    "shared/lib/prefetch/index.ts",
+    "shared/ui/toaster.tsx",
+    "shared/ui/tooltip.tsx"
+  ],
+  "app/router/index.tsx": [
+    "app/router/protected-route.tsx",
+    "features/tracking/tracking-page.tsx",
+    "pages/auth/login.tsx",
+    "pages/cars/cars.tsx",
+    "pages/dashboard/dashboard.tsx",
+    "pages/driver-detail/driver-detail.tsx",
+    "pages/driver-expenses/driver-expense-new.tsx",
+    "pages/driver-expenses/driver-expenses.tsx",
+    "pages/driver-loans/driver-loan-new.tsx",
+    "pages/driver-loans/driver-loans.tsx",
+    "pages/drivers/drivers.tsx",
+    "pages/error/not-found.tsx",
+    "pages/error/route-error.tsx",
+    "pages/fee-mappings/fee-mappings.tsx",
+    "pages/fleet-expenses/fleet-expense-edit.tsx",
+    "pages/fleet-expenses/fleet-expense-new.tsx",
+    "pages/fleet-expenses/fleet-expenses-messages.tsx",
+    "pages/fleet-expenses/fleet-expenses.tsx",
+    "pages/fuel-events/fuel-event-details.tsx",
+    "pages/fuel-events/fuel-event-edit.tsx",
+    "pages/fuel-events/fuel-event-new.tsx",
+    "pages/fuel-events/fuel-events.tsx",
+    "pages/locations/locations.tsx",
+    "pages/oil-changes/oil-change-edit.tsx",
+    "pages/oil-changes/oil-change-history.tsx",
+    "pages/oil-changes/oil-change-new.tsx",
+    "pages/oil-changes/oil-changes.tsx",
+    "pages/placeholder/placeholder.tsx",
+    "pages/service-invoices/service-invoice-details.tsx",
+    "pages/service-invoices/service-invoice-edit.tsx",
+    "pages/service-invoices/service-invoice-new.tsx",
+    "pages/service-invoices/service-invoices.tsx",
+    "pages/settings/settings.tsx",
+    "pages/tires/tires.tsx",
+    "pages/trip-audit/trip-audit.tsx",
+    "pages/trip-replay/trip-replay.tsx",
+    "pages/trips/trip-edit.tsx",
+    "pages/trips/trip-new.tsx",
+    "pages/trips/trips.tsx",
+    "pages/users/users.tsx",
+    "pages/zones/zones.tsx",
+    "shared/config/constants.ts",
+    "shared/ui/skeleton.tsx",
+    "widgets/layout/layout.tsx"
+  ],
+  "app/router/protected-route.tsx": [
+    "shared/auth/store.ts",
+    "shared/config/constants.ts",
+    "shared/hooks/use-permissions.ts"
+  ],
+  "entities/auth/api.ts": [
+    "entities/auth/schemas.ts",
+    "shared/api/client.ts"
+  ],
+  "entities/auth/queries.ts": [
+    "entities/auth/api.ts",
+    "entities/auth/schemas.ts",
+    "shared/api/errors.ts",
+    "shared/api/query.ts",
+    "shared/auth/store.ts",
+    "shared/ui/toaster.tsx"
+  ],
+  "entities/auth/schemas.ts": [],
+  "entities/car/api.ts": [
+    "entities/car/schemas.ts",
+    "shared/api/client.ts"
+  ],
+  "entities/car/queries.ts": [
+    "entities/car/api.ts",
+    "shared/config/constants.ts"
+  ],
+  "entities/car/schemas.ts": [],
+  "entities/dashboard/api.ts": [
+    "entities/dashboard/schemas.ts",
+    "entities/fuel-event/schemas.ts",
+    "shared/api/client.ts",
+    "shared/config/env.ts"
+  ],
+  "entities/dashboard/queries.ts": [
+    "entities/dashboard/api.ts",
+    "entities/dashboard/schemas.ts",
+    "shared/scope/index.ts"
+  ],
+  "entities/dashboard/schemas.ts": [],
+  "entities/driver-analytics/api.ts": [
+    "entities/driver-analytics/schemas.ts",
+    "shared/api/client.ts"
+  ],
+  "entities/driver-analytics/queries.ts": [
+    "entities/driver-analytics/api.ts",
+    "entities/driver-analytics/schemas.ts"
+  ],
+  "entities/driver-analytics/schemas.ts": [],
+  "entities/driver-expense/api.ts": [
+    "entities/driver-expense/schemas.ts",
+    "shared/api/client.ts"
+  ],
+  "entities/driver-expense/queries.ts": [
+    "entities/driver-expense/api.ts",
+    "entities/driver-expense/schemas.ts",
+    "shared/api/errors.ts",
+    "shared/api/query.ts",
+    "shared/config/constants.ts",
+    "shared/ui/toaster.tsx"
+  ],
+  "entities/driver-expense/schemas.ts": [],
+  "entities/driver-loan/api.ts": [
+    "entities/driver-loan/schemas.ts",
+    "shared/api/client.ts"
+  ],
+  "entities/driver-loan/queries.ts": [
+    "entities/driver-loan/api.ts",
+    "entities/driver-loan/schemas.ts",
+    "shared/api/errors.ts",
+    "shared/api/query.ts",
+    "shared/config/constants.ts",
+    "shared/ui/toaster.tsx"
+  ],
+  "entities/driver-loan/schemas.ts": [],
+  "entities/driver/api.ts": [
+    "entities/driver/schemas.ts",
+    "shared/api/client.ts"
+  ],
+  "entities/driver/queries.ts": [
+    "entities/driver/api.ts",
+    "entities/driver/schemas.ts",
+    "shared/api/errors.ts",
+    "shared/api/query.ts",
+    "shared/config/constants.ts",
+    "shared/ui/toaster.tsx"
+  ],
+  "entities/driver/schemas.ts": [],
+  "entities/fee-mapping/api.ts": [
+    "entities/fee-mapping/schemas.ts",
+    "shared/api/client.ts"
+  ],
+  "entities/fee-mapping/queries.ts": [
+    "entities/fee-mapping/api.ts",
+    "entities/fee-mapping/schemas.ts"
+  ],
+  "entities/fee-mapping/schemas.ts": [],
+  "entities/fuel-event/api.ts": [
+    "entities/fuel-event/schemas.ts",
+    "shared/api/client.ts",
+    "shared/lib/format.ts"
+  ],
+  "entities/fuel-event/defaults.ts": [
+    "shared/scope/index.ts"
+  ],
+  "entities/fuel-event/queries.ts": [
+    "entities/fuel-event/api.ts",
+    "entities/fuel-event/schemas.ts",
+    "shared/api/errors.ts",
+    "shared/api/query.ts",
+    "shared/config/constants.ts",
+    "shared/ui/toaster.tsx"
+  ],
+  "entities/fuel-event/schemas.ts": [
+    "shared/lib/zod-utils.ts"
+  ],
+  "entities/location/api.ts": [
+    "entities/location/schemas.ts",
+    "shared/api/client.ts"
+  ],
+  "entities/location/index.ts": [
+    "entities/location/api.ts",
+    "entities/location/queries.ts",
+    "entities/location/schemas.ts"
+  ],
+  "entities/location/queries.ts": [
+    "entities/location/api.ts",
+    "entities/location/schemas.ts",
+    "shared/api/errors.ts"
+  ],
+  "entities/location/schemas.ts": [],
+  "entities/maint-stock/api.ts": [
+    "entities/maint-stock/schemas.ts",
+    "shared/api/client.ts"
+  ],
+  "entities/maint-stock/queries.ts": [
+    "entities/maint-stock/api.ts",
+    "entities/maint-stock/schemas.ts"
+  ],
+  "entities/maint-stock/schemas.ts": [],
+  "entities/mapping/api.ts": [
+    "entities/mapping/schemas.ts",
+    "shared/api/client.ts"
+  ],
+  "entities/mapping/queries.ts": [
+    "entities/mapping/api.ts",
+    "entities/mapping/schemas.ts"
+  ],
+  "entities/mapping/schemas.ts": [],
+  "entities/oil-change/api.ts": [
+    "entities/oil-change/schemas.ts",
+    "shared/api/client.ts"
+  ],
+  "entities/oil-change/queries.ts": [
+    "entities/oil-change/api.ts",
+    "entities/oil-change/schemas.ts",
+    "shared/api/errors.ts",
+    "shared/api/query.ts",
+    "shared/ui/toaster.tsx"
+  ],
+  "entities/oil-change/schemas.ts": [
+    "shared/lib/zod-utils.ts"
+  ],
+  "entities/raw-message/api.ts": [
+    "entities/raw-message/schemas.ts",
+    "shared/api/client.ts"
+  ],
+  "entities/raw-message/queries.ts": [
+    "entities/raw-message/api.ts",
+    "entities/raw-message/schemas.ts",
+    "shared/config/constants.ts"
+  ],
+  "entities/raw-message/schemas.ts": [],
+  "entities/receipt-batch/api.ts": [
+    "entities/receipt-batch/schemas.ts",
+    "shared/api/client.ts"
+  ],
+  "entities/receipt-batch/queries.ts": [
+    "entities/receipt-batch/api.ts",
+    "entities/receipt-batch/schemas.ts"
+  ],
+  "entities/receipt-batch/schemas.ts": [
+    "entities/trip/schemas.ts"
+  ],
+  "entities/receipt/api.ts": [
+    "entities/receipt/schemas.ts",
+    "shared/api/client.ts"
+  ],
+  "entities/receipt/queries.ts": [
+    "entities/receipt/api.ts",
+    "entities/receipt/schemas.ts",
+    "entities/trip/queries.ts"
+  ],
+  "entities/receipt/schemas.ts": [
+    "entities/trip/schemas.ts"
+  ],
+  "entities/service-invoice/api.ts": [
+    "entities/service-invoice/schemas.ts",
+    "shared/api/client.ts"
+  ],
+  "entities/service-invoice/queries.ts": [
+    "entities/car/api.ts",
+    "entities/service-invoice/api.ts",
+    "entities/service-invoice/schemas.ts",
+    "shared/config/constants.ts"
+  ],
+  "entities/service-invoice/schemas.ts": [
+    "entities/car/schemas.ts"
+  ],
+  "entities/transaction/api.ts": [
+    "entities/transaction/schemas.ts",
+    "shared/api/client.ts",
+    "shared/lib/cairo.ts"
+  ],
+  "entities/transaction/categories.ts": [
+    "shared/api/client.ts",
+    "shared/api/errors.ts",
+    "shared/api/query.ts",
+    "shared/config/constants.ts",
+    "shared/ui/toaster.tsx"
+  ],
+  "entities/transaction/defaults.ts": [
+    "entities/transaction/schemas.ts",
+    "shared/scope/index.ts"
+  ],
+  "entities/transaction/queries.ts": [
+    "entities/transaction/api.ts",
+    "entities/transaction/defaults.ts",
+    "entities/transaction/schemas.ts",
+    "shared/api/errors.ts",
+    "shared/api/query.ts",
+    "shared/config/constants.ts",
+    "shared/ui/toaster.tsx"
+  ],
+  "entities/transaction/schemas.ts": [],
+  "entities/transaction/vehicles.ts": [
+    "shared/api/client.ts",
+    "shared/config/constants.ts"
+  ],
+  "entities/trip-audit/api.ts": [
+    "entities/trip-audit/schemas.ts",
+    "shared/api/client.ts"
+  ],
+  "entities/trip-audit/defaults.ts": [
+    "entities/trip-audit/api.ts",
+    "shared/lib/format.ts",
+    "shared/scope/index.ts"
+  ],
+  "entities/trip-audit/index.ts": [
+    "entities/trip-audit/api.ts",
+    "entities/trip-audit/queries.ts",
+    "entities/trip-audit/schemas.ts"
+  ],
+  "entities/trip-audit/queries.ts": [
+    "entities/trip-audit/api.ts",
+    "entities/trip-audit/defaults.ts"
+  ],
+  "entities/trip-audit/schemas.ts": [],
+  "entities/trip-statistics/api.ts": [
+    "entities/trip-statistics/schemas.ts",
+    "shared/api/client.ts"
+  ],
+  "entities/trip-statistics/queries.ts": [
+    "entities/trip-statistics/api.ts",
+    "entities/trip-statistics/schemas.ts"
+  ],
+  "entities/trip-statistics/schemas.ts": [],
+  "entities/trip-summary/api.ts": [
+    "entities/trip-summary/schemas.ts",
+    "shared/api/client.ts"
+  ],
+  "entities/trip-summary/queries.ts": [
+    "entities/trip-summary/api.ts",
+    "entities/trip-summary/schemas.ts"
+  ],
+  "entities/trip-summary/schemas.ts": [],
+  "entities/trip/api.ts": [
+    "entities/trip/schemas.ts",
+    "shared/api/client.ts"
+  ],
+  "entities/trip/defaults.ts": [
+    "entities/trip/schemas.ts",
+    "shared/lib/format.ts",
+    "shared/scope/index.ts"
+  ],
+  "entities/trip/queries.ts": [
+    "entities/trip/api.ts",
+    "entities/trip/schemas.ts"
+  ],
+  "entities/trip/schemas.ts": [],
+  "entities/user/api.ts": [
+    "entities/user/schemas.ts",
+    "shared/api/client.ts"
+  ],
+  "entities/user/queries.ts": [
+    "entities/user/api.ts"
+  ],
+  "entities/user/schemas.ts": [],
+  "entities/whatsapp/api.ts": [
+    "entities/whatsapp/schemas.ts",
+    "shared/api/client.ts"
+  ],
+  "entities/whatsapp/queries.ts": [
+    "entities/whatsapp/api.ts"
+  ],
+  "entities/whatsapp/schemas.ts": [],
+  "entities/zone/api.ts": [
+    "entities/zone/schemas.ts",
+    "shared/api/client.ts"
+  ],
+  "entities/zone/index.ts": [
+    "entities/zone/api.ts",
+    "entities/zone/queries.ts",
+    "entities/zone/schemas.ts"
+  ],
+  "entities/zone/queries.ts": [
+    "entities/zone/api.ts",
+    "entities/zone/schemas.ts"
+  ],
+  "entities/zone/schemas.ts": [],
+  "features/tracking/api.ts": [
+    "features/tracking/schemas.ts",
+    "shared/api/client.ts",
+    "shared/config/env.ts"
+  ],
+  "features/tracking/components/fleet-panel.tsx": [
+    "features/tracking/components/status-chips.tsx",
+    "features/tracking/schemas.ts",
+    "shared/lib/cn.ts"
+  ],
+  "features/tracking/components/range-picker.tsx": [
+    "features/tracking/api.ts",
+    "shared/lib/cairo.ts",
+    "shared/lib/cn.ts",
+    "shared/ui/button.tsx",
+    "shared/ui/cairo-range-calendar.tsx"
+  ],
+  "features/tracking/components/replay-transport.tsx": [
+    "features/tracking/components/time-deck.tsx",
+    "features/tracking/playback.ts",
+    "features/tracking/use-history.ts",
+    "shared/lib/cn.ts"
+  ],
+  "features/tracking/components/status-chips.tsx": [
+    "features/tracking/schemas.ts",
+    "shared/lib/cn.ts"
+  ],
+  "features/tracking/components/time-deck.tsx": [
+    "features/tracking/map/layers.ts",
+    "features/tracking/playback.ts",
+    "features/tracking/schemas.ts",
+    "features/tracking/use-history.ts",
+    "shared/lib/cn.ts"
+  ],
+  "features/tracking/components/vehicle-card.tsx": [
+    "features/tracking/components/status-chips.tsx",
+    "features/tracking/schemas.ts"
+  ],
+  "features/tracking/map/layers.ts": [
+    "features/tracking/schemas.ts",
+    "features/tracking/use-history.ts",
+    "shared/lib/maps/marker-svg.ts",
+    "shared/lib/maps/types.ts"
+  ],
+  "features/tracking/map/tracking-map.tsx": [
+    "features/tracking/map/layers.ts",
+    "features/tracking/playback.ts",
+    "features/tracking/schemas.ts",
+    "features/tracking/use-history.ts",
+    "shared/lib/maps/marker-svg.ts"
+  ],
+  "features/tracking/playback.ts": [
+    "features/tracking/schemas.ts",
+    "features/tracking/use-history.ts"
+  ],
+  "features/tracking/schemas.ts": [],
+  "features/tracking/tracking-page.tsx": [
+    "features/tracking/api.ts",
+    "features/tracking/components/fleet-panel.tsx",
+    "features/tracking/components/range-picker.tsx",
+    "features/tracking/components/status-chips.tsx",
+    "features/tracking/components/time-deck.tsx",
+    "features/tracking/components/vehicle-card.tsx",
+    "features/tracking/map/tracking-map.tsx",
+    "features/tracking/playback.ts",
+    "features/tracking/schemas.ts",
+    "features/tracking/url.ts",
+    "features/tracking/use-history.ts",
+    "features/tracking/use-live-fleet.ts",
+    "shared/lib/cn.ts"
+  ],
+  "features/tracking/url.ts": [],
+  "features/tracking/use-history.ts": [
+    "features/tracking/api.ts",
+    "features/tracking/playback.ts",
+    "features/tracking/schemas.ts"
+  ],
+  "features/tracking/use-live-fleet.ts": [
+    "features/tracking/api.ts",
+    "features/tracking/schemas.ts"
+  ],
+  "pages/auth/login.tsx": [
+    "entities/auth/queries.ts",
+    "entities/auth/schemas.ts",
+    "shared/auth/store.ts",
+    "shared/ui/button.tsx",
+    "shared/ui/card.tsx",
+    "shared/ui/form.tsx",
+    "shared/ui/input.tsx",
+    "widgets/language-toggle/language-toggle.tsx",
+    "widgets/theme-toggle/theme-toggle.tsx"
+  ],
+  "pages/cars/cars.tsx": [
+    "entities/car/queries.ts",
+    "entities/car/schemas.ts",
+    "shared/ui/dialog.tsx",
+    "shared/ui/page-shell.tsx",
+    "shared/ui/toaster.tsx",
+    "widgets/car-form/car-form.tsx",
+    "widgets/cars-table/cars-table.tsx"
+  ],
+  "pages/dashboard/dashboard.tsx": [
+    "entities/dashboard/api.ts",
+    "entities/dashboard/queries.ts",
+    "entities/dashboard/schemas.ts",
+    "entities/fuel-event/queries.ts",
+    "entities/transaction/queries.ts",
+    "entities/trip/defaults.ts",
+    "entities/trip/queries.ts",
+    "shared/config/constants.ts",
+    "shared/hooks/use-etit-live.ts",
+    "shared/hooks/use-permissions.ts",
+    "shared/lib/cairo.ts",
+    "shared/lib/cn.ts",
+    "shared/lib/format.ts",
+    "shared/lib/fuel.ts",
+    "shared/lib/prefetch/index.ts",
+    "shared/scope/index.ts",
+    "shared/ui/button.tsx",
+    "shared/ui/skeleton.tsx"
+  ],
+  "pages/driver-detail/driver-detail.tsx": [
+    "entities/driver/queries.ts",
+    "entities/driver/schemas.ts",
+    "shared/config/constants.ts",
+    "shared/hooks/use-permissions.ts",
+    "shared/ui/badge.tsx",
+    "shared/ui/button.tsx",
+    "shared/ui/confirm-dialog.tsx",
+    "shared/ui/dialog.tsx",
+    "shared/ui/empty-state.tsx",
+    "shared/ui/page-shell.tsx",
+    "shared/ui/skeleton.tsx",
+    "shared/ui/tabs.tsx",
+    "widgets/driver-detail/documents-tab.tsx",
+    "widgets/driver-detail/financial-tab.tsx",
+    "widgets/driver-detail/overview-tab.tsx",
+    "widgets/driver-detail/pin-tab.tsx",
+    "widgets/driver-form/driver-form.tsx"
+  ],
+  "pages/driver-expenses/driver-expense-new.tsx": [
+    "entities/driver-expense/queries.ts",
+    "entities/driver-expense/schemas.ts",
+    "entities/driver/queries.ts",
+    "shared/lib/format.ts",
+    "shared/ui/button.tsx",
+    "shared/ui/date-picker.tsx",
+    "shared/ui/form.tsx",
+    "shared/ui/input.tsx",
+    "shared/ui/page-shell.tsx",
+    "shared/ui/select.tsx",
+    "shared/ui/textarea.tsx"
+  ],
+  "pages/driver-expenses/driver-expenses.tsx": [
+    "entities/driver-expense/queries.ts",
+    "entities/driver-expense/schemas.ts",
+    "entities/driver/queries.ts",
+    "shared/config/constants.ts",
+    "shared/hooks/use-permissions.ts",
+    "shared/lib/cn.ts",
+    "shared/lib/format.ts",
+    "shared/ui/badge.tsx",
+    "shared/ui/button.tsx",
+    "shared/ui/card.tsx",
+    "shared/ui/confirm-dialog.tsx",
+    "shared/ui/empty-state.tsx",
+    "shared/ui/page-shell.tsx",
+    "shared/ui/skeleton.tsx",
+    "shared/ui/stat-card.tsx"
+  ],
+  "pages/driver-loans/driver-loan-new.tsx": [
+    "entities/driver-loan/queries.ts",
+    "entities/driver-loan/schemas.ts",
+    "entities/driver/queries.ts",
+    "shared/lib/format.ts",
+    "shared/ui/button.tsx",
+    "shared/ui/date-picker.tsx",
+    "shared/ui/form.tsx",
+    "shared/ui/input.tsx",
+    "shared/ui/page-shell.tsx"
+  ],
+  "pages/driver-loans/driver-loans.tsx": [
+    "entities/driver-loan/queries.ts",
+    "entities/driver-loan/schemas.ts",
+    "entities/driver/queries.ts",
+    "shared/config/constants.ts",
+    "shared/hooks/use-permissions.ts",
+    "shared/lib/cn.ts",
+    "shared/lib/format.ts",
+    "shared/ui/badge.tsx",
+    "shared/ui/button.tsx",
+    "shared/ui/card.tsx",
+    "shared/ui/confirm-dialog.tsx",
+    "shared/ui/empty-state.tsx",
+    "shared/ui/page-shell.tsx",
+    "shared/ui/skeleton.tsx",
+    "shared/ui/stat-card.tsx"
+  ],
+  "pages/drivers/drivers.tsx": [
+    "entities/driver/queries.ts",
+    "entities/driver/schemas.ts",
+    "shared/ui/dialog.tsx",
+    "shared/ui/page-shell.tsx",
+    "widgets/driver-form/driver-form.tsx",
+    "widgets/drivers-table/drivers-table.tsx"
+  ],
+  "pages/error/not-found.tsx": [
+    "shared/ui/button.tsx",
+    "shared/ui/empty-state.tsx"
+  ],
+  "pages/error/route-error.tsx": [
+    "shared/ui/button.tsx",
+    "shared/ui/card.tsx"
+  ],
+  "pages/fee-mappings/fee-mappings.tsx": [
+    "entities/fee-mapping/queries.ts",
+    "entities/fee-mapping/schemas.ts",
+    "shared/api/errors.ts",
+    "shared/ui/button.tsx",
+    "shared/ui/card.tsx",
+    "shared/ui/confirm-dialog.tsx",
+    "shared/ui/page-shell.tsx",
+    "shared/ui/skeleton.tsx",
+    "shared/ui/toaster.tsx",
+    "widgets/fee-mappings/fee-mappings-bulk-enrich-dialog.tsx",
+    "widgets/fee-mappings/fee-mappings-excel.ts",
+    "widgets/fee-mappings/fee-mappings-filters.tsx",
+    "widgets/fee-mappings/fee-mappings-form.tsx",
+    "widgets/fee-mappings/fee-mappings-location-dialog.tsx",
+    "widgets/fee-mappings/fee-mappings-stats.tsx",
+    "widgets/fee-mappings/fee-mappings-table.tsx"
+  ],
+  "pages/fleet-expenses/fleet-expense-edit.tsx": [
+    "pages/fleet-expenses/fleet-expense-form.tsx"
+  ],
+  "pages/fleet-expenses/fleet-expense-form.tsx": [
+    "entities/raw-message/queries.ts",
+    "entities/transaction/categories.ts",
+    "entities/transaction/queries.ts",
+    "entities/transaction/schemas.ts",
+    "entities/transaction/vehicles.ts",
+    "shared/hooks/use-debounce.ts",
+    "shared/lib/cairo.ts",
+    "shared/lib/cn.ts",
+    "shared/lib/money.ts",
+    "shared/ui/button.tsx",
+    "shared/ui/card.tsx",
+    "shared/ui/confirm-dialog.tsx",
+    "shared/ui/input.tsx",
+    "shared/ui/label.tsx",
+    "shared/ui/native-select.tsx",
+    "shared/ui/page-shell.tsx",
+    "shared/ui/skeleton.tsx",
+    "shared/ui/textarea.tsx",
+    "shared/ui/toaster.tsx",
+    "widgets/fleet-expenses-table/party-picker.tsx",
+    "widgets/fleet-expenses-table/split-editor.tsx"
+  ],
+  "pages/fleet-expenses/fleet-expense-new.tsx": [
+    "pages/fleet-expenses/fleet-expense-form.tsx"
+  ],
+  "pages/fleet-expenses/fleet-expenses-messages.tsx": [
+    "entities/raw-message/queries.ts",
+    "entities/raw-message/schemas.ts",
+    "shared/hooks/use-debounce.ts",
+    "shared/hooks/use-permissions.ts",
+    "shared/lib/cairo.ts",
+    "shared/lib/cn.ts",
+    "shared/ui/button.tsx",
+    "shared/ui/empty-state.tsx",
+    "shared/ui/input.tsx",
+    "shared/ui/page-shell.tsx",
+    "shared/ui/skeleton.tsx"
+  ],
+  "pages/fleet-expenses/fleet-expenses.tsx": [
+    "entities/raw-message/queries.ts",
+    "entities/transaction/categories.ts",
+    "entities/transaction/queries.ts",
+    "entities/transaction/schemas.ts",
+    "shared/hooks/use-debounce.ts",
+    "shared/hooks/use-permissions.ts",
+    "shared/lib/cairo.ts",
+    "shared/lib/chart-theme.ts",
+    "shared/lib/cn.ts",
+    "shared/lib/format-number.ts",
+    "shared/lib/money.ts",
+    "shared/lib/prefetch/index.ts",
+    "shared/scope/index.ts",
+    "shared/ui/button.tsx",
+    "shared/ui/chart-card.tsx",
+    "shared/ui/empty-state.tsx",
+    "shared/ui/input.tsx",
+    "shared/ui/label.tsx",
+    "shared/ui/native-select.tsx",
+    "shared/ui/page-shell.tsx",
+    "shared/ui/skeleton.tsx",
+    "shared/ui/stat-card.tsx",
+    "shared/ui/switch.tsx",
+    "widgets/fleet-expenses-table/cash-in-review.tsx",
+    "widgets/fleet-expenses-table/ledger-list.tsx"
+  ],
+  "pages/fuel-events/fuel-event-details.tsx": [
+    "entities/fuel-event/queries.ts",
+    "shared/hooks/use-permissions.ts",
+    "shared/lib/cn.ts",
+    "shared/lib/format.ts",
+    "shared/lib/fuel.ts",
+    "shared/lib/prefetch/index.ts",
+    "shared/ui/badge.tsx",
+    "shared/ui/button.tsx",
+    "shared/ui/card.tsx",
+    "shared/ui/confirm-dialog.tsx",
+    "shared/ui/empty-state.tsx",
+    "shared/ui/page-shell.tsx",
+    "shared/ui/separator.tsx",
+    "shared/ui/skeleton.tsx"
+  ],
+  "pages/fuel-events/fuel-event-edit.tsx": [
+    "entities/car/queries.ts",
+    "entities/fuel-event/queries.ts",
+    "entities/fuel-event/schemas.ts",
+    "shared/lib/format.ts",
+    "shared/ui/button.tsx",
+    "shared/ui/empty-state.tsx",
+    "shared/ui/page-shell.tsx",
+    "shared/ui/skeleton.tsx",
+    "widgets/fuel-event-form/fuel-event-form.tsx"
+  ],
+  "pages/fuel-events/fuel-event-new.tsx": [
+    "entities/fuel-event/queries.ts",
+    "entities/fuel-event/schemas.ts",
+    "shared/ui/button.tsx",
+    "shared/ui/page-shell.tsx",
+    "widgets/fuel-event-form/fuel-event-form.tsx"
+  ],
+  "pages/fuel-events/fuel-events.tsx": [
+    "entities/fuel-event/defaults.ts",
+    "entities/fuel-event/queries.ts",
+    "entities/fuel-event/schemas.ts",
+    "entities/trip/defaults.ts",
+    "shared/hooks/use-debounce.ts",
+    "shared/hooks/use-permissions.ts",
+    "shared/lib/cn.ts",
+    "shared/lib/format-number.ts",
+    "shared/lib/format.ts",
+    "shared/lib/fuel.ts",
+    "shared/lib/normalize.ts",
+    "shared/lib/prefetch/index.ts",
+    "shared/scope/index.ts",
+    "shared/ui/button.tsx",
+    "shared/ui/empty-state.tsx",
+    "shared/ui/input.tsx",
+    "shared/ui/page-shell.tsx",
+    "shared/ui/stat-card.tsx",
+    "widgets/fuel-events-table/fuel-events-excel.ts",
+    "widgets/fuel-events-table/fuel-events-filters.tsx",
+    "widgets/fuel-events-table/fuel-events-table.tsx"
+  ],
+  "pages/locations/locations.tsx": [
+    "entities/location/queries.ts",
+    "entities/location/schemas.ts",
+    "shared/hooks/use-debounce.ts",
+    "shared/lib/cn.ts",
+    "shared/lib/coords.ts",
+    "shared/ui/badge.tsx",
+    "shared/ui/button.tsx",
+    "shared/ui/confirm-dialog.tsx",
+    "shared/ui/page-shell.tsx",
+    "shared/ui/progress.tsx",
+    "shared/ui/search-input.tsx",
+    "shared/ui/tabs.tsx",
+    "widgets/locations-dropoff-dialog/index.ts",
+    "widgets/locations-dropoffs-table/index.ts",
+    "widgets/locations-needs-attention/index.ts",
+    "widgets/locations-terminal-dialog/index.ts",
+    "widgets/locations-terminals-table/index.ts",
+    "widgets/trips-table/trips-pagination.tsx"
+  ],
+  "pages/oil-changes/oil-change-edit.tsx": [
+    "entities/car/queries.ts",
+    "entities/oil-change/queries.ts",
+    "entities/oil-change/schemas.ts",
+    "shared/api/errors.ts",
+    "shared/ui/button.tsx",
+    "shared/ui/empty-state.tsx",
+    "shared/ui/page-shell.tsx",
+    "shared/ui/skeleton.tsx",
+    "widgets/oil-change-form/oil-change-form.tsx"
+  ],
+  "pages/oil-changes/oil-change-history.tsx": [
+    "entities/oil-change/api.ts",
+    "entities/oil-change/queries.ts",
+    "entities/oil-change/schemas.ts",
+    "shared/lib/cn.ts",
+    "shared/lib/format-number.ts",
+    "shared/lib/format.ts",
+    "shared/ui/button.tsx",
+    "shared/ui/confirm-dialog.tsx",
+    "shared/ui/data-table.tsx",
+    "shared/ui/empty-state.tsx",
+    "shared/ui/page-shell.tsx",
+    "shared/ui/skeleton.tsx",
+    "shared/ui/stat-card.tsx",
+    "shared/ui/tooltip.tsx",
+    "widgets/oil-changes-table/oil-change-status-badge.tsx",
+    "widgets/oil-changes-table/oil-changes-excel.ts"
+  ],
+  "pages/oil-changes/oil-change-new.tsx": [
+    "entities/oil-change/queries.ts",
+    "entities/oil-change/schemas.ts",
+    "shared/ui/button.tsx",
+    "shared/ui/page-shell.tsx",
+    "widgets/oil-change-form/oil-change-form.tsx"
+  ],
+  "pages/oil-changes/oil-changes.tsx": [
+    "entities/oil-change/api.ts",
+    "entities/oil-change/queries.ts",
+    "entities/oil-change/schemas.ts",
+    "shared/hooks/use-debounce.ts",
+    "shared/lib/format-number.ts",
+    "shared/lib/format.ts",
+    "shared/lib/normalize.ts",
+    "shared/lib/prefetch/index.ts",
+    "shared/ui/button.tsx",
+    "shared/ui/confirm-dialog.tsx",
+    "shared/ui/empty-state.tsx",
+    "shared/ui/page-shell.tsx",
+    "shared/ui/stat-card.tsx",
+    "widgets/oil-changes-table/oil-changes-excel.ts",
+    "widgets/oil-changes-table/oil-changes-filters.tsx",
+    "widgets/oil-changes-table/oil-changes-table.tsx"
+  ],
+  "pages/placeholder/placeholder.tsx": [
+    "shared/ui/empty-state.tsx",
+    "shared/ui/page-shell.tsx"
+  ],
+  "pages/service-invoices/service-invoice-details.tsx": [
+    "entities/service-invoice/queries.ts",
+    "shared/ui/skeleton.tsx",
+    "widgets/service-invoice-details/service-invoice-details.tsx"
+  ],
+  "pages/service-invoices/service-invoice-edit.tsx": [
+    "entities/service-invoice/queries.ts",
+    "entities/service-invoice/schemas.ts",
+    "shared/ui/skeleton.tsx",
+    "shared/ui/toaster.tsx",
+    "widgets/service-invoice-form/service-invoice-form.tsx"
+  ],
+  "pages/service-invoices/service-invoice-new.tsx": [
+    "entities/service-invoice/queries.ts",
+    "entities/service-invoice/schemas.ts",
+    "shared/ui/toaster.tsx",
+    "widgets/service-invoice-form/service-invoice-form.tsx"
+  ],
+  "pages/service-invoices/service-invoices.tsx": [
+    "entities/car/schemas.ts",
+    "entities/service-invoice/queries.ts",
+    "shared/hooks/use-debounce.ts",
+    "shared/lib/prefetch/index.ts",
+    "shared/ui/button.tsx",
+    "shared/ui/card.tsx",
+    "shared/ui/confirm-dialog.tsx",
+    "shared/ui/input.tsx",
+    "shared/ui/page-shell.tsx",
+    "shared/ui/toaster.tsx",
+    "widgets/service-cars-table/service-cars-table.tsx",
+    "widgets/service-invoices-table/service-invoices-table.tsx"
+  ],
+  "pages/settings/settings.tsx": [
+    "shared/api/client.ts",
+    "shared/hooks/use-permissions.ts",
+    "shared/ui/button.tsx",
+    "shared/ui/card.tsx",
+    "shared/ui/form.tsx",
+    "shared/ui/input.tsx",
+    "shared/ui/page-shell.tsx",
+    "widgets/whatsapp-gateway-card/index.ts"
+  ],
+  "pages/tires/tires.tsx": [
+    "entities/maint-stock/queries.ts",
+    "entities/maint-stock/schemas.ts",
+    "shared/api/errors.ts",
+    "shared/ui/button.tsx",
+    "shared/ui/card.tsx",
+    "shared/ui/input.tsx",
+    "shared/ui/label.tsx",
+    "shared/ui/page-shell.tsx",
+    "shared/ui/skeleton.tsx",
+    "shared/ui/toaster.tsx"
+  ],
+  "pages/trip-audit/trip-audit.tsx": [
+    "entities/trip-audit/api.ts",
+    "entities/trip-audit/defaults.ts",
+    "entities/trip-audit/queries.ts",
+    "entities/trip-audit/schemas.ts",
+    "shared/hooks/use-debounce.ts",
+    "shared/lib/cairo.ts",
+    "shared/lib/cn.ts",
+    "shared/lib/format.ts",
+    "shared/scope/index.ts",
+    "shared/ui/button.tsx",
+    "shared/ui/empty-state.tsx",
+    "shared/ui/native-select.tsx",
+    "shared/ui/page-shell.tsx",
+    "shared/ui/popover.tsx",
+    "shared/ui/search-input.tsx",
+    "shared/ui/tabs.tsx",
+    "widgets/trip-audit-detail-dialog/index.ts",
+    "widgets/trip-audit-queue/index.ts",
+    "widgets/trips-table/trips-pagination.tsx"
+  ],
+  "pages/trip-replay/playback-core.ts": [
+    "features/tracking/schemas.ts"
+  ],
+  "pages/trip-replay/replay-engine.ts": [
+    "pages/trip-replay/replay-model.ts"
+  ],
+  "pages/trip-replay/replay-model.ts": [
+    "entities/trip-audit/schemas.ts",
+    "features/tracking/schemas.ts",
+    "pages/trip-replay/playback-core.ts",
+    "shared/lib/cairo.ts",
+    "shared/lib/polyline.ts"
+  ],
+  "pages/trip-replay/trip-replay.tsx": [
+    "entities/trip-audit/queries.ts",
+    "pages/trip-replay/replay-engine.ts",
+    "pages/trip-replay/replay-model.ts",
+    "pages/trip-replay/use-trip-playback-history.ts",
+    "shared/lib/cairo.ts",
+    "shared/lib/cn.ts",
+    "shared/ui/badge.tsx",
+    "shared/ui/button.tsx",
+    "widgets/trip-replay-hud/index.ts",
+    "widgets/trip-replay-leg-rail/index.ts",
+    "widgets/trip-replay-map/index.ts",
+    "widgets/trip-replay-timeline/index.ts"
+  ],
+  "pages/trip-replay/use-trip-playback-history.ts": [
+    "features/tracking/api.ts",
+    "features/tracking/schemas.ts",
+    "features/tracking/use-history.ts"
+  ],
+  "pages/trips/trip-edit.tsx": [
+    "shared/ui/button.tsx",
+    "shared/ui/empty-state.tsx",
+    "shared/ui/page-shell.tsx",
+    "widgets/trip-form/trip-form.tsx"
+  ],
+  "pages/trips/trip-new.tsx": [
+    "shared/ui/button.tsx",
+    "shared/ui/page-shell.tsx",
+    "widgets/trip-form/trip-form.tsx"
+  ],
+  "pages/trips/trips.tsx": [
+    "entities/trip-statistics/queries.ts",
+    "entities/trip/defaults.ts",
+    "entities/trip/queries.ts",
+    "entities/trip/schemas.ts",
+    "shared/api/errors.ts",
+    "shared/hooks/use-debounce.ts",
+    "shared/lib/cn.ts",
+    "shared/lib/format.ts",
+    "shared/lib/prefetch/index.ts",
+    "shared/scope/index.ts",
+    "shared/ui/button.tsx",
+    "shared/ui/confirm-dialog.tsx",
+    "shared/ui/empty-state.tsx",
+    "shared/ui/page-shell.tsx",
+    "shared/ui/search-input.tsx",
+    "shared/ui/tabs.tsx",
+    "shared/ui/toaster.tsx",
+    "widgets/trip-location-dialog/trip-location-dialog.tsx",
+    "widgets/trip-receipt-batch-dialog/trip-receipt-batch-dialog.tsx",
+    "widgets/trip-receipt-dialog/trip-receipt-dialog.tsx",
+    "widgets/trips-statistics/trips-statistics.tsx",
+    "widgets/trips-table/trips-filters.tsx",
+    "widgets/trips-table/trips-pagination.tsx",
+    "widgets/trips-table/trips-table.tsx"
+  ],
+  "pages/users/users.tsx": [
+    "entities/user/queries.ts",
+    "entities/user/schemas.ts",
+    "shared/ui/button.tsx",
+    "shared/ui/confirm-dialog.tsx",
+    "shared/ui/page-shell.tsx",
+    "shared/ui/search-input.tsx",
+    "shared/ui/toaster.tsx",
+    "widgets/user-form-dialog/user-form-dialog.tsx",
+    "widgets/users-table/users-table.tsx"
+  ],
+  "pages/zones/zones.tsx": [
+    "entities/zone/queries.ts",
+    "entities/zone/schemas.ts",
+    "shared/ui/button.tsx",
+    "shared/ui/page-shell.tsx",
+    "widgets/zone-form-dialog/index.ts",
+    "widgets/zones-table/index.ts"
+  ],
+  "shared/api/client.ts": [
+    "shared/api/errors.ts",
+    "shared/config/constants.ts",
+    "shared/config/env.ts"
+  ],
+  "shared/api/errors.ts": [],
+  "shared/api/query.ts": [
+    "shared/api/errors.ts"
+  ],
+  "shared/auth/store.ts": [
+    "shared/config/constants.ts"
+  ],
+  "shared/config/constants.ts": [],
+  "shared/config/env.ts": [],
+  "shared/hooks/use-debounce.ts": [],
+  "shared/hooks/use-etit-live.ts": [
+    "entities/dashboard/api.ts",
+    "entities/dashboard/schemas.ts"
+  ],
+  "shared/hooks/use-layout-store.ts": [],
+  "shared/hooks/use-media-query.ts": [],
+  "shared/hooks/use-mounted.ts": [],
+  "shared/hooks/use-permissions.ts": [
+    "shared/auth/store.ts",
+    "shared/config/constants.ts"
+  ],
+  "shared/i18n/index.ts": [
+    "shared/i18n/locales/ar.json",
+    "shared/i18n/locales/en.json"
+  ],
+  "shared/i18n/locales/ar.json": [],
+  "shared/i18n/locales/en.json": [],
+  "shared/lib/animations.ts": [],
+  "shared/lib/cairo.ts": [],
+  "shared/lib/chart-theme.ts": [],
+  "shared/lib/cn.ts": [],
+  "shared/lib/coords.ts": [],
+  "shared/lib/excel.ts": [
+    "shared/i18n/index.ts",
+    "shared/ui/toaster.tsx"
+  ],
+  "shared/lib/format-number.ts": [],
+  "shared/lib/format.ts": [
+    "shared/config/constants.ts"
+  ],
+  "shared/lib/fuel.ts": [
+    "entities/fuel-event/schemas.ts",
+    "shared/config/constants.ts"
+  ],
+  "shared/lib/maps/google-provider.tsx": [
+    "shared/lib/cn.ts",
+    "shared/lib/maps/map-pool.ts",
+    "shared/lib/maps/marker-svg.ts",
+    "shared/lib/maps/types.ts",
+    "shared/ui/button.tsx"
+  ],
+  "shared/lib/maps/leaflet-provider.tsx": [
+    "shared/lib/cn.ts",
+    "shared/lib/coords.ts",
+    "shared/lib/maps/marker-svg.ts",
+    "shared/lib/maps/types.ts",
+    "shared/ui/button.tsx"
+  ],
+  "shared/lib/maps/map-pool.ts": [],
+  "shared/lib/maps/marker-svg.ts": [
+    "shared/lib/maps/types.ts"
+  ],
+  "shared/lib/maps/types.ts": [],
+  "shared/lib/money.ts": [],
+  "shared/lib/normalize.ts": [],
+  "shared/lib/polyline.ts": [],
+  "shared/lib/prefetch/assets.ts": [
+    "shared/lib/animations.ts"
+  ],
+  "shared/lib/prefetch/chunks.ts": [
+    "features/tracking/tracking-page.tsx",
+    "pages/cars/cars.tsx",
+    "pages/dashboard/dashboard.tsx",
+    "pages/driver-detail/driver-detail.tsx",
+    "pages/driver-expenses/driver-expense-new.tsx",
+    "pages/driver-expenses/driver-expenses.tsx",
+    "pages/driver-loans/driver-loan-new.tsx",
+    "pages/driver-loans/driver-loans.tsx",
+    "pages/drivers/drivers.tsx",
+    "pages/fee-mappings/fee-mappings.tsx",
+    "pages/fleet-expenses/fleet-expense-edit.tsx",
+    "pages/fleet-expenses/fleet-expense-new.tsx",
+    "pages/fleet-expenses/fleet-expenses-messages.tsx",
+    "pages/fleet-expenses/fleet-expenses.tsx",
+    "pages/fuel-events/fuel-event-details.tsx",
+    "pages/fuel-events/fuel-event-edit.tsx",
+    "pages/fuel-events/fuel-event-new.tsx",
+    "pages/fuel-events/fuel-events.tsx",
+    "pages/locations/locations.tsx",
+    "pages/oil-changes/oil-change-edit.tsx",
+    "pages/oil-changes/oil-change-history.tsx",
+    "pages/oil-changes/oil-change-new.tsx",
+    "pages/oil-changes/oil-changes.tsx",
+    "pages/placeholder/placeholder.tsx",
+    "pages/service-invoices/service-invoice-details.tsx",
+    "pages/service-invoices/service-invoice-edit.tsx",
+    "pages/service-invoices/service-invoice-new.tsx",
+    "pages/service-invoices/service-invoices.tsx",
+    "pages/settings/settings.tsx",
+    "pages/tires/tires.tsx",
+    "pages/trip-audit/trip-audit.tsx",
+    "pages/trips/trip-edit.tsx",
+    "pages/trips/trip-new.tsx",
+    "pages/trips/trips.tsx",
+    "pages/users/users.tsx",
+    "pages/zones/zones.tsx"
+  ],
+  "shared/lib/prefetch/forms.ts": [
+    "entities/car/queries.ts",
+    "entities/driver/queries.ts",
+    "entities/location/queries.ts",
+    "entities/mapping/queries.ts",
+    "entities/transaction/categories.ts",
+    "entities/transaction/vehicles.ts",
+    "shared/lib/prefetch/chunks.ts"
+  ],
+  "shared/lib/prefetch/index.ts": [
+    "shared/lib/prefetch/assets.ts",
+    "shared/lib/prefetch/chunks.ts",
+    "shared/lib/prefetch/forms.ts",
+    "shared/lib/prefetch/intent.ts",
+    "shared/lib/prefetch/routes.ts"
+  ],
+  "shared/lib/prefetch/intent.ts": [],
+  "shared/lib/prefetch/routes.ts": [
+    "entities/car/queries.ts",
+    "entities/dashboard/queries.ts",
+    "entities/driver/queries.ts",
+    "entities/fee-mapping/queries.ts",
+    "entities/fuel-event/defaults.ts",
+    "entities/fuel-event/queries.ts",
+    "entities/location/queries.ts",
+    "entities/maint-stock/queries.ts",
+    "entities/mapping/queries.ts",
+    "entities/oil-change/queries.ts",
+    "entities/service-invoice/queries.ts",
+    "entities/transaction/categories.ts",
+    "entities/transaction/queries.ts",
+    "entities/trip-audit/queries.ts",
+    "entities/trip/defaults.ts",
+    "entities/trip/queries.ts",
+    "entities/user/queries.ts",
+    "entities/zone/queries.ts",
+    "features/tracking/use-history.ts",
+    "shared/lib/prefetch/chunks.ts"
+  ],
+  "shared/lib/zod-utils.ts": [],
+  "shared/scope/index.ts": [
+    "shared/scope/scope.ts",
+    "shared/scope/use-scope.ts"
+  ],
+  "shared/scope/scope.ts": [
+    "shared/lib/cairo.ts"
+  ],
+  "shared/scope/use-scope.ts": [
+    "shared/scope/scope.ts"
+  ],
+  "shared/types/index.ts": [],
+  "shared/ui/avatar.tsx": [
+    "shared/lib/cn.ts"
+  ],
+  "shared/ui/badge.tsx": [
+    "shared/lib/cn.ts"
+  ],
+  "shared/ui/button.tsx": [
+    "shared/lib/cn.ts"
+  ],
+  "shared/ui/cairo-range-calendar.tsx": [
+    "shared/lib/cairo.ts",
+    "shared/lib/cn.ts",
+    "shared/ui/button.tsx"
+  ],
+  "shared/ui/card.tsx": [
+    "shared/lib/cn.ts"
+  ],
+  "shared/ui/chart-card.tsx": [
+    "shared/lib/cn.ts",
+    "shared/ui/card.tsx"
+  ],
+  "shared/ui/checkbox.tsx": [
+    "shared/lib/cn.ts"
+  ],
+  "shared/ui/collapsible-section.tsx": [
+    "shared/lib/cn.ts",
+    "shared/ui/card.tsx"
+  ],
+  "shared/ui/command.tsx": [
+    "shared/lib/cn.ts",
+    "shared/ui/dialog.tsx"
+  ],
+  "shared/ui/confirm-dialog.tsx": [
+    "shared/lib/animations.ts",
+    "shared/ui/button.tsx",
+    "shared/ui/dialog.tsx"
+  ],
+  "shared/ui/data-table.tsx": [
+    "shared/lib/cn.ts",
+    "shared/ui/button.tsx",
+    "shared/ui/empty-state.tsx",
+    "shared/ui/skeleton.tsx"
+  ],
+  "shared/ui/date-picker.tsx": [
+    "shared/lib/cn.ts",
+    "shared/lib/format.ts",
+    "shared/ui/button.tsx",
+    "shared/ui/month-year-selector.tsx",
+    "shared/ui/popover.tsx"
+  ],
+  "shared/ui/date-range-picker.tsx": [
+    "shared/lib/cn.ts",
+    "shared/lib/format.ts",
+    "shared/ui/button.tsx",
+    "shared/ui/month-year-selector.tsx",
+    "shared/ui/popover.tsx"
+  ],
+  "shared/ui/dialog.tsx": [
+    "shared/lib/cn.ts"
+  ],
+  "shared/ui/draggable.tsx": [
+    "shared/lib/cn.ts"
+  ],
+  "shared/ui/dropdown-menu.tsx": [
+    "shared/lib/cn.ts",
+    "shared/ui/z-index.ts"
+  ],
+  "shared/ui/empty-state.tsx": [
+    "shared/lib/animations.ts",
+    "shared/lib/cn.ts"
+  ],
+  "shared/ui/form.tsx": [
+    "shared/lib/cn.ts",
+    "shared/ui/label.tsx"
+  ],
+  "shared/ui/input.tsx": [
+    "shared/lib/cn.ts"
+  ],
+  "shared/ui/label.tsx": [
+    "shared/lib/cn.ts"
+  ],
+  "shared/ui/map-view.tsx": [
+    "shared/lib/cn.ts",
+    "shared/lib/maps/google-provider.tsx",
+    "shared/lib/maps/leaflet-provider.tsx",
+    "shared/lib/maps/types.ts"
+  ],
+  "shared/ui/month-year-selector.tsx": [
+    "shared/ui/select.tsx"
+  ],
+  "shared/ui/multi-select.tsx": [
+    "shared/lib/cn.ts",
+    "shared/ui/button.tsx",
+    "shared/ui/empty-state.tsx",
+    "shared/ui/popover.tsx"
+  ],
+  "shared/ui/native-select.tsx": [
+    "shared/lib/cn.ts"
+  ],
+  "shared/ui/page-shell.tsx": [
+    "shared/lib/cn.ts"
+  ],
+  "shared/ui/popover.tsx": [
+    "shared/lib/cn.ts",
+    "shared/ui/z-index.ts"
+  ],
+  "shared/ui/progress.tsx": [
+    "shared/lib/cn.ts"
+  ],
+  "shared/ui/ranked-list.tsx": [
+    "shared/lib/cn.ts"
+  ],
+  "shared/ui/scroll-area.tsx": [
+    "shared/lib/cn.ts"
+  ],
+  "shared/ui/search-input.tsx": [
+    "shared/lib/cn.ts",
+    "shared/ui/button.tsx",
+    "shared/ui/input.tsx"
+  ],
+  "shared/ui/searchable-select.tsx": [
+    "shared/lib/cn.ts",
+    "shared/lib/normalize.ts",
+    "shared/types/index.ts",
+    "shared/ui/button.tsx",
+    "shared/ui/command.tsx",
+    "shared/ui/empty-state.tsx",
+    "shared/ui/popover.tsx"
+  ],
+  "shared/ui/select.tsx": [
+    "shared/lib/cn.ts",
+    "shared/ui/z-index.ts"
+  ],
+  "shared/ui/separator.tsx": [
+    "shared/lib/cn.ts"
+  ],
+  "shared/ui/sheet.tsx": [
+    "shared/lib/cn.ts"
+  ],
+  "shared/ui/skeleton.tsx": [
+    "shared/lib/cn.ts"
+  ],
+  "shared/ui/stat-card.tsx": [
+    "shared/lib/cn.ts",
+    "shared/ui/card.tsx"
+  ],
+  "shared/ui/switch.tsx": [
+    "shared/lib/cn.ts"
+  ],
+  "shared/ui/tabs.tsx": [
+    "shared/lib/cn.ts"
+  ],
+  "shared/ui/textarea.tsx": [
+    "shared/lib/cn.ts"
+  ],
+  "shared/ui/toaster.tsx": [
+    "shared/lib/animations.ts"
+  ],
+  "shared/ui/tooltip.tsx": [
+    "shared/lib/cn.ts",
+    "shared/ui/z-index.ts"
+  ],
+  "shared/ui/truncate.tsx": [
+    "shared/lib/cn.ts"
+  ],
+  "shared/ui/z-index.ts": [],
+  "vite-env.d.ts": [],
+  "widgets/car-form/car-form.tsx": [
+    "entities/car/schemas.ts",
+    "entities/driver/queries.ts",
+    "shared/ui/button.tsx",
+    "shared/ui/card.tsx",
+    "shared/ui/date-picker.tsx",
+    "shared/ui/form.tsx",
+    "shared/ui/input.tsx",
+    "shared/ui/searchable-select.tsx",
+    "shared/ui/select.tsx"
+  ],
+  "widgets/cars-table/cars-table.tsx": [
+    "entities/car/queries.ts",
+    "entities/car/schemas.ts",
+    "entities/driver/queries.ts",
+    "shared/config/constants.ts",
+    "shared/hooks/use-permissions.ts",
+    "shared/lib/normalize.ts",
+    "shared/ui/badge.tsx",
+    "shared/ui/button.tsx",
+    "shared/ui/data-table.tsx",
+    "shared/ui/empty-state.tsx",
+    "shared/ui/search-input.tsx",
+    "shared/ui/stat-card.tsx"
+  ],
+  "widgets/command-palette/command-palette.tsx": [
+    "entities/car/queries.ts",
+    "entities/driver/queries.ts",
+    "entities/driver/schemas.ts",
+    "entities/mapping/queries.ts",
+    "shared/config/constants.ts",
+    "shared/hooks/use-permissions.ts",
+    "shared/ui/badge.tsx",
+    "shared/ui/command.tsx",
+    "shared/ui/empty-state.tsx",
+    "widgets/sidebar/sidebar.tsx"
+  ],
+  "widgets/driver-detail/documents-tab.tsx": [
+    "entities/driver/api.ts",
+    "entities/driver/queries.ts",
+    "entities/driver/schemas.ts",
+    "shared/config/constants.ts",
+    "shared/hooks/use-permissions.ts",
+    "shared/lib/cn.ts",
+    "shared/lib/format.ts",
+    "shared/ui/badge.tsx",
+    "shared/ui/button.tsx",
+    "shared/ui/card.tsx",
+    "shared/ui/date-picker.tsx",
+    "shared/ui/dialog.tsx"
+  ],
+  "widgets/driver-detail/financial-tab.tsx": [
+    "entities/driver-expense/queries.ts",
+    "entities/driver-loan/queries.ts",
+    "shared/lib/cn.ts",
+    "shared/lib/prefetch/index.ts",
+    "shared/ui/card.tsx"
+  ],
+  "widgets/driver-detail/overview-tab.tsx": [
+    "entities/driver/schemas.ts",
+    "shared/lib/cn.ts",
+    "shared/lib/format.ts",
+    "shared/ui/badge.tsx",
+    "shared/ui/card.tsx",
+    "shared/ui/stat-card.tsx"
+  ],
+  "widgets/driver-detail/pin-tab.tsx": [
+    "entities/driver/queries.ts",
+    "shared/config/constants.ts",
+    "shared/hooks/use-permissions.ts",
+    "shared/lib/cn.ts",
+    "shared/ui/button.tsx",
+    "shared/ui/card.tsx",
+    "shared/ui/toaster.tsx",
+    "shared/ui/tooltip.tsx"
+  ],
+  "widgets/driver-form/driver-form.tsx": [
+    "entities/driver/schemas.ts",
+    "shared/ui/button.tsx",
+    "shared/ui/card.tsx",
+    "shared/ui/date-picker.tsx",
+    "shared/ui/form.tsx",
+    "shared/ui/input.tsx"
+  ],
+  "widgets/drivers-table/drivers-table.tsx": [
+    "entities/driver/queries.ts",
+    "entities/driver/schemas.ts",
+    "shared/config/constants.ts",
+    "shared/hooks/use-permissions.ts",
+    "shared/lib/normalize.ts",
+    "shared/lib/prefetch/index.ts",
+    "shared/ui/badge.tsx",
+    "shared/ui/button.tsx",
+    "shared/ui/data-table.tsx",
+    "shared/ui/empty-state.tsx",
+    "shared/ui/search-input.tsx",
+    "shared/ui/stat-card.tsx"
+  ],
+  "widgets/fee-mappings/accuracy-badge.tsx": [
+    "entities/fee-mapping/schemas.ts",
+    "shared/lib/cn.ts"
+  ],
+  "widgets/fee-mappings/fee-mappings-bulk-enrich-dialog.tsx": [
+    "entities/fee-mapping/schemas.ts",
+    "shared/lib/cn.ts",
+    "shared/ui/button.tsx",
+    "shared/ui/dialog.tsx"
+  ],
+  "widgets/fee-mappings/fee-mappings-excel.ts": [
+    "entities/fee-mapping/schemas.ts",
+    "shared/i18n/index.ts",
+    "shared/lib/coords.ts",
+    "shared/lib/excel.ts"
+  ],
+  "widgets/fee-mappings/fee-mappings-filters.tsx": [
+    "entities/fee-mapping/schemas.ts",
+    "shared/ui/button.tsx",
+    "shared/ui/input.tsx",
+    "shared/ui/select.tsx"
+  ],
+  "widgets/fee-mappings/fee-mappings-form.tsx": [
+    "entities/fee-mapping/queries.ts",
+    "entities/fee-mapping/schemas.ts",
+    "entities/location/queries.ts",
+    "shared/api/errors.ts",
+    "shared/lib/normalize.ts",
+    "shared/types/index.ts",
+    "shared/ui/button.tsx",
+    "shared/ui/card.tsx",
+    "shared/ui/input.tsx",
+    "shared/ui/label.tsx",
+    "shared/ui/searchable-select.tsx",
+    "shared/ui/toaster.tsx",
+    "widgets/terminal-select/index.ts"
+  ],
+  "widgets/fee-mappings/fee-mappings-location-dialog.tsx": [
+    "entities/fee-mapping/queries.ts",
+    "entities/fee-mapping/schemas.ts",
+    "shared/api/errors.ts",
+    "shared/lib/coords.ts",
+    "shared/lib/format.ts",
+    "shared/lib/maps/types.ts",
+    "shared/ui/button.tsx",
+    "shared/ui/dialog.tsx",
+    "shared/ui/input.tsx",
+    "shared/ui/label.tsx",
+    "shared/ui/map-view.tsx",
+    "shared/ui/toaster.tsx"
+  ],
+  "widgets/fee-mappings/fee-mappings-stats.tsx": [
+    "entities/fee-mapping/schemas.ts",
+    "shared/lib/cn.ts"
+  ],
+  "widgets/fee-mappings/fee-mappings-table.tsx": [
+    "entities/fee-mapping/schemas.ts",
+    "shared/lib/coords.ts",
+    "shared/lib/format.ts",
+    "shared/ui/button.tsx",
+    "shared/ui/data-table.tsx",
+    "widgets/fee-mappings/accuracy-badge.tsx"
+  ],
+  "widgets/fleet-expenses-table/cash-in-review.tsx": [
+    "entities/transaction/queries.ts",
+    "entities/transaction/schemas.ts",
+    "shared/hooks/use-media-query.ts",
+    "shared/lib/cairo.ts",
+    "shared/lib/money.ts",
+    "shared/ui/button.tsx",
+    "shared/ui/confirm-dialog.tsx",
+    "shared/ui/sheet.tsx",
+    "shared/ui/skeleton.tsx"
+  ],
+  "widgets/fleet-expenses-table/ledger-list.tsx": [
+    "entities/transaction/categories.ts",
+    "entities/transaction/queries.ts",
+    "entities/transaction/schemas.ts",
+    "shared/lib/cairo.ts",
+    "shared/lib/cn.ts",
+    "shared/lib/money.ts",
+    "shared/lib/prefetch/index.ts",
+    "shared/ui/button.tsx",
+    "shared/ui/native-select.tsx",
+    "shared/ui/sheet.tsx",
+    "shared/ui/tooltip.tsx",
+    "widgets/fleet-expenses-table/party-picker.tsx",
+    "widgets/fleet-expenses-table/split-editor.tsx"
+  ],
+  "widgets/fleet-expenses-table/party-picker.tsx": [
+    "entities/transaction/categories.ts",
+    "shared/lib/cn.ts",
+    "shared/ui/button.tsx",
+    "shared/ui/command.tsx",
+    "shared/ui/popover.tsx",
+    "shared/ui/skeleton.tsx"
+  ],
+  "widgets/fleet-expenses-table/split-editor.tsx": [
+    "entities/transaction/categories.ts",
+    "entities/transaction/queries.ts",
+    "entities/transaction/schemas.ts",
+    "shared/lib/cn.ts",
+    "shared/lib/money.ts",
+    "shared/ui/button.tsx",
+    "shared/ui/confirm-dialog.tsx",
+    "shared/ui/input.tsx",
+    "shared/ui/label.tsx",
+    "shared/ui/native-select.tsx",
+    "shared/ui/sheet.tsx",
+    "shared/ui/skeleton.tsx",
+    "widgets/fleet-expenses-table/party-picker.tsx"
+  ],
+  "widgets/fuel-event-form/fuel-event-form.tsx": [
+    "entities/car/queries.ts",
+    "entities/car/schemas.ts",
+    "entities/driver/queries.ts",
+    "entities/driver/schemas.ts",
+    "entities/fuel-event/schemas.ts",
+    "shared/config/constants.ts",
+    "shared/lib/cn.ts",
+    "shared/lib/format.ts",
+    "shared/lib/fuel.ts",
+    "shared/ui/button.tsx",
+    "shared/ui/card.tsx",
+    "shared/ui/date-picker.tsx",
+    "shared/ui/form.tsx",
+    "shared/ui/input.tsx",
+    "shared/ui/searchable-select.tsx",
+    "shared/ui/skeleton.tsx"
+  ],
+  "widgets/fuel-events-table/fuel-events-excel.ts": [
+    "entities/fuel-event/schemas.ts",
+    "shared/lib/excel.ts",
+    "shared/lib/format.ts",
+    "shared/lib/fuel.ts"
+  ],
+  "widgets/fuel-events-table/fuel-events-filters.tsx": [
+    "entities/fuel-event/schemas.ts",
+    "shared/lib/cn.ts",
+    "shared/lib/fuel.ts",
+    "shared/ui/button.tsx",
+    "shared/ui/popover.tsx",
+    "shared/ui/select.tsx"
+  ],
+  "widgets/fuel-events-table/fuel-events-table.tsx": [
+    "entities/fuel-event/queries.ts",
+    "entities/fuel-event/schemas.ts",
+    "shared/hooks/use-media-query.ts",
+    "shared/lib/cn.ts",
+    "shared/lib/format.ts",
+    "shared/lib/fuel.ts",
+    "shared/lib/prefetch/index.ts",
+    "shared/ui/badge.tsx",
+    "shared/ui/card.tsx",
+    "shared/ui/data-table.tsx",
+    "shared/ui/skeleton.tsx",
+    "shared/ui/tooltip.tsx"
+  ],
+  "widgets/header/header.tsx": [
+    "shared/ui/button.tsx",
+    "widgets/scope-bar/scope-bar.tsx"
+  ],
+  "widgets/language-toggle/language-toggle.tsx": [
+    "shared/i18n/index.ts",
+    "shared/ui/button.tsx",
+    "shared/ui/dropdown-menu.tsx"
+  ],
+  "widgets/layout/layout.tsx": [
+    "shared/hooks/use-layout-store.ts",
+    "shared/hooks/use-media-query.ts",
+    "shared/ui/sheet.tsx",
+    "widgets/command-palette/command-palette.tsx",
+    "widgets/header/header.tsx",
+    "widgets/sidebar/sidebar.tsx"
+  ],
+  "widgets/locations-dropoff-dialog/index.ts": [
+    "widgets/locations-dropoff-dialog/locations-dropoff-dialog.tsx"
+  ],
+  "widgets/locations-dropoff-dialog/locations-dropoff-dialog.tsx": [
+    "entities/location/queries.ts",
+    "entities/location/schemas.ts",
+    "shared/lib/coords.ts",
+    "shared/ui/button.tsx",
+    "shared/ui/dialog.tsx",
+    "shared/ui/input.tsx",
+    "shared/ui/label.tsx",
+    "widgets/locations-dropoffs-table/pin-source-badge.tsx",
+    "widgets/locations-map-picker/index.ts"
+  ],
+  "widgets/locations-dropoffs-table/columns.tsx": [
+    "entities/location/schemas.ts",
+    "shared/lib/coords.ts",
+    "shared/ui/badge.tsx",
+    "widgets/locations-dropoffs-table/pin-source-badge.tsx"
+  ],
+  "widgets/locations-dropoffs-table/index.ts": [
+    "widgets/locations-dropoffs-table/locations-dropoffs-table.tsx",
+    "widgets/locations-dropoffs-table/pin-source-badge.tsx"
+  ],
+  "widgets/locations-dropoffs-table/locations-dropoffs-table.tsx": [
+    "entities/location/schemas.ts",
+    "shared/ui/data-table.tsx",
+    "widgets/locations-dropoffs-table/columns.tsx"
+  ],
+  "widgets/locations-dropoffs-table/pin-source-badge.tsx": [
+    "shared/ui/badge.tsx"
+  ],
+  "widgets/locations-map-picker/index.ts": [
+    "widgets/locations-map-picker/locations-map-picker.tsx"
+  ],
+  "widgets/locations-map-picker/locations-map-picker.tsx": [
+    "shared/lib/cn.ts",
+    "shared/lib/coords.ts",
+    "shared/lib/maps/types.ts",
+    "shared/ui/map-view.tsx"
+  ],
+  "widgets/locations-needs-attention/index.ts": [
+    "widgets/locations-needs-attention/locations-needs-attention.tsx"
+  ],
+  "widgets/locations-needs-attention/locations-needs-attention.tsx": [
+    "entities/location/api.ts",
+    "entities/location/queries.ts",
+    "entities/location/schemas.ts",
+    "shared/lib/cn.ts",
+    "shared/lib/normalize.ts",
+    "shared/ui/badge.tsx",
+    "shared/ui/button.tsx",
+    "shared/ui/empty-state.tsx",
+    "shared/ui/native-select.tsx",
+    "shared/ui/skeleton.tsx",
+    "widgets/locations-dropoff-dialog/index.ts",
+    "widgets/locations-map-picker/index.ts",
+    "widgets/locations-terminal-dialog/index.ts",
+    "widgets/trips-table/trips-pagination.tsx"
+  ],
+  "widgets/locations-terminal-dialog/index.ts": [
+    "widgets/locations-terminal-dialog/locations-terminal-dialog.tsx"
+  ],
+  "widgets/locations-terminal-dialog/locations-terminal-dialog.tsx": [
+    "entities/location/queries.ts",
+    "entities/location/schemas.ts",
+    "shared/lib/coords.ts",
+    "shared/ui/badge.tsx",
+    "shared/ui/button.tsx",
+    "shared/ui/dialog.tsx",
+    "shared/ui/input.tsx",
+    "shared/ui/label.tsx",
+    "shared/ui/switch.tsx",
+    "widgets/locations-dropoffs-table/pin-source-badge.tsx",
+    "widgets/locations-map-picker/index.ts"
+  ],
+  "widgets/locations-terminals-table/columns.tsx": [
+    "entities/location/schemas.ts",
+    "shared/lib/coords.ts",
+    "shared/ui/badge.tsx",
+    "widgets/locations-dropoffs-table/pin-source-badge.tsx"
+  ],
+  "widgets/locations-terminals-table/index.ts": [
+    "widgets/locations-terminals-table/locations-terminals-table.tsx"
+  ],
+  "widgets/locations-terminals-table/locations-terminals-table.tsx": [
+    "entities/location/schemas.ts",
+    "shared/ui/data-table.tsx",
+    "widgets/locations-terminals-table/columns.tsx"
+  ],
+  "widgets/oil-change-form/oil-change-form.tsx": [
+    "entities/car/queries.ts",
+    "entities/car/schemas.ts",
+    "entities/driver/queries.ts",
+    "entities/driver/schemas.ts",
+    "entities/oil-change/schemas.ts",
+    "shared/lib/cn.ts",
+    "shared/lib/format.ts",
+    "shared/ui/button.tsx",
+    "shared/ui/card.tsx",
+    "shared/ui/date-picker.tsx",
+    "shared/ui/form.tsx",
+    "shared/ui/input.tsx",
+    "shared/ui/searchable-select.tsx",
+    "shared/ui/skeleton.tsx",
+    "widgets/oil-change-form/oil-change-status-preview.tsx"
+  ],
+  "widgets/oil-change-form/oil-change-status-preview.tsx": [
+    "entities/oil-change/schemas.ts",
+    "shared/lib/cn.ts",
+    "shared/lib/format-number.ts"
+  ],
+  "widgets/oil-changes-table/oil-change-status-badge.tsx": [
+    "entities/oil-change/schemas.ts",
+    "shared/lib/cn.ts",
+    "shared/lib/format-number.ts",
+    "shared/ui/badge.tsx"
+  ],
+  "widgets/oil-changes-table/oil-changes-excel.ts": [
+    "entities/oil-change/schemas.ts",
+    "shared/lib/excel.ts",
+    "shared/lib/format.ts"
+  ],
+  "widgets/oil-changes-table/oil-changes-filters.tsx": [
+    "entities/oil-change/schemas.ts",
+    "shared/lib/cn.ts",
+    "shared/ui/input.tsx"
+  ],
+  "widgets/oil-changes-table/oil-changes-table.tsx": [
+    "entities/oil-change/queries.ts",
+    "entities/oil-change/schemas.ts",
+    "shared/lib/cn.ts",
+    "shared/lib/format-number.ts",
+    "shared/lib/format.ts",
+    "shared/lib/prefetch/index.ts",
+    "shared/ui/button.tsx",
+    "shared/ui/data-table.tsx",
+    "shared/ui/tooltip.tsx",
+    "widgets/oil-changes-table/oil-change-status-badge.tsx"
+  ],
+  "widgets/scope-bar/scope-bar.tsx": [
+    "entities/mapping/queries.ts",
+    "shared/lib/cn.ts",
+    "shared/scope/index.ts",
+    "shared/ui/button.tsx",
+    "shared/ui/popover.tsx",
+    "shared/ui/select.tsx",
+    "widgets/scope-bar/scope-date-picker.tsx"
+  ],
+  "widgets/scope-bar/scope-date-picker.tsx": [
+    "shared/lib/cairo.ts",
+    "shared/lib/cn.ts",
+    "shared/ui/button.tsx",
+    "shared/ui/cairo-range-calendar.tsx",
+    "shared/ui/popover.tsx"
+  ],
+  "widgets/service-cars-table/service-cars-table.tsx": [
+    "entities/car/schemas.ts",
+    "shared/ui/badge.tsx",
+    "shared/ui/button.tsx",
+    "shared/ui/data-table.tsx"
+  ],
+  "widgets/service-invoice-details/service-invoice-details.tsx": [
+    "entities/service-invoice/schemas.ts",
+    "shared/lib/cn.ts",
+    "shared/lib/format.ts",
+    "shared/ui/badge.tsx",
+    "shared/ui/button.tsx",
+    "shared/ui/card.tsx",
+    "shared/ui/empty-state.tsx",
+    "shared/ui/stat-card.tsx"
+  ],
+  "widgets/service-invoice-form/service-invoice-form.tsx": [
+    "entities/car/queries.ts",
+    "entities/car/schemas.ts",
+    "entities/driver/queries.ts",
+    "entities/service-invoice/schemas.ts",
+    "shared/lib/format.ts",
+    "shared/ui/button.tsx",
+    "shared/ui/card.tsx",
+    "shared/ui/date-picker.tsx",
+    "shared/ui/form.tsx",
+    "shared/ui/input.tsx",
+    "shared/ui/searchable-select.tsx",
+    "shared/ui/textarea.tsx"
+  ],
+  "widgets/service-invoices-table/service-invoices-table.tsx": [
+    "entities/service-invoice/queries.ts",
+    "entities/service-invoice/schemas.ts",
+    "shared/lib/format.ts",
+    "shared/lib/prefetch/index.ts",
+    "shared/ui/badge.tsx",
+    "shared/ui/button.tsx",
+    "shared/ui/data-table.tsx",
+    "shared/ui/dropdown-menu.tsx"
+  ],
+  "widgets/sidebar/sidebar.tsx": [
+    "shared/config/constants.ts",
+    "shared/hooks/use-permissions.ts",
+    "shared/lib/cn.ts",
+    "shared/lib/prefetch/index.ts",
+    "shared/scope/index.ts",
+    "shared/ui/button.tsx",
+    "shared/ui/scroll-area.tsx",
+    "widgets/language-toggle/language-toggle.tsx",
+    "widgets/theme-toggle/theme-toggle.tsx",
+    "widgets/user-menu/user-menu.tsx"
+  ],
+  "widgets/terminal-select/index.ts": [
+    "widgets/terminal-select/terminal-select.tsx"
+  ],
+  "widgets/terminal-select/terminal-select.tsx": [
+    "entities/location/queries.ts",
+    "entities/location/schemas.ts",
+    "shared/lib/normalize.ts",
+    "shared/types/index.ts",
+    "shared/ui/confirm-dialog.tsx",
+    "shared/ui/searchable-select.tsx",
+    "shared/ui/toaster.tsx"
+  ],
+  "widgets/theme-toggle/theme-toggle.tsx": [
+    "shared/hooks/use-mounted.ts",
+    "shared/ui/button.tsx",
+    "shared/ui/dropdown-menu.tsx"
+  ],
+  "widgets/trip-audit-detail-dialog/index.ts": [
+    "widgets/trip-audit-detail-dialog/trip-audit-detail-dialog.tsx"
+  ],
+  "widgets/trip-audit-detail-dialog/trip-audit-detail-dialog.tsx": [
+    "entities/location/api.ts",
+    "entities/location/queries.ts",
+    "entities/location/schemas.ts",
+    "entities/trip-audit/queries.ts",
+    "entities/trip-audit/schemas.ts",
+    "features/tracking/api.ts",
+    "features/tracking/components/replay-transport.tsx",
+    "features/tracking/playback.ts",
+    "features/tracking/schemas.ts",
+    "features/tracking/use-history.ts",
+    "shared/lib/cairo.ts",
+    "shared/lib/cn.ts",
+    "shared/lib/coords.ts",
+    "shared/lib/format.ts",
+    "shared/lib/maps/types.ts",
+    "shared/lib/normalize.ts",
+    "shared/lib/polyline.ts",
+    "shared/ui/badge.tsx",
+    "shared/ui/button.tsx",
+    "shared/ui/dialog.tsx",
+    "shared/ui/label.tsx",
+    "shared/ui/map-view.tsx",
+    "shared/ui/textarea.tsx",
+    "widgets/trip-audit-matches-table/index.ts"
+  ],
+  "widgets/trip-audit-matches-table/audit-format.tsx": [
+    "entities/trip-audit/schemas.ts",
+    "shared/lib/format.ts",
+    "shared/ui/badge.tsx"
+  ],
+  "widgets/trip-audit-matches-table/index.ts": [
+    "widgets/trip-audit-matches-table/audit-format.tsx"
+  ],
+  "widgets/trip-audit-queue/index.ts": [
+    "widgets/trip-audit-queue/trip-audit-queue.tsx"
+  ],
+  "widgets/trip-audit-queue/trip-audit-queue.tsx": [
+    "entities/trip-audit/schemas.ts",
+    "shared/lib/cairo.ts",
+    "shared/lib/cn.ts",
+    "shared/lib/format.ts",
+    "shared/ui/badge.tsx",
+    "shared/ui/button.tsx",
+    "shared/ui/empty-state.tsx",
+    "shared/ui/skeleton.tsx",
+    "widgets/trip-audit-matches-table/index.ts"
+  ],
+  "widgets/trip-form/drop-off-picker-modal.tsx": [
+    "entities/mapping/queries.ts",
+    "entities/mapping/schemas.ts",
+    "shared/lib/cn.ts",
+    "shared/lib/format.ts",
+    "shared/lib/normalize.ts",
+    "shared/ui/button.tsx",
+    "shared/ui/dialog.tsx",
+    "shared/ui/empty-state.tsx",
+    "shared/ui/input.tsx",
+    "shared/ui/scroll-area.tsx"
+  ],
+  "widgets/trip-form/duplicate-comparison-dialog.tsx": [
+    "entities/trip/schemas.ts",
+    "shared/lib/cn.ts",
+    "shared/lib/format.ts",
+    "shared/ui/button.tsx",
+    "shared/ui/dialog.tsx",
+    "shared/ui/scroll-area.tsx"
+  ],
+  "widgets/trip-form/trip-form.tsx": [
+    "entities/car/queries.ts",
+    "entities/driver/queries.ts",
+    "entities/driver/schemas.ts",
+    "entities/location/queries.ts",
+    "entities/location/schemas.ts",
+    "entities/mapping/queries.ts",
+    "entities/mapping/schemas.ts",
+    "entities/receipt-batch/schemas.ts",
+    "entities/trip/api.ts",
+    "entities/trip/queries.ts",
+    "entities/trip/schemas.ts",
+    "shared/api/errors.ts",
+    "shared/auth/store.ts",
+    "shared/lib/cn.ts",
+    "shared/lib/format.ts",
+    "shared/lib/normalize.ts",
+    "shared/ui/button.tsx",
+    "shared/ui/card.tsx",
+    "shared/ui/checkbox.tsx",
+    "shared/ui/confirm-dialog.tsx",
+    "shared/ui/date-picker.tsx",
+    "shared/ui/input.tsx",
+    "shared/ui/label.tsx",
+    "shared/ui/multi-select.tsx",
+    "shared/ui/searchable-select.tsx",
+    "shared/ui/skeleton.tsx",
+    "shared/ui/toaster.tsx",
+    "widgets/terminal-select/index.ts",
+    "widgets/trip-form/drop-off-picker-modal.tsx",
+    "widgets/trip-form/duplicate-comparison-dialog.tsx"
+  ],
+  "widgets/trip-location-dialog/trip-location-dialog.tsx": [
+    "entities/trip-summary/api.ts",
+    "entities/trip/queries.ts",
+    "shared/lib/cn.ts",
+    "shared/lib/coords.ts",
+    "shared/lib/format.ts",
+    "shared/lib/maps/types.ts",
+    "shared/ui/button.tsx",
+    "shared/ui/dialog.tsx",
+    "shared/ui/empty-state.tsx",
+    "shared/ui/map-view.tsx",
+    "shared/ui/separator.tsx",
+    "shared/ui/skeleton.tsx",
+    "shared/ui/toaster.tsx"
+  ],
+  "widgets/trip-receipt-batch-dialog/trip-receipt-batch-dialog.tsx": [
+    "entities/receipt-batch/api.ts",
+    "entities/trip/queries.ts",
+    "entities/trip/schemas.ts",
+    "shared/lib/cn.ts",
+    "shared/ui/button.tsx",
+    "shared/ui/dialog.tsx",
+    "shared/ui/empty-state.tsx",
+    "shared/ui/skeleton.tsx"
+  ],
+  "widgets/trip-receipt-dialog/trip-receipt-dialog.tsx": [
+    "entities/receipt/queries.ts",
+    "entities/receipt/schemas.ts",
+    "shared/api/errors.ts",
+    "shared/lib/cn.ts",
+    "shared/lib/format.ts",
+    "shared/ui/button.tsx",
+    "shared/ui/checkbox.tsx",
+    "shared/ui/dialog.tsx",
+    "shared/ui/empty-state.tsx",
+    "shared/ui/input.tsx",
+    "shared/ui/label.tsx",
+    "shared/ui/select.tsx",
+    "shared/ui/skeleton.tsx",
+    "shared/ui/textarea.tsx",
+    "shared/ui/toaster.tsx"
+  ],
+  "widgets/trip-replay-hud/index.ts": [
+    "widgets/trip-replay-hud/trip-replay-hud.tsx"
+  ],
+  "widgets/trip-replay-hud/trip-replay-hud.tsx": [
+    "pages/trip-replay/replay-engine.ts",
+    "shared/lib/cairo.ts",
+    "shared/lib/cn.ts",
+    "shared/ui/button.tsx"
+  ],
+  "widgets/trip-replay-leg-rail/index.ts": [
+    "widgets/trip-replay-leg-rail/trip-replay-leg-rail.tsx"
+  ],
+  "widgets/trip-replay-leg-rail/trip-replay-leg-rail.tsx": [
+    "pages/trip-replay/replay-model.ts",
+    "shared/lib/cairo.ts",
+    "shared/lib/cn.ts",
+    "shared/ui/badge.tsx",
+    "shared/ui/button.tsx"
+  ],
+  "widgets/trip-replay-map/google-adapter.ts": [
+    "shared/lib/maps/map-pool.ts",
+    "shared/lib/maps/marker-svg.ts",
+    "shared/lib/maps/types.ts",
+    "widgets/trip-replay-map/types.ts"
+  ],
+  "widgets/trip-replay-map/index.ts": [
+    "widgets/trip-replay-map/trip-replay-map.tsx",
+    "widgets/trip-replay-map/types.ts"
+  ],
+  "widgets/trip-replay-map/leaflet-adapter.ts": [
+    "shared/lib/maps/marker-svg.ts",
+    "shared/lib/maps/types.ts",
+    "widgets/trip-replay-map/types.ts"
+  ],
+  "widgets/trip-replay-map/trip-replay-map.tsx": [
+    "shared/lib/cn.ts",
+    "shared/lib/coords.ts",
+    "shared/lib/maps/google-provider.tsx",
+    "widgets/trip-replay-map/google-adapter.ts",
+    "widgets/trip-replay-map/leaflet-adapter.ts",
+    "widgets/trip-replay-map/types.ts"
+  ],
+  "widgets/trip-replay-map/types.ts": [
+    "shared/lib/maps/types.ts"
+  ],
+  "widgets/trip-replay-timeline/index.ts": [
+    "widgets/trip-replay-timeline/trip-replay-timeline.tsx"
+  ],
+  "widgets/trip-replay-timeline/trip-replay-timeline.tsx": [
+    "pages/trip-replay/replay-model.ts",
+    "shared/lib/cairo.ts",
+    "shared/lib/cn.ts"
+  ],
+  "widgets/trips-statistics/trips-statistics-car-table.tsx": [
+    "entities/trip-statistics/schemas.ts",
+    "shared/lib/format.ts",
+    "shared/ui/card.tsx",
+    "shared/ui/data-table.tsx"
+  ],
+  "widgets/trips-statistics/trips-statistics-cars.tsx": [
+    "entities/trip-statistics/schemas.ts",
+    "shared/lib/format-number.ts",
+    "shared/lib/format.ts",
+    "shared/ui/collapsible-section.tsx",
+    "shared/ui/ranked-list.tsx"
+  ],
+  "widgets/trips-statistics/trips-statistics-companies.tsx": [
+    "entities/trip-statistics/queries.ts",
+    "entities/trip-statistics/schemas.ts",
+    "shared/lib/chart-theme.ts",
+    "shared/lib/cn.ts",
+    "shared/lib/format.ts",
+    "shared/lib/prefetch/index.ts",
+    "shared/ui/badge.tsx",
+    "shared/ui/chart-card.tsx",
+    "shared/ui/collapsible-section.tsx",
+    "shared/ui/data-table.tsx"
+  ],
+  "widgets/trips-statistics/trips-statistics-excel.ts": [
+    "entities/trip-statistics/schemas.ts",
+    "shared/lib/excel.ts",
+    "shared/lib/format.ts"
+  ],
+  "widgets/trips-statistics/trips-statistics-routes.tsx": [
+    "entities/trip-statistics/schemas.ts",
+    "shared/lib/cn.ts",
+    "shared/lib/format.ts",
+    "shared/ui/button.tsx",
+    "shared/ui/card.tsx",
+    "shared/ui/data-table.tsx",
+    "shared/ui/empty-state.tsx"
+  ],
+  "widgets/trips-statistics/trips-statistics-summary.tsx": [
+    "entities/trip-statistics/schemas.ts",
+    "shared/lib/format-number.ts",
+    "shared/lib/format.ts",
+    "shared/ui/popover.tsx",
+    "shared/ui/stat-card.tsx"
+  ],
+  "widgets/trips-statistics/trips-statistics-timeline.tsx": [
+    "entities/trip-statistics/schemas.ts",
+    "shared/lib/chart-theme.ts",
+    "shared/lib/format-number.ts",
+    "shared/lib/format.ts",
+    "shared/ui/chart-card.tsx",
+    "shared/ui/empty-state.tsx",
+    "shared/ui/select.tsx"
+  ],
+  "widgets/trips-statistics/trips-statistics.tsx": [
+    "entities/trip-statistics/queries.ts",
+    "entities/trip-statistics/schemas.ts",
+    "shared/api/errors.ts",
+    "shared/lib/format.ts",
+    "shared/ui/button.tsx",
+    "shared/ui/card.tsx",
+    "shared/ui/empty-state.tsx",
+    "shared/ui/skeleton.tsx",
+    "shared/ui/tabs.tsx",
+    "shared/ui/toaster.tsx",
+    "widgets/trips-statistics/trips-statistics-car-table.tsx",
+    "widgets/trips-statistics/trips-statistics-companies.tsx",
+    "widgets/trips-statistics/trips-statistics-excel.ts",
+    "widgets/trips-statistics/trips-statistics-routes.tsx",
+    "widgets/trips-statistics/trips-statistics-summary.tsx",
+    "widgets/trips-statistics/trips-statistics-timeline.tsx"
+  ],
+  "widgets/trips-table/receipt-status-badge.tsx": [
+    "entities/trip/schemas.ts",
+    "shared/lib/cn.ts"
+  ],
+  "widgets/trips-table/revenue-breakdown.tsx": [
+    "entities/trip/schemas.ts",
+    "shared/lib/cn.ts",
+    "shared/lib/format.ts",
+    "shared/ui/popover.tsx",
+    "shared/ui/truncate.tsx"
+  ],
+  "widgets/trips-table/trip-row.ts": [
+    "entities/trip/schemas.ts",
+    "widgets/trips-table/revenue-breakdown.tsx"
+  ],
+  "widgets/trips-table/trips-desktop-table.tsx": [
+    "entities/trip/queries.ts",
+    "entities/trip/schemas.ts",
+    "shared/lib/cn.ts",
+    "shared/lib/format.ts",
+    "shared/lib/prefetch/index.ts",
+    "shared/ui/button.tsx",
+    "shared/ui/card.tsx",
+    "shared/ui/empty-state.tsx",
+    "shared/ui/popover.tsx",
+    "shared/ui/skeleton.tsx",
+    "shared/ui/truncate.tsx",
+    "widgets/trips-table/receipt-status-badge.tsx",
+    "widgets/trips-table/revenue-breakdown.tsx",
+    "widgets/trips-table/trip-row.ts"
+  ],
+  "widgets/trips-table/trips-filters.tsx": [
+    "entities/trip/schemas.ts",
+    "shared/lib/cn.ts",
+    "shared/ui/button.tsx",
+    "shared/ui/popover.tsx",
+    "shared/ui/searchable-select.tsx"
+  ],
+  "widgets/trips-table/trips-mobile-list.tsx": [
+    "entities/trip/queries.ts",
+    "shared/lib/cn.ts",
+    "shared/lib/format.ts",
+    "shared/lib/prefetch/index.ts",
+    "shared/ui/empty-state.tsx",
+    "shared/ui/skeleton.tsx",
+    "shared/ui/truncate.tsx",
+    "widgets/trips-table/receipt-status-badge.tsx",
+    "widgets/trips-table/revenue-breakdown.tsx",
+    "widgets/trips-table/trip-row.ts",
+    "widgets/trips-table/trips-desktop-table.tsx"
+  ],
+  "widgets/trips-table/trips-pagination.tsx": [
+    "shared/lib/cn.ts",
+    "shared/ui/button.tsx",
+    "shared/ui/input.tsx",
+    "shared/ui/select.tsx"
+  ],
+  "widgets/trips-table/trips-table.tsx": [
+    "entities/trip/schemas.ts",
+    "shared/config/constants.ts",
+    "shared/hooks/use-media-query.ts",
+    "shared/hooks/use-permissions.ts",
+    "widgets/trips-table/trip-row.ts",
+    "widgets/trips-table/trips-desktop-table.tsx",
+    "widgets/trips-table/trips-mobile-list.tsx"
+  ],
+  "widgets/user-form-dialog/user-form-dialog.tsx": [
+    "entities/user/schemas.ts",
+    "shared/ui/button.tsx",
+    "shared/ui/dialog.tsx",
+    "shared/ui/form.tsx",
+    "shared/ui/input.tsx",
+    "shared/ui/select.tsx"
+  ],
+  "widgets/user-menu/user-menu.tsx": [
+    "entities/auth/queries.ts",
+    "shared/auth/store.ts",
+    "shared/config/constants.ts",
+    "shared/lib/cn.ts",
+    "shared/ui/avatar.tsx",
+    "shared/ui/button.tsx",
+    "shared/ui/dropdown-menu.tsx"
+  ],
+  "widgets/users-table/users-table.tsx": [
+    "entities/user/schemas.ts",
+    "shared/lib/format.ts",
+    "shared/ui/badge.tsx",
+    "shared/ui/button.tsx",
+    "shared/ui/dropdown-menu.tsx",
+    "shared/ui/stat-card.tsx"
+  ],
+  "widgets/whatsapp-gateway-card/index.ts": [
+    "widgets/whatsapp-gateway-card/whatsapp-gateway-card.tsx"
+  ],
+  "widgets/whatsapp-gateway-card/whatsapp-gateway-card.tsx": [
+    "entities/whatsapp/queries.ts",
+    "shared/ui/badge.tsx",
+    "shared/ui/button.tsx",
+    "shared/ui/card.tsx",
+    "shared/ui/dialog.tsx",
+    "shared/ui/skeleton.tsx"
+  ],
+  "widgets/zone-form-dialog/index.ts": [
+    "widgets/zone-form-dialog/zone-form-dialog.tsx"
+  ],
+  "widgets/zone-form-dialog/zone-form-dialog.tsx": [
+    "entities/zone/schemas.ts",
+    "shared/ui/button.tsx",
+    "shared/ui/dialog.tsx",
+    "shared/ui/form.tsx",
+    "shared/ui/input.tsx",
+    "shared/ui/switch.tsx",
+    "widgets/zone-map-picker/index.ts"
+  ],
+  "widgets/zone-map-picker/index.ts": [
+    "widgets/zone-map-picker/zone-map-picker.tsx"
+  ],
+  "widgets/zone-map-picker/zone-map-picker.tsx": [
+    "entities/zone/index.ts",
+    "shared/lib/maps/types.ts",
+    "shared/ui/map-view.tsx"
+  ],
+  "widgets/zones-table/columns.tsx": [
+    "entities/zone/schemas.ts",
+    "shared/ui/badge.tsx",
+    "shared/ui/button.tsx",
+    "shared/ui/dropdown-menu.tsx"
+  ],
+  "widgets/zones-table/index.ts": [
+    "widgets/zones-table/zones-table.tsx"
+  ],
+  "widgets/zones-table/zones-table.tsx": [
+    "entities/zone/schemas.ts",
+    "shared/ui/data-table.tsx",
+    "widgets/zones-table/columns.tsx"
+  ]
+}

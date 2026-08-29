@@ -1,0 +1,4 @@
+# shard-023  loc=631  files=2
+# groups: widgets/trip-receipt-batch-dialog, widgets/trip-receipt-dialog
+190	src/widgets/trip-receipt-batch-dialog/trip-receipt-batch-dialog.tsx
+441	src/widgets/trip-receipt-dialog/trip-receipt-dialog.tsx
