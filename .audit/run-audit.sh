@@ -92,16 +92,31 @@ print(s)
 PY
 }
 
-run_claude() {  # run_claude <prompt-file> <log> <budget> <allowed-tools>
-  local prompt="$1" logf="$2" budget="$3" allowed="$4"
+RETRY_SLEEP_S="${AUDIT_RETRY_SLEEP_S:-900}"   # wait between retries on limit / rate / connection errors (15 min)
+MAX_RETRIES="${AUDIT_MAX_RETRIES:-48}"        # 48 × 15 min = 12 h of waiting at most
+TRANSIENT_RE='hit your session limit|usage limit|rate limit|rate_limit|overloaded|529|500 Internal|Connection lost|ECONNRESET|ETIMEDOUT|fetch failed|API Error|resets [0-9]'
+
+run_claude() {  # run_claude <prompt-file> <log> <budget> <allowed-tools>   — retries transient failures
+  local prompt="$1" logf="$2" budget="$3" allowed="$4" attempt=0 rc
   local -a args=(-p --output-format text --no-session-persistence --permission-mode acceptEdits
                  --max-budget-usd "$budget"
                  --allowedTools "$allowed"
                  --disallowedTools "Skill,WebFetch,WebSearch")
   [ -n "$MODEL" ] && args+=(--model "$MODEL")
-  # perl alarm = portable timeout on macOS; kills claude if it hangs past TIMEOUT_S
-  perl -e 'setpgrp(0,0); $SIG{ALRM}=sub{ kill "TERM", -$$; sleep 5; kill "KILL", -$$; exit 142 }; alarm shift @ARGV; system @ARGV; exit $? >> 8' \
-       "$TIMEOUT_S" claude "${args[@]}" < "$prompt" >> "$logf" 2>&1
+  while :; do
+    attempt=$((attempt+1))
+    local before; before="$(wc -c < "$logf")"
+    # perl alarm = portable timeout on macOS; kills claude's whole process group if it hangs past TIMEOUT_S
+    perl -e 'setpgrp(0,0); $SIG{ALRM}=sub{ kill "TERM", -$$; sleep 5; kill "KILL", -$$; exit 142 }; alarm shift @ARGV; system @ARGV; exit $? >> 8' \
+         "$TIMEOUT_S" claude "${args[@]}" < "$prompt" >> "$logf" 2>&1; rc=$?
+    [ $rc -eq 0 ] && return 0
+    if tail -c +"$((before+1))" "$logf" | grep -qiE "$TRANSIENT_RE"; then
+      if [ "$attempt" -ge "$MAX_RETRIES" ]; then log "  transient failure persisted for $attempt attempts — giving up"; return $rc; fi
+      log "  transient failure (rc=$rc, attempt $attempt/$MAX_RETRIES): $(tail -c +"$((before+1))" "$logf" | grep -iE "$TRANSIENT_RE" | tail -1 | cut -c1-110) — sleeping ${RETRY_SLEEP_S}s"
+      sleep "$RETRY_SLEEP_S"; continue
+    fi
+    return $rc
+  done
 }
 
 READ_TOOLS='Bash(cat:*),Bash(sed -n:*),Bash(grep:*),Bash(rg:*),Bash(wc:*),Bash(ls:*),Bash(git log:*),Bash(git diff:*),Bash(git status:*)'
