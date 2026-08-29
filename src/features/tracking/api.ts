@@ -92,11 +92,10 @@ export const trackingApi = {
   async historyDay(
     vehicleId: string,
     day: string,
-    opts?: { refresh?: boolean; optimal?: boolean },
+    opts?: { refresh?: boolean },
   ): Promise<HistoryDay> {
     const params = new URLSearchParams({ date: day, format: 'msgpack' });
     if (opts?.refresh) params.set('refresh', 'true');
-    if (opts?.optimal) params.set('include', 'optimal');
     const res = await apiClientEtit.get(
       `${PREFIX}/vehicles/${encodeURIComponent(vehicleId)}/history?${params}`,
       { responseType: 'arraybuffer', headers: { Accept: 'application/msgpack' } },
@@ -126,8 +125,8 @@ export const trackingKeys = {
   all: ['tracking'] as const,
   vehicles: () => [...trackingKeys.all, 'vehicles'] as const,
   live: () => [...trackingKeys.all, 'live'] as const,
-  day: (vehicleId: string, day: string, optimal = false) =>
-    [...trackingKeys.all, 'day', vehicleId, day, optimal ? 'optimal' : 'base'] as const,
+  day: (vehicleId: string, day: string) =>
+    [...trackingKeys.all, 'day', vehicleId, day] as const,
   summary: (vehicleId: string, from: string, to: string) =>
     [...trackingKeys.all, 'summary', vehicleId, from, to] as const,
 };

@@ -90,8 +90,7 @@ export const tripPinSchema = z.object({
 export type TripPin = z.output<typeof tripPinSchema>;
 
 /** A trip-audit leg — a TIME RANGE over the track (no geometry of its own;
- *  the segment is sliced from the response's points by [depart, arrive]).
- *  `osrmGeometry` appears only when the request adds include=optimal. */
+ *  the segment is sliced from the response's points by [depart, arrive]). */
 export const tripLegSchema = z.object({
   parentTripId: z.number(),
   seq: z.number(),
@@ -101,15 +100,10 @@ export const tripLegSchema = z.object({
   depart: z.string().transform((v) => new Date(v)),
   arrive: z.string().transform((v) => new Date(v)),
   actualKm: z.number().nullish(),
-  osrmKm: z.number().nullish(),
   actualSecs: z.number().nullish(),
-  osrmSecs: z.number().nullish(),
-  distanceRatio: z.number().nullish(),
-  offRoutePct: z.number().nullish(),
   distanceMethod: z.string().nullish(),
   startsBeforeWindow: z.boolean().optional().default(false),
   endsAfterWindow: z.boolean().optional().default(false),
-  osrmGeometry: z.string().nullish(),
 });
 export type TripLeg = z.output<typeof tripLegSchema>;
 

@@ -2149,6 +2149,8 @@
     "legs": "Legs",
     "prevLeg": "Previous leg",
     "nextLeg": "Next leg",
-    "legLoading": "Loading the whole leg…"
+    "legLoading": "Loading the whole leg…",
+    "beyondRange": "beyond range",
+    "beyondRangeHint": "This leg extends past the loaded range — its missing days were fetched for the locked view."
   }
 }

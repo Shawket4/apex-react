@@ -28,8 +28,6 @@ export interface HistoryLayerInput {
   showLegs: boolean;
   /** `parentTripId:seq` of the activated leg, if any. */
   activeLegId: string | null;
-  /** polyline5 optimal geometries by leg id (loaded on demand). */
-  optimalGeometries: Map<string, string>;
   /** When a leg is MANUALLY activated, the map shows ONLY this window —
    *  the leg's complete geometry (fetched beyond the range when cut), its
    *  own stops/events/pins, endpoints, and the optimal. */
@@ -184,25 +182,6 @@ export function buildStaticLayers(input: HistoryLayerInput): Layer[] {
         }),
       );
     }
-    const optimal = input.optimalGeometries.get(legId(seg));
-    if (optimal) {
-      layers.push(
-        new PathLayer<{ path: [number, number][] }>({
-          id: 'leg-optimal',
-          data: [{ path: decodePolyline5ToLngLat(optimal) }],
-          getPath: (d: { path: [number, number][] }) => d.path,
-          getColor: [22, 163, 74, 230],
-          getWidth: 4,
-          widthUnits: 'pixels',
-          widthMinPixels: 2,
-          capRounded: true,
-          jointRounded: true,
-          getDashArray: [6, 5],
-          dashJustified: true,
-          extensions: [new PathStyleExtension({ dash: true })],
-        } as never),
-      );
-    }
     return layers;
   }
 
@@ -326,27 +305,6 @@ export function buildStaticLayers(input: HistoryLayerInput): Layer[] {
       );
     }
 
-    /* The activated leg's OSRM optimal — dashed green over everything. */
-    const optimal =
-      input.activeLegId !== null ? input.optimalGeometries.get(input.activeLegId) : undefined;
-    if (optimal) {
-      layers.push(
-        new PathLayer<{ path: [number, number][] }>({
-          id: 'leg-optimal',
-          data: [{ path: decodePolyline5ToLngLat(optimal) }],
-          getPath: (d: { path: [number, number][] }) => d.path,
-          getColor: [22, 163, 74, 230],
-          getWidth: 4,
-          widthUnits: 'pixels',
-          widthMinPixels: 2,
-          capRounded: true,
-          jointRounded: true,
-          getDashArray: [6, 5],
-          dashJustified: true,
-          extensions: [new PathStyleExtension({ dash: true })],
-        } as never),
-      );
-    }
   }
 
   if (input.showPins && input.pins.length > 0) {
@@ -366,30 +324,6 @@ export function buildStaticLayers(input: HistoryLayerInput): Layer[] {
   return layers;
 }
 
-/** polyline5 → [lng, lat][] (the audit stores optimal routes as polyline5). */
-function decodePolyline5ToLngLat(encoded: string): [number, number][] {
-  const out: [number, number][] = [];
-  let index = 0;
-  let lat = 0;
-  let lng = 0;
-  while (index < encoded.length) {
-    for (const which of [0, 1] as const) {
-      let result = 0;
-      let shift = 0;
-      let b: number;
-      do {
-        b = encoded.charCodeAt(index++) - 63;
-        result |= (b & 0x1f) << shift;
-        shift += 5;
-      } while (b >= 0x20);
-      const delta = result & 1 ? ~(result >> 1) : result >> 1;
-      if (which === 0) lat += delta;
-      else lng += delta;
-    }
-    out.push([lng / 1e5, lat / 1e5]);
-  }
-  return out;
-}
 
 /**
  * The animated tail behind the replay marker. Timestamps go to the GPU as

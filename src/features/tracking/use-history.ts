@@ -232,6 +232,8 @@ export function useHistory(range: HistoryRange | null): HistoryData {
  */
 export interface LegWindow {
   path: [number, number][];
+  /** The leg-locked playback track — start-to-end IS the leg. */
+  track: ReplayTrack | null;
   stops: Stop[];
   sensors: SensorEvent[];
   pins: TripPin[];
@@ -304,6 +306,7 @@ export function useLegWindow(
     });
     return {
       path: points.map((p) => [p.lng, p.lat] as [number, number]),
+      track: buildTrack(points),
       stops: uniqStops,
       sensors,
       pins: uniqPins,
@@ -311,41 +314,6 @@ export function useLegWindow(
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [leg, days, fingerprint]);
-}
-
-/**
- * Optimal (OSRM) geometries for the range's legs — fetched only when a leg
- * is activated (`enabled`), on separately keyed day queries so the initial
- * paint never pays for them. Returns polyline5 strings by leg identity.
- */
-export function useOptimalLegs(
-  range: HistoryRange | null,
-  enabled: boolean,
-): Map<string, string> {
-  const days = React.useMemo(
-    () =>
-      range && enabled ? daysCovering(range.from.slice(0, 10), range.to.slice(0, 10)) : [],
-    [range?.from, range?.to, enabled], // eslint-disable-line react-hooks/exhaustive-deps
-  );
-  const queries = useQueries({
-    queries: days.map((day) => ({
-      queryKey: trackingKeys.day(range!.vehicleId, day, true),
-      queryFn: () => trackingApi.historyDay(range!.vehicleId, day, { optimal: true }),
-      staleTime: 5 * 60_000,
-      refetchOnWindowFocus: false,
-    })),
-  });
-  const fingerprint = queries.map((q) => (q.data ? '1' : '0')).join('');
-  return React.useMemo(() => {
-    const m = new Map<string, string>();
-    for (const q of queries) {
-      for (const leg of q.data?.legs ?? []) {
-        if (leg.osrmGeometry) m.set(`${leg.parentTripId}:${leg.seq}`, leg.osrmGeometry);
-      }
-    }
-    return m;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fingerprint]);
 }
 
 /** One Cairo day of history — for consumers (audit replay) that window a

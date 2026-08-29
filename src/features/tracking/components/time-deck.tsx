@@ -213,6 +213,9 @@ function ScrubRow({
 
 export function TimeDeck({
   history,
+  track,
+  lockedStops,
+  beyondRange,
   summary,
   cursor,
   playing,
@@ -238,6 +241,12 @@ export function TimeDeck({
   onExit,
 }: {
   history: HistoryData;
+  /** The clock's world — the range track, or the active leg's when locked. */
+  track: HistoryData['track'];
+  /** The locked leg's own stops (null = not locked). */
+  lockedStops: Array<{ from: Date }> | null;
+  /** The locked leg reached beyond the loaded range — data was fetched. */
+  beyondRange: boolean;
   summary: RangeSummary | null;
   cursor: CursorStore;
   playing: boolean;
@@ -265,7 +274,7 @@ export function TimeDeck({
   onExit: () => void;
 }) {
   const { t } = useTranslation();
-  const track = history.track;
+  const locked = lockedStops !== null;
 
   return (
     <div className="pointer-events-auto w-full rounded-t-2xl border border-b-0 bg-card/95 shadow-2xl backdrop-blur md:mx-auto md:max-w-3xl">
@@ -304,6 +313,14 @@ export function TimeDeck({
             </span>
           </div>
         )}
+        {beyondRange && (
+          <span
+            className="shrink-0 rounded-full border border-amber-500/50 bg-amber-500/10 px-2 py-0.5 font-mono text-[9px] font-semibold text-amber-600"
+            title={t('tracking.beyondRangeHint', 'This leg extends past the loaded range — its missing days were fetched for the locked view.')}
+          >
+            ‹ {t('tracking.beyondRange', 'beyond range')} ›
+          </span>
+        )}
         <button
           type="button"
           onClick={onExit}
@@ -320,8 +337,8 @@ export function TimeDeck({
             <ScrubRow
               cursor={cursor}
               track={track}
-              stops={showStops ? history.stops : []}
-              legs={showLegs ? history.legs : []}
+              stops={showStops ? (lockedStops ?? history.stops) : []}
+              legs={showLegs && !locked ? history.legs : []}
               onScrub={onScrub}
             />
             <div className="flex items-center gap-1.5">
@@ -498,11 +515,6 @@ export function TimeDeck({
                         {timeFmt.format(seg.leg.depart).slice(0, 5)}–
                         {timeFmt.format(seg.leg.arrive).slice(0, 5)}
                         {seg.leg.actualKm != null && ` · ${seg.leg.actualKm.toFixed(0)} km`}
-                        {seg.leg.distanceRatio != null && seg.leg.distanceRatio > 1.15 && (
-                          <span className={active ? '' : 'text-destructive'}>
-                            {' '}×{seg.leg.distanceRatio.toFixed(2)}
-                          </span>
-                        )}
                       </span>
                     </button>
                   );

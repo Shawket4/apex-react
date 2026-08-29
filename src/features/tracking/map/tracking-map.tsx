@@ -165,18 +165,12 @@ function pinInfoHtml(cluster: PinCluster): string {
 
 function legInfoHtml(seg: LegSegment): string {
   const l = seg.leg;
-  const km =
-    l.actualKm != null
-      ? `${l.actualKm.toFixed(1)} km${l.osrmKm != null ? ` / ${l.osrmKm.toFixed(1)} km` : ''}`
-      : '';
-  const secs = (v: number | null | undefined) => (v != null ? fmtDwell(v) : '');
   const rows = [
     `<div style="font-weight:700">${esc(l.fromName ?? '—')} → ${esc(l.toName ?? '—')}</div>`,
     `<div style="color:#6b7280">${esc(l.legType)} · #${l.parentTripId}·${l.seq}</div>`,
     `<div>${infoTimeFmt.format(l.depart)} → ${infoTimeFmt.format(l.arrive)}</div>`,
-    km ? `<div><b>${km}</b>${l.distanceRatio != null ? ` · ×${l.distanceRatio.toFixed(2)}` : ''}</div>` : '',
-    l.actualSecs != null ? `<div>${secs(l.actualSecs)}${l.osrmSecs != null ? ` / ${secs(l.osrmSecs)}` : ''}</div>` : '',
-    l.offRoutePct != null ? `<div style="color:#6b7280">off-route ${Math.round(l.offRoutePct)}%</div>` : '',
+    l.actualKm != null ? `<div><b>${l.actualKm.toFixed(1)} km</b></div>` : '',
+    l.actualSecs != null ? `<div>${fmtDwell(l.actualSecs)}</div>` : '',
     seg.cutStart || seg.cutEnd
       ? `<div style="color:#b45309">⟷ continues beyond the loaded range</div>`
       : '',
