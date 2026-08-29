@@ -1,0 +1,5 @@
+16:09:18  === run start · phase=audit · model=default · dry-run=0 · shards:  shard-023
+16:09:18  --- shard-023 (631 LOC) ---
+16:11:52  shard-023: audit ok — FINDINGS: 30 (blocker 5 / should 20 / nit 5)
+16:11:52  === run end · shards=1 ok=0 failed=0 skipped=0
+exit=0
