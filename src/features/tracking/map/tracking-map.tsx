@@ -308,6 +308,9 @@ export const TrackingMap = React.forwardRef<TrackingMapHandle, Props>(
             position: { lat, lng },
             content: chipElement(datum),
             zIndex: datum.selected ? 20 : 10,
+            // Without this the marker neither receives clicks nor shows a
+            // pointer cursor — taps fall through to the map beneath it.
+            gmpClickable: true,
           });
           marker.addListener('click', () => {
             const now = performance.now();
