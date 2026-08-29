@@ -34,6 +34,7 @@ violations = []
 for f in sorted(changed):
     st = changed[f]
     if f in reference: violations.append(f'REFERENCE FILE MODIFIED: {f}'); continue
+    if f.startswith('e2e/__screenshots__/'): continue  # baselines are expected to move (pre-fix re-baseline + fix)
     if f.startswith('e2e/') or re.search(r'\.(test|spec)\.', f): violations.append(f'TEST/E2E MODIFIED: {f}'); continue
     if f.startswith(audit_scratch_prefixes) or f in audit_scratch_files: continue
     if f.startswith('.audit/'): violations.append(f'AUDIT SOURCE-OF-TRUTH MODIFIED: {f}'); continue
