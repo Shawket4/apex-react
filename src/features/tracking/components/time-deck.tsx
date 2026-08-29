@@ -9,9 +9,12 @@ import {
   Play,
   RotateCcw,
   Route,
+  SkipBack,
+  SkipForward,
   X,
 } from 'lucide-react';
 import { legColor, legId } from '../map/layers';
+import type { LegSegment } from '../use-history';
 import { cn } from '@/shared/lib/cn';
 import { indexAt, SPEEDS } from '../playback';
 import type { HistoryData } from '../use-history';
@@ -77,15 +80,26 @@ const fullFmt = new Intl.DateTimeFormat('en-GB', {
   second: '2-digit',
 });
 
+/** The leg whose [depart, arrive] holds `ms`, if any. */
+export function legAt(legs: LegSegment[], ms: number): LegSegment | null {
+  for (const seg of legs) {
+    if (ms >= seg.leg.depart.getTime() && ms <= seg.leg.arrive.getTime()) return seg;
+  }
+  return null;
+}
+
 function ScrubRow({
   cursor,
   track,
   stops,
+  legs,
   onScrub,
 }: {
   cursor: CursorStore;
   track: NonNullable<HistoryData['track']>;
   stops: Array<{ from: Date }>;
+  /** Shown as colored time bands + the current-leg line (empty = legs off). */
+  legs: LegSegment[];
   onScrub: (ms: number) => void;
 }) {
   const { t } = useTranslation();
@@ -101,15 +115,32 @@ function ScrubRow({
   const limit = track.limits[idx] ?? 0;
   const speeding = limit > 0 && speed > limit;
 
+  const current = legs.length > 0 ? legAt(legs, value || startMs) : null;
+  const currentColor = current ? legColor(current) : null;
+
   return (
     <div className="space-y-1.5">
     <div className="flex items-center justify-between gap-3 px-0.5">
-      <span className="font-mono text-[11px] font-semibold tabular-nums">
+      <span className="flex min-w-0 items-center gap-2 font-mono text-[11px] font-semibold tabular-nums">
         {fullFmt.format(new Date(value || startMs))}
+        {current && currentColor && (
+          <span
+            className="flex min-w-0 items-center gap-1.5 rounded-full border px-2 py-0.5 text-[10px] font-semibold"
+            style={{ borderColor: `rgb(${currentColor.join(' ')} / .5)` }}
+          >
+            <span
+              className="h-1.5 w-1.5 shrink-0 rounded-full"
+              style={{ background: `rgb(${currentColor.join(' ')})` }}
+            />
+            <span className="truncate">
+              {current.leg.fromName ?? '—'} → {current.leg.toName ?? '—'}
+            </span>
+          </span>
+        )}
       </span>
       <span
         className={cn(
-          'rounded-md px-1.5 py-0.5 font-mono text-[11px] font-bold tabular-nums',
+          'shrink-0 rounded-md px-1.5 py-0.5 font-mono text-[11px] font-bold tabular-nums',
           speeding ? 'bg-destructive/10 text-destructive' : 'bg-muted text-foreground',
         )}
       >
@@ -122,6 +153,28 @@ function ScrubRow({
         {timeFmt.format(new Date(value || startMs))}
       </span>
       <div className="relative min-w-0 flex-1">
+        {/* leg time-bands under everything — the replay timeline's idea */}
+        {legs.length > 0 && (
+          <div className="pointer-events-none absolute inset-x-0 top-1/2 h-3 -translate-y-1/2 overflow-hidden rounded-full">
+            {legs.map((seg) => {
+              const a = Math.max(0, ((seg.leg.depart.getTime() - startMs) / span) * 100);
+              const b = Math.min(100, ((seg.leg.arrive.getTime() - startMs) / span) * 100);
+              if (b <= 0 || a >= 100 || b <= a) return null;
+              const [r, g, bl] = legColor(seg);
+              return (
+                <span
+                  key={legId(seg)}
+                  className="absolute top-0 h-3"
+                  style={{
+                    insetInlineStart: `${a}%`,
+                    width: `${b - a}%`,
+                    background: `rgb(${r} ${g} ${bl} / 0.35)`,
+                  }}
+                />
+              );
+            })}
+          </div>
+        )}
         {/* stop ticks under the range input */}
         <div className="pointer-events-none absolute inset-x-0 top-1/2 h-2 -translate-y-1/2">
           {stops.map((s, i) => {
@@ -174,6 +227,7 @@ export function TimeDeck({
   onToggleLegs,
   activeLegId,
   onActivateLeg,
+  onJumpLeg,
   onScrub,
   onPlayPause,
   onRestart,
@@ -197,6 +251,8 @@ export function TimeDeck({
   onToggleLegs: () => void;
   activeLegId: string | null;
   onActivateLeg: (id: string) => void;
+  /** Seek to the previous/next leg's departure. */
+  onJumpLeg: (dir: -1 | 1) => void;
   onScrub: (ms: number) => void;
   onPlayPause: () => void;
   onRestart: () => void;
@@ -262,6 +318,7 @@ export function TimeDeck({
               cursor={cursor}
               track={track}
               stops={showStops ? history.stops : []}
+              legs={showLegs ? history.legs : []}
               onScrub={onScrub}
             />
             <div className="flex items-center gap-1.5">
@@ -273,6 +330,26 @@ export function TimeDeck({
               >
                 <RotateCcw className="h-3.5 w-3.5" />
               </button>
+              {showLegs && history.legs.length > 0 && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => onJumpLeg(-1)}
+                    aria-label={t('tracking.prevLeg', 'Previous leg')}
+                    className="grid h-8 w-8 place-items-center rounded-lg border bg-background hover:bg-muted"
+                  >
+                    <SkipBack className="h-3.5 w-3.5 rtl:rotate-180" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onJumpLeg(1)}
+                    aria-label={t('tracking.nextLeg', 'Next leg')}
+                    className="grid h-8 w-8 place-items-center rounded-lg border bg-background hover:bg-muted"
+                  >
+                    <SkipForward className="h-3.5 w-3.5 rtl:rotate-180" />
+                  </button>
+                </>
+              )}
               <button
                 type="button"
                 onClick={onPlayPause}
@@ -387,20 +464,37 @@ export function TimeDeck({
                       onClick={() => onActivateLeg(id)}
                       title={`${seg.leg.fromName ?? '—'} → ${seg.leg.toName ?? '—'}`}
                       className={cn(
-                        'flex shrink-0 items-center gap-1.5 rounded-full border px-2 py-0.5 font-mono text-[10px] font-semibold',
-                        active
-                          ? 'border-transparent text-white'
-                          : 'bg-background text-muted-foreground hover:bg-muted',
+                        'flex shrink-0 flex-col items-start gap-0 rounded-lg border px-2 py-1 text-start',
+                        active ? 'border-transparent text-white' : 'bg-background hover:bg-muted',
                       )}
                       style={active ? { background: `rgb(${r} ${g} ${b})` } : undefined}
                     >
+                      <span className="flex items-center gap-1.5 font-mono text-[10px] font-bold">
+                        <span
+                          className="h-1.5 w-1.5 rounded-full"
+                          style={{ background: active ? '#fff' : `rgb(${r} ${g} ${b})` }}
+                        />
+                        {seg.cutStart && '‹'}
+                        <span className={active ? '' : 'text-foreground'}>
+                          {seg.leg.fromName ?? '—'} → {seg.leg.toName ?? '—'}
+                        </span>
+                        {seg.cutEnd && '›'}
+                      </span>
                       <span
-                        className="h-1.5 w-1.5 rounded-full"
-                        style={{ background: active ? '#fff' : `rgb(${r} ${g} ${b})` }}
-                      />
-                      {seg.cutStart && '‹'}
-                      {seg.leg.parentTripId}·{seg.leg.seq}
-                      {seg.cutEnd && '›'}
+                        className={cn(
+                          'ps-3 font-mono text-[9px] tabular-nums',
+                          active ? 'text-white/80' : 'text-muted-foreground',
+                        )}
+                      >
+                        {timeFmt.format(seg.leg.depart).slice(0, 5)}–
+                        {timeFmt.format(seg.leg.arrive).slice(0, 5)}
+                        {seg.leg.actualKm != null && ` · ${seg.leg.actualKm.toFixed(0)} km`}
+                        {seg.leg.distanceRatio != null && seg.leg.distanceRatio > 1.15 && (
+                          <span className={active ? '' : 'text-destructive'}>
+                            {' '}×{seg.leg.distanceRatio.toFixed(2)}
+                          </span>
+                        )}
+                      </span>
                     </button>
                   );
                 })}

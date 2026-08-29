@@ -160,6 +160,24 @@ export default function TrackingPage() {
     [cursor],
   );
 
+  // The leg under the cursor — the map bolds it while replaying, so the
+  // playback reads leg-by-leg like the trip replay. Manual activation wins.
+  const [cursorLegId, setCursorLegId] = React.useState<string | null>(null);
+  React.useEffect(() => {
+    if (!showLegs || history.legs.length === 0) {
+      setCursorLegId(null);
+      return;
+    }
+    return cursor.subscribe(() => {
+      const ms = cursor.get();
+      const seg = history.legs.find(
+        (l) => ms >= l.leg.depart.getTime() && ms <= l.leg.arrive.getTime(),
+      );
+      const id = seg ? `${seg.leg.parentTripId}:${seg.leg.seq}` : null;
+      setCursorLegId((prev) => (prev === id ? prev : id));
+    });
+  }, [cursor, showLegs, history.legs]);
+
   // Static GPU layers follow data + toggles + cursor day.
   React.useEffect(() => {
     mapRef.current?.setHistory(
@@ -173,7 +191,7 @@ export default function TrackingPage() {
             legs: history.legs,
             showPins,
             showLegs,
-            activeLegId,
+            activeLegId: activeLegId ?? cursorLegId,
             optimalGeometries,
             cursorDay,
             showStops,
@@ -185,7 +203,7 @@ export default function TrackingPage() {
       mapRef.current?.setCursor(cursor.get() || history.track.startMs);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [historyRange?.vehicleId, historyRange?.from, historyRange?.to, history, cursorDay, showStops, showIgnitions, showPins, showLegs, activeLegId, optimalGeometries]);
+  }, [historyRange?.vehicleId, historyRange?.from, historyRange?.to, history, cursorDay, showStops, showIgnitions, showPins, showLegs, activeLegId, cursorLegId, optimalGeometries]);
 
   // Pause → the moment becomes a link (debounced).
   React.useEffect(() => {
@@ -447,6 +465,16 @@ export default function TrackingPage() {
               })
             }
             activeLegId={activeLegId}
+            onJumpLeg={(dir) => {
+              if (history.legs.length === 0) return;
+              const now = cursor.get();
+              const starts = history.legs.map((l) => l.leg.depart.getTime());
+              const target =
+                dir === 1
+                  ? starts.find((s2) => s2 > now + 1000)
+                  : [...starts].reverse().find((s2) => s2 < now - 1000);
+              if (target !== undefined) scrub(target);
+            }}
             onActivateLeg={(id) => {
               setShowLegs(true);
               setActiveLegId((prev) => (prev === id ? null : id));

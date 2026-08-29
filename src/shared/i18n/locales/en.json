@@ -2137,6 +2137,8 @@
     "minute": "minute",
     "mapType": "Satellite",
     "places": "Places",
-    "legs": "Legs"
+    "legs": "Legs",
+    "prevLeg": "Previous leg",
+    "nextLeg": "Next leg"
   }
 }
