@@ -10,6 +10,7 @@ import {
   dayOfMs,
   prefetchHistoryDays,
   useHistory,
+  useLegWindow,
   useOptimalLegs,
   useRangeSummary,
 } from './use-history';
@@ -85,6 +86,16 @@ export default function TrackingPage() {
   const [activeLegId, setActiveLegId] = React.useState<string | null>(null);
   // Optimal geometries load only once a leg is activated.
   const optimalGeometries = useOptimalLegs(historyRange, activeLegId !== null);
+  const activeSeg = React.useMemo(
+    () =>
+      activeLegId
+        ? history.legs.find((l) => `${l.leg.parentTripId}:${l.leg.seq}` === activeLegId) ?? null
+        : null,
+    [activeLegId, history.legs],
+  );
+  // The isolated leg's COMPLETE window — fetches days beyond the range when
+  // the leg is cut; cache-hits otherwise.
+  const legWindow = useLegWindow(activeSeg ? url.vehicleId : null, activeSeg?.leg ?? null);
   const [playing, setPlaying] = React.useState(false);
   const [follow, setFollow] = React.useState(true);
   const [speed, setSpeed] = React.useState(16);
@@ -193,6 +204,8 @@ export default function TrackingPage() {
             showLegs,
             activeLegId: activeLegId ?? cursorLegId,
             optimalGeometries,
+            isolated:
+              activeSeg && legWindow ? { seg: activeSeg, window: legWindow } : null,
             cursorDay,
             showStops,
             showIgnitions,
@@ -203,7 +216,7 @@ export default function TrackingPage() {
       mapRef.current?.setCursor(cursor.get() || history.track.startMs);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [historyRange?.vehicleId, historyRange?.from, historyRange?.to, history, cursorDay, showStops, showIgnitions, showPins, showLegs, activeLegId, cursorLegId, optimalGeometries]);
+  }, [historyRange?.vehicleId, historyRange?.from, historyRange?.to, history, cursorDay, showStops, showIgnitions, showPins, showLegs, activeLegId, cursorLegId, optimalGeometries, activeSeg, legWindow]);
 
   // Pause → the moment becomes a link (debounced).
   React.useEffect(() => {
@@ -248,6 +261,16 @@ export default function TrackingPage() {
   const openReplay = React.useCallback(() => {
     setComposerOpen(true);
   }, []);
+
+  // When the isolated leg's complete geometry lands, refit to the whole leg.
+  const fitKeyRef = React.useRef('');
+  React.useEffect(() => {
+    if (!activeSeg || !legWindow || legWindow.path.length < 2) return;
+    const key = `${activeLegId}:${legWindow.complete ? 'c' : 'p'}:${legWindow.path.length}`;
+    if (fitKeyRef.current === key) return;
+    fitKeyRef.current = key;
+    mapRef.current?.fitTo(legWindow.path);
+  }, [activeSeg, legWindow, activeLegId]);
 
   const loadRange = React.useCallback(
     (fromWall: string, toWall: string) => {
@@ -465,6 +488,7 @@ export default function TrackingPage() {
               })
             }
             activeLegId={activeLegId}
+            legWindowLoading={!!activeSeg && !!legWindow && !legWindow.complete}
             onJumpLeg={(dir) => {
               if (history.legs.length === 0) return;
               const now = cursor.get();

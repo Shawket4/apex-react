@@ -13,7 +13,7 @@ import type { Layer } from '@deck.gl/core';
 import { buildMarkerSvg, markerSize } from '@/shared/lib/maps/marker-svg';
 import type { MarkerKind } from '@/shared/lib/maps/types';
 import type { SensorEvent, Stop, TripPin } from '../schemas';
-import type { DayTrail, LegSegment, ReplayTrack } from '../use-history';
+import type { DayTrail, LegSegment, LegWindow, ReplayTrack } from '../use-history';
 
 export interface HistoryLayerInput {
   trails: DayTrail[];
@@ -30,6 +30,10 @@ export interface HistoryLayerInput {
   activeLegId: string | null;
   /** polyline5 optimal geometries by leg id (loaded on demand). */
   optimalGeometries: Map<string, string>;
+  /** When a leg is MANUALLY activated, the map shows ONLY this window —
+   *  the leg's complete geometry (fetched beyond the range when cut), its
+   *  own stops/events/pins, endpoints, and the optimal. */
+  isolated: { seg: LegSegment; window: LegWindow } | null;
   /** Cairo day under the replay cursor — its trail draws full-strength. */
   cursorDay: string | null;
   showStops: boolean;
@@ -103,6 +107,104 @@ function icon(kind: MarkerKind, color: string) {
 
 export function buildStaticLayers(input: HistoryLayerInput): Layer[] {
   const layers: Layer[] = [];
+
+  /* ── Isolation: one leg, its data, nothing else — the replay's focus. ── */
+  if (input.isolated) {
+    const { seg, window } = input.isolated;
+    const [r, g, b] = legColor(seg);
+    const path = window.path.length > 1 ? window.path : seg.path;
+    if (path.length > 1) {
+      layers.push(
+        new PathLayer<{ path: [number, number][] }>({
+          id: 'legs',
+          data: [{ path }],
+          getPath: (d) => d.path,
+          getColor: [r, g, b, 240],
+          getWidth: 5,
+          widthUnits: 'pixels',
+          widthMinPixels: 3,
+          capRounded: true,
+          jointRounded: true,
+          pickable: true,
+        }),
+      );
+      layers.push(
+        new IconLayer<{ pos: [number, number]; kind: 'route-start' | 'route-end' }>({
+          id: 'endpoints',
+          data: [
+            { pos: path[0], kind: 'route-start' as const },
+            { pos: path[path.length - 1], kind: 'route-end' as const },
+          ],
+          getPosition: (d) => d.pos,
+          getIcon: (d) => icon(d.kind, d.kind === 'route-start' ? '#16a34a' : '#dc2626'),
+          getSize: (d) => markerSize(d.kind).height,
+          sizeUnits: 'pixels',
+        }),
+      );
+    }
+    if (input.showStops && window.stops.length > 0) {
+      layers.push(
+        new IconLayer<Stop>({
+          id: 'stops',
+          data: window.stops,
+          getPosition: (d) => [d.lng, d.lat],
+          getIcon: () => icon('stop', STOP_COLOR),
+          getSize: markerSize('stop').height,
+          sizeUnits: 'pixels',
+          pickable: true,
+        }),
+      );
+    }
+    if (input.showIgnitions && window.sensors.length > 0) {
+      layers.push(
+        new IconLayer<SensorEvent>({
+          id: 'sensors',
+          data: window.sensors,
+          getPosition: (d) => [d.lng, d.lat],
+          getIcon: (d) =>
+            /on/i.test(d.typeName)
+              ? icon('ignition-on', IGNITION_ON_COLOR)
+              : icon('ignition-off', IGNITION_OFF_COLOR),
+          getSize: markerSize('ignition-on').height,
+          sizeUnits: 'pixels',
+          pickable: true,
+        }),
+      );
+    }
+    if (input.showPins && window.pins.length > 0) {
+      layers.push(
+        new IconLayer<PinCluster>({
+          id: 'trip-pins',
+          data: clusterPins(window.pins),
+          getPosition: (d) => [d.lng, d.lat],
+          getIcon: (d) => icon('pin', PIN_COLORS[d.kind] ?? PIN_COLORS.dropoff),
+          getSize: markerSize('pin').height,
+          sizeUnits: 'pixels',
+          pickable: true,
+        }),
+      );
+    }
+    const optimal = input.optimalGeometries.get(legId(seg));
+    if (optimal) {
+      layers.push(
+        new PathLayer<{ path: [number, number][] }>({
+          id: 'leg-optimal',
+          data: [{ path: decodePolyline5ToLngLat(optimal) }],
+          getPath: (d: { path: [number, number][] }) => d.path,
+          getColor: [22, 163, 74, 230],
+          getWidth: 4,
+          widthUnits: 'pixels',
+          widthMinPixels: 2,
+          capRounded: true,
+          jointRounded: true,
+          getDashArray: [6, 5],
+          dashJustified: true,
+          extensions: [new PathStyleExtension({ dash: true })],
+        } as never),
+      );
+    }
+    return layers;
+  }
 
   if (input.trails.length > 0) {
     const multiDay = input.trails.length > 1;

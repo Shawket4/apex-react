@@ -227,6 +227,7 @@ export function TimeDeck({
   onToggleLegs,
   activeLegId,
   onActivateLeg,
+  legWindowLoading,
   onJumpLeg,
   onScrub,
   onPlayPause,
@@ -251,6 +252,8 @@ export function TimeDeck({
   onToggleLegs: () => void;
   activeLegId: string | null;
   onActivateLeg: (id: string) => void;
+  /** True while an isolated cut leg is still fetching its missing days. */
+  legWindowLoading: boolean;
   /** Seek to the previous/next leg's departure. */
   onJumpLeg: (dir: -1 | 1) => void;
   onScrub: (ms: number) => void;
@@ -450,6 +453,11 @@ export function TimeDeck({
                 </button>
               </div>
             </div>
+            {activeLegId && legWindowLoading && (
+              <p className="text-center font-mono text-[10px] text-muted-foreground">
+                {t('tracking.legLoading', 'Loading the whole leg…')}
+              </p>
+            )}
             {showLegs && history.legs.length > 0 && (
               <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 pt-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 {history.legs.map((seg) => {
@@ -464,8 +472,9 @@ export function TimeDeck({
                       onClick={() => onActivateLeg(id)}
                       title={`${seg.leg.fromName ?? '—'} → ${seg.leg.toName ?? '—'}`}
                       className={cn(
-                        'flex shrink-0 flex-col items-start gap-0 rounded-lg border px-2 py-1 text-start',
+                        'flex shrink-0 flex-col items-start gap-0 rounded-lg border px-2 py-1 text-start transition-opacity',
                         active ? 'border-transparent text-white' : 'bg-background hover:bg-muted',
+                        activeLegId !== null && !active && 'opacity-40 hover:opacity-100',
                       )}
                       style={active ? { background: `rgb(${r} ${g} ${b})` } : undefined}
                     >

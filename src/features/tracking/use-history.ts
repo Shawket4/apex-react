@@ -225,6 +225,95 @@ export function useHistory(range: HistoryRange | null): HistoryData {
 }
 
 /**
+ * The ACTIVE leg's complete window — its own day queries (same cache keys as
+ * the range, so fully-covered legs cost nothing) merged and trimmed to
+ * [depart, arrive]. This is how a leg cut by the loaded range shows whole:
+ * activation fetches only the missing days.
+ */
+export interface LegWindow {
+  path: [number, number][];
+  stops: Stop[];
+  sensors: SensorEvent[];
+  pins: TripPin[];
+  /** False while a missing day is still in flight. */
+  complete: boolean;
+}
+
+export function useLegWindow(
+  vehicleId: string | null,
+  leg: TripLeg | null,
+): LegWindow | null {
+  const days = React.useMemo(
+    () =>
+      vehicleId && leg
+        ? daysCovering(cairoDay(leg.depart), cairoDay(leg.arrive))
+        : [],
+    [vehicleId, leg],
+  );
+  const queries = useQueries({
+    queries: days.map((day) => ({
+      queryKey: trackingKeys.day(vehicleId!, day),
+      queryFn: () => trackingApi.historyDay(vehicleId!, day),
+      staleTime: 5 * 60_000,
+      refetchOnWindowFocus: false,
+    })),
+  });
+  const fingerprint = queries.map((q) => (q.data ? '1' : '0')).join('');
+  return React.useMemo(() => {
+    if (!leg || days.length === 0) return null;
+    const a = leg.depart.getTime();
+    const b = leg.arrive.getTime();
+    const points: HistoryPoint[] = [];
+    const stops: Stop[] = [];
+    const sensors: SensorEvent[] = [];
+    const pins: TripPin[] = [];
+    for (const q of queries) {
+      if (!q.data) continue;
+      for (const p of q.data.points) {
+        const t = p.timestamp?.getTime();
+        if (t != null && t >= a && t <= b) points.push(p);
+      }
+      stops.push(...q.data.stops.filter((s) => s.to.getTime() >= a && s.from.getTime() <= b));
+      sensors.push(
+        ...q.data.sensors.filter((s) => {
+          const t = s.timestamp.getTime();
+          return t >= a && t <= b;
+        }),
+      );
+      pins.push(
+        ...q.data.pins.filter(
+          (p2) => p2.parentTripId === leg.parentTripId,
+        ),
+      );
+    }
+    points.sort((x, y) => x.timestamp!.getTime() - y.timestamp!.getTime());
+    // Day-straddling dedupe for stops/pins by identity.
+    const stopSeen = new Set<string>();
+    const uniqStops = stops.filter((s) => {
+      const k = `${s.from.getTime()}:${s.to.getTime()}`;
+      if (stopSeen.has(k)) return false;
+      stopSeen.add(k);
+      return true;
+    });
+    const pinSeen = new Set<string>();
+    const uniqPins = pins.filter((p2) => {
+      const k = `${p2.kind}:${p2.name}:${p2.arrive?.getTime() ?? ''}:${p2.depart?.getTime() ?? ''}`;
+      if (pinSeen.has(k)) return false;
+      pinSeen.add(k);
+      return true;
+    });
+    return {
+      path: points.map((p) => [p.lng, p.lat] as [number, number]),
+      stops: uniqStops,
+      sensors,
+      pins: uniqPins,
+      complete: queries.every((q) => !!q.data || q.isError),
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [leg, days, fingerprint]);
+}
+
+/**
  * Optimal (OSRM) geometries for the range's legs — fetched only when a leg
  * is activated (`enabled`), on separately keyed day queries so the initial
  * paint never pays for them. Returns polyline5 strings by leg identity.

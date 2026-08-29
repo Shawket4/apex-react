@@ -2142,6 +2142,7 @@
     "places": "Places",
     "legs": "Legs",
     "prevLeg": "Previous leg",
-    "nextLeg": "Next leg"
+    "nextLeg": "Next leg",
+    "legLoading": "Loading the whole leg…"
   }
 }
