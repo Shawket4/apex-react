@@ -1,4 +1,4 @@
-import { useQuery, type QueryClient } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery, type QueryClient } from '@tanstack/react-query';
 import { currentScopeSlice } from '@/shared/scope';
 import { dashboardApi, etitApi, type DashboardScope } from './api';
 import type {
@@ -73,6 +73,20 @@ export function useDrawer(kind: DrawerKind, scope: DashboardScope | undefined, e
     queryKey: dashboardKeys.drawer(kind, scope),
     queryFn: () => DRAWER_FETCHERS[kind](scope),
     staleTime: 60_000,
+    enabled,
+  });
+}
+
+/// The dashboard's infinite fuel list: pages of the window's events,
+/// flattened by the panel as the user scrolls.
+export function useInfiniteFuelEvents(scope: DashboardScope | undefined, enabled: boolean) {
+  return useInfiniteQuery({
+    queryKey: [...dashboardKeys.all, 'fuel-events', scopeKeyOf(scope)] as const,
+    queryFn: ({ pageParam }) => dashboardApi.fuelEvents(scope, pageParam, 15),
+    initialPageParam: 1,
+    getNextPageParam: (last) =>
+      last.page * last.limit < last.total ? last.page + 1 : undefined,
+    staleTime: 30_000,
     enabled,
   });
 }

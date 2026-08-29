@@ -1,4 +1,6 @@
 import { decode as msgpackDecode } from '@msgpack/msgpack';
+import { z } from 'zod';
+import { fuelEventSchema as fuelEventWireSchema } from '@/entities/fuel-event/schemas';
 import { apiClientEtit, apiClientRust } from '@/shared/api/client';
 import { env } from '@/shared/config/env';
 import {
@@ -66,7 +68,37 @@ export const dashboardApi = {
   async fuel(scope?: DashboardScope): Promise<FuelDrawer> {
     return fuelDrawerSchema.parse(await getPacked('/api/v1/dashboard/fuel', scope));
   },
+  /** One page of the window's fuel events, newest first — the Go wire shape
+   *  the fuel-events page already parses, so its components render these
+   *  untouched. */
+  async fuelEvents(
+    scope: DashboardScope | undefined,
+    page: number,
+    limit: number,
+  ): Promise<FuelEventsPage> {
+    const response = await apiClientRust.get('/api/v1/dashboard/fuel-events', {
+      params: {
+        ...(scope?.from && scope?.to ? { from: scope.from, to: scope.to } : {}),
+        page,
+        limit,
+        format: 'msgpack',
+      },
+      responseType: 'arraybuffer',
+      headers: { Accept: 'application/msgpack' },
+    });
+    return fuelEventsPageSchema.parse(
+      msgpackDecode(new Uint8Array(response.data as ArrayBuffer)),
+    );
+  },
 };
+
+export const fuelEventsPageSchema = z.object({
+  items: z.array(fuelEventWireSchema).default([]),
+  total: z.number(),
+  page: z.number(),
+  limit: z.number(),
+});
+export type FuelEventsPage = z.infer<typeof fuelEventsPageSchema>;
 
 /* -------------------------------------------------------------------------- */
 /* etit-proxy — called straight from the browser, never through apex-rust,     */

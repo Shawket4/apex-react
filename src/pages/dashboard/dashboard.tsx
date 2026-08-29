@@ -24,9 +24,12 @@ import {
   prefetchTruckDay,
   useDashboard,
   useDrawer,
+  useInfiniteFuelEvents,
   useTruckDay,
   type DrawerKind,
 } from '@/entities/dashboard/queries';
+import { prefetchFuelEvent } from '@/entities/fuel-event/queries';
+import { analyseEvents } from '@/shared/lib/fuel';
 import { type DashboardScope } from '@/entities/dashboard/api';
 import { keepScopeSearch, useScope, useScopeCompany } from '@/shared/scope';
 import { cairoToday } from '@/shared/lib/cairo';
@@ -183,6 +186,9 @@ export default function DashboardPage() {
         </section>
       </div>
 
+      {/* ---- fuel events (money only): the window's ledger, lazily ---- */}
+      {showMoney && <FuelPanel scope={scope} />}
+
       {/* ---- cash out by category (money only) ---- */}
       {showMoney && dashboard.data?.money && dashboard.data.money.by_category.length > 0 && (
         <section className="overflow-hidden rounded-xl border bg-card">
@@ -317,16 +323,6 @@ function KpiRow({
           detail: t('dashboard.kpi.acrossTrucks', { count: data.month.trucks }),
         },
         {
-          kind: 'fuel',
-          title: t('dashboard.kpi.fuel'),
-          value: compactMoney(data.fuel?.today ?? '0'),
-          isMoney: true,
-          detail: t('dashboard.kpi.fuelDetail', {
-            liters: formatNumber(data.fuel?.today_liters ?? 0, 0),
-            count: data.fuel?.today_events ?? 0,
-          }),
-        },
-        {
           kind: 'advances',
           title: t('dashboard.kpi.owed'),
           value: compactMoney(money.owed.total),
@@ -360,7 +356,7 @@ function KpiRow({
       ];
 
   return (
-    <div className={cn('grid grid-cols-2 gap-3', money ? 'lg:grid-cols-5' : 'lg:grid-cols-3')}>
+    <div className={cn('grid grid-cols-2 gap-3', money ? 'lg:grid-cols-4' : 'lg:grid-cols-3')}>
       {cards.map((card) => (
         <KpiCard
           key={card.kind}
@@ -485,48 +481,6 @@ function KpiDrawer({ kind, scope }: { kind: DrawerKind; scope: DashboardScope })
       label: c.name,
       value: formatNumber(c.trips, 0),
     }));
-  } else if (kind === 'fuel' && 'events' in d) {
-    return (
-      <div className="border-t bg-muted/40 p-3">
-        <dl className="space-y-1 text-[12px]">
-          {d.by_method.map((m) => (
-            <div key={m.method} className="flex items-baseline justify-between gap-3">
-              <dt className="text-muted-foreground">{m.method}</dt>
-              <dd className="m-0 font-mono tabular-nums">
-                {formatNumber(Number(m.spend), 0)}
-                <span className="ms-1 text-[10px] text-muted-foreground">
-                  {formatNumber(m.liters, 0)} L
-                </span>
-              </dd>
-            </div>
-          ))}
-        </dl>
-        <p className="mb-1 mt-2.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-          {t('dashboard.drawer.latestFuel')}
-        </p>
-        <div className="space-y-1 text-[12px]">
-          {d.events.slice(0, 8).map((e) => (
-            <Link
-              key={e.id}
-              to={`/fuel-events/${e.id}`}
-              className="flex items-baseline justify-between gap-3 rounded-md px-1 py-0.5 transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              <span className="min-w-0 truncate text-muted-foreground" dir="auto">
-                <span className="font-mono tabular-nums text-foreground">{e.plate_no}</span>
-                {' · '}
-                {e.driver_name || e.method}
-              </span>
-              <span className="shrink-0 font-mono tabular-nums text-money">
-                {formatNumber(Number(e.price), 0)}
-                <span className="ms-1 text-[10px] text-muted-foreground">
-                  {formatNumber(e.liters, 0)} L
-                </span>
-              </span>
-            </Link>
-          ))}
-        </div>
-      </div>
-    );
   } else if ('parties' in d) {
     rows = d.parties.slice(0, 8).map((p) => ({
       label: `${p.name} · ${t(`dashboard.owed.${p.audience}`)}${
@@ -568,6 +522,147 @@ function KpiDrawer({ kind, scope }: { kind: DrawerKind; scope: DashboardScope })
         </>
       )}
     </div>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/* Fuel panel — the fuel-events screen's cards, embedded and infinite          */
+/* -------------------------------------------------------------------------- */
+
+function FuelPanel({ scope }: { scope: DashboardScope }) {
+  const { t } = useTranslation();
+  const qc = useQueryClient();
+  const totals = useDrawer('fuel', scope, true);
+  const events = useInfiniteFuelEvents(scope, true);
+
+  const loaded = React.useMemo(
+    () => (events.data?.pages ?? []).flatMap((p) => p.items),
+    [events.data],
+  );
+  // Same pairing analysis the fuel-events page runs, over what is loaded so
+  // far — statuses refine as more pages arrive.
+  const analysis = React.useMemo(() => analyseEvents(loaded), [loaded]);
+  const total = events.data?.pages[0]?.total ?? 0;
+
+  // The infinite part: a sentinel row asks for the next page when it scrolls
+  // into view.
+  const sentinelRef = React.useRef<HTMLLIElement | null>(null);
+  const { hasNextPage, isFetchingNextPage, fetchNextPage } = events;
+  React.useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting) && hasNextPage && !isFetchingNextPage) {
+          void fetchNextPage();
+        }
+      },
+      { rootMargin: '200px' },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage, loaded.length]);
+
+  const drawer = totals.data && 'window_spend' in totals.data ? totals.data : null;
+
+  return (
+    <section className="overflow-hidden rounded-xl border bg-card">
+      <PanelHead
+        title={t('dashboard.fuelPanel.title')}
+        aside={
+          drawer
+            ? `${formatNumber(Number(drawer.window_spend), 0)} · ${formatNumber(drawer.window_liters, 0)} L · ${t('dashboard.fuelPanel.count', { count: drawer.window_events })}`
+            : undefined
+        }
+      />
+      {drawer && drawer.by_method.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 border-b px-3 py-2">
+          {drawer.by_method.map((m) => (
+            <span
+              key={m.method}
+              className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10.5px] font-medium text-muted-foreground"
+            >
+              {m.method}
+              <span className="font-mono tabular-nums text-foreground">
+                {formatNumber(Number(m.spend), 0)}
+              </span>
+            </span>
+          ))}
+        </div>
+      )}
+      {events.isPending ? (
+        <div className="space-y-2 p-3">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-10 w-full" />
+          ))}
+        </div>
+      ) : events.isError ? (
+        <p className="p-3 text-xs text-muted-foreground">{t('dashboard.drawer.failed')}</p>
+      ) : loaded.length === 0 ? (
+        <p className="p-3 text-xs text-muted-foreground">{t('dashboard.fuelPanel.empty')}</p>
+      ) : (
+        <ul className="max-h-[420px] divide-y overflow-y-auto">
+          {loaded.map((e) => {
+            const a = analysis.map.get(e.ID);
+            const distance = Math.max(0, e.odometer_after - e.odometer_before);
+            const displayRate = a?.status === 'paired' ? a.effectiveRate : e.fuel_rate;
+            return (
+              <li key={e.ID}>
+                <Link
+                  to={`/fuel-events/${e.ID}`}
+                  onPointerEnter={() => prefetchFuelEvent(qc, e.ID)}
+                  onFocus={() => prefetchFuelEvent(qc, e.ID)}
+                  className="grid w-full grid-cols-[1fr_auto] gap-x-3 gap-y-1 px-3 py-2.5 text-start transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring md:px-4"
+                >
+                  <div className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
+                    <span className="shrink-0">{format(e.date, 'MMM d, yyyy')}</span>
+                    <span>·</span>
+                    <span className="shrink-0 font-mono tabular-nums text-foreground">
+                      {e.car_no_plate}
+                    </span>
+                    {e.driver_name && (
+                      <>
+                        <span>·</span>
+                        <span className="truncate">{e.driver_name}</span>
+                      </>
+                    )}
+                    <span className="ms-1 shrink-0 rounded-full bg-muted px-1.5 py-0.5 text-[9.5px]">
+                      {e.method}
+                    </span>
+                  </div>
+                  <span className="text-sm font-semibold tabular-nums text-money">
+                    {formatNumber(e.price, 0)}
+                  </span>
+                  <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                    <span className="tabular-nums">{formatNumber(e.liters, 2)} L</span>
+                    <span className="tabular-nums">{formatNumber(distance, 0)} km</span>
+                  </div>
+                  <span className={cn('text-xs font-medium', a?.className)}>
+                    {formatNumber(displayRate, 1)} {t('fuelEvents.efficiency.unit')}
+                    {a?.status === 'excluded' && (
+                      <span className="ms-1 text-[10px] text-muted-foreground">
+                        ({t('fuelEvents.efficiency.excluded')})
+                      </span>
+                    )}
+                  </span>
+                </Link>
+              </li>
+            );
+          })}
+          <li ref={sentinelRef} aria-hidden className="h-px" />
+          {isFetchingNextPage && (
+            <li className="p-3">
+              <Skeleton className="h-10 w-full" />
+            </li>
+          )}
+          {!hasNextPage && loaded.length > 0 && (
+            <li className="p-2 text-center text-[10.5px] text-muted-foreground">
+              {t('dashboard.fuelPanel.end', { count: total })}
+            </li>
+          )}
+        </ul>
+      )}
+    </section>
   );
 }
 

@@ -208,6 +208,12 @@
       "driver": "driver",
       "employee": "employee",
       "loan": "loan"
+    },
+    "fuelPanel": {
+      "title": "Fuel events",
+      "count": "{{count}} events",
+      "empty": "No fuel events in this period",
+      "end": "All {{count}} events loaded"
     }
   },
   "fuelEvents": {
