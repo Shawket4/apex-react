@@ -250,10 +250,11 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
   return (
     <CommandDialog
       open={open}
-      onOpenChange={(next) => {
-        if (!next && page.type !== 'root') return; // let handleKeyDown manage ESC in sub-pages
-        onOpenChange(next);
-      }}
+      // Honor EVERY close request (X button, overlay tap, mobile back).
+      // ESC-goes-back in sub-pages is handled in handleKeyDown, which stops
+      // propagation before Radix's document listener fires — so a close
+      // reaching here is always a real close.
+      onOpenChange={onOpenChange}
       // Widen and heighten the dialog beyond the shadcn default
     >
       <Breadcrumb page={page} />

@@ -61,7 +61,16 @@ const CommandList = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <CommandPrimitive.List
     ref={ref}
-    className={cn('max-h-[300px] overflow-y-auto overflow-x-hidden', className)}
+    // Stop touch/wheel events before they reach the document, where a
+    // parent Sheet/Dialog's scroll-lock (react-remove-scroll) would
+    // preventDefault them — portaled dropdowns are OUTSIDE the locked
+    // content, so without this the list refuses to scroll on mobile.
+    onTouchMove={(e) => e.stopPropagation()}
+    onWheel={(e) => e.stopPropagation()}
+    className={cn(
+      'max-h-[300px] overflow-y-auto overflow-x-hidden overscroll-contain',
+      className,
+    )}
     {...props}
   />
 ));
