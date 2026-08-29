@@ -346,7 +346,17 @@
     "pageNotFoundTitle": "الصفحة غير موجودة",
     "pageNotFoundDescription": "الصفحة التي تبحث عنها غير موجودة أو تم نقلها.",
     "goHome": "الذهاب إلى لوحة التحكم",
-    "invalidId": "معرف غير صالح"
+    "invalidId": "معرف غير صالح",
+    "unauthorized": "غير مصرح",
+    "forbidden": "ممنوع الوصول",
+    "notFound": "غير موجود",
+    "network": "خطأ في الشبكة",
+    "networkCheck": "خطأ في الشبكة — يرجى التحقق من اتصالك."
+  },
+  "validation": {
+    "positive": "يجب أن يكون رقماً موجباً",
+    "nonNegative": "يجب أن يكون صفراً أو أكبر",
+    "invalidDate": "تاريخ غير صالح"
   },
   "datePicker": {
     "today": "اليوم",
@@ -372,7 +382,9 @@
     "downloading": "جاري التحميل...",
     "done": "تم تصدير {{count}} سجل",
     "failed": "فشل التصدير",
-    "nothingToExport": "لا يوجد ما يمكن تصديره"
+    "nothingToExport": "لا يوجد ما يمكن تصديره",
+    "generated": "تاريخ الإنشاء",
+    "totals": "الإجمالي"
   },
   "drivers": {
     "subtitle": "إدارة سائقي الأسطول ومستنداتهم",

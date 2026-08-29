@@ -346,7 +346,17 @@
     "pageNotFoundTitle": "Page not found",
     "pageNotFoundDescription": "The page you're looking for doesn't exist or has been moved.",
     "goHome": "Go to dashboard",
-    "invalidId": "Invalid ID"
+    "invalidId": "Invalid ID",
+    "unauthorized": "Unauthorized",
+    "forbidden": "Forbidden",
+    "notFound": "Not found",
+    "network": "Network error",
+    "networkCheck": "Network error — please check your connection."
+  },
+  "validation": {
+    "positive": "Must be a positive number",
+    "nonNegative": "Must be zero or greater",
+    "invalidDate": "Invalid date"
   },
   "datePicker": {
     "today": "Today",
@@ -372,7 +382,9 @@
     "downloading": "Preparing download...",
     "done": "Exported {{count}} rows",
     "failed": "Export failed",
-    "nothingToExport": "Nothing to export"
+    "nothingToExport": "Nothing to export",
+    "generated": "Generated",
+    "totals": "TOTALS"
   },
   "drivers": {
     "subtitle": "Manage fleet drivers and their documents",

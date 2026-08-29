@@ -189,7 +189,7 @@ export async function exportToExcel(config: ExcelExportConfig): Promise<void> {
         }
 
         for (const sheet of config.sheets) {
-            buildSheet(wb, sheet, config.meta, logoId);
+            buildSheet(wb, sheet, config.meta, logoId, t);
         }
 
         toast.loading(t('excel.downloading'), { id: toastId });
@@ -221,6 +221,7 @@ function buildSheet<T>(
     sheet: ExcelSheetConfig<T>,
     meta: string | undefined,
     logoId: number | undefined,
+    t: ReturnType<typeof i18n.getFixedT> = i18n.getFixedT(null, 'translation'),
 ): void {
     const ws = wb.addWorksheet(cleanSheetName(sheet.name), {
         pageSetup: { fitToPage: true, fitToWidth: 1, orientation: 'landscape' },
@@ -251,7 +252,9 @@ function buildSheet<T>(
     const subParts: string[] = [];
     if (sheet.subtitle) subParts.push(sheet.subtitle);
     if (meta) subParts.push(meta);
-    subParts.push(`Generated: ${new Date().toLocaleString('en-GB')}`);
+    subParts.push(
+        `${t('excel.generated', { defaultValue: 'Generated' })}: ${new Date().toLocaleString(i18n.language)}`,
+    );
     subCell.value = subParts.join(' · ');
     subCell.font = { name: 'Calibri', size: 9, color: { argb: PALETTE.muted } };
     subCell.alignment = { horizontal: 'center', vertical: 'middle' };
@@ -331,7 +334,7 @@ function buildSheet<T>(
     // ── Totals row ─────────────────────────────────────────────────────────────
     if (sheet.totals && sheet.rows.length > 0) {
         const totalValues = sheet.columns.map((c, i) => {
-            if (!c.total) return i === 0 ? 'TOTALS' : '';
+            if (!c.total) return i === 0 ? t('excel.totals', { defaultValue: 'TOTALS' }) : '';
             const letter = columnLetter(i);
             return {
                 formula: `SUM(${letter}${dataStart}:${letter}${dataStart + sheet.rows.length - 1})`,

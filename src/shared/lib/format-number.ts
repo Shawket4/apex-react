@@ -7,14 +7,14 @@
 export function formatNumber(value: number, decimals = 2): string {
     if (!Number.isFinite(value)) return '0';
     return value
-        .toLocaleString('en-US', {
+        .toLocaleString(undefined, {
             minimumFractionDigits: 0,
             maximumFractionDigits: decimals,
         });
 }
 
 /**
- * Compact form for tight UI: 2,150,000 → "2.15M", 12,400 → "12.4K".
+ * Compact form for tight UI: 2,150,000 → "2.15M", 12,400 → "12k".
  * Falls back to the full formatted number below the threshold.
  */
 export function formatCompactNumber(value: number, decimals = 2): string {
@@ -24,7 +24,7 @@ export function formatCompactNumber(value: number, decimals = 2): string {
 
     if (abs >= 1_000_000_000) return `${sign}${(abs / 1_000_000_000).toFixed(decimals)}B`;
     if (abs >= 1_000_000) return `${sign}${(abs / 1_000_000).toFixed(decimals)}M`;
-    if (abs >= 10_000) return `${sign}${(abs / 1_000).toFixed(decimals)}K`;
+    if (abs >= 10_000) return `${sign}${(abs / 1_000).toFixed(0)}k`;
 
     return formatNumber(value, decimals);
 }
