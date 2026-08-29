@@ -28,10 +28,13 @@ export interface HistoryLayerInput {
   showLegs: boolean;
   /** `parentTripId:seq` of the activated leg, if any. */
   activeLegId: string | null;
-  /** When a leg is MANUALLY activated, the map shows ONLY this window —
-   *  the leg's complete geometry (fetched beyond the range when cut), its
-   *  own stops/events/pins, endpoints, and the optimal. */
-  isolated: { seg: LegSegment; window: LegWindow } | null;
+  /** When a leg OR whole trip is locked, the map shows ONLY this window —
+   *  its complete geometry as colored member paths (fetched beyond the
+   *  range when cut), its own stops/events/pins, and endpoints. */
+  isolated: {
+    paths: Array<{ path: [number, number][]; color: [number, number, number]; dashed: boolean }>;
+    window: LegWindow;
+  } | null;
   /** Cairo day under the replay cursor — its trail draws full-strength. */
   cursorDay: string | null;
   showStops: boolean;
@@ -48,18 +51,10 @@ const PIN_COLORS: Record<string, string> = {
   dropoff: '#d97706',
   garage: '#6b7280',
 };
-/** Leg palette, cycled by seq. Garage legs draw dashed instead. */
-const LEG_PALETTE: [number, number, number][] = [
-  [59, 130, 246],
-  [139, 92, 246],
-  [5, 150, 105],
-  [217, 119, 6],
-  [220, 38, 38],
-  [8, 145, 178],
-];
 export const legId = (l: LegSegment) => `${l.leg.parentTripId}:${l.leg.seq}`;
+/** One hue per trip, shaded per leg — computed at merge time. */
 export function legColor(seg: LegSegment): [number, number, number] {
-  return LEG_PALETTE[Math.abs(seg.leg.seq) % LEG_PALETTE.length];
+  return seg.color;
 }
 
 /** Pins standing on ~the same spot (back-to-back visits) merge into ONE
@@ -106,32 +101,53 @@ function icon(kind: MarkerKind, color: string) {
 export function buildStaticLayers(input: HistoryLayerInput): Layer[] {
   const layers: Layer[] = [];
 
-  /* ── Isolation: one leg, its data, nothing else — the replay's focus. ── */
+  /* ── Isolation: one leg or trip, its data, nothing else. ── */
   if (input.isolated) {
-    const { seg, window } = input.isolated;
-    const [r, g, b] = legColor(seg);
-    const path = window.path.length > 1 ? window.path : seg.path;
-    if (path.length > 1) {
+    const { paths, window } = input.isolated;
+    const solid = paths.filter((p) => !p.dashed && p.path.length > 1);
+    const dashed = paths.filter((p) => p.dashed && p.path.length > 1);
+    if (solid.length > 0) {
       layers.push(
-        new PathLayer<{ path: [number, number][] }>({
+        new PathLayer<(typeof paths)[number]>({
           id: 'legs',
-          data: [{ path }],
+          data: solid,
           getPath: (d) => d.path,
-          getColor: [r, g, b, 240],
+          getColor: (d) => [...d.color, 240] as [number, number, number, number],
           getWidth: 5,
           widthUnits: 'pixels',
           widthMinPixels: 3,
           capRounded: true,
           jointRounded: true,
-          pickable: true,
         }),
       );
+    }
+    if (dashed.length > 0) {
+      layers.push(
+        new PathLayer<(typeof paths)[number]>({
+          id: 'legs-garage',
+          data: dashed,
+          getPath: (d: (typeof paths)[number]) => d.path,
+          getColor: (d: (typeof paths)[number]) =>
+            [...d.color, 240] as [number, number, number, number],
+          getWidth: 5,
+          widthUnits: 'pixels',
+          widthMinPixels: 3,
+          capRounded: true,
+          jointRounded: true,
+          getDashArray: [8, 6],
+          dashJustified: true,
+          extensions: [new PathStyleExtension({ dash: true })],
+        } as never),
+      );
+    }
+    const whole = window.path;
+    if (whole.length > 1) {
       layers.push(
         new IconLayer<{ pos: [number, number]; kind: 'route-start' | 'route-end' }>({
           id: 'endpoints',
           data: [
-            { pos: path[0], kind: 'route-start' as const },
-            { pos: path[path.length - 1], kind: 'route-end' as const },
+            { pos: whole[0], kind: 'route-start' as const },
+            { pos: whole[whole.length - 1], kind: 'route-end' as const },
           ],
           getPosition: (d) => d.pos,
           getIcon: (d) => icon(d.kind, d.kind === 'route-start' ? '#16a34a' : '#dc2626'),

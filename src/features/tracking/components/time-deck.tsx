@@ -230,6 +230,8 @@ export function TimeDeck({
   onToggleLegs,
   activeLegId,
   onActivateLeg,
+  activeTripId,
+  onActivateTrip,
   legWindowLoading,
   onJumpLeg,
   onScrub,
@@ -261,6 +263,8 @@ export function TimeDeck({
   onToggleLegs: () => void;
   activeLegId: string | null;
   onActivateLeg: (id: string) => void;
+  activeTripId: number | null;
+  onActivateTrip: (tripId: number) => void;
   /** True while an isolated cut leg is still fetching its missing days. */
   legWindowLoading: boolean;
   /** Seek to the previous/next leg's departure. */
@@ -476,50 +480,13 @@ export function TimeDeck({
               </p>
             )}
             {showLegs && history.legs.length > 0 && (
-              <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5 pt-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                {history.legs.map((seg) => {
-                  const id = legId(seg);
-                  const [r, g, b] = legColor(seg);
-                  const active = activeLegId === id;
-                  return (
-                    <button
-                      key={id}
-                      type="button"
-                      aria-pressed={active}
-                      onClick={() => onActivateLeg(id)}
-                      title={`${seg.leg.fromName ?? '—'} → ${seg.leg.toName ?? '—'}`}
-                      className={cn(
-                        'flex shrink-0 flex-col items-start gap-0 rounded-lg border px-2 py-1 text-start transition-opacity',
-                        active ? 'border-transparent text-white' : 'bg-background hover:bg-muted',
-                        activeLegId !== null && !active && 'opacity-40 hover:opacity-100',
-                      )}
-                      style={active ? { background: `rgb(${r} ${g} ${b})` } : undefined}
-                    >
-                      <span className="flex items-center gap-1.5 font-mono text-[10px] font-bold">
-                        <span
-                          className="h-1.5 w-1.5 rounded-full"
-                          style={{ background: active ? '#fff' : `rgb(${r} ${g} ${b})` }}
-                        />
-                        {seg.cutStart && '‹'}
-                        <span className={active ? '' : 'text-foreground'}>
-                          {seg.leg.fromName ?? '—'} → {seg.leg.toName ?? '—'}
-                        </span>
-                        {seg.cutEnd && '›'}
-                      </span>
-                      <span
-                        className={cn(
-                          'ps-3 font-mono text-[9px] tabular-nums',
-                          active ? 'text-white/80' : 'text-muted-foreground',
-                        )}
-                      >
-                        {timeFmt.format(seg.leg.depart).slice(0, 5)}–
-                        {timeFmt.format(seg.leg.arrive).slice(0, 5)}
-                        {seg.leg.actualKm != null && ` · ${seg.leg.actualKm.toFixed(0)} km`}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
+              <LegRail
+                legs={history.legs}
+                activeLegId={activeLegId}
+                activeTripId={activeTripId}
+                onActivateLeg={onActivateLeg}
+                onActivateTrip={onActivateTrip}
+              />
             )}
           </>
         ) : history.isLoading ? (
@@ -540,3 +507,156 @@ export function TimeDeck({
   );
 }
 
+/* -------------------------------------------------------------------------- */
+/* The leg rail — one horizontal strip (touch-scrollable, so it stays mobile  */
+/* friendly): a header chip per TRIP, its leg cards revealed on expand. The   */
+/* trip chip's play glyph locks the whole trip; a leg card locks that leg.    */
+/* -------------------------------------------------------------------------- */
+
+function LegRail({
+  legs,
+  activeLegId,
+  activeTripId,
+  onActivateLeg,
+  onActivateTrip,
+}: {
+  legs: LegSegment[];
+  activeLegId: string | null;
+  activeTripId: number | null;
+  onActivateLeg: (id: string) => void;
+  onActivateTrip: (tripId: number) => void;
+}) {
+  const { t } = useTranslation();
+  const [expanded, setExpanded] = React.useState<Set<number>>(new Set());
+
+  const trips = React.useMemo(() => {
+    const m2 = new Map<number, LegSegment[]>();
+    for (const seg of legs) {
+      if (!m2.has(seg.leg.parentTripId)) m2.set(seg.leg.parentTripId, []);
+      m2.get(seg.leg.parentTripId)!.push(seg);
+    }
+    return [...m2.entries()];
+  }, [legs]);
+
+  const anyLock = activeLegId !== null || activeTripId !== null;
+
+  return (
+    <div className="flex items-stretch gap-1.5 overflow-x-auto pb-0.5 pt-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      {trips.map(([tripId, members]) => {
+        const [r, g, b] = members[0].color;
+        const tripActive = activeTripId === tripId;
+        const open = expanded.has(tripId) || tripActive || members.some(
+          (m3) => `${m3.leg.parentTripId}:${m3.leg.seq}` === activeLegId,
+        );
+        const km = members.reduce((s2, m3) => s2 + (m3.leg.actualKm ?? 0), 0);
+        const cut = members.some((m3) => m3.cutStart || m3.cutEnd);
+        const first = members[0].leg;
+        const last = members[members.length - 1].leg;
+        return (
+          <React.Fragment key={tripId}>
+            <div
+              className={cn(
+                'flex shrink-0 items-center overflow-hidden rounded-lg border transition-opacity',
+                tripActive ? 'border-transparent text-white' : 'bg-background',
+                anyLock && !tripActive && !open && 'opacity-40',
+              )}
+              style={tripActive ? { background: `rgb(${r} ${g} ${b})` } : undefined}
+            >
+              <button
+                type="button"
+                aria-expanded={open}
+                onClick={() =>
+                  setExpanded((prev) => {
+                    const next = new Set(prev);
+                    if (next.has(tripId)) next.delete(tripId);
+                    else next.add(tripId);
+                    return next;
+                  })
+                }
+                className="flex flex-col items-start px-2 py-1 text-start"
+              >
+                <span className="flex items-center gap-1.5 font-mono text-[10px] font-bold">
+                  <span
+                    className="h-1.5 w-1.5 rounded-full"
+                    style={{ background: tripActive ? '#fff' : `rgb(${r} ${g} ${b})` }}
+                  />
+                  {cut && '‹'}#{tripId}
+                  <span className={tripActive ? 'text-white/80' : 'text-muted-foreground'}>
+                    · {members.length} {t('tracking.legsShort', 'legs')}
+                  </span>
+                  {cut && '›'}
+                </span>
+                <span
+                  className={cn(
+                    'ps-3 font-mono text-[9px] tabular-nums',
+                    tripActive ? 'text-white/80' : 'text-muted-foreground',
+                  )}
+                >
+                  {first.fromName ?? '—'} → {last.toName ?? '—'}
+                  {km > 0 && ` · ${km.toFixed(0)} km`}
+                </span>
+              </button>
+              <button
+                type="button"
+                aria-pressed={tripActive}
+                onClick={() => onActivateTrip(tripId)}
+                title={t('tracking.lockTrip', 'Lock playback to this trip')}
+                className={cn(
+                  'grid h-full w-7 place-items-center border-s',
+                  tripActive
+                    ? 'border-white/25 text-white'
+                    : 'text-muted-foreground hover:bg-muted',
+                )}
+              >
+                <Play className="h-3 w-3" />
+              </button>
+            </div>
+            {open &&
+              members.map((seg) => {
+                const id = legId(seg);
+                const [lr, lg, lb] = seg.color;
+                const active = activeLegId === id;
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    aria-pressed={active}
+                    onClick={() => onActivateLeg(id)}
+                    title={`${seg.leg.fromName ?? '—'} → ${seg.leg.toName ?? '—'}`}
+                    className={cn(
+                      'flex shrink-0 flex-col items-start gap-0 rounded-lg border px-2 py-1 text-start transition-opacity',
+                      active ? 'border-transparent text-white' : 'bg-background hover:bg-muted',
+                      anyLock && !active && 'opacity-40 hover:opacity-100',
+                    )}
+                    style={active ? { background: `rgb(${lr} ${lg} ${lb})` } : undefined}
+                  >
+                    <span className="flex items-center gap-1.5 font-mono text-[10px] font-bold">
+                      <span
+                        className="h-1.5 w-1.5 rounded-full"
+                        style={{ background: active ? '#fff' : `rgb(${lr} ${lg} ${lb})` }}
+                      />
+                      {seg.cutStart && '‹'}
+                      <span className={active ? '' : 'text-foreground'}>
+                        {seg.leg.fromName ?? '—'} → {seg.leg.toName ?? '—'}
+                      </span>
+                      {seg.cutEnd && '›'}
+                    </span>
+                    <span
+                      className={cn(
+                        'ps-3 font-mono text-[9px] tabular-nums',
+                        active ? 'text-white/80' : 'text-muted-foreground',
+                      )}
+                    >
+                      {timeFmt.format(seg.leg.depart).slice(0, 5)}–
+                      {timeFmt.format(seg.leg.arrive).slice(0, 5)}
+                      {seg.leg.actualKm != null && ` · ${seg.leg.actualKm.toFixed(0)} km`}
+                    </span>
+                  </button>
+                );
+              })}
+          </React.Fragment>
+        );
+      })}
+    </div>
+  );
+}

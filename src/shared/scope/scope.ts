@@ -43,7 +43,61 @@ function fmt(y: number, m0: number, d: number): string {
   ).padStart(2, '0')}`;
 }
 
-/** Garbage in, default out — a bad URL must never crash a query. */
+/* -------------------------------------------------------------------------- */
+/* Persistence — the URL stays the source of truth; localStorage only SEEDS   */
+/* a bare URL, so a refresh, a new tab, or a fresh session resumes the last   */
+/* scope while shared links land exactly as sent.                              */
+/* -------------------------------------------------------------------------- */
+
+const SCOPE_STORAGE_KEY = 'apex:scope';
+
+interface StoredScope {
+  preset?: string;
+  from?: string;
+  to?: string;
+  co?: string | null;
+}
+
+function loadStored(): StoredScope {
+  try {
+    const raw = window.localStorage.getItem(SCOPE_STORAGE_KEY);
+    return raw ? (JSON.parse(raw) as StoredScope) : {};
+  } catch {
+    return {};
+  }
+}
+
+/** Mirror the live scope (merging partial updates). Called by the hooks on
+ *  every change — including clears, so "All companies" persists as all. */
+export function storeScopeSlice(patch: StoredScope): void {
+  try {
+    window.localStorage.setItem(
+      SCOPE_STORAGE_KEY,
+      JSON.stringify({ ...loadStored(), ...patch }),
+    );
+  } catch {
+    /* storage unavailable — the URL still works */
+  }
+}
+
+function storedScope(): Scope | null {
+  const s = loadStored();
+  if (s.preset === 'custom' && s.from && s.to && isValidDay(s.from) && isValidDay(s.to) && s.from <= s.to) {
+    return { preset: 'custom', from: s.from, to: s.to };
+  }
+  if ((SCOPE_PRESETS as readonly string[]).includes(s.preset ?? '')) {
+    return { preset: s.preset as ScopePreset };
+  }
+  return null;
+}
+
+export function storedCompany(): string | null {
+  const s = loadStored();
+  return typeof s.co === 'string' && s.co ? s.co : null;
+}
+
+/** Garbage in, default out — a bad URL must never crash a query. A URL with
+ *  NO scope at all falls back to the last persisted scope. */
 export function parseScope(params: URLSearchParams): Scope {
   const preset = params.get('preset');
   if (preset === 'custom') {
@@ -56,6 +110,10 @@ export function parseScope(params: URLSearchParams): Scope {
   }
   if ((SCOPE_PRESETS as readonly string[]).includes(preset ?? '')) {
     return { preset: preset as ScopePreset };
+  }
+  if (preset === null && typeof window !== 'undefined') {
+    const stored = storedScope();
+    if (stored) return stored;
   }
   return { preset: DEFAULT_PRESET };
 }
@@ -143,7 +201,11 @@ export function keepScopeSearch(_path: string): string {
 
 export function readScopeCompany(): string | null {
   if (typeof window === 'undefined') return null;
-  return new URLSearchParams(window.location.search).get('co') || null;
+  const params = new URLSearchParams(window.location.search);
+  if (params.has('co')) return params.get('co') || null;
+  // No co in the URL at all: seed from the persisted scope. (An explicit
+  // "All companies" clears storage too, so it stays cleared.)
+  return storedCompany();
 }
 
 /**

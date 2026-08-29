@@ -2,6 +2,8 @@ import * as React from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
   parseScope,
+  storeScopeSlice,
+  storedCompany,
   rangeForScope,
   scopeKey,
   scopeToParams,
@@ -32,6 +34,15 @@ export function useScope(): UseScope {
   const range = React.useMemo(() => rangeForScope(scope), [scope]);
   const key = scopeKey(scope);
 
+  // Persist the live scope — the seed for the next bare URL.
+  React.useEffect(() => {
+    storeScopeSlice(
+      scope.preset === 'custom'
+        ? { preset: 'custom', from: scope.from, to: scope.to }
+        : { preset: scope.preset, from: undefined, to: undefined },
+    );
+  }, [key]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const setPreset = React.useCallback(
     (preset: ScopePreset) => {
       setParams((prev) => scopeToParams({ preset }, prev), { replace: true });
@@ -58,9 +69,16 @@ export function useScopeCompany(): {
   setCompany: (c: string | null) => void;
 } {
   const [params, setParams] = useSearchParams();
-  const company = params.get('co') || null;
+  const company = params.has('co')
+    ? params.get('co') || null
+    : typeof window !== 'undefined'
+      ? storedCompany()
+      : null;
   const setCompany = React.useCallback(
     (c: string | null) => {
+      // Synchronously, BEFORE the URL loses `co` — otherwise clearing to
+      // "All companies" would fall back to the stale stored value.
+      storeScopeSlice({ co: c });
       setParams(
         (prev) => {
           const next = new URLSearchParams(prev);

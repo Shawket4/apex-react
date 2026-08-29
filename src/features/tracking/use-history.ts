@@ -29,6 +29,8 @@ export interface LegSegment {
   leg: TripLeg;
   /** The leg's slice of the drawn track — [lng, lat], possibly empty. */
   path: [number, number][];
+  /** One HUE per trip, shaded per leg — grouping is visible on the map. */
+  color: [number, number, number];
   /** True when the leg extends beyond the LOADED RANGE (recomputed here —
    *  the per-day fetch makes the server's per-window flags meaningless for
    *  multi-day ranges). */
@@ -75,6 +77,27 @@ export interface HistoryData {
 }
 
 const DAY_MS = 86_400_000;
+
+/** Trip hues (cycled); member legs shade toward white by position. */
+const TRIP_HUES: [number, number, number][] = [
+  [59, 130, 246],
+  [139, 92, 246],
+  [5, 150, 105],
+  [217, 119, 6],
+  [220, 38, 38],
+  [8, 145, 178],
+];
+
+function shade(
+  [r, g, b]: [number, number, number],
+  f: number,
+): [number, number, number] {
+  return [
+    Math.round(r + (255 - r) * f),
+    Math.round(g + (255 - g) * f),
+    Math.round(b + (255 - b) * f),
+  ];
+}
 
 /** Cairo day strings covering [from, to] inclusive. */
 export function daysCovering(from: string, to: string): string[] {
@@ -187,25 +210,40 @@ export function useHistory(range: HistoryRange | null): HistoryData {
 
     // Slice each leg's segment from the track by its time range. Range-edge
     // flags are recomputed against OUR range — the server's are per-day.
-    const legs: LegSegment[] = [...legById.values()]
-      .sort((a, b) => a.parentTripId - b.parentTripId || a.seq - b.seq)
-      .map((leg) => {
-        let path: [number, number][] = [];
-        if (track) {
-          const a = leg.depart.getTime();
-          const b = leg.arrive.getTime();
-          const i0 = indexAt(track.timesMs, a);
-          const i1 = indexAt(track.timesMs, b);
-          const start = track.timesMs[i0] < a ? i0 + 1 : i0;
-          path = track.path.slice(Math.max(0, start), Math.min(track.path.length, i1 + 1));
-        }
-        return {
-          leg,
-          path,
-          cutStart: leg.depart.getTime() < fromMs,
-          cutEnd: leg.arrive.getTime() > toMs,
-        };
-      });
+    const sortedLegs = [...legById.values()].sort(
+      (a, b) => a.parentTripId - b.parentTripId || a.seq - b.seq,
+    );
+    const tripOrder = new Map<number, number>();
+    for (const leg of sortedLegs) {
+      if (!tripOrder.has(leg.parentTripId)) tripOrder.set(leg.parentTripId, tripOrder.size);
+    }
+    const tripSizes = new Map<number, number>();
+    for (const leg of sortedLegs) {
+      tripSizes.set(leg.parentTripId, (tripSizes.get(leg.parentTripId) ?? 0) + 1);
+    }
+    const seenInTrip = new Map<number, number>();
+    const legs: LegSegment[] = sortedLegs.map((leg) => {
+      let path: [number, number][] = [];
+      if (track) {
+        const a = leg.depart.getTime();
+        const b = leg.arrive.getTime();
+        const i0 = indexAt(track.timesMs, a);
+        const i1 = indexAt(track.timesMs, b);
+        const start = track.timesMs[i0] < a ? i0 + 1 : i0;
+        path = track.path.slice(Math.max(0, start), Math.min(track.path.length, i1 + 1));
+      }
+      const hue = TRIP_HUES[tripOrder.get(leg.parentTripId)! % TRIP_HUES.length];
+      const pos = seenInTrip.get(leg.parentTripId) ?? 0;
+      seenInTrip.set(leg.parentTripId, pos + 1);
+      const size = tripSizes.get(leg.parentTripId)!;
+      return {
+        leg,
+        path,
+        color: shade(hue, size > 1 ? (0.4 * pos) / (size - 1) : 0),
+        cutStart: leg.depart.getTime() < fromMs,
+        cutEnd: leg.arrive.getTime() > toMs,
+      };
+    });
 
     return {
       days: dayRows,

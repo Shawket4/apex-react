@@ -7,6 +7,7 @@ import { cn } from '@/shared/lib/cn';
 import { parseTrackingUrl, writeTrackingUrl, type TrackingUrl } from './url';
 import { useLiveFleet } from './use-live-fleet';
 import { cairoDay, trackingKeys } from './api';
+import { indexAt } from './playback';
 import {
   dayOfMs,
   daysCovering,
@@ -85,6 +86,7 @@ export default function TrackingPage() {
   const [showPins, setShowPins] = React.useState(true);
   const [showLegs, setShowLegs] = React.useState(false);
   const [activeLegId, setActiveLegId] = React.useState<string | null>(null);
+  const [activeTripId, setActiveTripId] = React.useState<number | null>(null);
   const activeSeg = React.useMemo(
     () =>
       activeLegId
@@ -92,22 +94,44 @@ export default function TrackingPage() {
         : null,
     [activeLegId, history.legs],
   );
+  const tripMembers = React.useMemo(
+    () =>
+      activeTripId !== null
+        ? history.legs.filter((l) => l.leg.parentTripId === activeTripId)
+        : [],
+    [activeTripId, history.legs],
+  );
+  /** What the clock is locked to: one leg, a whole trip, or nothing. */
+  const lockTarget = React.useMemo(() => {
+    if (activeSeg) {
+      return { legLike: activeSeg.leg, members: [activeSeg] };
+    }
+    if (tripMembers.length > 0) {
+      const first = tripMembers[0].leg;
+      const last = tripMembers[tripMembers.length - 1].leg;
+      return {
+        legLike: { ...first, depart: first.depart, arrive: last.arrive },
+        members: tripMembers,
+      };
+    }
+    return null;
+  }, [activeSeg, tripMembers]);
   // The isolated leg's COMPLETE window — fetches days beyond the range when
   // the leg is cut; cache-hits otherwise.
-  const legWindow = useLegWindow(activeSeg ? url.vehicleId : null, activeSeg?.leg ?? null);
+  const legWindow = useLegWindow(lockTarget ? url.vehicleId : null, lockTarget?.legLike ?? null);
 
   // Locked playback: while a leg is active, ITS track is the clock's world —
   // start-to-end is the leg, wherever its days came from.
-  const effectiveTrack = activeSeg ? (legWindow?.track ?? null) : history.track;
+  const effectiveTrack = lockTarget ? (legWindow?.track ?? null) : history.track;
 
   /** Days a leg needed beyond the loaded range — the snap-out discard set. */
   const overfetchDays = React.useCallback(
-    (seg2: NonNullable<typeof activeSeg>) => {
+    (span: { depart: Date; arrive: Date }) => {
       if (!historyRange) return [] as string[];
       const rangeDays = new Set(
         daysCovering(historyRange.from.slice(0, 10), historyRange.to.slice(0, 10)),
       );
-      return daysCovering(cairoDay(seg2.leg.depart), cairoDay(seg2.leg.arrive)).filter(
+      return daysCovering(cairoDay(span.depart), cairoDay(span.arrive)).filter(
         (day) => !rangeDays.has(day),
       );
     },
@@ -140,39 +164,56 @@ export default function TrackingPage() {
 
   /** Snap out: back to the full range, over-fetched days evicted. */
   const deactivateLeg = React.useCallback(() => {
-    if (activeSeg && url.vehicleId) {
-      for (const day of overfetchDays(activeSeg)) {
+    if (lockTarget && url.vehicleId) {
+      for (const day of overfetchDays(lockTarget.legLike)) {
         qc.removeQueries({ queryKey: trackingKeys.day(url.vehicleId, day) });
       }
     }
     setActiveLegId(null);
+    setActiveTripId(null);
     // Re-seat the clock inside the range if the leg carried it beyond.
     if (history.track) {
       const clamped = Math.min(Math.max(cursor.get(), history.track.startMs), history.track.endMs);
       cursor.set(clamped);
       mapRef.current?.setCursor(clamped);
     }
-  }, [activeSeg, url.vehicleId, overfetchDays, qc, history.track, cursor]);
+  }, [lockTarget, url.vehicleId, overfetchDays, qc, history.track, cursor]);
+
+  const evictLockDays = React.useCallback(() => {
+    if (lockTarget && url.vehicleId) {
+      for (const day of overfetchDays(lockTarget.legLike)) {
+        qc.removeQueries({ queryKey: trackingKeys.day(url.vehicleId, day) });
+      }
+    }
+  }, [lockTarget, url.vehicleId, overfetchDays, qc]);
 
   const activateLeg = React.useCallback(
     (id: string) => {
-      if (activeSeg) {
-        const currentId = `${activeSeg.leg.parentTripId}:${activeSeg.leg.seq}`;
-        if (currentId === id) {
-          deactivateLeg();
-          return;
-        }
-        // Switching legs: the old leg's extra days go before the new fetch.
-        if (url.vehicleId) {
-          for (const day of overfetchDays(activeSeg)) {
-            qc.removeQueries({ queryKey: trackingKeys.day(url.vehicleId, day) });
-          }
-        }
+      if (activeSeg && `${activeSeg.leg.parentTripId}:${activeSeg.leg.seq}` === id) {
+        deactivateLeg();
+        return;
       }
+      evictLockDays();
       setShowLegs(true);
+      setActiveTripId(null);
       setActiveLegId(id);
     },
-    [activeSeg, deactivateLeg, overfetchDays, qc, url.vehicleId],
+    [activeSeg, deactivateLeg, evictLockDays],
+  );
+
+  /** Lock the whole trip: first departure → last arrival. */
+  const activateTrip = React.useCallback(
+    (tripId: number) => {
+      if (activeTripId === tripId) {
+        deactivateLeg();
+        return;
+      }
+      evictLockDays();
+      setShowLegs(true);
+      setActiveLegId(null);
+      setActiveTripId(tripId);
+    },
+    [activeTripId, deactivateLeg, evictLockDays],
   );
 
   // Seat the cursor when the first day lands: on the URL's t, else at start.
@@ -259,7 +300,33 @@ export default function TrackingPage() {
             showLegs,
             activeLegId: activeLegId ?? cursorLegId,
             isolated:
-              activeSeg && legWindow ? { seg: activeSeg, window: legWindow } : null,
+              lockTarget && legWindow
+                ? {
+                    paths: lockTarget.members.map((member) => {
+                      // Slice the member's span from the LOCK window's track,
+                      // so cut legs draw complete.
+                      let path = member.path;
+                      if (legWindow.track) {
+                        const a = member.leg.depart.getTime();
+                        const b = member.leg.arrive.getTime();
+                        const t2 = legWindow.track;
+                        const i0 = indexAt(t2.timesMs, a);
+                        const i1 = indexAt(t2.timesMs, b);
+                        const start = t2.timesMs[i0] < a ? i0 + 1 : i0;
+                        path = t2.path.slice(
+                          Math.max(0, start),
+                          Math.min(t2.path.length, i1 + 1),
+                        );
+                      }
+                      return {
+                        path,
+                        color: member.color,
+                        dashed: member.leg.legType === 'garage',
+                      };
+                    }),
+                    window: legWindow,
+                  }
+                : null,
             cursorDay,
             showStops,
             showIgnitions,
@@ -321,19 +388,21 @@ export default function TrackingPage() {
   const fitKeyRef = React.useRef('');
   const legSeatRef = React.useRef('');
   React.useEffect(() => {
-    if (!activeSeg || !legWindow || legWindow.path.length < 2) return;
-    const key = `${activeLegId}:${legWindow.complete ? 'c' : 'p'}:${legWindow.path.length}`;
+    if (!lockTarget || !legWindow || legWindow.path.length < 2) return;
+    const lockId = activeLegId ?? `trip:${activeTripId}`;
+    const key = `${lockId}:${legWindow.complete ? 'c' : 'p'}:${legWindow.path.length}`;
     if (fitKeyRef.current !== key) {
       fitKeyRef.current = key;
       mapRef.current?.fitTo(legWindow.path);
     }
-    if (legWindow.track && legSeatRef.current !== activeLegId) {
-      legSeatRef.current = activeLegId ?? '';
+    const lockId2 = activeLegId ?? `trip:${activeTripId}`;
+    if (legWindow.track && legSeatRef.current !== lockId2) {
+      legSeatRef.current = lockId2;
       setPlaying(false);
       cursor.set(legWindow.track.startMs);
       mapRef.current?.setCursor(legWindow.track.startMs);
     }
-  }, [activeSeg, legWindow, activeLegId, cursor]);
+  }, [lockTarget, legWindow, activeLegId, activeTripId, cursor]);
 
   const loadRange = React.useCallback(
     (fromWall: string, toWall: string) => {
@@ -526,8 +595,12 @@ export default function TrackingPage() {
           <TimeDeck
             history={history}
             track={effectiveTrack}
-            lockedStops={activeSeg && legWindow ? legWindow.stops : null}
-            beyondRange={!!activeSeg && (activeSeg.cutStart || activeSeg.cutEnd)}
+            lockedStops={lockTarget && legWindow ? legWindow.stops : null}
+            beyondRange={
+              !!lockTarget && lockTarget.members.some((m2) => m2.cutStart || m2.cutEnd)
+            }
+            activeTripId={activeTripId}
+            onActivateTrip={activateTrip}
             summary={summaryQuery.data ?? null}
             cursor={cursor}
             playing={playing}
@@ -555,7 +628,7 @@ export default function TrackingPage() {
               })
             }
             activeLegId={activeLegId}
-            legWindowLoading={!!activeSeg && !!legWindow && !legWindow.complete}
+            legWindowLoading={!!lockTarget && !!legWindow && !legWindow.complete}
             onJumpLeg={(dir) => {
               if (history.legs.length === 0) return;
               if (activeSeg) {
@@ -565,6 +638,13 @@ export default function TrackingPage() {
                 );
                 const next = history.legs[i + dir];
                 if (next) activateLeg(`${next.leg.parentTripId}:${next.leg.seq}`);
+                return;
+              }
+              if (activeTripId !== null) {
+                const trips = [...new Set(history.legs.map((l) => l.leg.parentTripId))];
+                const i = trips.indexOf(activeTripId);
+                const next = trips[i + dir];
+                if (next !== undefined) activateTrip(next);
                 return;
               }
               const now = cursor.get();
