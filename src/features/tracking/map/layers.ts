@@ -137,6 +137,7 @@ export function buildStaticLayers(input: HistoryLayerInput): Layer[] {
           getIcon: (d) => icon(d.kind, d.kind === 'route-start' ? '#16a34a' : '#dc2626'),
           getSize: (d) => markerSize(d.kind).height,
           sizeUnits: 'pixels',
+          pickable: true,
         }),
       );
     }
@@ -221,6 +222,7 @@ export function buildStaticLayers(input: HistoryLayerInput): Layer[] {
           getIcon: (d) => icon(d.kind, d.kind === 'route-start' ? '#16a34a' : '#dc2626'),
           getSize: (d) => markerSize(d.kind).height,
           sizeUnits: 'pixels',
+          pickable: true,
         }),
       );
     }

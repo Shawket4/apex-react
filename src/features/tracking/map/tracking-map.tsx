@@ -111,28 +111,61 @@ const infoTimeFmt = new Intl.DateTimeFormat('en-GB', {
 const esc = (s: string) =>
   s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
-function vehicleInfoHtml(datum: LiveMarkerDatum): string {
+/**
+ * The one tooltip shell every marker uses: a left-aligned card with the
+ * title row, the detail rows, and a footer button that opens the exact
+ * coordinate in Google Maps. Direction-aware; text is never selectable.
+ */
+function tipShell(title: string, rows: string[], lat: number, lng: number): string {
+  const mapsUrl = `https://www.google.com/maps?q=${lat.toFixed(6)},${lng.toFixed(6)}`;
+  const body = rows.filter(Boolean).join('');
+  return (
+    `<div dir="auto" style="font:12px system-ui;display:grid;gap:3px;min-width:150px;max-width:250px;` +
+    `user-select:none;text-align:start;padding:2px 2px 0">` +
+    `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px">` +
+    `<div style="font-weight:700;min-width:0">${title}</div>` +
+    `<a href="${mapsUrl}" target="_blank" rel="noopener" title="Google Maps" ` +
+    `style="flex:none;display:grid;place-items:center;width:24px;height:24px;border-radius:6px;` +
+    `border:1px solid #d6d9e0;color:#1f3a5f;text-decoration:none;background:#fff">` +
+    `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" ` +
+    `stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">` +
+    `<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>` +
+    `<polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>` +
+    `</a>` +
+    `</div>` +
+    body +
+    `</div>`
+  );
+}
+
+const row = (html: string) => `<div style="line-height:1.45">${html}</div>`;
+const dimRow = (html: string) => `<div style="color:#6b7280;line-height:1.45">${html}</div>`;
+
+function vehicleInfoHtml(datum: LiveMarkerDatum, lat: number, lng: number): string {
   const live = datum.live;
-  const rows = [
-    `<div style="font:700 14px ui-monospace,monospace">${esc(datum.vehicle.plate)}</div>`,
-    `<div>${esc(live?.statusLabel ?? datum.vehicle.statusLabel)}</div>`,
-    live && live.speed > 0 ? `<div>${Math.round(live.speed)} km/h</div>` : '',
-    live?.timestamp || datum.vehicle.lastLocationAt
-      ? `<div style="color:#6b7280">${infoTimeFmt.format(
-          (live?.timestamp ?? datum.vehicle.lastLocationAt)!,
-        )}</div>`
-      : '',
-  ];
-  return `<div style="font:12px system-ui;display:grid;gap:2px;min-width:120px;user-select:none">${rows.join('')}</div>`;
+  return tipShell(
+    `<span style="font:700 14px ui-monospace,monospace">${esc(datum.vehicle.plate)}</span>`,
+    [
+      row(esc(live?.statusLabel ?? datum.vehicle.statusLabel)),
+      live && live.speed > 0 ? row(`${Math.round(live.speed)} km/h`) : '',
+      live?.timestamp || datum.vehicle.lastLocationAt
+        ? dimRow(infoTimeFmt.format((live?.timestamp ?? datum.vehicle.lastLocationAt)!))
+        : '',
+    ],
+    lat,
+    lng,
+  );
 }
 
 function stopInfoHtml(stop: Stop): string {
-  return (
-    `<div style="font:12px system-ui;display:grid;gap:2px;max-width:220px;user-select:none">` +
-    `<div style="font-weight:700">${esc(stop.duration)}</div>` +
-    (stop.address ? `<div>${esc(stop.address)}</div>` : '') +
-    `<div style="color:#6b7280">${infoTimeFmt.format(stop.from)} → ${infoTimeFmt.format(stop.to)}</div>` +
-    `</div>`
+  return tipShell(
+    esc(stop.duration),
+    [
+      stop.address ? row(esc(stop.address)) : '',
+      dimRow(`${infoTimeFmt.format(stop.from)} → ${infoTimeFmt.format(stop.to)}`),
+    ],
+    stop.lat,
+    stop.lng,
   );
 }
 
@@ -145,46 +178,50 @@ function fmtDwell(secs: number): string {
 /** One marker can stand for several back-to-back visits — list them all. */
 function pinInfoHtml(cluster: PinCluster): string {
   const head = cluster.visits[0];
-  const rows = [
-    `<div style="font-weight:700">${esc(head.name)}</div>`,
-    `<div style="color:#6b7280">${esc(cluster.kind)}</div>`,
-    ...cluster.visits.map((pin) => {
-      const bits = [
-        pin.parentTripId ? `#${pin.parentTripId}` : '',
-        pin.arrive ? `▾ ${infoTimeFmt.format(pin.arrive)}` : '',
-        pin.depart ? `▴ ${infoTimeFmt.format(pin.depart)}` : '',
-        pin.dwellSecs != null && pin.dwellSecs > 0
-          ? `<b>${fmtDwell(pin.dwellSecs)}</b>`
-          : '',
-      ].filter(Boolean);
-      return `<div>${bits.join(' · ')}</div>`;
-    }),
-  ];
-  return `<div style="font:12px system-ui;display:grid;gap:2px;min-width:140px;user-select:none">${rows.join('')}</div>`;
+  return tipShell(
+    esc(head.name),
+    [
+      dimRow(esc(cluster.kind)),
+      ...cluster.visits.map((pin) => {
+        const bits = [
+          pin.parentTripId ? `#${pin.parentTripId}` : '',
+          pin.arrive ? `▾ ${infoTimeFmt.format(pin.arrive)}` : '',
+          pin.depart ? `▴ ${infoTimeFmt.format(pin.depart)}` : '',
+          pin.dwellSecs != null && pin.dwellSecs > 0 ? `<b>${fmtDwell(pin.dwellSecs)}</b>` : '',
+        ].filter(Boolean);
+        return row(`<span dir="ltr">${bits.join(' · ')}</span>`);
+      }),
+    ],
+    cluster.lat,
+    cluster.lng,
+  );
 }
 
-function legInfoHtml(seg: LegSegment): string {
+function legInfoHtml(seg: LegSegment, lat: number, lng: number): string {
   const l = seg.leg;
-  const rows = [
-    `<div style="font-weight:700">${esc(l.fromName ?? '—')} → ${esc(l.toName ?? '—')}</div>`,
-    `<div style="color:#6b7280">${esc(l.legType)} · #${l.parentTripId}·${l.seq}</div>`,
-    `<div>${infoTimeFmt.format(l.depart)} → ${infoTimeFmt.format(l.arrive)}</div>`,
-    l.actualKm != null ? `<div><b>${l.actualKm.toFixed(1)} km</b></div>` : '',
-    l.actualSecs != null ? `<div>${fmtDwell(l.actualSecs)}</div>` : '',
-    seg.cutStart || seg.cutEnd
-      ? `<div style="color:#b45309">⟷ continues beyond the loaded range</div>`
-      : '',
-  ];
-  return `<div style="font:12px system-ui;display:grid;gap:2px;max-width:240px;user-select:none">${rows.join('')}</div>`;
+  return tipShell(
+    `${esc(l.fromName ?? '—')} → ${esc(l.toName ?? '—')}`,
+    [
+      dimRow(`${esc(l.legType)} · #${l.parentTripId}·${l.seq}`),
+      row(`<span dir="ltr">${infoTimeFmt.format(l.depart)} → ${infoTimeFmt.format(l.arrive)}</span>`),
+      l.actualKm != null ? row(`<b>${l.actualKm.toFixed(1)} km</b>`) : '',
+      l.actualSecs != null ? row(fmtDwell(l.actualSecs)) : '',
+      seg.cutStart || seg.cutEnd
+        ? `<div style="color:#b45309;line-height:1.45">⟷ continues beyond the loaded range</div>`
+        : '',
+    ],
+    lat,
+    lng,
+  );
 }
 
 function sensorInfoHtml(ev: SensorEvent): string {
-  return (
-    `<div style="font:12px system-ui;display:grid;gap:2px;user-select:none">` +
-    `<div style="font-weight:700">${esc(ev.typeName)}</div>` +
-    `<div style="color:#6b7280">${infoTimeFmt.format(ev.timestamp)}</div>` +
-    `</div>`
-  );
+  return tipShell(esc(ev.typeName), [dimRow(infoTimeFmt.format(ev.timestamp))], ev.lat, ev.lng);
+}
+
+function endpointInfoHtml(kind: 'route-start' | 'route-end', lat: number, lng: number): string {
+  const label = kind === 'route-start' ? 'Route start' : 'Route end';
+  return tipShell(esc(label), [], lat, lng);
 }
 
 export const TrackingMap = React.forwardRef<TrackingMapHandle, Props>(
@@ -286,9 +323,15 @@ export const TrackingMap = React.forwardRef<TrackingMapHandle, Props>(
             }
             onSelectRef.current(id);
             if (infoRef.current && pos) {
-              infoRef.current.setContent(vehicleInfoHtml(datum));
-              infoRef.current.setPosition(pos);
-              infoRef.current.open({ map });
+              // Guard against the map click that follows — it was closing
+              // this tooltip the instant it opened.
+              pickAtRef.current = now;
+              const latN = typeof pos.lat === 'function' ? (pos.lat as () => number)() : pos.lat;
+              const lngN = typeof pos.lng === 'function' ? (pos.lng as () => number)() : pos.lng;
+              infoRef.current.setContent(vehicleInfoHtml(datum, latN, lngN));
+              infoRef.current.setOptions({ pixelOffset: new google.maps.Size(0, 0) });
+              // Anchoring to the marker aligns the window above the artwork.
+              infoRef.current.open({ map, anchor: marker });
             }
           });
           markers.set(id, { marker, fingerprint });
@@ -415,13 +458,26 @@ export const TrackingMap = React.forwardRef<TrackingMapHandle, Props>(
                   ? sensorInfoHtml(info.object as SensorEvent)
                   : info.layer.id === 'trip-pins'
                     ? pinInfoHtml(info.object as PinCluster)
-                    : info.layer.id === 'legs' || info.layer.id === 'legs-garage'
-                      ? legInfoHtml(info.object as LegSegment)
-                      : null;
+                    : info.layer.id === 'endpoints'
+                      ? endpointInfoHtml(
+                          (info.object as { kind: 'route-start' | 'route-end' }).kind,
+                          lat,
+                          lng,
+                        )
+                      : info.layer.id === 'legs' || info.layer.id === 'legs-garage'
+                        ? legInfoHtml(info.object as LegSegment, lat, lng)
+                        : null;
             if (html && infoRef.current) {
               pickAtRef.current = performance.now();
               infoRef.current.setContent(html);
               infoRef.current.setPosition({ lat, lng });
+              // Lift the window clear of the icon artwork beneath it.
+              infoRef.current.setOptions({
+                pixelOffset: new google.maps.Size(
+                  0,
+                  info.layer.id === 'trip-pins' || info.layer.id === 'endpoints' ? -30 : -14,
+                ),
+              });
               infoRef.current.open({ map });
             }
           },
