@@ -87,6 +87,17 @@ test.describe('public routes', () => {
 });
 
 test.describe('authenticated routes', () => {
+  // The saved session (e2e/storageState.json) is keyed by the origin it was
+  // captured on; re-key it to whatever origin this config runs against so a
+  // port change never silently logs the run out.
+  test.use({
+    storageState: async ({ baseURL }, use) => {
+      const state = JSON.parse(readFileSync(new URL('./storageState.json', import.meta.url), 'utf8'));
+      const origin = new URL(baseURL as string).origin;
+      state.origins = (state.origins ?? []).map((o: { origin: string }) => ({ ...o, origin }));
+      await use(state);
+    },
+  });
   for (const route of routes.filter((r) => r.auth)) {
     test(route.name, async ({ page }) => {
       test.skip(!route.path, `unresolved params: ${route.unresolved?.join(', ')}`);

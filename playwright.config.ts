@@ -37,13 +37,20 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'], viewport: { width: 1440, height: 900 } },
+      use: {
+        ...devices['Desktop Chrome'],
+        viewport: { width: 1440, height: 900 },
+      },
     },
   ],
+  // The backends' CORS allowlists know the origin http://localhost:5173, so the
+  // detector runs the app there. It never reuses a server it did not start: if
+  // another tool holds the port, Playwright fails loudly instead of screenshotting
+  // a stranger (that happened once — a plugin's own Vite dashboard on 5173/5174).
   webServer: {
     command: 'npm run dev',
     url: 'http://localhost:5173',
-    reuseExistingServer: true,
+    reuseExistingServer: false,
     timeout: 120_000,
   },
 });

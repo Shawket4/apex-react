@@ -179,6 +179,14 @@ for SID in $LIST; do
     if grep -qE '^FINDINGS: 0( |$)' ".audit/findings/$SID.md"; then log "$SID: 0 findings — marking done"; touch ".audit/findings/$SID.done"; OK=$((OK+1)); continue; fi
     render .audit/prompts/fix.md "$SID" "$SHARD_FILE" > ".audit/logs/$SID.fix.prompt.md"
     : > ".audit/logs/$SID.fix.log"; GL=".audit/logs/$SID.gates.log"; : > "$GL"
+    # Pre-fix baseline: the app reads live production data, so screenshots drift on their own.
+    # Re-baselining right before the fix means the post-fix comparison shows the fix, not the drift.
+    { echo "== playwright (pre-fix baseline)"; npx playwright test --update-snapshots --reporter=list; } >> "$GL" 2>&1
+    pre_infra="$(grep -cE 'Test timeout of|page\.goto|browserType\.|Timed out waiting|webServer|ERR_CONNECTION_REFUSED|No tests found|EADDRINUSE|strictPort' "$GL" || true)"
+    if [ "$pre_infra" != "0" ] || ! grep -qE '[0-9]+ passed' "$GL"; then
+      log "$SID: pre-fix baseline failed (infra $pre_infra) — screenshots unavailable, skipping shard (see $GL)"
+      cp "$GL" ".audit/findings/$SID.FAILED"; git checkout -q -- e2e/__screenshots__ 2>/dev/null; FAILED=$((FAILED+1)); continue
+    fi
     run_claude ".audit/logs/$SID.fix.prompt.md" ".audit/logs/$SID.fix.log" "$FIX_BUDGET" "$FIX_TOOLS"; rc=$?
     log "$SID: fix run rc=$rc — $(grep -E '^APPLIED:' ".audit/findings/$SID.fix.md" 2>/dev/null | tail -1)"
     if [ $rc -ne 0 ] || [ ! -s ".audit/findings/$SID.fix.md" ] || ! grep -qE '^APPLIED: [0-9]+' ".audit/findings/$SID.fix.md"; then
@@ -194,11 +202,20 @@ for SID in $LIST; do
     { echo "== lint-diff"; python3 .audit/lint-diff.py; } >> "$GL" 2>&1 || pass=0
     if [ $pass = 1 ]; then { echo "== build"; npm run build; } >> "$GL" 2>&1 || pass=0; fi
     if [ $pass = 1 ]; then
+      # The change detector runs its own Vite on localhost:5173 (playwright.config.ts) and never
+      # reuses a server. If something else already answers there, screenshots would capture a
+      # stranger — treat it as an infrastructure failure rather than re-baselining garbage.
+      if lsof -nP -iTCP:5173 -sTCP:LISTEN >/dev/null 2>&1 && ! curl -s -m 5 http://localhost:5173/ | grep -q 'src/app/main.tsx'; then
+        pid="$(lsof -nP -iTCP:5173 -sTCP:LISTEN -t | head -1)"
+        log "$SID: port 5173 is held by a non-app process (pid $pid: $(ps -p "$pid" -o comm= 2>/dev/null)) — gates cannot run"; echo "== playwright: port 5173 held by foreign process $pid" >> "$GL"; pass=0
+      fi
+      [ $pass = 1 ] && \
       { echo "== playwright (recording)"; npx playwright test --reporter=list; } >> "$GL" 2>&1
       changed="$(grep -cE '^[[:space:]]+✘' "$GL" || true)"
       infra="$(grep -cE 'Test timeout of|page\.goto|browserType\.|Timed out waiting|webServer|ERR_CONNECTION_REFUSED|No tests found' "$GL" || true)"
-      if [ "$infra" != "0" ] || [ "$changed" -gt "${AUDIT_MAX_CHANGED_ROUTES:-12}" ]; then
-        log "$SID: playwright infra failure ($infra) or too many routes changed ($changed) — not re-baselining"; pass=0
+      broken="$(grep -oE 'ratio 0\.[5-9][0-9]* of all image pixels|ratio 1 of all image pixels' "$GL" | wc -l | tr -d ' ')"
+      if [ "$infra" != "0" ] || [ "$broken" != "0" ] || [ "$changed" -gt "${AUDIT_MAX_CHANGED_ROUTES:-12}" ]; then
+        log "$SID: playwright infra failure ($infra), routes changed >50% ($broken — a crash, not a fix) or too many routes changed ($changed) — not re-baselining"; pass=0
       elif [ "$changed" != "0" ]; then
         mkdir -p ".audit/visual/$SID"
         find e2e/test-results -name '*-diff.png' -exec cp {} ".audit/visual/$SID/" \; 2>/dev/null
