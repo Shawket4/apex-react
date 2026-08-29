@@ -610,6 +610,7 @@ function FuelPanel({ scope }: { scope: DashboardScope }) {
               <li key={e.ID}>
                 <Link
                   to={`/fuel-events/${e.ID}`}
+                  state={{ from: `${window.location.pathname}${window.location.search}` }}
                   onPointerEnter={() => prefetchFuelEvent(qc, e.ID)}
                   onFocus={() => prefetchFuelEvent(qc, e.ID)}
                   className="grid w-full grid-cols-[1fr_auto] gap-x-3 gap-y-1 px-3 py-2.5 text-start transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring md:px-4"

@@ -400,7 +400,7 @@ function GroupCard({
                   <li key={e.ID}>
                     <button
                       type="button"
-                      onClick={() => navigate(`/fuel-events/${e.ID}`)}
+                      onClick={() => navigate(`/fuel-events/${e.ID}`, { state: { from: `${window.location.pathname}${window.location.search}` } })}
                       {...intentProps(() => {
                         preloadChunk('fuel-event-details');
                         prefetchFuelEvent(queryClient, e.ID);

@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { intentProps, warmFuelForm } from '@/shared/lib/prefetch';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   ArrowLeft,
@@ -55,6 +55,10 @@ function DetailRow({ icon, label, value }: DetailRowProps) {
 export default function FuelEventDetailsPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
+  // Where "back" goes: the page that linked here (the dashboard's fuel panel
+  // passes its full URL, scope included), else the fuel-events list.
+  const backTo = (location.state as { from?: string } | null)?.from ?? '/fuel-events';
   const queryClient = useQueryClient();
   const params = useParams<{ id: string }>();
   const { canEditFuel, canDeleteFuel } = usePermissions();
@@ -67,7 +71,7 @@ export default function FuelEventDetailsPage() {
     if (!params.id) return;
     await deleteEvent.mutateAsync(Number(params.id));
     setConfirmOpen(false);
-    navigate('/fuel-events');
+    navigate(backTo);
   };
 
   if (isLoading) {
@@ -93,7 +97,7 @@ export default function FuelEventDetailsPage() {
           lottieHeight={100}
           title={t('fuelEvents.loadFailed')}
           action={
-            <Button variant="outline" onClick={() => navigate('/fuel-events')}>
+            <Button variant="outline" onClick={() => navigate(backTo)}>
               <ArrowLeft className="h-4 w-4 rtl:rotate-180" />
               {t('common.back')}
             </Button>
@@ -125,7 +129,7 @@ export default function FuelEventDetailsPage() {
       icon={<Fuel className="h-5 w-5" />}
       actions={
         <>
-          <Button variant="outline" size="sm" onClick={() => navigate('/fuel-events')}>
+          <Button variant="outline" size="sm" onClick={() => navigate(backTo)}>
             <ArrowLeft className="h-4 w-4 rtl:rotate-180" />
             <span className="hidden sm:inline">{t('common.back')}</span>
           </Button>
