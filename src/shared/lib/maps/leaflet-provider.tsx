@@ -40,7 +40,7 @@ function injectLeafletStyles() {
       background: hsl(var(--popover)); color: hsl(var(--popover-foreground));
     }
     .leaflet-control-zoom {
-      border: none; border-radius: 8px; overflow: hidden;
+      border: 1px solid hsl(var(--border)); border-radius: calc(var(--radius) - 2px); overflow: hidden;
       background: hsl(var(--card) / 0.9); backdrop-filter: blur(10px);
       box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
     }

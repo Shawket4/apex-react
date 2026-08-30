@@ -397,7 +397,7 @@ export default function FleetExpenseFormPage({ mode }: { mode: 'create' | 'edit'
                     id="fe-amount"
                     inputMode="decimal"
                     dir="ltr"
-                    placeholder="0.00"
+                    placeholder={t('fleetExpenses.amountPlaceholder', { defaultValue: '0.00…' })}
                     autoComplete="off"
                     autoFocus={mode === 'create' && isDesktop}
                     disabled={moneyLocked}
@@ -500,7 +500,7 @@ export default function FleetExpenseFormPage({ mode }: { mode: 'create' | 'edit'
                     required={(selectedCategory?.required_party ?? 'either') as PartyKind}
                   />
                   {partyMissing && (
-                    <p className="text-xs text-destructive">{t('fleetExpenses.partyRequired')}</p>
+                    <p className="text-[11px] font-medium text-destructive">{t('fleetExpenses.partyRequired')}</p>
                   )}
                   {willPost && !row?.loan && (
                     <p className="text-xs text-muted-foreground">
@@ -793,7 +793,7 @@ function Field({
         {label}
       </Label>
       {children}
-      {error?.message && <p className="text-xs text-destructive">{error.message}</p>}
+      {error?.message && <p className="text-[11px] font-medium text-destructive">{error.message}</p>}
     </div>
   );
 }

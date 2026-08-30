@@ -296,11 +296,11 @@ export default function LocationsPage() {
           <TabsTrigger value="terminals">{t('locations.tabs.terminals', 'Terminals')}</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="inbox" className="mt-4">
+        <TabsContent value="inbox" className="mt-3">
           <LocationsNeedsAttention onBrowseDropoffs={() => handleTabChange('dropoffs')} />
         </TabsContent>
 
-        <TabsContent value="dropoffs" className="mt-4 space-y-3">
+        <TabsContent value="dropoffs" className="mt-3 space-y-3">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <SearchInput
               value={search}
@@ -327,7 +327,7 @@ export default function LocationsPage() {
           />
         </TabsContent>
 
-        <TabsContent value="terminals" className="mt-4 space-y-3">
+        <TabsContent value="terminals" className="mt-3 space-y-3">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <SearchInput
               value={terminalSearch}

@@ -110,7 +110,7 @@ export function CarsTable({ onAddCar, onEditCar }: CarsTableProps) {
         header: t('cars.fields.plateNumber', 'Plate Number'),
         cell: ({ row }) => (
           <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+            <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10 text-primary">
               <CarIcon className="h-4 w-4" />
             </div>
             <div className="min-w-0">

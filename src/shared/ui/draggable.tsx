@@ -189,7 +189,7 @@ export function Draggable({
         aria-hidden
         className={cn(
           'pointer-events-none absolute top-1 start-1/2 -translate-x-1/2 rtl:translate-x-1/2 z-10',
-          'opacity-0 group-hover:opacity-50 transition-opacity duration-150',
+          'opacity-0 group-hover:opacity-50 transition-opacity duration-200',
         )}
       >
         <GripHorizontal className="h-3 w-3 text-foreground/70" />

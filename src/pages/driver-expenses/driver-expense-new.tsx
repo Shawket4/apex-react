@@ -92,7 +92,7 @@ export default function AddDriverExpensePage() {
       description={driver?.name ?? t('common.loading')}
       icon={<Receipt className="h-5 w-5" aria-hidden="true" />}
       actions={
-        <Button variant="ghost" size="sm" onClick={goBack}>
+        <Button variant="outline" size="sm" onClick={goBack}>
           <ArrowLeft className="rtl:rotate-180" />
           <span className="hidden sm:inline">{t('common.back')}</span>
         </Button>

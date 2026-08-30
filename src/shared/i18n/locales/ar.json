@@ -1,6 +1,7 @@
 {
   "common": {
     "appName": "أبيكس",
+    "currencyCode": "ج.م",
     "tagline": "إدارة أسطول",
     "search": "بحث",
     "searchPlaceholder": "ابحث…",
@@ -1151,6 +1152,7 @@
     "form": {
       "sections": {
         "vehicle": "المركبة والتاريخ",
+        "vehiclePersonnel": "المركبة والموظفون",
         "personnel": "الموظفون",
         "maintenance": "تفاصيل الصيانة"
       }
@@ -1599,6 +1601,8 @@
     "title": "مخزون الكاوتش والزيت",
     "subtitle": "شحنات المخزن — الرصيد الرسمي اللي بينزل لنظام الصيانة، والورشة بتخصم منه",
     "tires": "كاوتش جديد",
+    "sizePlaceholder": "315/80R22.5…",
+    "oilTypePlaceholder": "15W-40…",
     "oil": "زيت",
     "brand": "الماركة",
     "model": "الموديل",
@@ -1616,6 +1620,7 @@
   },
   "fleetExpenses": {
     "title": "مصروفات الأسطول",
+    "amountPlaceholder": "0.00…",
     "subtitle": "كل مصروف ومعاملة بنكية عبر الأسطول",
     "formSubtitle": "تُحفظ المبالغ والتواريخ والتصنيفات حتى القرش",
     "addExpense": "إضافة مصروف",
@@ -1931,6 +1936,7 @@
       "company": "الشركة",
       "companyPlaceholder": "اتركه فارغًا لجميع الشركات",
       "pattern": "النمط (Regex)",
+      "patternPlaceholder": "^WT-\\d{5}$",
       "description": "الوصف",
       "descriptionPlaceholder": "مثل WT- متبوعة بخمسة أرقام",
       "active": "مفعّل",

@@ -75,7 +75,7 @@ export function BulkEnrichDialog({ results, onOpenChange }: BulkEnrichDialogProp
                   key={r.id}
                   className={cn(
                     'flex items-start gap-2.5 px-3 py-2 text-xs',
-                    r.error && 'bg-destructive/5',
+                    r.error && 'bg-destructive/10',
                   )}
                 >
                   {r.error ? (

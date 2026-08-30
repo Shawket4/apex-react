@@ -723,7 +723,8 @@ export default function FleetExpensesPage() {
           })}
           className="inline-block rounded py-1 font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
-          {t('fleetExpenses.reviewLink')} ›
+          {t('fleetExpenses.reviewLink')}{' '}
+          <ChevronRight className="inline h-3 w-3 rtl:rotate-180" aria-hidden="true" />
         </Link>
       </div>
 

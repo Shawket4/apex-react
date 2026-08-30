@@ -18,7 +18,7 @@ export function PinSourceBadge({ pinSource }: { pinSource?: string | null }) {
       );
     case 'gps_suggested':
       return (
-        <Badge variant="success">
+        <Badge variant="warning">
           {t('locations.pinSource.gpsSuggested', 'GPS (provisional)')}
         </Badge>
       );

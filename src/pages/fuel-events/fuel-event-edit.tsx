@@ -60,7 +60,7 @@ export default function FuelEventEditPage() {
       actions={
         <Button variant="outline" size="sm" onClick={() => navigate(-1)}>
           <ArrowLeft className="rtl:rotate-180" />
-          {t('common.back')}
+          <span className="hidden sm:inline">{t('common.back')}</span>
         </Button>
       }
     >

@@ -90,7 +90,7 @@ export default function AddDriverLoanPage() {
             name="kind"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>{t('driverLoans.fields.kind')} *</FormLabel>
+                <FormLabel>{t('driverLoans.fields.kind')} <span className="text-destructive">*</span></FormLabel>
                 <FormControl>
                   <div className="grid max-w-xs grid-cols-2 gap-2">
                     {(['advance', 'loan'] as const).map((k) => (
@@ -121,7 +121,7 @@ export default function AddDriverLoanPage() {
                 <FormItem>
                   <FormLabel>
                     <DollarSign className="me-1 inline h-3.5 w-3.5" aria-hidden="true" />
-                    {t('driverLoans.fields.amount')} *
+                    {t('driverLoans.fields.amount')} <span className="text-destructive">*</span>
                   </FormLabel>
                   <FormControl>
                     <Input
@@ -148,7 +148,7 @@ export default function AddDriverLoanPage() {
                 <FormItem>
                   <FormLabel>
                     <Calendar className="me-1 inline h-3.5 w-3.5" aria-hidden="true" />
-                    {t('driverLoans.fields.date')} *
+                    {t('driverLoans.fields.date')} <span className="text-destructive">*</span>
                   </FormLabel>
                   <FormControl>
                     <DatePicker
@@ -171,7 +171,7 @@ export default function AddDriverLoanPage() {
               <FormItem>
                 <FormLabel>
                   <CreditCard className="me-1 inline h-3.5 w-3.5" aria-hidden="true" />
-                  {t('driverLoans.fields.method')} *
+                  {t('driverLoans.fields.method')} <span className="text-destructive">*</span>
                 </FormLabel>
                 <FormControl>
                   <Input

@@ -580,7 +580,7 @@ export default function TrackingPage() {
 
       {/* selected vehicle card (live mode) */}
       {selected && url.mode === 'live' && !composerOpen && (
-        <div className="absolute inset-x-2 bottom-2 z-20 flex justify-center md:inset-x-auto md:bottom-auto md:end-3 md:top-16 md:block">
+        <div className="absolute inset-x-3 bottom-3 z-20 flex justify-center md:inset-x-auto md:bottom-auto md:end-3 md:top-16 md:block">
           <VehicleCard
             vehicle={selected}
             live={fleet.live.get(selected.id) ?? null}

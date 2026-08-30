@@ -511,7 +511,10 @@ function ReceiptPatternsSection({ terminalId }: { terminalId: number }) {
                 autoComplete="off"
                 value={form.pattern}
                 onChange={(e) => setForm((prev) => ({ ...prev, pattern: e.target.value }))}
-                placeholder="^WT-\d{5}$"
+                placeholder={t(
+                  'locations.receiptPatterns.patternPlaceholder',
+                  '^WT-\\d{5}$',
+                )}
                 className="font-mono"
                 aria-invalid={regexError || undefined}
                 aria-describedby={regexError ? 'rp-pattern-error' : undefined}

@@ -148,7 +148,6 @@ export default function LoginPage() {
                     <Button
                       type="submit"
                       className="w-full"
-                      size="lg"
                       disabled={login.isPending}
                     >
                       {login.isPending ? (
