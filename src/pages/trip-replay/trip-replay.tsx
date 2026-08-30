@@ -6,6 +6,8 @@ import { Layers, ArrowLeft, Loader2, TriangleAlert } from 'lucide-react';
 import { cn } from '@/shared/lib/cn';
 import { Button } from '@/shared/ui/button';
 import { Badge } from '@/shared/ui/badge';
+import { Skeleton } from '@/shared/ui/skeleton';
+import { formatNumber } from '@/shared/lib/format';
 import { formatCairoDay, formatCairoTime } from '@/shared/lib/cairo';
 import { useTripMatchReplay } from '@/entities/trip-audit/queries';
 import {
@@ -398,8 +400,8 @@ export default function TripReplayPage() {
       const km = model ? kmDrivenAt(model, ms) : 0;
       return {
         timeLabel: formatCairoTime(new Date(ms), i18n.language),
-        speedLabel: `${Math.round(speed)} ${t('tripReplay.hud.kmh', 'km/h')}`,
-        kmLabel: `${km.toFixed(1)} ${t('tripReplay.legRail.km', 'km')}`,
+        speedLabel: `${formatNumber(speed, 0)} ${t('tripReplay.hud.kmh', 'km/h')}`,
+        kmLabel: `${formatNumber(km, 1)} ${t('tripReplay.legRail.km', 'km')}`,
       };
     },
     [model, i18n.language, t],
@@ -502,7 +504,7 @@ export default function TripReplayPage() {
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-background">
       {/* Top bar */}
-      <header className="flex flex-wrap items-center gap-3 border-b bg-card/70 px-4 py-2 backdrop-blur">
+      <header className="safe-top flex flex-wrap items-center gap-3 border-b bg-background/80 px-4 py-2 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <Button
           type="button"
           variant="ghost"
@@ -510,19 +512,19 @@ export default function TripReplayPage() {
           className="gap-1.5"
           onClick={goBack}
         >
-          <ArrowLeft className="h-4 w-4 rtl:rotate-180" />
+          <ArrowLeft className="h-4 w-4 rtl:rotate-180" aria-hidden="true" />
           {t('tripReplay.back', 'Back to audit')}
         </Button>
 
         <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
-          <h1 className="text-sm font-bold">{t('tripReplay.title', 'Trip replay')}</h1>
+          <h1 className="text-sm font-semibold">{t('tripReplay.title', 'Trip replay')}</h1>
           {detail && (
             <>
               <span className="text-sm text-muted-foreground">
                 {formatCairoDay(detail.day_local, i18n.language)}
               </span>
-              <span className="text-sm font-semibold" dir="ltr">
-                {detail.car_no_plate || '—'}
+              <span className="font-mono text-sm font-semibold tabular-nums" dir="ltr">
+                {detail.car_no_plate || <span className="opacity-40">—</span>}
               </span>
               {detail.driver_name && (
                 <span className="truncate text-sm text-muted-foreground" dir="auto">
@@ -533,7 +535,7 @@ export default function TripReplayPage() {
           )}
           {degraded && (
             <Badge variant="warning" className="gap-1">
-              <TriangleAlert className="h-3 w-3" />
+              <TriangleAlert className="h-3 w-3" aria-hidden="true" />
               {t(
                 'tripReplay.banner.unavailable',
                 'Replay unavailable — showing route only',
@@ -542,7 +544,7 @@ export default function TripReplayPage() {
           )}
           {history.loading && (
             <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <Loader2 className="h-3 w-3 animate-spin" />
+              <Loader2 className="h-3 w-3 animate-spin motion-reduce:animate-none" aria-hidden="true" />
               {t('tripReplay.loadingTrace', 'Loading GPS trace…')}
             </span>
           )}
@@ -554,9 +556,7 @@ export default function TripReplayPage() {
       {/* Map + overlays */}
       <div className="relative flex-1 overflow-hidden">
         {isLoading || !detail ? (
-          <div className="flex h-full items-center justify-center text-muted-foreground">
-            <Loader2 className="h-6 w-6 animate-spin" />
-          </div>
+          <Skeleton className="absolute inset-0 rounded-none" />
         ) : (
           <>
             <TripReplayMap
@@ -580,11 +580,11 @@ export default function TripReplayPage() {
               }
               aria-label={t('tracking.mapType', 'Satellite')}
               className={cn(
-                'absolute bottom-3 end-3 z-20 grid h-9 w-9 place-items-center rounded-full border shadow backdrop-blur',
-                satellite ? 'bg-primary text-primary-foreground' : 'bg-card/90 hover:bg-card',
+                'absolute bottom-3 end-3 z-20 grid h-9 w-9 place-items-center rounded-full border shadow-sm backdrop-blur',
+                satellite ? 'bg-primary text-primary-foreground' : 'bg-card hover:bg-card',
               )}
             >
-              <Layers className="h-4 w-4" />
+              <Layers className="h-4 w-4" aria-hidden="true" />
             </button>
 
             {/* Floating overlays — SIBLINGS of the map container, never inside
@@ -624,7 +624,7 @@ export default function TripReplayPage() {
 
       {/* Timeline band — the spine */}
       {model && model.timedLegs.length > 0 && (
-        <div className="border-t bg-card/70 backdrop-blur">
+        <div className="safe-bottom border-t bg-background/80 backdrop-blur supports-[backdrop-filter]:bg-background/60">
           <TripReplayTimeline
             ref={timelineRef}
             model={model}
