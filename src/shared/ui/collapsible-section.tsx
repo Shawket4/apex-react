@@ -60,8 +60,9 @@ export function CollapsibleSection({
     <Card className={cn('overflow-hidden', className)}>
       <div
         className={cn(
-          'flex items-center gap-3 border-b px-4 py-3 md:px-5 md:py-3.5',
-          !alwaysOpen && 'cursor-pointer select-none transition-colors hover:bg-muted/40',
+          'flex items-center gap-2 border-b bg-muted/60 px-3 py-2',
+          !alwaysOpen &&
+            'cursor-pointer select-none transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring',
         )}
         role={alwaysOpen ? undefined : 'button'}
         tabIndex={alwaysOpen ? undefined : 0}
@@ -81,8 +82,24 @@ export function CollapsibleSection({
               }
         }
       >
-        {icon && <div className="flex shrink-0 items-center">{icon}</div>}
-        <div className="min-w-0 flex-1">{title}</div>
+        {alwaysOpen ? (
+          <>
+            {icon && <div className="flex shrink-0 items-center">{icon}</div>}
+            <div className="min-w-0 flex-1">{title}</div>
+          </>
+        ) : (
+          // Native control for the disclosure. It carries no onClick of its
+          // own — the click bubbles to the header row's handler, so the
+          // toggle still fires exactly once from mouse and keyboard alike.
+          <button
+            type="button"
+            aria-expanded={isOpen}
+            className="flex min-w-0 flex-1 items-center gap-2 text-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+          >
+            {icon && <div className="flex shrink-0 items-center">{icon}</div>}
+            <div className="min-w-0 flex-1">{title}</div>
+          </button>
+        )}
         {actions && (
           <div
             className="flex items-center gap-2"
@@ -94,8 +111,9 @@ export function CollapsibleSection({
         )}
         {!alwaysOpen && (
           <ChevronDown
+            aria-hidden="true"
             className={cn(
-              'h-4 w-4 shrink-0 text-muted-foreground transition-transform',
+              'h-3 w-3 shrink-0 text-muted-foreground transition-transform duration-200',
               isOpen && 'rotate-180',
             )}
           />

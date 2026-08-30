@@ -147,8 +147,9 @@ export function DateRangePicker({ from, to, onChange, className }: Props) {
           key={p.key}
           variant={isPresetActive(p) ? 'default' : 'outline'}
           size="sm"
+          aria-pressed={isPresetActive(p)}
           onClick={() => applyPreset(p)}
-          className="h-7 shrink-0 px-2 text-[11px] sm:h-8 sm:px-3 sm:text-xs"
+          className="h-7 shrink-0 text-xs"
         >
           <span className="sm:hidden">{t(`datePicker.short.${p.key}`)}</span>
           <span className="hidden sm:inline">{t(`datePicker.${p.key}`)}</span>
@@ -157,8 +158,9 @@ export function DateRangePicker({ from, to, onChange, className }: Props) {
       <Button
         variant={isAllTime ? 'default' : 'outline'}
         size="sm"
+        aria-pressed={isAllTime}
         onClick={() => onChange(null, null)}
-        className="h-7 shrink-0 px-2 text-[11px] sm:h-8 sm:px-3 sm:text-xs"
+        className="h-7 shrink-0 text-xs"
       >
         <span className="sm:hidden">{t('datePicker.short.allTime')}</span>
         <span className="hidden sm:inline">{t('datePicker.allTime')}</span>
@@ -169,14 +171,15 @@ export function DateRangePicker({ from, to, onChange, className }: Props) {
           <Button
             variant={isCustom ? 'default' : 'outline'}
             size="sm"
-            className="h-7 shrink-0 gap-1 px-2 text-[11px] sm:h-8 sm:gap-1.5 sm:px-3 sm:text-xs"
+            aria-pressed={isCustom}
+            className="h-7 shrink-0 gap-1 text-xs"
           >
             <CalendarIcon className="h-3 w-3" />
             {isCustom ? `${fmtDate(from)} → ${to ? fmtDate(to) : ''}` : t('datePicker.custom')}
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-4" align="start">
-          <div className="mb-4 flex items-center gap-3 rounded-lg bg-muted p-2.5 text-xs">
+          <div className="mb-3 flex items-center gap-3 rounded-lg bg-muted p-2.5 text-xs">
             <div className="flex-1 text-center">
               <p className="mb-0.5 text-muted-foreground">{t('common.from')}</p>
               <p className="font-semibold">
@@ -211,7 +214,7 @@ export function DateRangePicker({ from, to, onChange, className }: Props) {
             {weekdayNames.map((d) => (
               <div
                 key={d}
-                className="py-1 text-center text-[10px] font-semibold text-muted-foreground"
+                className="py-1 text-center text-xs font-semibold text-muted-foreground"
               >
                 {d}
               </div>
@@ -249,7 +252,7 @@ export function DateRangePicker({ from, to, onChange, className }: Props) {
                     onMouseEnter={() => !isFuture && setHovered({ y: year, m: month, d })}
                     onMouseLeave={() => setHovered(undefined)}
                     className={cn(
-                      'flex h-8 w-8 items-center justify-center rounded-full text-xs font-medium',
+                      'flex h-8 w-8 items-center justify-center rounded-full text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                       isFuture && 'cursor-not-allowed text-muted-foreground/30',
                       !isFuture && !isStart && !isEnd && 'hover:bg-muted',
                       isToday && !isStart && !isEnd && 'border border-primary text-primary',
@@ -264,7 +267,7 @@ export function DateRangePicker({ from, to, onChange, className }: Props) {
             })}
           </div>
 
-          <div className="mt-4 flex items-center justify-between border-t pt-3">
+          <div className="mt-3 flex items-center justify-between border-t pt-3">
             <p className="text-xs text-muted-foreground">
               {!selected.from
                 ? t('datePicker.clickStart')
@@ -273,10 +276,10 @@ export function DateRangePicker({ from, to, onChange, className }: Props) {
                   : t('datePicker.rangeSelected')}
             </p>
             <div className="flex gap-2">
-              <Button variant="ghost" size="sm" onClick={() => setOpen(false)}>
+              <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setOpen(false)}>
                 {t('common.cancel')}
               </Button>
-              <Button size="sm" onClick={handleApply} disabled={!selected.from}>
+              <Button size="sm" className="h-7 text-xs" onClick={handleApply} disabled={!selected.from}>
                 {t('datePicker.apply')}
               </Button>
             </div>

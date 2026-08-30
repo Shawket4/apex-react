@@ -149,7 +149,7 @@ export function DataTable<TData, TValue>({
     const rendered = footer(data);
     if (Array.isArray(rendered)) {
       return (
-        <tr className="border-t-2 bg-muted/40 font-semibold">
+        <tr className="border-t bg-muted/40 font-semibold">
           {rendered.map((cell, i) => {
             const col = columns[i];
             const align = (col?.meta as { align?: 'start' | 'end' | 'center' } | undefined)?.align;
@@ -157,7 +157,7 @@ export function DataTable<TData, TValue>({
               <td
                 key={i}
                 className={cn(
-                  'px-4 py-3 text-sm tabular-nums',
+                  'px-3 py-2.5 text-sm tabular-nums',
                   align === 'end' && 'text-end',
                   align === 'center' && 'text-center',
                 )}
@@ -177,23 +177,23 @@ export function DataTable<TData, TValue>({
       <div className="overflow-hidden rounded-lg border bg-card">
         <div className="relative w-full overflow-auto">
           <table className="w-full caption-bottom text-sm">
-            <thead className="border-b bg-muted/50 text-xs uppercase tracking-wider text-muted-foreground">
+            <thead className="border-b bg-muted/60 text-[10px] uppercase tracking-wider text-muted-foreground">
               {table.getHeaderGroups().map((headerGroup) => (
                 <tr key={headerGroup.id}>
                   {headerGroup.headers.map((header) => (
                     <th
                       key={header.id}
-                      className="h-11 px-4 text-start font-medium"
+                      className="h-10 px-3 text-start font-semibold"
                       style={{ width: header.getSize() !== 150 ? header.getSize() : undefined }}
                     >
                       {header.isPlaceholder ? null : header.column.getCanSort() ? (
                         <button
                           type="button"
-                          className="flex items-center gap-1 hover:text-foreground"
+                          className="flex items-center gap-1 rounded-sm hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                           onClick={header.column.getToggleSortingHandler()}
                         >
                           {flexRender(header.column.columnDef.header, header.getContext())}
-                          <ArrowUpDown className="h-3 w-3" />
+                          <ArrowUpDown aria-hidden="true" className="h-3 w-3" />
                         </button>
                       ) : (
                         flexRender(header.column.columnDef.header, header.getContext())
@@ -208,8 +208,8 @@ export function DataTable<TData, TValue>({
                 Array.from({ length: 5 }).map((_, i) => (
                   <tr key={i} className="border-b last:border-0">
                     {columns.map((_, j) => (
-                      <td key={j} className="p-4">
-                        <Skeleton className="h-4 w-full" />
+                      <td key={j} className="px-3 py-2.5">
+                        <Skeleton className="h-3.5 w-full rounded-sm" />
                       </td>
                     ))}
                   </tr>
@@ -225,10 +225,14 @@ export function DataTable<TData, TValue>({
                         data-state={row.getIsSelected() && 'selected'}
                         data-expanded={isExpanded ? 'true' : undefined}
                         className={cn(
-                          'border-b transition-colors last:border-0 hover:bg-muted/40 data-[state=selected]:bg-muted',
-                          (onRowClick || canExpand) && 'cursor-pointer',
-                          isExpanded && 'bg-muted/30',
+                          'border-b transition-colors last:border-0 hover:bg-muted/50 data-[state=selected]:bg-muted',
+                          (onRowClick || canExpand) &&
+                            'cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring',
+                          isExpanded && 'bg-muted/40',
                         )}
+                        role={onRowClick || canExpand ? 'button' : undefined}
+                        tabIndex={onRowClick || canExpand ? 0 : undefined}
+                        aria-expanded={canExpand ? !!isExpanded : undefined}
                         onClick={() => {
                           if (canExpand) {
                             row.toggleExpanded();
@@ -236,18 +240,32 @@ export function DataTable<TData, TValue>({
                             onRowClick?.(row.original);
                           }
                         }}
+                        onKeyDown={
+                          onRowClick || canExpand
+                            ? (e) => {
+                                if (e.key !== 'Enter' && e.key !== ' ') return;
+                                if (e.target !== e.currentTarget) return;
+                                e.preventDefault();
+                                if (canExpand) {
+                                  row.toggleExpanded();
+                                } else {
+                                  onRowClick?.(row.original);
+                                }
+                              }
+                            : undefined
+                        }
                         onPointerEnter={onRowIntent ? () => onRowIntent(row.original) : undefined}
                         onFocus={onRowIntent ? () => onRowIntent(row.original) : undefined}
                         onTouchStart={onRowIntent ? () => onRowIntent(row.original) : undefined}
                       >
                         {row.getVisibleCells().map((cell) => (
-                          <td key={cell.id} className="px-4 py-3 align-middle">
+                          <td key={cell.id} className="px-3 py-2.5 align-middle">
                             {flexRender(cell.column.columnDef.cell, cell.getContext())}
                           </td>
                         ))}
                       </tr>
                       {isExpanded && renderSubComponent && (
-                        <tr key={`${row.id}-expanded`} className="bg-muted/10">
+                        <tr key={`${row.id}-expanded`} className="bg-muted/40">
                           <td
                             colSpan={row.getVisibleCells().length}
                             className="p-0"
@@ -265,10 +283,10 @@ export function DataTable<TData, TValue>({
                     {typeof emptyState === 'string' || !emptyState ? (
                       <EmptyState
                         lottieSrc="/animations/no_results.json"
-                        lottieWidth={100}
-                        lottieHeight={100}
+                        lottieWidth={110}
+                        lottieHeight={110}
                         title={emptyState ?? t('common.noResults')}
-                        className="border-0 bg-transparent py-12 shadow-none"
+                        className="border-0 bg-transparent py-6 shadow-none"
                       />
                     ) : (
                       emptyState
@@ -291,18 +309,22 @@ export function DataTable<TData, TValue>({
             <Button
               variant="outline"
               size="icon"
+              className="h-8 w-8"
+              aria-label={t('common.previous')}
               onClick={() => pagination ? pagination.onPageChange(pagination.page - 1) : table.previousPage()}
               disabled={pagination ? pagination.page <= 1 : !table.getCanPreviousPage()}
             >
-              <ChevronLeft className="h-4 w-4 rtl:rotate-180" />
+              <ChevronLeft aria-hidden="true" className="h-4 w-4 rtl:rotate-180" />
             </Button>
             <Button
               variant="outline"
               size="icon"
+              className="h-8 w-8"
+              aria-label={t('common.next')}
               onClick={() => pagination ? pagination.onPageChange(pagination.page + 1) : table.nextPage()}
               disabled={pagination ? pagination.page >= pagination.totalPages : !table.getCanNextPage()}
             >
-              <ChevronRight className="h-4 w-4 rtl:rotate-180" />
+              <ChevronRight aria-hidden="true" className="h-4 w-4 rtl:rotate-180" />
             </Button>
           </div>
         </div>
