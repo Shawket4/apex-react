@@ -245,18 +245,7 @@
       "kmLeft": "{{km}} km left",
       "kmOverdue": "{{km}} km overdue",
       "sinceOf": "{{since}} of {{interval}} km",
-      "count": "{{count}}",
-      "filters": {
-        "oilShort": "O",
-        "fuelShort": "F",
-        "waterShort": "W",
-        "oilDone": "Oil filter replaced",
-        "oilNotDone": "Oil filter not replaced",
-        "fuelDone": "Fuel filter replaced",
-        "fuelNotDone": "Fuel filter not replaced",
-        "waterDone": "Water separator replaced",
-        "waterNotDone": "Water separator not replaced"
-      }
+      "count": "{{count}}"
     }
   },
   "fuelEvents": {
@@ -1136,7 +1125,19 @@
     "filters": {
       "byStatus": "Filter by status",
       "all": "All",
-      "showingCount": "Showing {{shown}} of {{total}}"
+      "showingCount": "Showing {{shown}} of {{total}}",
+      "oilShort": "O",
+      "oilLabel": "Oil filter",
+      "oilDone": "Oil filter replaced",
+      "oilNotDone": "Oil filter not replaced",
+      "fuelShort": "F",
+      "fuelLabel": "Fuel filter",
+      "fuelDone": "Fuel filter replaced",
+      "fuelNotDone": "Fuel filter not replaced",
+      "waterShort": "W",
+      "waterLabel": "Water separator",
+      "waterDone": "Water separator replaced",
+      "waterNotDone": "Water separator not replaced"
     },
     "status": {
       "good": "Good",
@@ -1164,7 +1165,8 @@
       "cost": "Cost",
       "lastUpdated": "Last Updated",
       "totals": "Totals",
-      "avgRemaining": "Avg remaining"
+      "avgRemaining": "Avg remaining",
+      "filters": "Filters"
     },
     "preview": {
       "used": "Used",

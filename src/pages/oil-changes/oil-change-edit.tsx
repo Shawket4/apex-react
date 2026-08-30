@@ -44,6 +44,9 @@ export default function OilChangeEditPage() {
       current_odometer: record.current_odometer,
       mileage: record.mileage,
       cost: record.cost,
+      oil_filter_changed: record.oil_filter_changed,
+      fuel_filter_changed: record.fuel_filter_changed,
+      water_filter_changed: record.water_filter_changed,
     };
   }, [record, cars]);
 
@@ -60,6 +63,9 @@ export default function OilChangeEditPage() {
       odometer_at_change: values.odometer_at_change,
       current_odometer: values.current_odometer ?? values.odometer_at_change,
       cost: values.cost,
+      oil_filter_changed: values.oil_filter_changed,
+      fuel_filter_changed: values.fuel_filter_changed,
+      water_filter_changed: values.water_filter_changed,
     });
     navigate('/oil-changes');
   };

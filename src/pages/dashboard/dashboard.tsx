@@ -33,6 +33,7 @@ import {
 import { prefetchFuelEvent } from '@/entities/fuel-event/queries';
 import { analyseEvents } from '@/shared/lib/fuel';
 import { type DashboardScope } from '@/entities/dashboard/api';
+import { OilChangeFilterChips } from '@/entities/oil-change/filter-chips';
 import { keepScopeSearch, useScope, useScopeCompany } from '@/shared/scope';
 import { cairoToday } from '@/shared/lib/cairo';
 import { useEtitLive } from '@/shared/hooks/use-etit-live';
@@ -1101,10 +1102,9 @@ function AttentionPanel({
               }
               severity={o.km_left < 0 ? 'critical' : 'warning'}
               filters={
-                <FilterChips
-                  oil={o.oil_filter}
-                  fuel={o.fuel_filter}
-                  water={o.water_filter}
+                <OilChangeFilterChips
+                  className="mt-1"
+                  flags={{ oil: o.oil_filter, fuel: o.fuel_filter, water: o.water_filter }}
                 />
               }
             />
@@ -1112,53 +1112,6 @@ function AttentionPanel({
         </AttentionColumn>
       </div>
     </section>
-  );
-}
-
-/**
- * What went in with the last oil change, as three states you can read at a
- * glance down a column: filled means replaced, hollow means it wasn't. Letters
- * rather than icons because three filter glyphs would be indistinguishable at
- * this size, and they come from i18n so Arabic gets its own initials.
- */
-function FilterChips({ oil, fuel, water }: { oil: boolean; fuel: boolean; water: boolean }) {
-  const { t } = useTranslation();
-  const chips = [
-    { on: oil, key: 'oil' },
-    { on: fuel, key: 'fuel' },
-    { on: water, key: 'water' },
-  ] as const;
-  return (
-    <span className="mt-1 flex items-center gap-1">
-      {chips.map(({ on, key }) => (
-        <span
-          key={key}
-          // `title` rather than a Tooltip: this renders once per row and a
-          // fleet can put twenty rows in the column, which is a lot of
-          // popper instances for a three-letter hint.
-          title={t(
-            on
-              ? `dashboard.attention.filters.${key}Done`
-              : `dashboard.attention.filters.${key}NotDone`,
-          )}
-          className={cn(
-            'inline-flex h-4 min-w-4 items-center justify-center rounded-[3px] px-1 text-[9px] font-semibold leading-none',
-            on
-              ? 'bg-primary/10 text-primary'
-              : 'border border-dashed border-muted-foreground/30 text-muted-foreground/50',
-          )}
-        >
-          <span aria-hidden>{t(`dashboard.attention.filters.${key}Short`)}</span>
-          <span className="sr-only">
-            {t(
-              on
-                ? `dashboard.attention.filters.${key}Done`
-                : `dashboard.attention.filters.${key}NotDone`,
-            )}
-          </span>
-        </span>
-      ))}
-    </span>
   );
 }
 

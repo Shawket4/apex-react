@@ -26,6 +26,8 @@ import { SearchableSelect } from '@/shared/ui/searchable-select';
 import { DatePicker } from '@/shared/ui/date-picker';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card';
 import { Skeleton } from '@/shared/ui/skeleton';
+import { Checkbox } from '@/shared/ui/checkbox';
+import { OIL_FILTER_KEYS } from '@/entities/oil-change/filter-chips';
 import {
   Form,
   FormControl,
@@ -48,6 +50,9 @@ export interface OilChangeFormInitialValues {
   current_odometer?: number | string;
   mileage?: number | string;
   cost?: number | string;
+  oil_filter_changed?: boolean;
+  fuel_filter_changed?: boolean;
+  water_filter_changed?: boolean;
 }
 
 interface OilChangeFormProps {
@@ -75,6 +80,9 @@ function getDefaults(initial?: OilChangeFormInitialValues): OilChangeFormValues 
         : undefined,
     mileage: (initial?.mileage as number) ?? (undefined as unknown as number),
     cost: (initial?.cost as number) ?? (undefined as unknown as number),
+    oil_filter_changed: initial?.oil_filter_changed ?? false,
+    fuel_filter_changed: initial?.fuel_filter_changed ?? false,
+    water_filter_changed: initial?.water_filter_changed ?? false,
   };
 }
 
@@ -440,6 +448,38 @@ export function OilChangeForm({
                 )}
               />
             </div>
+
+            {/* Three independent facts, so three checkboxes rather than a
+                radio group — a radio group means "pick one of these", and a
+                truck can have all three done, or none. */}
+            <fieldset className="mt-4 border-t pt-4">
+              <legend className="sr-only">{t('oilChanges.fields.filters')}</legend>
+              <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                {t('oilChanges.fields.filters')}
+              </p>
+              <div className="grid gap-3 sm:grid-cols-3">
+                {OIL_FILTER_KEYS.map((key) => (
+                  <FormField
+                    key={key}
+                    control={form.control}
+                    name={`${key}_filter_changed` as const}
+                    render={({ field }) => (
+                      <FormItem className="flex flex-row items-center gap-2 space-y-0">
+                        <FormControl>
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={(v) => field.onChange(v === true)}
+                          />
+                        </FormControl>
+                        <FormLabel className="cursor-pointer font-normal">
+                          {t(`oilChanges.filters.${key}Label`)}
+                        </FormLabel>
+                      </FormItem>
+                    )}
+                  />
+                ))}
+              </div>
+            </fieldset>
 
             <div className="pt-2">
               <OilChangeStatusPreview

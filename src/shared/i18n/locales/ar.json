@@ -245,18 +245,7 @@
       "kmLeft": "باقي {{km}} كم",
       "kmOverdue": "تأخر {{km}} كم",
       "sinceOf": "{{since}} من {{interval}} كم",
-      "count": "{{count}}",
-      "filters": {
-        "oilShort": "ز",
-        "fuelShort": "ج",
-        "waterShort": "م",
-        "oilDone": "تم تغيير فلتر الزيت",
-        "oilNotDone": "لم يتم تغيير فلتر الزيت",
-        "fuelDone": "تم تغيير فلتر الجاز",
-        "fuelNotDone": "لم يتم تغيير فلتر الجاز",
-        "waterDone": "تم تغيير فلتر فاصل المياه",
-        "waterNotDone": "لم يتم تغيير فلتر فاصل المياه"
-      }
+      "count": "{{count}}"
     }
   },
   "fuelEvents": {
@@ -1140,7 +1129,19 @@
     "filters": {
       "byStatus": "تصفية حسب الحالة",
       "all": "الكل",
-      "showingCount": "عرض {{shown}} من {{total}}"
+      "showingCount": "عرض {{shown}} من {{total}}",
+      "oilShort": "ز",
+      "oilLabel": "فلتر الزيت",
+      "oilDone": "تم تغيير فلتر الزيت",
+      "oilNotDone": "لم يتم تغيير فلتر الزيت",
+      "fuelShort": "ج",
+      "fuelLabel": "فلتر الجاز",
+      "fuelDone": "تم تغيير فلتر الجاز",
+      "fuelNotDone": "لم يتم تغيير فلتر الجاز",
+      "waterShort": "م",
+      "waterLabel": "فلتر فاصل المياه",
+      "waterDone": "تم تغيير فلتر فاصل المياه",
+      "waterNotDone": "لم يتم تغيير فلتر فاصل المياه"
     },
     "status": {
       "good": "جيد",
@@ -1168,7 +1169,8 @@
       "cost": "التكلفة",
       "lastUpdated": "آخر تحديث",
       "totals": "الإجماليات",
-      "avgRemaining": "متوسط المتبقي"
+      "avgRemaining": "متوسط المتبقي",
+      "filters": "الفلاتر"
     },
     "preview": {
       "used": "المستخدم",

@@ -68,6 +68,15 @@ export const oilChangeSchema = z.object({
   // for others — coerce both into a single optional field.
   updated_at: z.string().optional().nullable(),
   UpdatedAt: z.string().optional().nullable(),
+  /**
+   * Which filters were replaced with the oil. Defaulted, because rows written
+   * before FalconGo grew these columns carry nothing at all, and "we didn't
+   * record it" reads the same as "it wasn't done" — which is what an
+   * unqualified "تم تغير زيت" always meant on the paper sheet.
+   */
+  oil_filter_changed: z.boolean().optional().default(false),
+  fuel_filter_changed: z.boolean().optional().default(false),
+  water_filter_changed: z.boolean().optional().default(false),
 });
 
 export type OilChange = z.infer<typeof oilChangeSchema>;
@@ -126,6 +135,9 @@ export const oilChangeFormSchema = z
     current_odometer: zIntegerNonNegative.optional(),
     mileage: zNumericPositive,
     cost: zNumericPositive,
+    oil_filter_changed: z.boolean().default(false),
+    fuel_filter_changed: z.boolean().default(false),
+    water_filter_changed: z.boolean().default(false),
   })
   .refine(
     (v) =>
@@ -153,6 +165,9 @@ export interface AddOilChangePayload {
   odometer_at_change: number;
   current_odometer: number;
   cost: number;
+  oil_filter_changed: boolean;
+  fuel_filter_changed: boolean;
+  water_filter_changed: boolean;
 }
 
 export interface EditOilChangePayload extends AddOilChangePayload {

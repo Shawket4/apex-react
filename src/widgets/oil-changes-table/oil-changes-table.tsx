@@ -20,6 +20,7 @@ import { cn } from '@/shared/lib/cn';
 import { format, formatDateTime, formatCurrency } from '@/shared/lib/format';
 import { formatNumber } from '@/shared/lib/format-number';
 import type { OilChangeView } from '@/entities/oil-change/schemas';
+import { OilChangeFilterChips } from '@/entities/oil-change/filter-chips';
 import { OilChangeStatusBadge } from './oil-change-status-badge';
 
 interface OilChangesTableProps {
@@ -109,6 +110,20 @@ export function OilChangesTable({
           <OilChangeStatusBadge
             kmRemaining={row.original.kmRemaining}
             showValue
+          />
+        ),
+      },
+      {
+        id: 'filters',
+        header: t('oilChanges.fields.filters'),
+        enableSorting: false,
+        cell: ({ row }) => (
+          <OilChangeFilterChips
+            flags={{
+              oil: row.original.oil_filter_changed,
+              fuel: row.original.fuel_filter_changed,
+              water: row.original.water_filter_changed,
+            }}
           />
         ),
       },
@@ -249,6 +264,8 @@ export function OilChangesTable({
               {formatNumber(avgKmRemaining, 0)} km
             </span>
           </span>,
+          // filters
+          '',
           // cost (sum)
           <span className="font-mono font-semibold tabular-nums text-money">
             {formatCurrency(totalCost)}
