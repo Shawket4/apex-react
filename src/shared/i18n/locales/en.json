@@ -1562,7 +1562,7 @@
     "scanNow": "Run scan now",
     "fields": {
       "name": "Zone Name",
-      "namePlaceholder": "e.g. Headquarters",
+      "namePlaceholder": "e.g. Headquarters…",
       "lat": "Latitude",
       "lng": "Longitude",
       "radius": "Radius (meters)",

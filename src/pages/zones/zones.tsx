@@ -11,13 +11,15 @@ import {
 import type { Zone } from '@/entities/zone/schemas';
 import { PageShell } from '@/shared/ui/page-shell';
 import { Button } from '@/shared/ui/button';
+import { ConfirmDialog } from '@/shared/ui/confirm-dialog';
+import { EmptyState } from '@/shared/ui/empty-state';
 import { ZonesTable } from '@/widgets/zones-table';
 import { ZoneFormDialog } from '@/widgets/zone-form-dialog';
 
 export default function ZonesPage() {
   const { t } = useTranslation();
 
-  const { data: zones = [], isLoading } = useZones();
+  const { data: zones = [], isLoading, isError, refetch } = useZones();
   const createMutation = useCreateZone();
   const updateMutation = useUpdateZone();
   const deleteMutation = useDeleteZone();
@@ -25,6 +27,7 @@ export default function ZonesPage() {
 
   const [dialogOpen, setDialogOpen] = React.useState(false);
   const [selectedZone, setSelectedZone] = React.useState<Zone | null>(null);
+  const [deletingZone, setDeletingZone] = React.useState<Zone | null>(null);
 
   const handleCreateNew = () => {
     setSelectedZone(null);
@@ -44,9 +47,13 @@ export default function ZonesPage() {
   };
 
   const handleDelete = async (zone: Zone) => {
-    if (window.confirm(t('common.confirmDelete', 'Are you sure you want to delete this?'))) {
-      await deleteMutation.mutateAsync(zone.id);
-    }
+    setDeletingZone(zone);
+  };
+
+  const onConfirmDelete = async () => {
+    if (!deletingZone) return;
+    await deleteMutation.mutateAsync(deletingZone.id);
+    setDeletingZone(null);
   };
 
   const handleSubmit = async (data: any) => {
@@ -74,31 +81,45 @@ export default function ZonesPage() {
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
+            size="sm"
             onClick={handleScanNow}
             disabled={scanMutation.isPending}
-            className="gap-2"
           >
             {scanMutation.isPending ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Loader2 className="animate-spin motion-reduce:animate-none" aria-hidden="true" />
             ) : (
-              <Radar className="h-4 w-4" />
+              <Radar aria-hidden="true" />
             )}
-            {t('zones.scanNow', 'Run scan now')}
+            <span className="hidden sm:inline">{t('zones.scanNow', 'Run scan now')}</span>
           </Button>
-          <Button onClick={handleCreateNew} className="gap-2">
-            <Plus className="h-4 w-4" />
-            {t('zones.newZone', 'New Zone')}
+          <Button onClick={handleCreateNew} size="sm">
+            <Plus className="h-4 w-4" aria-hidden="true" />
+            <span className="hidden sm:inline">{t('zones.newZone', 'New Zone')}</span>
           </Button>
         </div>
       }
     >
-      <ZonesTable
-        zones={zones}
-        loading={isLoading}
-        onEdit={handleEdit}
-        onToggleActive={handleToggleActive}
-        onDelete={handleDelete}
-      />
+      {isError ? (
+        <EmptyState
+          lottieSrc="/animations/warning.lottie"
+          lottieWidth={100}
+          lottieHeight={100}
+          title={t('errors.generic')}
+          action={
+            <Button onClick={() => void refetch()} variant="outline">
+              {t('common.retry')}
+            </Button>
+          }
+        />
+      ) : (
+        <ZonesTable
+          zones={zones}
+          loading={isLoading}
+          onEdit={handleEdit}
+          onToggleActive={handleToggleActive}
+          onDelete={handleDelete}
+        />
+      )}
 
       <ZoneFormDialog
         open={dialogOpen}
@@ -107,6 +128,16 @@ export default function ZonesPage() {
         otherZones={otherZones}
         onSubmit={handleSubmit}
         loading={createMutation.isPending || updateMutation.isPending}
+      />
+
+      <ConfirmDialog
+        open={!!deletingZone}
+        onOpenChange={(open) => !open && setDeletingZone(null)}
+        title={t('common.delete')}
+        description={t('common.confirmDelete', 'Are you sure you want to delete this?')}
+        onConfirm={onConfirmDelete}
+        loading={deleteMutation.isPending}
+        variant="destructive"
       />
     </PageShell>
   );

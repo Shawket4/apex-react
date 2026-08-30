@@ -24,24 +24,30 @@ function ZoneActions({ zone, onEdit, onToggleActive, onDelete }: ZoneActionsProp
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-8 w-8">
-          <MoreHorizontal className="h-4 w-4" />
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          aria-label={t('common.actions')}
+          title={t('common.actions')}
+        >
+          <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-40">
         <DropdownMenuItem onClick={() => onEdit(zone)}>
-          <Edit className="mr-2 h-3.5 w-3.5" />
+          <Edit className="me-2 h-3.5 w-3.5" aria-hidden="true" />
           {t('common.edit')}
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => onToggleActive(zone)}>
-          <Power className="mr-2 h-3.5 w-3.5" />
+          <Power className="me-2 h-3.5 w-3.5" aria-hidden="true" />
           {zone.active ? t('common.deactivate', 'Deactivate') : t('common.activate', 'Activate')}
         </DropdownMenuItem>
         <DropdownMenuItem
           className="text-destructive focus:bg-destructive/10 focus:text-destructive"
           onClick={() => onDelete(zone)}
         >
-          <Trash2 className="mr-2 h-3.5 w-3.5" />
+          <Trash2 className="me-2 h-3.5 w-3.5" aria-hidden="true" />
           {t('common.delete')}
         </DropdownMenuItem>
       </DropdownMenuContent>
@@ -74,17 +80,17 @@ export function useZoneColumns({
       {
         accessorKey: 'lat',
         header: t('zones.fields.lat', 'Latitude'),
-        cell: ({ row }) => <div className="text-muted-foreground tabular-nums">{row.original.lat.toFixed(6)}</div>,
+        cell: ({ row }) => <div className="text-muted-foreground font-mono tabular-nums">{row.original.lat.toFixed(6)}</div>,
       },
       {
         accessorKey: 'lng',
         header: t('zones.fields.lng', 'Longitude'),
-        cell: ({ row }) => <div className="text-muted-foreground tabular-nums">{row.original.lng.toFixed(6)}</div>,
+        cell: ({ row }) => <div className="text-muted-foreground font-mono tabular-nums">{row.original.lng.toFixed(6)}</div>,
       },
       {
         accessorKey: 'radius_m',
         header: t('zones.fields.radius', 'Radius (m)'),
-        cell: ({ row }) => <div className="text-muted-foreground tabular-nums">{row.original.radius_m}</div>,
+        cell: ({ row }) => <div className="text-muted-foreground font-mono tabular-nums">{row.original.radius_m}</div>,
       },
       {
         accessorKey: 'active',
@@ -92,7 +98,7 @@ export function useZoneColumns({
         cell: ({ row }) => {
           const active = row.original.active;
           return (
-            <Badge variant={active ? 'success' : 'secondary'} className={!active ? 'opacity-50' : ''}>
+            <Badge variant={active ? 'success' : 'secondary'}>
               {active ? t('zones.status.active', 'Active') : t('zones.status.inactive', 'Inactive')}
             </Badge>
           );

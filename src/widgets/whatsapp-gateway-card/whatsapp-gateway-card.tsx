@@ -68,7 +68,7 @@ export function WhatsAppGatewayCard() {
       <CardHeader>
         <div className="flex items-center justify-between gap-2">
           <CardTitle className="flex items-center gap-2">
-            <MessageCircle className="h-4 w-4" />
+            <MessageCircle className="h-4 w-4" aria-hidden="true" />
             {t('settings.whatsappTitle', 'WhatsApp Gateway')}
           </CardTitle>
           {badge}
@@ -94,16 +94,16 @@ export function WhatsAppGatewayCard() {
               disabled={reconnect.isPending}
             >
               {reconnect.isPending ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <Loader2 className="animate-spin motion-reduce:animate-none" aria-hidden="true" />
               ) : (
-                <RefreshCw className="mr-2 h-4 w-4" />
+                <RefreshCw aria-hidden="true" />
               )}
               {t('settings.whatsappReconnect', 'Reconnect')}
             </Button>
           )}
           {status && !loggedIn && (
             <Button onClick={() => setQrOpen(true)}>
-              <QrCode className="mr-2 h-4 w-4" />
+              <QrCode aria-hidden="true" />
               {t('settings.whatsappShowQr', 'Show QR code')}
             </Button>
           )}
@@ -126,6 +126,8 @@ export function WhatsAppGatewayCard() {
               <img
                 src={qrUrl}
                 alt={t('settings.whatsappQrTitle', 'Link WhatsApp')}
+                width={256}
+                height={256}
                 className="h-64 w-64 rounded-md bg-white p-2"
               />
             ) : qrQuery.isError ? (
@@ -133,7 +135,10 @@ export function WhatsAppGatewayCard() {
                 {t('settings.whatsappServiceError', 'Failed to reach the WhatsApp service')}
               </p>
             ) : (
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+              <Loader2
+                className="h-8 w-8 animate-spin text-muted-foreground motion-reduce:animate-none"
+                aria-hidden="true"
+              />
             )}
           </div>
         </DialogContent>

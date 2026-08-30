@@ -20,6 +20,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/shared/ui/dropdown-menu';
+import { EmptyState } from '@/shared/ui/empty-state';
+import { Skeleton } from '@/shared/ui/skeleton';
 import { StatCard } from '@/shared/ui/stat-card';
 
 interface UsersTableProps {
@@ -50,10 +52,10 @@ export function UsersTable({
       <div className="space-y-4">
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="h-20 animate-pulse rounded-xl bg-muted/50" />
+            <Skeleton key={i} className="h-20 rounded-lg" />
           ))}
         </div>
-        <div className="h-64 animate-pulse rounded-xl bg-muted/30" />
+        <Skeleton className="h-64 rounded-lg" />
       </div>
     );
   }
@@ -72,26 +74,35 @@ export function UsersTable({
           label={t('users.stats.regulars')}
           value={stats.regulars}
           icon={UserIcon}
-          tone="success"
+          tone="default"
         />
         <StatCard
           label={t('users.stats.managers')}
           value={stats.managers}
           icon={Shield}
-          tone="warning"
+          tone="default"
         />
         <StatCard
           label={t('users.stats.admins')}
           value={stats.admins}
           icon={Shield}
-          tone="destructive"
+          tone="default"
         />
       </div>
 
+      {users.length === 0 && !loading ? (
+        <EmptyState
+          lottieSrc="/animations/no_results.json"
+          lottieWidth={110}
+          lottieHeight={110}
+          title={t('common.noResults')}
+        />
+      ) : (
+        <>
       {/* Desktop Table */}
-      <div className="hidden overflow-hidden rounded-xl border bg-card shadow-sm md:block">
-        <table className="w-full text-left text-sm">
-          <thead className="border-b bg-muted/30 text-muted-foreground uppercase text-[10px] font-bold tracking-wider">
+      <div className="hidden overflow-hidden rounded-lg border bg-card md:block">
+        <table className="w-full text-start text-sm">
+          <thead className="border-b bg-muted/60 text-muted-foreground uppercase text-[10px] font-semibold tracking-wider">
             <tr>
               <th className="px-4 py-3 font-semibold">{t('users.fields.name')}</th>
               <th className="px-4 py-3 font-semibold">{t('users.fields.email')}</th>
@@ -101,18 +112,18 @@ export function UsersTable({
               <th className="w-10 px-4 py-3"></th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-border/50">
+          <tbody className="divide-y">
             {users.map((user) => (
-              <tr key={user.ID} className="hover:bg-muted/20 transition-colors">
+              <tr key={user.ID} className="hover:bg-muted/50 transition-colors">
                 <td className="px-4 py-3 font-medium">{user.name || '—'}</td>
                 <td className="px-4 py-3 text-muted-foreground">{user.email}</td>
-                <td className="px-4 py-3 text-muted-foreground tabular-nums">
+                <td className="px-4 py-3 text-muted-foreground font-mono tabular-nums">
                   {user.phone || '—'}
                 </td>
                 <td className="px-4 py-3">
                   <PermissionBadge permission={user.permission} />
                 </td>
-                <td className="px-4 py-3 text-muted-foreground tabular-nums">
+                <td className="px-4 py-3 text-muted-foreground font-mono tabular-nums">
                   {user.created_at ? formatDateTime(user.created_at) : '—'}
                 </td>
                 <td className="px-4 py-3">
@@ -135,6 +146,8 @@ export function UsersTable({
           />
         ))}
       </div>
+        </>
+      )}
     </div>
   );
 }
@@ -151,10 +164,10 @@ function PermissionBadge({ permission }: { permission: number }) {
 
   const variant = (
     {
-      1: 'secondary',
+      1: 'outline',
       2: 'outline',
-      3: 'default',
-      4: 'destructive',
+      3: 'secondary',
+      4: 'secondary',
     } as const
   )[permission] || 'outline';
 
@@ -174,20 +187,26 @@ function UserActions({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-8 w-8">
-          <MoreHorizontal className="h-4 w-4" />
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          aria-label={t('common.actions')}
+          title={t('common.actions')}
+        >
+          <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-40">
         <DropdownMenuItem onClick={() => onEdit(user)}>
-          <Edit className="mr-2 h-3.5 w-3.5" />
+          <Edit className="me-2 h-3.5 w-3.5" aria-hidden="true" />
           {t('common.edit')}
         </DropdownMenuItem>
         <DropdownMenuItem
           className="text-destructive focus:bg-destructive/10 focus:text-destructive"
           onClick={() => onDelete(user)}
         >
-          <Trash2 className="mr-2 h-3.5 w-3.5" />
+          <Trash2 className="me-2 h-3.5 w-3.5" aria-hidden="true" />
           {t('common.delete')}
         </DropdownMenuItem>
       </DropdownMenuContent>
@@ -206,11 +225,11 @@ function MobileUserCard({
 }) {
   const { t } = useTranslation();
   return (
-    <div className="rounded-xl border bg-card p-4 shadow-sm space-y-3">
+    <div className="rounded-lg border bg-card p-4 space-y-3">
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-            <UserIcon className="h-5 w-5" />
+            <UserIcon className="h-5 w-5" aria-hidden="true" />
           </div>
           <div className="min-w-0">
             <h3 className="font-semibold text-foreground truncate">{user.name || '—'}</h3>
@@ -222,20 +241,20 @@ function MobileUserCard({
 
       <div className="grid grid-cols-2 gap-3 text-xs border-t pt-3">
         <div className="space-y-1">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-            <Phone className="h-3 w-3" />
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+            <Phone className="h-3 w-3" aria-hidden="true" />
             {t('users.fields.phone')}
           </p>
-          <p className="font-medium text-foreground tabular-nums truncate">
+          <p className="font-medium text-foreground font-mono tabular-nums truncate">
             {user.phone || '—'}
           </p>
         </div>
         <div className="space-y-1">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-            <Calendar className="h-3 w-3" />
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+            <Calendar className="h-3 w-3" aria-hidden="true" />
             {t('users.fields.createdAt')}
           </p>
-          <p className="font-medium text-foreground tabular-nums truncate">
+          <p className="font-medium text-foreground font-mono tabular-nums truncate">
             {user.created_at ? formatDateTime(user.created_at) : '—'}
           </p>
         </div>
@@ -243,7 +262,7 @@ function MobileUserCard({
 
       <div className="flex justify-end gap-2 pt-1">
         <Button variant="outline" size="sm" onClick={() => onEdit(user)} className="h-8 gap-1.5 text-xs">
-          <Edit className="h-3 w-3" />
+          <Edit className="h-3 w-3" aria-hidden="true" />
           {t('common.edit')}
         </Button>
         <Button
@@ -252,7 +271,7 @@ function MobileUserCard({
           className="h-8 gap-1.5 text-xs text-destructive hover:bg-destructive/5"
           onClick={() => onDelete(user)}
         >
-          <Trash2 className="h-3 w-3" />
+          <Trash2 className="h-3 w-3" aria-hidden="true" />
           {t('common.delete')}
         </Button>
       </div>
