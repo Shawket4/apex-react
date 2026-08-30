@@ -62,9 +62,9 @@ export function CashInReview({ open, onOpenChange, filters, canEdit }: CashInRev
           ))}
         </>
       ) : rows.length === 0 ? (
-        <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed bg-muted/20 px-4 py-8 text-center">
-          <Inbox className="h-6 w-6 text-muted-foreground" />
-          <p className="text-sm font-medium">{t('fleetExpenses.cashIn.empty')}</p>
+        <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed bg-muted/40 px-3 py-6 text-center">
+          <Inbox className="h-6 w-6 text-muted-foreground" aria-hidden="true" />
+          <p className="text-xs text-muted-foreground">{t('fleetExpenses.cashIn.empty')}</p>
           <p className="text-xs text-muted-foreground">
             {t('fleetExpenses.cashIn.emptyHint')}
           </p>
@@ -103,7 +103,7 @@ export function CashInReview({ open, onOpenChange, filters, canEdit }: CashInRev
   if (isDesktop) {
     if (!open) return null;
     return (
-      <section className="space-y-3 rounded-xl border border-warning/40 bg-warning/5 p-4">
+      <section className="space-y-3 rounded-lg border border-warning/40 bg-warning/10 p-3">
         <div className="flex items-start justify-between gap-3">
           {heading}
           <Button
@@ -113,7 +113,7 @@ export function CashInReview({ open, onOpenChange, filters, canEdit }: CashInRev
             onClick={() => onOpenChange(false)}
             aria-label={t('common.close')}
           >
-            <X className="h-4 w-4" />
+            <X aria-hidden="true" />
           </Button>
         </div>
         {body}
@@ -125,7 +125,7 @@ export function CashInReview({ open, onOpenChange, filters, canEdit }: CashInRev
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="bottom"
-        className="max-h-[85dvh] overflow-y-auto rounded-t-2xl p-4 pb-[max(1.5rem,env(safe-area-inset-bottom))]"
+        className="max-h-[85dvh] overflow-y-auto overscroll-contain rounded-t-2xl p-4 pb-[max(1.5rem,env(safe-area-inset-bottom))]"
       >
         <div className="space-y-3">
           {heading}
@@ -168,7 +168,7 @@ function CashInRow({ row, canEdit }: { row: Transaction; canEdit: boolean }) {
         </div>
         <span
           dir="ltr"
-          className="shrink-0 whitespace-nowrap text-sm font-semibold tabular-nums text-emerald-600 dark:text-emerald-400"
+          className="shrink-0 whitespace-nowrap font-mono text-sm font-semibold tabular-nums text-money"
         >
           + {formatMoney(row.amount)}
           {row.currency && row.currency !== 'EGP' ? ` ${row.currency}` : ''}
@@ -201,7 +201,7 @@ function CashInRow({ row, canEdit }: { row: Transaction; canEdit: boolean }) {
               })
             }
           >
-            <ArrowRightLeft className="h-4 w-4" />
+            <ArrowRightLeft aria-hidden="true" />
             {t('fleetExpenses.cashIn.markOut')}
           </Button>
           <Button
@@ -211,7 +211,7 @@ function CashInRow({ row, canEdit }: { row: Transaction; canEdit: boolean }) {
             disabled={busy}
             onClick={() => setConfirmIgnore(true)}
           >
-            <EyeOff className="h-4 w-4" />
+            <EyeOff aria-hidden="true" />
             {t('fleetExpenses.cashIn.ignore')}
           </Button>
         </div>

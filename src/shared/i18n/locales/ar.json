@@ -250,7 +250,9 @@
       "distance": "المسافة المقطوعة",
       "fuelRate": "كفاءة الوقود",
       "selectCar": "اختر مركبة...",
-      "selectDriver": "اختر سائقاً..."
+      "selectDriver": "اختر سائقاً...",
+      "km": "كم",
+      "carAndDriver": "المركبة والسائق"
     },
     "efficiency": {
       "excluded": "مستبعد من المتوسط",
@@ -1667,6 +1669,8 @@
     },
     "principal": "الأصل",
     "readOnlySource": "للقراءة فقط — يملكه نظام آخر",
+    "sourceFuel": "عملية وقود",
+    "sourceLoan": "قرض",
     "readOnlyExplain": "هذا الصف قادم من نظام الوقود أو القروض ويظهر هنا للتقارير فقط. عدّله من وحدته الأصلية.",
     "includeFuel": "أحداث الوقود",
     "includeLoans": "قروض السائقين",

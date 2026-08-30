@@ -45,12 +45,15 @@ export function PartyPicker({
   onChange,
   required,
   disabled,
+  labelledBy,
 }: {
   value: PartyValue;
   onChange: (v: PartyValue) => void;
   /** From the category: which kinds of person are acceptable. */
   required: PartyKind;
   disabled?: boolean;
+  /** id of the visible label naming this field. */
+  labelledBy?: string;
 }) {
   const { t } = useTranslation();
   const [open, setOpen] = React.useState(false);
@@ -115,6 +118,7 @@ export function PartyPicker({
           variant="outline"
           role="combobox"
           aria-expanded={open}
+          aria-labelledby={labelledBy}
           disabled={disabled}
           // Full width so it is comfortably tappable on a phone.
           className="w-full justify-between font-normal"
@@ -122,14 +126,14 @@ export function PartyPicker({
           <span className={cn('truncate', !selected && 'text-muted-foreground')}>
             {selected ? selected.name : t('fleetExpenses.party.placeholder')}
           </span>
-          <ChevronsUpDown className="ms-2 h-4 w-4 shrink-0 opacity-50" />
+          <ChevronsUpDown className="ms-2 shrink-0 opacity-50" aria-hidden="true" />
         </Button>
       </PopoverTrigger>
 
       {/* z-bumped above the Sheet overlay (z-[9999]) so the picker works when
           it renders inside the inline-category bottom sheet as well as on the
           plain edit form. */}
-      <PopoverContent className="z-[10060] w-[--radix-popover-trigger-width] p-0" align="start">
+      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
         <Command shouldFilter>
           <CommandInput
             placeholder={t('fleetExpenses.party.search')}
@@ -183,9 +187,9 @@ export function PartyPicker({
             <button
               type="button"
               onClick={create}
-              className="flex w-full items-center gap-2 border-t px-3 py-2 text-start text-sm hover:bg-accent"
+              className="flex w-full items-center gap-2 border-t px-3 py-2 text-start text-sm hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ring-inset"
             >
-              <UserPlus className="h-4 w-4 shrink-0 text-muted-foreground" />
+              <UserPlus className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
               <span className="truncate" dir="auto">
                 {t('fleetExpenses.party.create', { name: search.trim() })}
               </span>
@@ -220,6 +224,7 @@ export function SmartPartyField({
   required,
   disabled,
   suggest = true,
+  labelledBy,
 }: {
   /** The transaction's counterparty text — the lookup key. */
   counterparty?: string | null;
@@ -229,6 +234,8 @@ export function SmartPartyField({
   disabled?: boolean;
   /** Pass false when the row already names a person — no second-guessing. */
   suggest?: boolean;
+  /** id of the visible label naming this field. */
+  labelledBy?: string;
 }) {
   const { t } = useTranslation();
   const [manual, setManual] = React.useState(false);
@@ -262,10 +269,10 @@ export function SmartPartyField({
   if (active && suggestion) {
     const Icon = suggestion.kind === 'driver' ? Truck : User;
     return (
-      <div className="rounded-lg border bg-muted/30 p-3">
+      <div className="rounded-lg border bg-muted/40 p-3">
         <div className="flex items-center gap-3">
           <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-            <Icon className="h-5 w-5" />
+            <Icon className="h-5 w-5" aria-hidden="true" />
           </span>
           <span className="min-w-0 flex-1">
             <span className="block truncate text-sm font-semibold" dir="auto">
@@ -275,7 +282,7 @@ export function SmartPartyField({
               {t('fleetExpenses.party.matchedTimes', { count: suggestion.times })}
             </span>
           </span>
-          <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-500" />
+          <CheckCircle2 className="h-5 w-5 shrink-0 text-success" aria-hidden="true" />
         </div>
         <Button
           type="button"
@@ -294,7 +301,13 @@ export function SmartPartyField({
   }
 
   return (
-    <PartyPicker value={value} onChange={onChange} required={required} disabled={disabled} />
+    <PartyPicker
+      value={value}
+      onChange={onChange}
+      required={required}
+      disabled={disabled}
+      labelledBy={labelledBy}
+    />
   );
 }
 
@@ -310,11 +323,11 @@ function PartyRow({
   const Icon = party.kind === 'driver' ? Truck : User;
   return (
     <CommandItem value={`${party.name} ${party.kind}`} onSelect={() => onSelect(party)}>
-      <Icon className="me-2 h-4 w-4 shrink-0 text-muted-foreground" />
+      <Icon className="me-2 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
       <span className="truncate" dir="auto">
         {party.name}
       </span>
-      {selected && <Check className="ms-auto h-4 w-4 shrink-0" />}
+      {selected && <Check className="ms-auto h-4 w-4 shrink-0" aria-hidden="true" />}
     </CommandItem>
   );
 }

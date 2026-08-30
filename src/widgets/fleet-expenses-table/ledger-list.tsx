@@ -186,10 +186,10 @@ export function LedgerList({ rows, dayTotals, canEdit }: LedgerListProps) {
           <section key={`${group.key}-${index}`}>
             {/* Sticky day header — top-0 because the app bar is outside the
                 scroll root. bg required: content scrolls beneath it. */}
-            <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-y bg-background px-3 py-1.5 text-xs font-semibold text-muted-foreground">
+            <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-y bg-background px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
               <span>{formatCairoDay(group.key, i18n.language)}</span>
               {total && (
-                <span className="tabular-nums" dir="ltr">
+                <span className="font-mono font-medium normal-case tracking-normal tabular-nums text-money" dir="ltr">
                   − {formatMoney(total.out)}
                 </span>
               )}
@@ -250,7 +250,7 @@ export function LedgerList({ rows, dayTotals, canEdit }: LedgerListProps) {
       <Sheet open={!!flow} onOpenChange={(open) => !open && setFlow(null)}>
         <SheetContent
           side="bottom"
-          className="mx-auto max-h-[80dvh] max-w-lg overflow-y-auto rounded-t-2xl p-4 pb-[max(1.5rem,env(safe-area-inset-bottom))]"
+          className="mx-auto max-h-[80dvh] max-w-lg overflow-y-auto overscroll-contain rounded-t-2xl p-4 pb-[max(1.5rem,env(safe-area-inset-bottom))]"
         >
           {flow?.step === 'category' && (
             <div className="space-y-3">
@@ -265,7 +265,7 @@ export function LedgerList({ rows, dayTotals, canEdit }: LedgerListProps) {
                     type="button"
                     disabled={update.isPending}
                     onClick={() => pickCategory(flow.row, c.key)}
-                    className="min-h-11 rounded-lg border px-3 py-2 text-start text-sm font-medium hover:bg-accent disabled:opacity-50"
+                    className="min-h-11 rounded-lg border bg-card px-3 py-2 text-start text-sm font-medium transition-colors hover:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
                   >
                     {categoryLabel(c, i18n.language)}
                   </button>
@@ -361,8 +361,8 @@ function Amount({ row, className }: { row: Transaction; className?: string }) {
     <span
       dir="ltr"
       className={cn(
-        'whitespace-nowrap font-semibold tabular-nums',
-        isIn && 'text-emerald-600 dark:text-emerald-400',
+        'whitespace-nowrap font-mono font-semibold tabular-nums text-money',
+        isIn && 'text-money',
         row.fee != null && 'cursor-help border-b border-dotted border-muted-foreground/50',
         className,
       )}
@@ -376,7 +376,7 @@ function Amount({ row, className }: { row: Transaction; className?: string }) {
     <Tooltip>
       <TooltipTrigger asChild>{span}</TooltipTrigger>
       <TooltipContent>
-        <div className="space-y-0.5 text-xs" dir="ltr">
+        <div className="space-y-0.5 font-mono text-xs tabular-nums" dir="ltr">
           <div>
             {t('fleetExpenses.principal')}: {formatMoney(row.principal)}
           </div>
@@ -401,7 +401,7 @@ function CategoryChip({
   if (!row.category) return null;
   const cat = catByKey.get(row.category);
   return (
-    <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+    <span className="rounded-full bg-muted px-2 py-0.5 text-[10.5px] font-medium text-muted-foreground">
       {cat ? categoryLabel(cat, i18n.language) : row.category}
     </span>
   );
@@ -411,12 +411,30 @@ function RowFlags({ row }: { row: Transaction }) {
   const { t, i18n } = useTranslation();
   return (
     <>
-      {row.source === 'fuel_event' && <Fuel className="h-3.5 w-3.5 shrink-0 text-amber-500" />}
-      {row.source === 'loan' && <HandCoins className="h-3.5 w-3.5 shrink-0 text-sky-500" />}
+      {row.source === 'fuel_event' && (
+        <Fuel
+          className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
+          role="img"
+          aria-label={t('fleetExpenses.sourceFuel')}
+        />
+      )}
+      {row.source === 'loan' && (
+        <HandCoins
+          className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
+          role="img"
+          aria-label={t('fleetExpenses.sourceLoan')}
+        />
+      )}
       {!row.editable && (
         <Tooltip>
           <TooltipTrigger asChild>
-            <Lock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+            <span
+              tabIndex={0}
+              aria-label={t('fleetExpenses.readOnlySource')}
+              className="inline-flex rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <Lock className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
+            </span>
           </TooltipTrigger>
           <TooltipContent>{t('fleetExpenses.readOnlySource')}</TooltipContent>
         </Tooltip>
@@ -424,7 +442,16 @@ function RowFlags({ row }: { row: Transaction }) {
       {row.edited_by && (
         <Tooltip>
           <TooltipTrigger asChild>
-            <PenLine className="h-3 w-3 shrink-0 text-amber-600 dark:text-amber-400" />
+            <span
+              tabIndex={0}
+              aria-label={t('fleetExpenses.editedBy', {
+                name: row.edited_by,
+                date: row.edited_at ? formatCairoDate(row.edited_at, i18n.language) : '',
+              })}
+              className="inline-flex rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <PenLine className="h-3 w-3 shrink-0 text-muted-foreground" aria-hidden="true" />
+            </span>
           </TooltipTrigger>
           <TooltipContent>
             {t('fleetExpenses.editedBy', {
@@ -480,7 +507,8 @@ function TxnCard({
       }
       className={cn(
         'grid grid-cols-[minmax(0,1fr)_auto] gap-x-3 gap-y-1 border-b bg-card px-3 py-3',
-        tappable && 'cursor-pointer active:bg-muted/40',
+        tappable &&
+          'cursor-pointer transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ring-inset',
       )}
     >
       <p className="min-w-0 text-sm font-medium [overflow-wrap:anywhere]" dir="auto">
@@ -490,7 +518,7 @@ function TxnCard({
 
       <div className="col-span-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
         {row.reference && (
-          <span className="font-mono text-[11px] [overflow-wrap:anywhere]">{row.reference}</span>
+          <span className="font-mono [overflow-wrap:anywhere]">{row.reference}</span>
         )}
         {row.account && <span className="tabular-nums">****{row.account}</span>}
         <span className="tabular-nums">{formatCairoTime(row.occurred_at, i18n.language)}</span>
@@ -504,7 +532,7 @@ function TxnCard({
               e.stopPropagation();
               onAddCategory();
             }}
-            className="min-h-9 rounded-full border border-dashed border-primary/50 px-3 py-0.5 text-xs font-semibold text-primary lg:min-h-8 lg:px-2.5"
+            className="min-h-9 rounded-full border border-dashed border-primary/60 px-3 py-0.5 text-[11px] font-medium text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:min-h-8 lg:px-2.5"
           >
             + {t('fleetExpenses.addCategory')}
           </button>
@@ -524,9 +552,9 @@ function TxnCard({
               e.stopPropagation();
               onOpenSplit();
             }}
-            className="inline-flex min-h-9 items-center gap-1 rounded-full border border-dashed px-3 py-0.5 text-xs font-semibold text-muted-foreground hover:text-foreground lg:min-h-8 lg:px-2.5"
+            className="inline-flex min-h-9 items-center gap-1 rounded-full border border-dashed px-3 py-0.5 text-[11px] font-medium text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:min-h-8 lg:px-2.5"
           >
-            <Split className="h-3 w-3 shrink-0" />
+            <Split className="h-3 w-3 shrink-0" aria-hidden="true" />
             {t('fleetExpenses.split.action')}
           </button>
         )}
@@ -567,7 +595,23 @@ function TxnRow({
     <tr
       data-txn-id={row.id}
       onClick={tappable ? onOpen : undefined}
-      className={cn('border-b bg-card', tappable && 'cursor-pointer hover:bg-muted/40')}
+      tabIndex={tappable ? 0 : undefined}
+      role={tappable ? 'link' : undefined}
+      onKeyDown={
+        tappable
+          ? (e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onOpen();
+              }
+            }
+          : undefined
+      }
+      className={cn(
+        'border-b bg-card',
+        tappable &&
+          'cursor-pointer transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ring-inset',
+      )}
     >
       <td className="w-16 whitespace-nowrap px-3 py-2.5 text-xs tabular-nums text-muted-foreground">
         {formatCairoTime(row.occurred_at, i18n.language)}
@@ -639,9 +683,9 @@ function TxnRow({
                     onOpenSplit();
                   }}
                   aria-label={t('fleetExpenses.split.action')}
-                  className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground opacity-60 hover:bg-accent hover:text-foreground hover:opacity-100"
+                  className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground opacity-60 hover:bg-accent hover:text-foreground hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ring-inset"
                 >
-                  <Split className="h-3.5 w-3.5" />
+                  <Split className="h-3.5 w-3.5" aria-hidden="true" />
                 </button>
               </TooltipTrigger>
               <TooltipContent>{t('fleetExpenses.split.action')}</TooltipContent>

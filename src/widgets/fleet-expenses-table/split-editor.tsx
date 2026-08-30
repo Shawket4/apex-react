@@ -219,7 +219,7 @@ export function SplitEditor({ open, onOpenChange, row, onDone, canEdit }: SplitE
           {/* ── Fixed header: the amount being divided ── */}
           <div className="shrink-0 border-b px-4 py-3 pe-12">
             <h3 className="flex items-center gap-2 text-base font-semibold">
-              <Split className="h-4 w-4 shrink-0 text-primary" />
+              <Split className="h-4 w-4 shrink-0 text-primary" aria-hidden="true" />
               <span dir="auto">
                 {parent
                   ? t('fleetExpenses.split.title', {
@@ -236,7 +236,7 @@ export function SplitEditor({ open, onOpenChange, row, onDone, canEdit }: SplitE
           </div>
 
           {/* ── Parts ── */}
-          <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-3">
+          <div className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain px-4 py-3">
             {editing && splitQuery.isLoading ? (
               <>
                 {Array.from({ length: 2 }).map((_, i) => (
@@ -244,7 +244,7 @@ export function SplitEditor({ open, onOpenChange, row, onDone, canEdit }: SplitE
                 ))}
               </>
             ) : loadFailed ? (
-              <p className="rounded-lg border border-destructive/40 bg-destructive/5 px-3 py-2.5 text-sm text-destructive">
+              <p className="px-3 py-6 text-center text-xs text-muted-foreground">
                 {t('fleetExpenses.split.loadFailed')}
               </p>
             ) : (
@@ -258,7 +258,7 @@ export function SplitEditor({ open, onOpenChange, row, onDone, canEdit }: SplitE
                     return (
                       <li key={draft.key} className="space-y-2 rounded-lg border bg-card p-3">
                         <div className="flex min-h-6 items-center justify-between gap-2">
-                          <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                          <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                             {t('fleetExpenses.split.part', { n: index + 1 })}
                           </span>
                           {drafts.length > 2 && (
@@ -267,20 +267,25 @@ export function SplitEditor({ open, onOpenChange, row, onDone, canEdit }: SplitE
                               onClick={() => removeDraft(draft.key)}
                               disabled={busy}
                               aria-label={t('fleetExpenses.split.removePart')}
-                              className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
+                              className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                             >
-                              <X className="h-4 w-4" />
+                              <X className="h-4 w-4" aria-hidden="true" />
                             </button>
                           )}
                         </div>
 
                         <div className="grid grid-cols-1 gap-2 min-[420px]:grid-cols-2">
                           <div className="space-y-1">
-                            <Label className="text-xs">{t('fleetExpenses.fields.amount')}</Label>
+                            <Label htmlFor={`split-${draft.key}-amount`} className="text-xs">
+                              {t('fleetExpenses.fields.amount')}
+                            </Label>
                             <Input
+                              id={`split-${draft.key}-amount`}
+                              name={`split-${draft.key}-amount`}
+                              autoComplete="off"
                               inputMode="decimal"
                               dir="ltr"
-                              placeholder="0.00"
+                              placeholder="0.00…"
                               value={draft.amount}
                               disabled={busy}
                               onChange={(e) => patchDraft(draft.key, { amount: e.target.value })}
@@ -288,10 +293,11 @@ export function SplitEditor({ open, onOpenChange, row, onDone, canEdit }: SplitE
                             />
                           </div>
                           <div className="space-y-1">
-                            <Label className="text-xs">
+                            <Label htmlFor={`split-${draft.key}-category`} className="text-xs">
                               {t('fleetExpenses.fields.expenseType')}
                             </Label>
                             <NativeSelect
+                              id={`split-${draft.key}-category`}
                               value={draft.category}
                               disabled={busy}
                               onChange={(e) => patchDraft(draft.key, { category: e.target.value })}
@@ -308,8 +314,11 @@ export function SplitEditor({ open, onOpenChange, row, onDone, canEdit }: SplitE
 
                         {needsParty && (
                           <div className="space-y-1">
-                            <Label className="text-xs">{t('fleetExpenses.toWhom')}</Label>
+                            <Label id={`split-${draft.key}-party-label`} className="text-xs">
+                              {t('fleetExpenses.toWhom')}
+                            </Label>
                             <SmartPartyField
+                              labelledBy={`split-${draft.key}-party-label`}
                               counterparty={parent?.counterparty}
                               suggest={draft.suggest}
                               value={draft.party}
@@ -318,7 +327,7 @@ export function SplitEditor({ open, onOpenChange, row, onDone, canEdit }: SplitE
                               required={(cat?.required_party ?? 'either') as PartyKind}
                             />
                             {partyMissing && (
-                              <p className="text-xs text-amber-600 dark:text-amber-400">
+                              <p className="text-[11px] font-medium text-destructive">
                                 {t('fleetExpenses.partyRequired')}
                               </p>
                             )}
@@ -336,7 +345,7 @@ export function SplitEditor({ open, onOpenChange, row, onDone, canEdit }: SplitE
                   onClick={addDraft}
                   disabled={busy}
                 >
-                  <Plus className="h-4 w-4" />
+                  <Plus aria-hidden="true" />
                   {t('fleetExpenses.split.addPart')}
                 </Button>
               </>
@@ -354,8 +363,8 @@ export function SplitEditor({ open, onOpenChange, row, onDone, canEdit }: SplitE
                   overAllocated
                     ? 'text-destructive'
                     : allocatedAll
-                      ? 'text-emerald-600 dark:text-emerald-400'
-                      : 'text-amber-600 dark:text-amber-400',
+                      ? 'text-success'
+                      : 'text-warning',
                 )}
               >
                 {overAllocated
@@ -468,12 +477,12 @@ export function SplitChip({
         onOpen();
       }}
       className={cn(
-        'inline-flex min-h-6 items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary hover:bg-primary/15',
+        'inline-flex min-h-6 items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary hover:bg-primary/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
         className,
       )}
     >
-      <Split className="h-3 w-3 shrink-0" />
-      <span className="tabular-nums" dir="auto">
+      <Split className="h-3 w-3 shrink-0" aria-hidden="true" />
+      <span className="font-mono tabular-nums" dir="auto">
         {label}
       </span>
     </button>

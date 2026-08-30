@@ -250,7 +250,9 @@
       "distance": "Distance traveled",
       "fuelRate": "Fuel efficiency",
       "selectCar": "Select a vehicle...",
-      "selectDriver": "Select a driver..."
+      "selectDriver": "Select a driver...",
+      "km": "km",
+      "carAndDriver": "Vehicle & Driver"
     },
     "efficiency": {
       "excluded": "Excluded from avg",
@@ -1667,6 +1669,8 @@
     },
     "principal": "Principal",
     "readOnlySource": "Read-only — owned by another system",
+    "sourceFuel": "Fuel event",
+    "sourceLoan": "Loan",
     "readOnlyExplain": "This row comes from the fuel or loans system and is shown here for reporting only. Edit it in its own module.",
     "includeFuel": "Fuel events",
     "includeLoans": "Driver loans",
