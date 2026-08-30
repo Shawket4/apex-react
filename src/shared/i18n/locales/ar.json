@@ -1456,7 +1456,16 @@
       "compartments": "عيون التنك",
       "addCompartment": "إضافة عين",
       "compartmentIndex": "عين {{index}}",
-      "licenses": "الرخص والتواريخ"
+      "licenses": "الرخص والتواريخ",
+      "removeCompartment": "إزالة العين"
+    },
+    "types": {
+      "noTrailer": "بدون مقطورة",
+      "trailer": "مقطورة",
+      "truck": "شاحنة"
+    },
+    "units": {
+      "litre": "لتر"
     },
     "status": {
       "expired": "مستندات منتهية",

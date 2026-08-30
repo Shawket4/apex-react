@@ -1456,7 +1456,16 @@
       "compartments": "Tank Compartments",
       "addCompartment": "Add Compartment",
       "compartmentIndex": "Comp {{index}}",
-      "licenses": "Licenses & Dates"
+      "licenses": "Licenses & Dates",
+      "removeCompartment": "Remove compartment"
+    },
+    "types": {
+      "noTrailer": "No Trailer",
+      "trailer": "Trailer",
+      "truck": "Truck"
+    },
+    "units": {
+      "litre": "L"
     },
     "status": {
       "expired": "Expired Docs",

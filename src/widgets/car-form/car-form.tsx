@@ -101,7 +101,7 @@ export function CarForm({
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-base font-semibold">
+            <CardTitle className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider">
               <Truck className="h-4 w-4 text-muted-foreground" />
               {t('cars.sections.vehicleInfo')}
             </CardTitle>
@@ -133,9 +133,9 @@ export function CarForm({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="No Trailer">No Trailer</SelectItem>
-                      <SelectItem value="Trailer">Trailer</SelectItem>
-                      <SelectItem value="Truck">Truck</SelectItem>
+                      <SelectItem value="No Trailer">{t('cars.types.noTrailer', 'No Trailer')}</SelectItem>
+                      <SelectItem value="Trailer">{t('cars.types.trailer', 'Trailer')}</SelectItem>
+                      <SelectItem value="Truck">{t('cars.types.truck', 'Truck')}</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -148,7 +148,7 @@ export function CarForm({
         {/* Driver Assignment Card */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-base font-semibold">
+            <CardTitle className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider">
               <User className="h-4 w-4 text-muted-foreground" />
               {t('cars.sections.driverAssignment')}
             </CardTitle>
@@ -177,13 +177,13 @@ export function CarForm({
 
         <Card>
           <CardHeader className="pb-3 flex flex-row items-center justify-between">
-            <CardTitle className="flex items-center gap-2 text-base font-semibold">
+            <CardTitle className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider">
               <Gauge className="h-4 w-4 text-muted-foreground" />
               {t('cars.sections.compartments')}
             </CardTitle>
             <div className="flex items-center gap-2 text-sm font-medium">
               <span className="text-muted-foreground">{t('common.total')}:</span>
-              <span>{totalCapacity.toLocaleString()} L</span>
+              <span className="font-mono tabular-nums">{totalCapacity.toLocaleString()} {t('cars.units.litre', 'L')}</span>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -201,11 +201,11 @@ export function CarForm({
                           <div className="relative">
                             <Input
                               type="number"
-                              className="pr-8"
+                              className="pe-8"
                               {...field}
                               onChange={(e) => field.onChange(Number(e.target.value))}
                             />
-                            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">L</span>
+                            <span className="absolute end-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">{t('cars.units.litre', 'L')}</span>
                           </div>
                         </FormControl>
                         {fields.length > 1 && (
@@ -213,10 +213,11 @@ export function CarForm({
                             type="button"
                             variant="ghost"
                             size="icon"
-                            className="h-10 w-10 shrink-0"
+                            className="h-9 w-9 shrink-0"
+                            aria-label={t('cars.sections.removeCompartment', 'Remove compartment')}
                             onClick={() => remove(index)}
                           >
-                            <Trash2 className="h-4 w-4 text-destructive" />
+                            <Trash2 className="text-destructive" />
                           </Button>
                         )}
                       </div>
@@ -234,7 +235,7 @@ export function CarForm({
                 className="w-full border-dashed"
                 onClick={() => append(0)}
               >
-                <Plus className="h-4 w-4 mr-2" />
+                <Plus />
                 {t('cars.sections.addCompartment', 'Add Compartment')}
               </Button>
             )}
@@ -243,7 +244,7 @@ export function CarForm({
 
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-base font-semibold">
+            <CardTitle className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider">
               <Calendar className="h-4 w-4 text-muted-foreground" />
               {t('cars.sections.licenses')}
             </CardTitle>
@@ -316,9 +317,9 @@ export function CarForm({
             disabled={submitting || (mode === 'edit' && !form.formState.isDirty)}
           >
             {submitting ? (
-              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              <Loader2 className="animate-spin motion-reduce:animate-none" />
             ) : (
-              <Save className="h-4 w-4 mr-2" />
+              <Save />
             )}
             {mode === 'create' ? t('cars.addCar') : t('common.save')}
           </Button>

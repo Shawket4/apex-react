@@ -7,6 +7,7 @@ import { Eye, EyeOff, Loader2, LogIn, Truck } from 'lucide-react';
 import { loginSchema, type LoginInput } from '@/entities/auth/schemas';
 import { useLogin } from '@/entities/auth/queries';
 import { useAuthStore } from '@/shared/auth/store';
+import { useIsDesktop } from '@/shared/hooks/use-media-query';
 import { Button } from '@/shared/ui/button';
 import { Card, CardContent } from '@/shared/ui/card';
 import { Input } from '@/shared/ui/input';
@@ -26,6 +27,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = React.useState(false);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const login = useLogin();
+  const isDesktop = useIsDesktop();
 
   const form = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
@@ -43,14 +45,14 @@ export default function LoginPage() {
   return (
     <div className="flex min-h-dvh flex-col bg-background md:flex-row">
       {/* Brand panel — hidden on mobile */}
-      <aside className="relative hidden flex-1 items-center justify-center overflow-hidden bg-gradient-to-br from-primary to-primary/70 p-12 text-primary-foreground md:flex">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.15),transparent_50%)]" />
+      <aside className="relative hidden flex-1 items-center justify-center overflow-hidden bg-primary p-12 text-primary-foreground md:flex">
+        <div className="absolute inset-0" />
         <div className="relative max-w-md space-y-6">
           <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/10 backdrop-blur">
+            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-white/10 backdrop-blur">
               <Truck className="h-6 w-6" />
             </div>
-            <h1 className="text-3xl font-bold">{t('common.appName')}</h1>
+            <h1 className="text-3xl font-semibold">{t('common.appName')}</h1>
           </div>
           <h2 className="text-3xl font-semibold leading-tight">
             {t('auth.brandHeadline')}
@@ -76,10 +78,10 @@ export default function LoginPage() {
               <span className="text-xl font-semibold">{t('common.appName')}</span>
             </div>
 
-            <Card className="border-none shadow-lg md:border md:shadow-sm">
+            <Card className="border shadow-none">
               <CardContent className="space-y-6 p-6 md:p-8">
                 <div className="space-y-1">
-                  <h2 className="text-2xl font-semibold tracking-tight">
+                  <h2 className="text-lg font-semibold leading-tight sm:text-xl">
                     {t('auth.loginTitle')}
                   </h2>
                   <p className="text-sm text-muted-foreground">{t('auth.loginSubtitle')}</p>
@@ -96,9 +98,10 @@ export default function LoginPage() {
                           <FormControl>
                             <Input
                               type="text"
+                              spellCheck={false}
                               autoComplete="username"
                               placeholder={t('auth.emailPlaceholder')}
-                              autoFocus
+                              autoFocus={isDesktop}
                               {...field}
                             />
                           </FormControl>
@@ -125,7 +128,7 @@ export default function LoginPage() {
                               <button
                                 type="button"
                                 onClick={() => setShowPassword((v) => !v)}
-                                className="absolute end-2 top-1/2 -translate-y-1/2 rounded p-1 text-muted-foreground hover:text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                                className="absolute end-2 top-1/2 -translate-y-1/2 rounded p-1 text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                                 aria-label={
                                   showPassword ? t('auth.hidePassword') : t('auth.showPassword')
                                 }
@@ -151,12 +154,12 @@ export default function LoginPage() {
                     >
                       {login.isPending ? (
                         <>
-                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <Loader2 className="animate-spin motion-reduce:animate-none" />
                           {t('auth.signingIn')}
                         </>
                       ) : (
                         <>
-                          <LogIn className="h-4 w-4" />
+                          <LogIn />
                           {t('auth.signIn')}
                         </>
                       )}
