@@ -131,6 +131,16 @@ READ_TOOLS='Bash(cat:*),Bash(sed -n:*),Bash(grep:*),Bash(rg:*),Bash(wc:*),Bash(l
 FIX_TOOLS="$READ_TOOLS,Bash(npx tsc:*),Bash(npx eslint:*),Bash(python3 .audit/lint-diff.py:*)"
 
 PROTECTED_MD='.audit/design-system.md .audit/vercel-rules.md .audit/PLAN.md'
+
+# Playwright starts its own Vite and never reuses one (reuseExistingServer:false), so a
+# leftover server from a killed run blocks every later shard. Reap OUR orphan; leave a
+# foreign holder alone (the port check further down fails the shard for that case).
+free_port_5173() {
+  local pid; pid="$(lsof -nP -iTCP:5173 -sTCP:LISTEN -t 2>/dev/null | head -1)"; [ -z "$pid" ] && return 0
+  if ps -p "$pid" -o command= 2>/dev/null | grep -q "$ROOT/node_modules/.*vite"; then
+    log "  reaping orphaned dev server on :5173 (pid $pid)"; kill "$pid" 2>/dev/null; sleep 3; kill -9 "$pid" 2>/dev/null; sleep 1
+  fi
+}
 revert_src() {
   # restore every tracked file except the audit's own scratch output; drop new files under src and the screenshot dir
   git checkout -q -- . ':(exclude).audit/findings' ':(exclude).audit/logs' ':(exclude).audit/visual' 2>/dev/null
@@ -187,6 +197,7 @@ for SID in $LIST; do
     if grep -qE '^FINDINGS: 0( |$)' ".audit/findings/$SID.md"; then log "$SID: 0 findings — marking done"; touch ".audit/findings/$SID.done"; OK=$((OK+1)); continue; fi
     render .audit/prompts/fix.md "$SID" "$SHARD_FILE" > ".audit/logs/$SID.fix.prompt.md"
     : > ".audit/logs/$SID.fix.log"; GL=".audit/logs/$SID.gates.log"; : > "$GL"
+    free_port_5173   # a killed Playwright run can leave our own Vite listening
     # Pre-fix baseline: the app reads live production data, so screenshots drift on their own.
     # Re-baselining right before the fix means the post-fix comparison shows the fix, not the drift.
     { echo "== playwright (pre-fix baseline)"; npx playwright test --update-snapshots --reporter=list; } >> "$GL" 2>&1
