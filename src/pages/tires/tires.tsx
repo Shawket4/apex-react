@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { CircleDot, Droplets, Loader2, Plus } from 'lucide-react';
 
-import { toast } from '@/shared/ui/toaster';
+import { toast } from '@/shared/ui/toast';
 import { Button } from '@/shared/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card';
 import { Input } from '@/shared/ui/input';
@@ -85,7 +85,7 @@ function TireStockCard() {
         ) : (
           <div className="overflow-hidden rounded-lg border">
             <table className="w-full text-sm">
-              <thead className="bg-muted/50 text-xs text-muted-foreground">
+              <thead className="bg-muted/60 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                 <tr>
                   <th className="px-3 py-2 text-start">{t('tiresStock.brand')}</th>
                   <th className="px-3 py-2 text-start">{t('tiresStock.model')}</th>
@@ -128,7 +128,7 @@ function TireStockCard() {
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="ts-size">{t('tiresStock.size')}</Label>
-              <Input id="ts-size" dir="ltr" placeholder="315/80R22.5" {...form.register('size')} />
+              <Input id="ts-size" dir="ltr" placeholder={t('tiresStock.sizePlaceholder', { defaultValue: '315/80R22.5…' })} {...form.register('size')} />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="ts-qty">{t('tiresStock.addQty')}</Label>
@@ -197,7 +197,7 @@ function OilStockCard() {
         ) : (
           <div className="overflow-hidden rounded-lg border">
             <table className="w-full text-sm">
-              <thead className="bg-muted/50 text-xs text-muted-foreground">
+              <thead className="bg-muted/60 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                 <tr>
                   <th className="px-3 py-2 text-start">{t('tiresStock.oilType')}</th>
                   <th className="px-3 py-2 text-end">{t('tiresStock.liters')}</th>
@@ -224,7 +224,7 @@ function OilStockCard() {
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label htmlFor="os-type">{t('tiresStock.oilType')}</Label>
-              <Input id="os-type" dir="ltr" placeholder="15W-40" aria-invalid={!!form.formState.errors.oil_type} {...form.register('oil_type')} />
+              <Input id="os-type" dir="ltr" placeholder={t('tiresStock.oilTypePlaceholder', { defaultValue: '15W-40…' })} aria-invalid={!!form.formState.errors.oil_type} {...form.register('oil_type')} />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="os-liters">{t('tiresStock.addLiters')}</Label>

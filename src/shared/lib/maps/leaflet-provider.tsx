@@ -40,7 +40,7 @@ function injectLeafletStyles() {
       background: hsl(var(--popover)); color: hsl(var(--popover-foreground));
     }
     .leaflet-control-zoom {
-      border: none; border-radius: 8px; overflow: hidden;
+      border: 1px solid hsl(var(--border)); border-radius: calc(var(--radius) - 2px); overflow: hidden;
       background: hsl(var(--card) / 0.9); backdrop-filter: blur(10px);
       box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
     }
@@ -267,16 +267,19 @@ export function LeafletMapView({
 
     void initMap();
 
+    // Captured at setup — see the same pattern in tracking-map.
+    const markerEntries = markerEntriesRef.current;
+    const circleEntries = circleEntriesRef.current;
     return () => {
       cancelled = true;
       if (themeObserverRef.current) {
         themeObserverRef.current.disconnect();
         themeObserverRef.current = null;
       }
-      markerEntriesRef.current.forEach((e) => e.marker.remove());
-      markerEntriesRef.current.clear();
-      circleEntriesRef.current.forEach((c) => c.remove());
-      circleEntriesRef.current.clear();
+      markerEntries.forEach((e) => e.marker.remove());
+      markerEntries.clear();
+      circleEntries.forEach((c) => c.remove());
+      circleEntries.clear();
       polylinesRef.current.forEach((p) => p.remove());
       polylinesRef.current = [];
       if (mapRef.current) {
@@ -510,7 +513,7 @@ export function LeafletMapView({
     } else if (points.length === 1) {
       map.setView(points[0], 18);
     }
-  }, [markers, route, polylines, suppressRoute]);
+  }, [markers, circles, route, polylines, suppressRoute]);
 
   return (
     <div className={cn('relative', className)} style={{ height }}>

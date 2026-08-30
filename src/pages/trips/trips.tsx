@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { toast } from '@/shared/ui/toaster';
+import { toast } from '@/shared/ui/toast';
 import { saveAs } from 'file-saver';
 import {
   BarChart3,
@@ -52,11 +52,13 @@ import { prefetchTripStatistics } from '@/entities/trip-statistics/queries';
 import {
   TripsMissingDataFilter,
   TripsReceiptStatusControl,
+} from '@/widgets/trips-table/trips-filters';
+import {
   parseMissing,
   parseReceiptStatus,
   serializeMissing,
   serializeReceiptStatus,
-} from '@/widgets/trips-table/trips-filters';
+} from '@/widgets/trips-table/trips-filters-url';
 import { TripReceiptDialog } from '@/widgets/trip-receipt-dialog/trip-receipt-dialog';
 import { TripLocationDialog } from '@/widgets/trip-location-dialog/trip-location-dialog';
 import { TripReceiptBatchDialog } from '@/widgets/trip-receipt-batch-dialog/trip-receipt-batch-dialog';
@@ -187,7 +189,6 @@ export default function TripsPage() {
 
   React.useEffect(() => {
     setPage(1);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [debouncedSearch, from, to, company, missingData, receiptStatus]);
 
   /* ------------------------------------------------------------------------ */

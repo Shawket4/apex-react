@@ -74,7 +74,8 @@ export function DropOffPickerModal({
     setPage(1);
   }, [open, company, terminal]);
 
-  const dropOffs = data?.data ?? [];
+  // Memoised: see locations.tsx.
+  const dropOffs = React.useMemo(() => data?.data ?? [], [data]);
   const mappings = data?.mappings ?? {};
 
   // Filter (Arabic-aware), then paginate

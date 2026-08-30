@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { apiClientRust, apiClient } from '@/shared/api/client';
 import { QUERY_KEYS } from '@/shared/config/constants';
 import { queryClient } from '@/shared/api/query';
-import { toast } from '@/shared/ui/toaster';
+import { toast } from '@/shared/ui/toast';
 import { extractErrorMessage } from '@/shared/api/errors';
 
 /* -------------------------------------------------------------------------- */

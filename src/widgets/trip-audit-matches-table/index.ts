@@ -1,6 +1,6 @@
+export { RatioBadge } from './audit-format';
 export {
-  RatioBadge,
   formatDurationSecs,
   formatKm,
   useUnmatchedReasonLabel,
-} from './audit-format';
+} from './audit-format-utils';

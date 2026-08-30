@@ -153,7 +153,7 @@ export function FeeMappingsTable({
               variant="ghost"
               className={
                 hasLoc
-                  ? 'h-7 w-7 text-success hover:bg-success/10 hover:text-success'
+                  ? 'h-7 w-7 text-primary hover:bg-primary/10 hover:text-primary'
                   : 'h-7 w-7 text-muted-foreground hover:bg-muted'
               }
               onClick={() => onSetLocation(m)}

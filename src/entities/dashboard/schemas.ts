@@ -92,6 +92,43 @@ export const fuelBlockSchema = z.object({
   recent: z.array(fuelEventSchema).default([]),
 });
 
+/* ─── Attention: dated obligations ─── */
+
+/** `kind` is a key, not a label — the wording and its Arabic live in i18n. */
+export const expiringDocumentSchema = z.object({
+  plate_no: z.string(),
+  plate_ar: z.string().default(''),
+  kind: z.enum(['license', 'calibration', 'tank_license']).catch('license'),
+  expires_on: z.string(),
+  /** Negative once the paper has lapsed. */
+  days_left: z.number(),
+});
+export type ExpiringDocument = z.infer<typeof expiringDocumentSchema>;
+
+export const oilChangeDueSchema = z.object({
+  plate_no: z.string(),
+  plate_ar: z.string().default(''),
+  last_change_date: z.string().nullable().default(null),
+  interval_km: z.number(),
+  km_since: z.number(),
+  /** Negative once overdue. */
+  km_left: z.number(),
+});
+export type OilChangeDue = z.infer<typeof oilChangeDueSchema>;
+
+/**
+ * Both lists are truncated by the backend; the totals say how many met the
+ * same test, so a fleet with a long tail of lapsed papers still shows that the
+ * tail exists instead of silently cutting it.
+ */
+export const attentionSchema = z.object({
+  documents: z.array(expiringDocumentSchema).default([]),
+  documents_total: z.number().default(0),
+  oil_changes: z.array(oilChangeDueSchema).default([]),
+  oil_changes_total: z.number().default(0),
+});
+export type Attention = z.infer<typeof attentionSchema>;
+
 export const dashboardSchema = z.object({
   as_of: z.string(),
   month: dashboardMonthSchema,
@@ -99,6 +136,14 @@ export const dashboardSchema = z.object({
   fuel: fuelBlockSchema.optional(),
   fleet: z.array(fleetEntrySchema).default([]),
   exceptions: z.array(dashboardExceptionSchema).default([]),
+  // Older builds of apex-rust predate this block; an absent one is an empty
+  // one, so the panel renders "nothing due" rather than throwing.
+  attention: attentionSchema.default({
+    documents: [],
+    documents_total: 0,
+    oil_changes: [],
+    oil_changes_total: 0,
+  }),
 });
 export type Dashboard = z.infer<typeof dashboardSchema>;
 

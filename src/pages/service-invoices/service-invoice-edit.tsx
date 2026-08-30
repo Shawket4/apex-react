@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useServiceInvoice, useUpdateServiceInvoice } from '@/entities/service-invoice/queries';
 import { ServiceInvoiceForm } from '@/widgets/service-invoice-form/service-invoice-form';
 import { Skeleton } from '@/shared/ui/skeleton';
-import { toast } from '@/shared/ui/toaster';
+import { toast } from '@/shared/ui/toast';
 import type { ServiceInvoiceFormValues } from '@/entities/service-invoice/schemas';
 
 export default function ServiceInvoiceEditPage() {
@@ -19,7 +19,7 @@ export default function ServiceInvoiceEditPage() {
       await updateMutation.mutateAsync(values);
       toast({ title: t('common.saveSuccess') });
       navigate(`/service-invoices/${id}`);
-    } catch (err) {
+    } catch {
       toast({ 
         title: t('errors.generic'), 
         variant: 'destructive' 

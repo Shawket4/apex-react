@@ -1,5 +1,5 @@
 import type { Trip, TripListItem } from '@/entities/trip/schemas';
-import { sumRevenue } from './revenue-breakdown';
+import { sumRevenue } from './revenue-lines';
 
 /* -------------------------------------------------------------------------- */
 /* One row, described once                                                     */

@@ -42,25 +42,6 @@ type Page =
   | { type: 'fuel-terminals'; company: string }
   | { type: 'fuel-up' };
 
-// ─── Hook ─────────────────────────────────────────────────────────────────────
-
-export function useCommandPalette() {
-  const [open, setOpen] = React.useState(false);
-
-  React.useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.key.toLowerCase() === 'k' && (e.metaKey || e.ctrlKey)) {
-        e.preventDefault();
-        setOpen((o) => !o);
-      }
-    };
-    document.addEventListener('keydown', handler);
-    return () => document.removeEventListener('keydown', handler);
-  }, []);
-
-  return { open, setOpen };
-}
-
 // ─── Kbd ─────────────────────────────────────────────────────────────────────
 
 function Kbd({ children }: { children: React.ReactNode }) {

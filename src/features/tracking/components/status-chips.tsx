@@ -4,20 +4,16 @@ import { cn } from '@/shared/lib/cn';
 import {
   STATUS_COLOR,
   STATUS_ORDER,
-  statusGroup,
   type LiveStatus,
   type StatusGroup,
   type Vehicle,
 } from '../schemas';
+import { groupOf } from './status-group';
 
 /* -------------------------------------------------------------------------- */
 /* Floating status bar — the fleet at a glance, and the map's filter. Tap a   */
 /* chip to isolate that group; tap again to clear.                             */
 /* -------------------------------------------------------------------------- */
-
-export function groupOf(vehicle: Vehicle, live: LiveStatus | null): StatusGroup {
-  return statusGroup(live?.status ?? vehicle.status);
-}
 
 export function StatusChips({
   vehicles,

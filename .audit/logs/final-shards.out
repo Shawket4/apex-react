@@ -1,0 +1,33 @@
+12:00:13  === run start · phase=both · model=default · dry-run=0 · shards: shard-001 shard-002 shard-003 shard-004 shard-005 shard-006 shard-007 shard-008 shard-009 shard-010 shard-011 shard-012 shard-013 shard-014 shard-015 shard-016 shard-017 shard-018 shard-019 shard-020 shard-021 shard-022 shard-023 shard-024 shard-025 shard-026 shard-027 shard-028 shard-029 
+12:00:13  shard-001: done marker present — skipping
+12:00:13  shard-002: done marker present — skipping
+12:00:13  shard-003: done marker present — skipping
+12:00:13  shard-004: done marker present — skipping
+12:00:13  shard-005: done marker present — skipping
+12:00:13  shard-006: done marker present — skipping
+12:00:13  shard-007: done marker present — skipping
+12:00:13  shard-008: done marker present — skipping
+12:00:13  shard-009: done marker present — skipping
+12:00:13  shard-010: done marker present — skipping
+12:00:13  shard-011: done marker present — skipping
+12:00:13  shard-012: done marker present — skipping
+12:00:13  shard-013: done marker present — skipping
+12:00:13  shard-014: done marker present — skipping
+12:00:13  shard-015: done marker present — skipping
+12:00:13  shard-016: done marker present — skipping
+12:00:13  shard-017: done marker present — skipping
+12:00:13  shard-018: done marker present — skipping
+12:00:13  shard-019: done marker present — skipping
+12:00:13  shard-020: done marker present — skipping
+12:00:13  shard-021: done marker present — skipping
+12:00:13  shard-022: done marker present — skipping
+12:00:13  shard-023: done marker present — skipping
+12:00:13  shard-024: done marker present — skipping
+12:00:13  --- shard-025 (1948 LOC) ---
+12:00:13  shard-025: findings exist — skipping audit
+12:09:23  shard-025: fix run rc=0 — APPLIED: 17 SKIPPED: 5
+12:09:29  shard-025: GATES FAILED — reverting shard (see .audit/logs/shard-025.gates.log)
+12:09:30  --- shard-026 (2171 LOC) ---
+12:13:21  shard-026: audit ok — FINDINGS: 24 (blocker 11 / should 7 / nit 6)
+12:13:21    reaping orphaned dev server on :5173 (pid 58671)
+12:26:24  shard-026: fix run rc=0 — APPLIED: 22 SKIPPED: 2

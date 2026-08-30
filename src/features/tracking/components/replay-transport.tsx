@@ -4,7 +4,7 @@ import { Flag, Pause, Play, RotateCcw } from 'lucide-react';
 import { cn } from '@/shared/lib/cn';
 import { sampleAt, SPEEDS, type ReplaySample } from '../playback';
 import type { ReplayTrack } from '../use-history';
-import { createCursorStore } from './time-deck';
+import { createCursorStore } from './time-deck-utils';
 
 /* -------------------------------------------------------------------------- */
 /* A reusable transport bar over a ReplayTrack — the same rAF-clock pattern    */

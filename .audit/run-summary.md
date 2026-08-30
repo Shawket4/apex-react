@@ -1,11 +1,11 @@
-# Run summary — Sun Aug 30 07:42:23 EEST 2026
+# Run summary — Sun Aug 30 14:17:23 EEST 2026
 
 | Shard | Findings | Applied | Status |
 |---|---|---|---|
 | shard-001 | 8 | 7 | done |
-| shard-002 | 21 | 19 | FAILED |
-| shard-003 | 42 | 40 | FAILED |
-| shard-004 | 54 | - | FAILED |
+| shard-002 | 21 | 19 | done |
+| shard-003 | 42 | 41 | done |
+| shard-004 | 54 | 49 | done |
 | shard-005 | 33 | 28 | done |
 | shard-006 | 12 | 12 | done |
 | shard-007 | 53 | 45 | done |
@@ -23,11 +23,11 @@
 | shard-019 | 0 | - | done |
 | shard-020 | 23 | 20 | done |
 | shard-021 | 31 | 29 | done |
-| shard-022 | 55 | - | FAILED |
-| shard-023 | 30 | - | FAILED |
-| shard-024 | - | - | FAILED |
-| shard-025 | - | - | FAILED |
-| shard-026 | - | - | FAILED |
-| shard-027 | - | - | FAILED |
-| shard-028 | - | - | FAILED |
-| shard-029 | - | - | FAILED |
+| shard-022 | 55 | 42 | done |
+| shard-023 | 30 | 28 | done |
+| shard-024 | 20 | 16 | done |
+| shard-025 | 22 | 18 | done |
+| shard-026 | 24 | 22 | done |
+| shard-027 | 26 | 25 | done |
+| shard-028 | 38 | 33 | done |
+| shard-029 | 38 | 34 | done |

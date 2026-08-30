@@ -188,9 +188,9 @@ export function OilChangeForm({
         {/* Vehicle & Personnel */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-base">
+            <CardTitle className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider">
               <Car className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-              {t('oilChanges.form.sections.vehicle')} &amp; {t('oilChanges.form.sections.personnel')}
+              {t('oilChanges.form.sections.vehiclePersonnel', 'Vehicle & Personnel')}
             </CardTitle>
           </CardHeader>
           <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -267,7 +267,7 @@ export function OilChangeForm({
         {/* Maintenance Info */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-base">
+            <CardTitle className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider">
               <History className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
               {t('oilChanges.title')}
             </CardTitle>
@@ -317,7 +317,7 @@ export function OilChangeForm({
         {/* Maintenance Details */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-base">
+            <CardTitle className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider">
               <Wrench className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
               {t('oilChanges.form.sections.maintenance')}
             </CardTitle>
@@ -431,7 +431,7 @@ export function OilChangeForm({
                           }
                         />
                         <span className="pointer-events-none absolute end-3 top-1/2 -translate-y-1/2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                          EGP
+                          {t('common.currencyCode', 'EGP')}
                         </span>
                       </div>
                     </FormControl>

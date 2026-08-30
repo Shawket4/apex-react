@@ -5,15 +5,15 @@ import { cn } from '@/shared/lib/cn';
 import { Button } from '@/shared/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/shared/ui/popover';
 import { CAIRO_TZ } from '@/shared/lib/cairo';
+import { CairoRangeCalendar } from '@/shared/ui/cairo-range-calendar';
 import {
-  CairoRangeCalendar,
   cairoTodayParts,
   dayIso,
   partsOfDay,
   toNum,
   tzDate,
   type DayParts,
-} from '@/shared/ui/cairo-range-calendar';
+} from '@/shared/ui/cairo-date';
 
 /* -------------------------------------------------------------------------- */
 /* Madar's period picker, ported verbatim: quick preset pills + a Cairo-aware  */

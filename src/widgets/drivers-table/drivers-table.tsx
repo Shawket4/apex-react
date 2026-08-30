@@ -87,7 +87,7 @@ export function DriversTable({ onAddDriver }: DriversTableProps) {
         cell: ({ row }) => (
           <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
             <Truck className="h-3.5 w-3.5" aria-hidden="true" />
-            {row.original.transporter || 'Apex'}
+            <span translate="no">{row.original.transporter || 'Apex'}</span>
           </div>
         ),
       },

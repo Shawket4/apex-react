@@ -12,7 +12,7 @@ import { Button } from '@/shared/ui/button';
 import { PageShell } from '@/shared/ui/page-shell';
 import { SearchInput } from '@/shared/ui/search-input';
 import { ConfirmDialog } from '@/shared/ui/confirm-dialog';
-import { toast } from '@/shared/ui/toaster';
+import { toast } from '@/shared/ui/toast';
 import { UsersTable } from '@/widgets/users-table/users-table';
 import { UserFormDialog } from '@/widgets/user-form-dialog/user-form-dialog';
 
@@ -63,7 +63,7 @@ export default function UsersPage() {
         toast({ title: t('common.createSuccess') || 'Created' });
       }
       setFormOpen(false);
-    } catch (err) {
+    } catch {
       toast({
         title: t('errors.generic'),
         variant: 'destructive',
@@ -77,7 +77,7 @@ export default function UsersPage() {
       await deleteMutation.mutateAsync(deletingUser.ID);
       toast({ title: t('common.deleteSuccess') || 'Deleted' });
       setDeletingUser(null);
-    } catch (err) {
+    } catch {
       toast({
         title: t('errors.generic'),
         variant: 'destructive',

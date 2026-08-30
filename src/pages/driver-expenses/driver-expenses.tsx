@@ -92,7 +92,7 @@ export default function DriverExpensesPage() {
       actions={
         <>
           <Button
-            variant="ghost"
+            variant="outline"
             size="sm"
             onClick={() => navigate(`/drivers/${id}`)}
           >

@@ -609,7 +609,7 @@ function CompanyGroupTable({
         )}
       </span>,
     ];
-  }, [t, hasFinancialAccess]);
+  }, [t, hasFinancialAccess, companyTotalTrips]);
 
   /* ---- Group → routes drill-down ---- */
 

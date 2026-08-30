@@ -1,1 +1,2 @@
-export { TripAuditQueue, severityOf } from './trip-audit-queue';
+export { TripAuditQueue } from './trip-audit-queue';
+export { severityOf } from './queue-severity';

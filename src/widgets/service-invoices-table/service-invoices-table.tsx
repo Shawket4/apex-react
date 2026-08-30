@@ -124,7 +124,7 @@ export function ServiceInvoicesTable({
                 </DropdownMenuItem>
                 {onDelete && (
                   <DropdownMenuItem 
-                    className="text-destructive focus:bg-destructive/10 focus:text-destructive"
+                    className="text-destructive focus:text-destructive"
                     onClick={() => onDelete(invoice.ID)}
                   >
                     <Trash2 className="me-2 h-4 w-4" aria-hidden="true" />

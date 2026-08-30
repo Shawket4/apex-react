@@ -12,7 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/shared/ui/dialog';
-import { toast } from '@/shared/ui/toaster';
+import { toast } from '@/shared/ui/toast';
 
 export default function CarsPage() {
   const { t } = useTranslation();

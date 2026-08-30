@@ -1,6 +1,7 @@
 {
   "common": {
     "appName": "Apex",
+    "currencyCode": "EGP",
     "tagline": "Fleet Management",
     "search": "Search",
     "searchPlaceholder": "Search…",
@@ -225,6 +226,25 @@
       "count": "{{count}} events",
       "empty": "No fuel events in this period",
       "end": "All {{count}} events loaded"
+    },
+    "attention": {
+      "title": "Needs attention",
+      "documents": "Documents expiring",
+      "oilChanges": "Oil changes due",
+      "allClear": "Nothing due — papers and services are current.",
+      "noDocuments": "No document expires in the next 60 days.",
+      "noOilChanges": "No vehicle is within 3,000 km of a service.",
+      "showingOf": "showing {{shown}} of {{total}}",
+      "kind": {
+        "license": "Licence",
+        "calibration": "Calibration",
+        "tank_license": "Tank licence"
+      },
+      "expiredAgo": "expired {{count}}d ago",
+      "daysLeft": "{{count}}d left",
+      "kmLeft": "{{km}} km left",
+      "kmOverdue": "{{km}} km overdue",
+      "sinceOf": "{{since}} of {{interval}} km"
     }
   },
   "fuelEvents": {
@@ -1147,6 +1167,7 @@
     "form": {
       "sections": {
         "vehicle": "Vehicle & Date",
+        "vehiclePersonnel": "Vehicle & Personnel",
         "personnel": "Personnel",
         "maintenance": "Maintenance Details"
       }
@@ -1595,6 +1616,8 @@
     "title": "Tire & Oil Stock",
     "subtitle": "Shipments — the authoritative ledger the maintenance system mirrors and debits",
     "tires": "New tires",
+    "sizePlaceholder": "315/80R22.5…",
+    "oilTypePlaceholder": "15W-40…",
     "oil": "Oil",
     "brand": "Brand",
     "model": "Model",
@@ -1612,6 +1635,7 @@
   },
   "fleetExpenses": {
     "title": "Fleet Expenses",
+    "amountPlaceholder": "0.00…",
     "subtitle": "Every expense and bank transaction across the fleet",
     "formSubtitle": "Amounts, dates and categories are stored to the cent",
     "addExpense": "Add expense",
@@ -1919,6 +1943,7 @@
       "company": "Company",
       "companyPlaceholder": "Leave empty for all companies",
       "pattern": "Pattern (regex)",
+      "patternPlaceholder": "^WT-\\d{5}$",
       "description": "Description",
       "descriptionPlaceholder": "e.g. WT- followed by 5 digits",
       "active": "Active",

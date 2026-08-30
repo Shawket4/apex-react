@@ -78,7 +78,10 @@ export default function LocationsPage() {
   const unpinnedDropoffs = inboxQuery.data?.total_unpinned ?? 0;
   const attentionCount = unpinnedDropoffs + pendingCount + provisionalCount;
 
-  const terminals = terminalsQuery.data ?? [];
+  // `?? []` mints a new array every render, which is a dependency that always
+  // differs. Memoised so the hooks below re-run when the data changes, not when
+  // the component does.
+  const terminals = React.useMemo(() => terminalsQuery.data ?? [], [terminalsQuery.data]);
   const terminalsPinned = terminals.filter((x) => isValidCoordinate(x.lat, x.long)).length;
   const dropoffsTotalAll = dropoffTotalsQuery.data?.total ?? 0;
   const dropoffsPinned = Math.max(0, dropoffsTotalAll - unpinnedDropoffs);
@@ -296,11 +299,11 @@ export default function LocationsPage() {
           <TabsTrigger value="terminals">{t('locations.tabs.terminals', 'Terminals')}</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="inbox" className="mt-4">
+        <TabsContent value="inbox" className="mt-3">
           <LocationsNeedsAttention onBrowseDropoffs={() => handleTabChange('dropoffs')} />
         </TabsContent>
 
-        <TabsContent value="dropoffs" className="mt-4 space-y-3">
+        <TabsContent value="dropoffs" className="mt-3 space-y-3">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <SearchInput
               value={search}
@@ -327,7 +330,7 @@ export default function LocationsPage() {
           />
         </TabsContent>
 
-        <TabsContent value="terminals" className="mt-4 space-y-3">
+        <TabsContent value="terminals" className="mt-3 space-y-3">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <SearchInput
               value={terminalSearch}

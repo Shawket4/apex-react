@@ -89,7 +89,7 @@ export function UserFormDialog({
     try {
       await onSubmit(payload);
       onOpenChange(false);
-    } catch (err) {
+    } catch {
       // Error is handled by mutation or caller
     }
   };

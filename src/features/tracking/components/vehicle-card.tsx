@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Crosshair, History, X } from 'lucide-react';
 import { Button } from '@/shared/ui/button';
 import { STATUS_COLOR, type LiveStatus, type Vehicle } from '../schemas';
-import { groupOf } from './status-chips';
+import { groupOf } from './status-group';
 
 /* -------------------------------------------------------------------------- */
 /* The selected vehicle's floating card (live mode): identity, live status,   */

@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Loader2 } from 'lucide-react';
 import { cn } from '@/shared/lib/cn';
 import { DEFAULT_MAP_CENTER } from '@/shared/lib/coords';
-import { isGoogleMapsConfigured } from '@/shared/lib/maps/google-provider';
+import { isGoogleMapsConfigured } from '@/shared/lib/maps/google-maps-config';
 import type { DynMarkerId, ReplayMapAdapter, ReplayScene } from './types';
 
 /* -------------------------------------------------------------------------- */
@@ -99,7 +99,6 @@ export const TripReplayMap = React.forwardRef<TripReplayMapHandle, TripReplayMap
         adapterRef.current = null;
         setReady(false);
       };
-      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     /* ---- Static scene (built once per scene identity) ------------------ */

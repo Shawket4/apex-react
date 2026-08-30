@@ -113,6 +113,10 @@ export function ServiceInvoiceForm({
         }
       }
     }
+    // `drivers.length`, not `drivers`: this seeds the driver once the list has
+    // arrived, and depending on the array identity would re-seed — overwriting a
+    // driver the user had since picked — on every refetch.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isEditMode, initialValues?.driver_name, drivers.length, form]);
 
   const { fields, append } = useFieldArray({
