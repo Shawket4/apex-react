@@ -314,6 +314,16 @@
     }
   },
   "settings": {
+    "petroapp": {
+      "title": "إعدادات PetroApp",
+      "description": "تحديث رمز التكامل وملف الارتباط الخاصين بـ PetroApp.",
+      "token": "الرمز",
+      "cookie": "ملف الارتباط",
+      "tokenPlaceholder": "أدخل الرمز…",
+      "cookiePlaceholder": "أدخل ملف الارتباط…",
+      "updated": "تم تحديث رمز PetroApp بنجاح",
+      "updateFailed": "فشل تحديث الرمز"
+    },
     "theme": "السمة",
     "themeLight": "فاتح",
     "themeDark": "داكن",

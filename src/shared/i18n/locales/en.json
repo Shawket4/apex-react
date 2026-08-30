@@ -314,6 +314,16 @@
     }
   },
   "settings": {
+    "petroapp": {
+      "title": "PetroApp Configuration",
+      "description": "Update the PetroApp integration token and cookie.",
+      "token": "Token",
+      "cookie": "Cookie",
+      "tokenPlaceholder": "Enter token…",
+      "cookiePlaceholder": "Enter cookie…",
+      "updated": "PetroApp token updated successfully",
+      "updateFailed": "Failed to update token"
+    },
     "theme": "Theme",
     "themeLight": "Light",
     "themeDark": "Dark",

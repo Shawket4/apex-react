@@ -29,17 +29,17 @@ export default function ServiceInvoiceEditPage() {
 
   if (isLoading) {
     return (
-      <div className="container max-w-5xl mx-auto py-8 px-4 space-y-6">
-        <Skeleton className="h-12 w-1/3" />
-        <Skeleton className="h-[600px] w-full" />
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 p-3 sm:p-4">
+        <Skeleton className="h-5 w-1/3 rounded-sm" />
+        <Skeleton className="h-96 w-full rounded-lg" />
       </div>
     );
   }
 
-  if (!invoice) return null;
+  if (!invoice) return <p className="py-6 text-center text-xs text-muted-foreground">{t('common.noResults')}</p>;
 
   return (
-    <div className="container max-w-5xl mx-auto py-8 px-4">
+    <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 p-3 sm:p-4">
       <ServiceInvoiceForm
         isEditMode
         initialValues={invoice}

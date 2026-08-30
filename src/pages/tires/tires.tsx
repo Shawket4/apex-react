@@ -40,7 +40,7 @@ export function TiresPage() {
       description={t('tiresStock.subtitle')}
       icon={<CircleDot className="h-6 w-6" />}
     >
-      <div className="grid gap-6 xl:grid-cols-2">
+      <div className="grid gap-3 lg:grid-cols-2">
         <TireStockCard />
         <OilStockCard />
       </div>
@@ -73,15 +73,15 @@ function TireStockCard() {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
-          <CircleDot className="h-4 w-4 text-primary" />
+          <CircleDot className="h-4 w-4 text-primary" aria-hidden="true" />
           {t('tiresStock.tires')}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         {stock.isLoading ? (
-          <Skeleton className="h-24" />
+          <Skeleton className="h-24 rounded-lg" />
         ) : (stock.data ?? []).length === 0 ? (
-          <p className="text-sm text-muted-foreground">{t('tiresStock.empty')}</p>
+          <p className="py-6 text-center text-xs text-muted-foreground">{t('tiresStock.empty')}</p>
         ) : (
           <div className="overflow-hidden rounded-lg border">
             <table className="w-full text-sm">
@@ -105,7 +105,7 @@ function TireStockCard() {
                     <td className="px-3 py-2" dir="ltr">
                       {row.size ?? '—'}
                     </td>
-                    <td className="px-3 py-2 text-end font-semibold tabular-nums">
+                    <td className="px-3 py-2 text-end font-mono tabular-nums">
                       {row.on_hand_qty}
                     </td>
                   </tr>
@@ -115,12 +115,12 @@ function TireStockCard() {
           </div>
         )}
 
-        <form onSubmit={(e) => void submit(e)} className="space-y-3 rounded-lg border p-4">
+        <form onSubmit={(e) => void submit(e)} className="space-y-3 rounded-lg border p-3">
           <div className="text-sm font-semibold">{t('tiresStock.addShipment')}</div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label htmlFor="ts-brand">{t('tiresStock.brand')}</Label>
-              <Input id="ts-brand" dir="ltr" {...form.register('brand')} />
+              <Input id="ts-brand" dir="ltr" aria-invalid={!!form.formState.errors.brand} {...form.register('brand')} />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="ts-model">{t('tiresStock.model')}</Label>
@@ -135,20 +135,22 @@ function TireStockCard() {
               <Input
                 id="ts-qty"
                 type="number"
+                inputMode="numeric"
                 min={1}
                 className="tabular-nums"
+                aria-invalid={!!form.formState.errors.on_hand_qty}
                 {...form.register('on_hand_qty')}
               />
             </div>
           </div>
           {(form.formState.errors.brand ?? form.formState.errors.on_hand_qty) && (
-            <p className="text-xs text-destructive">{t('tiresStock.validation')}</p>
+            <p className="text-[11px] font-medium text-destructive">{t('tiresStock.validation')}</p>
           )}
           <Button type="submit" disabled={credit.isPending} className="w-full">
             {credit.isPending ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Loader2 className="animate-spin motion-reduce:animate-none" aria-hidden="true" />
             ) : (
-              <Plus className="h-4 w-4" />
+              <Plus aria-hidden="true" />
             )}
             {t('tiresStock.addShipment')}
           </Button>
@@ -183,15 +185,15 @@ function OilStockCard() {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
-          <Droplets className="h-4 w-4 text-amber-500" />
+          <Droplets className="h-4 w-4 text-primary" aria-hidden="true" />
           {t('tiresStock.oil')}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         {stock.isLoading ? (
-          <Skeleton className="h-24" />
+          <Skeleton className="h-24 rounded-lg" />
         ) : (stock.data ?? []).length === 0 ? (
-          <p className="text-sm text-muted-foreground">{t('tiresStock.empty')}</p>
+          <p className="py-6 text-center text-xs text-muted-foreground">{t('tiresStock.empty')}</p>
         ) : (
           <div className="overflow-hidden rounded-lg border">
             <table className="w-full text-sm">
@@ -207,7 +209,7 @@ function OilStockCard() {
                     <td className="px-3 py-2" dir="ltr">
                       {row.oil_type}
                     </td>
-                    <td className="px-3 py-2 text-end font-semibold tabular-nums">
+                    <td className="px-3 py-2 text-end font-mono tabular-nums">
                       {row.liters_on_hand}
                     </td>
                   </tr>
@@ -217,33 +219,35 @@ function OilStockCard() {
           </div>
         )}
 
-        <form onSubmit={(e) => void submit(e)} className="space-y-3 rounded-lg border p-4">
+        <form onSubmit={(e) => void submit(e)} className="space-y-3 rounded-lg border p-3">
           <div className="text-sm font-semibold">{t('tiresStock.addOil')}</div>
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label htmlFor="os-type">{t('tiresStock.oilType')}</Label>
-              <Input id="os-type" dir="ltr" placeholder="15W-40" {...form.register('oil_type')} />
+              <Input id="os-type" dir="ltr" placeholder="15W-40" aria-invalid={!!form.formState.errors.oil_type} {...form.register('oil_type')} />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="os-liters">{t('tiresStock.addLiters')}</Label>
               <Input
                 id="os-liters"
                 type="number"
+                inputMode="decimal"
                 min={1}
                 step="0.5"
                 className="tabular-nums"
+                aria-invalid={!!form.formState.errors.liters_on_hand}
                 {...form.register('liters_on_hand')}
               />
             </div>
           </div>
           {(form.formState.errors.oil_type ?? form.formState.errors.liters_on_hand) && (
-            <p className="text-xs text-destructive">{t('tiresStock.validation')}</p>
+            <p className="text-[11px] font-medium text-destructive">{t('tiresStock.validation')}</p>
           )}
           <Button type="submit" disabled={credit.isPending} className="w-full">
             {credit.isPending ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Loader2 className="animate-spin motion-reduce:animate-none" aria-hidden="true" />
             ) : (
-              <Plus className="h-4 w-4" />
+              <Plus aria-hidden="true" />
             )}
             {t('tiresStock.addOil')}
           </Button>

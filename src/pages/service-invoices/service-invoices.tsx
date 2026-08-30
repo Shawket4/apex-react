@@ -107,55 +107,60 @@ export default function ServiceInvoicesPage() {
         <div className="flex items-center gap-2">
           {selectedCar && (
             <Button variant="outline" onClick={() => setSelectedCar(null)}>
-              <ArrowLeft className="mr-2 h-4 w-4" />
+              <ArrowLeft className="rtl:rotate-180" aria-hidden="true" />
               {t('common.back')}
             </Button>
           )}
           <Button onClick={() => navigate('/service-invoices/new')} {...intentProps(() => warmServiceInvoiceForm(queryClient))}>
-            <Plus className="mr-2 h-4 w-4" />
+            <Plus aria-hidden="true" />
             {t('serviceInvoices.newInvoice')}
           </Button>
         </div>
       }
     >
-      <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-3">
         {/* Smart Search Bar */}
-        <Card className="border-2 border-primary/20 shadow-lg shadow-primary/5 bg-gradient-to-br from-background via-background to-primary/5 overflow-hidden">
-          <CardContent className="p-6">
+        <Card className="overflow-hidden">
+          <CardContent className="p-3">
             <div className="relative group">
-              <div className="absolute inset-y-0 start-0 flex items-center ps-4 pointer-events-none">
+              <div className="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
                 {searchLoading ? (
-                  <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                  <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none text-primary" aria-hidden="true" />
                 ) : isSearching ? (
-                  <Sparkles className="h-5 w-5 text-primary animate-pulse" />
+                  <Sparkles className="h-4 w-4 text-primary" aria-hidden="true" />
                 ) : (
-                  <Search className="h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                  <Search className="h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" aria-hidden="true" />
                 )}
               </div>
               <Input
-                type="text"
+                type="search"
+                name="q"
+                autoComplete="off"
+                aria-label={t('serviceInvoices.searchPlaceholder')}
                 placeholder={t('serviceInvoices.searchPlaceholder')}
-                className="ps-12 pe-12 py-6 text-lg border-2 border-muted focus-visible:border-primary/50 rounded-2xl shadow-inner bg-background/50"
+                className="ps-9 pe-9"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
               {searchQuery && (
                 <button
+                  type="button"
+                  aria-label={t('common.clear')}
                   onClick={() => setSearchQuery('')}
-                  className="absolute inset-y-0 end-0 flex items-center pe-4 text-muted-foreground hover:text-foreground transition-colors"
+                  className="absolute inset-y-0 end-0 flex items-center pe-4 text-muted-foreground hover:text-foreground transition-colors rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
-                  <X className="h-5 w-5" />
+                  <X className="h-4 w-4" aria-hidden="true" />
                 </button>
               )}
             </div>
-            
-            <div className="mt-4 flex flex-wrap gap-4 text-[10px] uppercase font-bold tracking-widest text-muted-foreground/60">
+
+            <div className="mt-3 flex flex-wrap gap-3 text-[11px] text-muted-foreground">
               <div className="flex items-center gap-1.5">
-                <Sparkles className="h-3 w-3 text-primary" />
+                <Sparkles className="h-3 w-3 text-primary" aria-hidden="true" />
                 {t('serviceInvoices.search.semanticMatch')}
               </div>
               <div className="flex items-center gap-1.5">
-                <Search className="h-3 w-3 text-blue-500" />
+                <Search className="h-3 w-3 text-muted-foreground" aria-hidden="true" />
                 {t('serviceInvoices.search.keywordMatch')}
               </div>
             </div>

@@ -127,8 +127,8 @@ export function TerminalSelect({
         }
       />
       {unresolved && (
-        <p className="mt-1 flex items-start gap-1.5 text-[11px] font-medium text-warning">
-          <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" />
+        <p className="mt-1 flex items-start gap-1.5 text-[11px] font-medium text-warning" role="status">
+          <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" aria-hidden="true" />
           <span dir="auto">
             {t('terminalSelect.unresolved', {
               name: legacyName,
