@@ -226,6 +226,25 @@
       "count": "{{count}} عملية",
       "empty": "لا توجد عمليات وقود في هذه الفترة",
       "end": "تم تحميل كل العمليات ({{count}})"
+    },
+    "attention": {
+      "title": "يحتاج انتباه",
+      "documents": "مستندات تنتهي قريباً",
+      "oilChanges": "تغييرات زيت مستحقة",
+      "allClear": "لا يوجد مستحق — المستندات والصيانة سارية.",
+      "noDocuments": "لا تنتهي أي مستندات خلال ٦٠ يوماً.",
+      "noOilChanges": "لا توجد مركبة على بعد ٣٠٠٠ كم من الصيانة.",
+      "showingOf": "عرض {{shown}} من {{total}}",
+      "kind": {
+        "license": "رخصة السيارة",
+        "calibration": "المعايرة",
+        "tank_license": "رخصة التانك"
+      },
+      "expiredAgo": "انتهت منذ {{count}} يوم",
+      "daysLeft": "باقي {{count}} يوم",
+      "kmLeft": "باقي {{km}} كم",
+      "kmOverdue": "تأخر {{km}} كم",
+      "sinceOf": "{{since}} من {{interval}} كم"
     }
   },
   "fuelEvents": {

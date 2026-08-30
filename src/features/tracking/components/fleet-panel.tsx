@@ -9,7 +9,7 @@ import {
   type StatusGroup,
   type Vehicle,
 } from '../schemas';
-import { groupOf } from './status-chips';
+import { groupOf } from './status-group';
 
 /* -------------------------------------------------------------------------- */
 /* The fleet panel — a slide-in list grouped by status. Row tap selects,      */

@@ -39,7 +39,9 @@ function ScopeControls({ className }: { className?: string }) {
   const { company, setCompany } = useScopeCompany();
 
   const companies = useCompanies();
-  const companyNames = companies.data?.data ?? [];
+  // Memoised: see locations.tsx — a fresh `[]` each render would re-run the
+  // self-heal effect below on every render.
+  const companyNames = React.useMemo(() => companies.data?.data ?? [], [companies.data]);
 
   // Self-heal a stale company: one carried in a shared link but since renamed
   // or removed would silently filter everything to zero.

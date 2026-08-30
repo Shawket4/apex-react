@@ -209,7 +209,7 @@ export function OilChangesTable({
         meta: { align: 'end' },
       },
     ],
-    [t, navigate, onDelete, onViewHistory],
+    [t, navigate, onDelete, onViewHistory, queryClient],
   );
 
   return (

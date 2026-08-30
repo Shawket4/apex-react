@@ -16,7 +16,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip';
 import { usePermissions } from '@/shared/hooks/use-permissions';
 import { PERMISSION_LEVELS } from '@/shared/config/constants';
-import { toast } from '@/shared/ui/toaster';
+import { toast } from '@/shared/ui/toast';
 import { cn } from '@/shared/lib/cn';
 
 interface PinTabProps {

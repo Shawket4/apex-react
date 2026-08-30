@@ -48,6 +48,8 @@ import {
   FuelEventsFilterPopover,
   FuelEventsMethodControl,
   FuelEventsSortControl,
+} from '@/widgets/fuel-events-table/fuel-events-filters';
+import {
   applyMethodFilter,
   applyStatusFilter,
   applySort,
@@ -60,7 +62,7 @@ import {
   type FuelEventSortKey,
   type FuelEventStatusFilter,
   type SortDirection,
-} from '@/widgets/fuel-events-table/fuel-events-filters';
+} from '@/widgets/fuel-events-table/fuel-events-filter-logic';
 import type { FuelEvent } from '@/entities/fuel-event/schemas';
 import { FUEL_STORAGE_KEYS } from '@/entities/fuel-event/defaults';
 import { loadDefault } from '@/entities/trip/defaults';

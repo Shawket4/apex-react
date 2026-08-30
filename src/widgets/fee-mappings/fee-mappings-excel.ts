@@ -201,6 +201,16 @@ function buildStats(rows: FeeMappingExcelRow[]): ExcelStat[] {
       color: EXCEL_PALETTE.red,
     },
     {
+      // The screen counts five buckets and this sheet counted the same five,
+      // but only printed four — dropping the largest. `unknown` is "no OSRM
+      // distance", which is exactly the bucket someone exports the sheet to
+      // go and fix.
+      label: t('feeMappings.stats.unknown'),
+      value: unknown,
+      type: 'number',
+      color: EXCEL_PALETTE.muted,
+    },
+    {
       label: t('feeMappings.excel.totalFee'),
       value: totalFee,
       type: 'moneyRaw',

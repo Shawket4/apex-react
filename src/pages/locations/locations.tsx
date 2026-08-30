@@ -78,7 +78,10 @@ export default function LocationsPage() {
   const unpinnedDropoffs = inboxQuery.data?.total_unpinned ?? 0;
   const attentionCount = unpinnedDropoffs + pendingCount + provisionalCount;
 
-  const terminals = terminalsQuery.data ?? [];
+  // `?? []` mints a new array every render, which is a dependency that always
+  // differs. Memoised so the hooks below re-run when the data changes, not when
+  // the component does.
+  const terminals = React.useMemo(() => terminalsQuery.data ?? [], [terminalsQuery.data]);
   const terminalsPinned = terminals.filter((x) => isValidCoordinate(x.lat, x.long)).length;
   const dropoffsTotalAll = dropoffTotalsQuery.data?.total ?? 0;
   const dropoffsPinned = Math.max(0, dropoffsTotalAll - unpinnedDropoffs);

@@ -14,7 +14,7 @@ import { Card, CardContent } from '@/shared/ui/card';
 import { NativeSelect } from '@/shared/ui/native-select';
 import { ConfirmDialog } from '@/shared/ui/confirm-dialog';
 import { Skeleton } from '@/shared/ui/skeleton';
-import { toast } from '@/shared/ui/toaster';
+import { toast } from '@/shared/ui/toast';
 import { cn } from '@/shared/lib/cn';
 import { formatMoney, trimMoney } from '@/shared/lib/money';
 import {

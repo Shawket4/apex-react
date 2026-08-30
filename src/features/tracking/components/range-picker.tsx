@@ -3,21 +3,21 @@ import { useTranslation } from 'react-i18next';
 import { X } from 'lucide-react';
 import { cn } from '@/shared/lib/cn';
 import { Button } from '@/shared/ui/button';
+import { CairoRangeCalendar } from '@/shared/ui/cairo-range-calendar';
 import {
-  CairoRangeCalendar,
   cairoTodayParts,
   dayIso,
   partsOfDay,
   toNum,
   tzDate,
   type DayParts,
-} from '@/shared/ui/cairo-range-calendar';
+} from '@/shared/ui/cairo-date';
 import { CAIRO_TZ } from '@/shared/lib/cairo';
 import { cairoWall } from '../api';
 
 /* -------------------------------------------------------------------------- */
 /* The history range picker — the old datetime-range's ideas rebuilt in the   */
-/* global scope picker's visual language: quick presets (Last hour, 3h,       */
+/* visual language of the global scope picker: quick presets (Last hour, 3h,  */
 /* Today, Yesterday, 7 days), the shared Cairo two-tap calendar, and time     */
 /* fields so a range can start and end mid-day. Emits Cairo wall strings      */
 /* (`YYYY-MM-DDTHH:mm`).                                                       */

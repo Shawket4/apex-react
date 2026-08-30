@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { legColor, legId } from '../map/layers';
 import type { LegSegment } from '../use-history';
+import { legAt, type CursorStore } from './time-deck-utils';
 import { cn } from '@/shared/lib/cn';
 import { Skeleton } from '@/shared/ui/skeleton';
 import { indexAt, SPEEDS } from '../playback';
@@ -29,28 +30,6 @@ import type { RangeSummary } from '../schemas';
 /* summary stats, overlay toggles. The cursor renders through a tiny external  */
 /* store so 60fps playback re-renders ONLY the readout row.                    */
 /* -------------------------------------------------------------------------- */
-
-export interface CursorStore {
-  get: () => number;
-  set: (v: number) => void;
-  subscribe: (fn: () => void) => () => void;
-}
-
-export function createCursorStore(initial = 0): CursorStore {
-  let value = initial;
-  const subs = new Set<() => void>();
-  return {
-    get: () => value,
-    set: (v) => {
-      value = v;
-      subs.forEach((fn) => fn());
-    },
-    subscribe: (fn) => {
-      subs.add(fn);
-      return () => subs.delete(fn);
-    },
-  };
-}
 
 const localeOf = (lang: string) => (lang.startsWith('ar') ? 'ar-EG' : 'en-GB');
 
@@ -84,14 +63,6 @@ const makeFullFmt = (locale: string) =>
     minute: '2-digit',
     second: '2-digit',
   });
-
-/** The leg whose [depart, arrive] holds `ms`, if any. */
-export function legAt(legs: LegSegment[], ms: number): LegSegment | null {
-  for (const seg of legs) {
-    if (ms >= seg.leg.depart.getTime() && ms <= seg.leg.arrive.getTime()) return seg;
-  }
-  return null;
-}
 
 function ScrubRow({
   cursor,

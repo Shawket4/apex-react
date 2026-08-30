@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { CircleDot, Droplets, Loader2, Plus } from 'lucide-react';
 
-import { toast } from '@/shared/ui/toaster';
+import { toast } from '@/shared/ui/toast';
 import { Button } from '@/shared/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card';
 import { Input } from '@/shared/ui/input';

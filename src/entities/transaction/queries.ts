@@ -22,7 +22,7 @@ import type {
 } from './schemas';
 import { QUERY_KEYS } from '@/shared/config/constants';
 import { queryClient } from '@/shared/api/query';
-import { toast } from '@/shared/ui/toaster';
+import { toast } from '@/shared/ui/toast';
 import { extractErrorMessage } from '@/shared/api/errors';
 import type { QueryClient } from '@tanstack/react-query';
 import { defaultLedgerFilters, defaultLedgerListFilters } from './defaults';

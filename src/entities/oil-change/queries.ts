@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { toast } from '@/shared/ui/toaster';
+import { toast } from '@/shared/ui/toast';
 import {
   addOilChange,
   deleteOilChange,

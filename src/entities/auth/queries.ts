@@ -5,7 +5,7 @@ import { login } from './api';
 import type { LoginInput } from './schemas';
 import { useAuthStore } from '@/shared/auth/store';
 import { queryClient } from '@/shared/api/query';
-import { toast } from '@/shared/ui/toaster';
+import { toast } from '@/shared/ui/toast';
 import { extractErrorMessage } from '@/shared/api/errors';
 
 export function useLogin() {

@@ -550,14 +550,17 @@ export const TrackingMap = React.forwardRef<TrackingMapHandle, Props>(
         pushLayers();
         onMapReady?.();
       });
+      // Captured at setup: the cleanup must clear the very map of markers this
+      // effect filled, not whatever `.current` points at when it runs.
+      const markers = markersRef.current;
       return () => {
         cancelled = true;
         infoRef.current?.close();
         infoRef.current = null;
         overlayRef.current?.finalize();
         overlayRef.current = null;
-        for (const { marker } of markersRef.current.values()) marker.map = null;
-        markersRef.current.clear();
+        for (const { marker } of markers.values()) marker.map = null;
+        markers.clear();
         if (replayMarkerRef.current) replayMarkerRef.current.map = null;
         replayMarkerRef.current = null;
         mapRef.current = null;

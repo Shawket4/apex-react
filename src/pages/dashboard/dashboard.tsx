@@ -14,6 +14,7 @@ import {
 import {
   formatDrawerDuration,
   tileStatus,
+  type Attention,
   type Dashboard,
   type DashboardException,
   type FleetEntry,
@@ -192,6 +193,9 @@ export default function DashboardPage() {
           </div>
         </section>
       </div>
+
+      {/* ---- what falls due: papers and services, both dated ---- */}
+      <AttentionPanel attention={dashboard.data?.attention} pending={dashboard.isPending} />
 
       {/* ---- fuel events (money only): the window's ledger, lazily ---- */}
       {showMoney && <FuelPanel scope={scope} />}
@@ -995,6 +999,201 @@ function CategoryBars({ categories }: { categories: { key: string; out: string }
           </div>
         );
       })}
+    </div>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
+/* Attention — what expires or falls due next                                  */
+/*                                                                            */
+/* Two lists that answer the same question ("what will stop a truck working?") */
+/* from two directions: a date and an odometer. They share a panel because     */
+/* they share an answer — go and look at that truck — and neither is long      */
+/* enough to earn one of its own.                                              */
+/* -------------------------------------------------------------------------- */
+
+function AttentionPanel({
+  attention,
+  pending,
+}: {
+  attention?: Attention;
+  pending: boolean;
+}) {
+  const { t } = useTranslation();
+  const docs = attention?.documents ?? [];
+  const oil = attention?.oil_changes ?? [];
+
+  if (pending) {
+    return (
+      <section className="overflow-hidden rounded-lg border bg-card">
+        <PanelHead title={t('dashboard.attention.title')} />
+        <div className="grid gap-2 p-3 md:grid-cols-2">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-12 rounded-lg" />
+          ))}
+        </div>
+      </section>
+    );
+  }
+
+  if (docs.length === 0 && oil.length === 0) {
+    return (
+      <section className="overflow-hidden rounded-lg border bg-card">
+        <PanelHead title={t('dashboard.attention.title')} />
+        <p className="py-6 text-center text-xs text-muted-foreground">
+          {t('dashboard.attention.allClear')}
+        </p>
+      </section>
+    );
+  }
+
+  return (
+    <section className="overflow-hidden rounded-lg border bg-card">
+      <PanelHead title={t('dashboard.attention.title')} />
+      <div className="grid gap-3 p-3 md:grid-cols-2">
+        <AttentionColumn
+          title={t('dashboard.attention.documents')}
+          shown={docs.length}
+          total={attention?.documents_total ?? docs.length}
+          empty={t('dashboard.attention.noDocuments')}
+          href="/cars"
+        >
+          {docs.map((d) => (
+            <AttentionRow
+              key={`${d.plate_no}-${d.kind}`}
+              plateNo={d.plate_no}
+              plateAr={d.plate_ar}
+              label={t(`dashboard.attention.kind.${d.kind}`)}
+              detail={format(d.expires_on, 'd MMM yyyy')}
+              // Lapsed is not "more urgent than urgent" — it is a different
+              // state, so it takes the destructive colour and its own phrasing.
+              status={
+                d.days_left < 0
+                  ? t('dashboard.attention.expiredAgo', { count: Math.abs(d.days_left) })
+                  : t('dashboard.attention.daysLeft', { count: d.days_left })
+              }
+              severity={d.days_left < 0 ? 'critical' : 'warning'}
+            />
+          ))}
+        </AttentionColumn>
+
+        <AttentionColumn
+          title={t('dashboard.attention.oilChanges')}
+          shown={oil.length}
+          total={attention?.oil_changes_total ?? oil.length}
+          empty={t('dashboard.attention.noOilChanges')}
+          href="/oil-changes"
+        >
+          {oil.map((o) => (
+            <AttentionRow
+              key={o.plate_no}
+              plateNo={o.plate_no}
+              plateAr={o.plate_ar}
+              label={t('dashboard.attention.sinceOf', {
+                since: formatNumber(o.km_since, 0),
+                interval: formatNumber(o.interval_km, 0),
+              })}
+              detail={o.last_change_date ? format(o.last_change_date, 'd MMM yyyy') : '—'}
+              status={
+                o.km_left < 0
+                  ? t('dashboard.attention.kmOverdue', { km: formatNumber(-o.km_left, 0) })
+                  : t('dashboard.attention.kmLeft', { km: formatNumber(o.km_left, 0) })
+              }
+              severity={o.km_left < 0 ? 'critical' : 'warning'}
+            />
+          ))}
+        </AttentionColumn>
+      </div>
+    </section>
+  );
+}
+
+function AttentionColumn({
+  title,
+  shown,
+  total,
+  empty,
+  href,
+  children,
+}: {
+  title: string;
+  shown: number;
+  total: number;
+  empty: string;
+  href: string;
+  children: React.ReactNode;
+}) {
+  const { t } = useTranslation();
+  return (
+    <div>
+      <p className="mb-1.5 flex items-baseline justify-between gap-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+        {title}
+        {total > shown && (
+          <span className="font-medium normal-case tracking-normal">
+            {t('dashboard.attention.showingOf', { shown, total })}
+          </span>
+        )}
+      </p>
+      {shown === 0 ? (
+        <p className="py-6 text-center text-xs text-muted-foreground">{empty}</p>
+      ) : (
+        <>
+          <div className="grid gap-2">{children}</div>
+          <Link
+            to={href}
+            className="mt-2 inline-block rounded-sm text-[11px] text-muted-foreground underline underline-offset-2 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            {t('common.viewAll')}
+          </Link>
+        </>
+      )}
+    </div>
+  );
+}
+
+function AttentionRow({
+  plateNo,
+  plateAr,
+  label,
+  detail,
+  status,
+  severity,
+}: {
+  plateNo: string;
+  plateAr: string;
+  label: string;
+  detail: string;
+  status: string;
+  severity: 'critical' | 'warning';
+}) {
+  return (
+    <div className="grid grid-cols-[3px_1fr_auto] items-center gap-3 rounded-lg border bg-card px-3 py-2.5">
+      <span
+        className={cn(
+          'h-full min-h-[26px] w-[3px] self-stretch rounded-full',
+          severity === 'critical' ? 'bg-destructive' : 'bg-warning',
+        )}
+        aria-hidden
+      />
+      <span className="min-w-0">
+        <span className="flex items-baseline gap-1.5">
+          <span className="font-mono text-[13px] font-semibold tabular-nums">{plateNo}</span>
+          <span className="truncate text-[11px] text-muted-foreground" dir="rtl">
+            {plateAr}
+          </span>
+        </span>
+        <span className="mt-0.5 block text-[11px] text-muted-foreground">
+          {label} · {detail}
+        </span>
+      </span>
+      <span
+        className={cn(
+          'shrink-0 text-[11px] font-medium',
+          severity === 'critical' ? 'text-destructive' : 'text-warning',
+        )}
+      >
+        {status}
+      </span>
     </div>
   );
 }

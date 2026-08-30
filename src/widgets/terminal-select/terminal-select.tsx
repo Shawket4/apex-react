@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { AlertTriangle } from 'lucide-react';
-import { toast } from '@/shared/ui/toaster';
+import { toast } from '@/shared/ui/toast';
 import { SearchableSelect } from '@/shared/ui/searchable-select';
 import { ConfirmDialog } from '@/shared/ui/confirm-dialog';
 import { normalize } from '@/shared/lib/normalize';

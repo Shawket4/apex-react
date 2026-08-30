@@ -4,7 +4,7 @@ import { getDriverLoans, addDriverLoan, deleteDriverLoan } from './api';
 import type { AddLoanPayload } from './schemas';
 import { QUERY_KEYS } from '@/shared/config/constants';
 import { queryClient } from '@/shared/api/query';
-import { toast } from '@/shared/ui/toaster';
+import { toast } from '@/shared/ui/toast';
 import { extractErrorMessage } from '@/shared/api/errors';
 
 /* ─── List ─── */

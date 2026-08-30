@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/shared/lib/cn';
 import { Skeleton } from './skeleton';
-import { isGoogleMapsConfigured } from '@/shared/lib/maps/google-provider';
+import { isGoogleMapsConfigured } from '@/shared/lib/maps/google-maps-config';
 import type { MapProvider, MapViewProps } from '@/shared/lib/maps/types';
 
 declare global {

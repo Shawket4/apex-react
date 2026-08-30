@@ -13,7 +13,7 @@
  *   - Lazy ExcelJS import — no bundle cost until user clicks Export
  */
 
-import { toast } from '@/shared/ui/toaster';
+import { toast } from '@/shared/ui/toast';
 import i18n from '@/shared/i18n';
 
 // ── Column types ─────────────────────────────────────────────────────────────
@@ -66,7 +66,6 @@ export interface ExcelSheetConfig<T> {
 export interface ExcelExportConfig {
     /** Final file name (without extension) */
     filename: string;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     sheets: ExcelSheetConfig<any>[];
     /** Optional logo path relative to public dir */
     logoUrl?: string;
@@ -215,7 +214,6 @@ export async function exportToExcel(config: ExcelExportConfig): Promise<void> {
 
 // ── Sheet builder ────────────────────────────────────────────────────────────
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
 function buildSheet<T>(
     wb: any,
     sheet: ExcelSheetConfig<T>,
@@ -357,4 +355,3 @@ function applyBorder(cell: any): void {
     const side = { style: 'thin' as const, color: { argb: PALETTE.border } };
     cell.border = { top: side, bottom: side, left: side, right: side };
 }
-/* eslint-enable @typescript-eslint/no-explicit-any */

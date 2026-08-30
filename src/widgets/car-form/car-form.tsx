@@ -85,6 +85,10 @@ export function CarForm({
     if (car) {
       form.reset(getDefaults(car));
     }
+    // Keyed on the car's identity, not the car object: the query refetches in
+    // the background, and depending on `car` would reset the form under someone
+    // mid-edit every time it did.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [car?.ID, form]);
 
   const carType = form.watch('car_type');

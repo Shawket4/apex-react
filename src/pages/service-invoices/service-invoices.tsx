@@ -25,7 +25,7 @@ import { Input } from '@/shared/ui/input';
 import { Card, CardContent } from '@/shared/ui/card';
 import { PageShell } from '@/shared/ui/page-shell';
 import { useDebounce } from '@/shared/hooks/use-debounce';
-import { toast } from '@/shared/ui/toaster';
+import { toast } from '@/shared/ui/toast';
 import { ConfirmDialog } from '@/shared/ui/confirm-dialog';
 
 export default function ServiceInvoicesPage() {
@@ -92,7 +92,7 @@ export default function ServiceInvoicesPage() {
     try {
       await deleteMutation.mutateAsync(deleteId);
       toast({ title: t('common.deleteSuccess') });
-    } catch (err) {
+    } catch {
       toast({ title: t('errors.generic'), variant: 'destructive' });
     } finally {
       setDeleteId(null);

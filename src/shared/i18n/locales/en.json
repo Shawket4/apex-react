@@ -226,6 +226,25 @@
       "count": "{{count}} events",
       "empty": "No fuel events in this period",
       "end": "All {{count}} events loaded"
+    },
+    "attention": {
+      "title": "Needs attention",
+      "documents": "Documents expiring",
+      "oilChanges": "Oil changes due",
+      "allClear": "Nothing due — papers and services are current.",
+      "noDocuments": "No document expires in the next 60 days.",
+      "noOilChanges": "No vehicle is within 3,000 km of a service.",
+      "showingOf": "showing {{shown}} of {{total}}",
+      "kind": {
+        "license": "Licence",
+        "calibration": "Calibration",
+        "tank_license": "Tank licence"
+      },
+      "expiredAgo": "expired {{count}}d ago",
+      "daysLeft": "{{count}}d left",
+      "kmLeft": "{{km}} km left",
+      "kmOverdue": "{{km}} km overdue",
+      "sinceOf": "{{since}} of {{interval}} km"
     }
   },
   "fuelEvents": {

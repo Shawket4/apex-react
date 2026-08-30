@@ -18,10 +18,11 @@ import {
 } from './use-history';
 import { TrackingMap, type TrackingMapHandle } from './map/tracking-map';
 import { StatusChips } from './components/status-chips';
-import { groupOf } from './components/status-chips';
+import { groupOf } from './components/status-group';
 import { FleetPanel } from './components/fleet-panel';
 import { VehicleCard } from './components/vehicle-card';
-import { createCursorStore, TimeDeck } from './components/time-deck';
+import { TimeDeck } from './components/time-deck';
+import { createCursorStore } from './components/time-deck-utils';
 import { TrackingRangePicker } from './components/range-picker';
 import type { StatusGroup } from './schemas';
 
@@ -66,10 +67,15 @@ export default function TrackingPage() {
 
   /* ---- data ---- */
   const fleet = useLiveFleet(true);
-  const historyRange =
-    url.mode === 'history' && url.vehicleId && url.from && url.to
-      ? { vehicleId: url.vehicleId, from: url.from, to: url.to }
-      : null;
+  // Memoised: this object is a query key and a hook dependency, so a fresh
+  // identity each render would refetch the history on every render.
+  const historyRange = React.useMemo(
+    () =>
+      url.mode === 'history' && url.vehicleId && url.from && url.to
+        ? { vehicleId: url.vehicleId, from: url.from, to: url.to }
+        : null,
+    [url.mode, url.vehicleId, url.from, url.to],
+  );
   const history = useHistory(historyRange);
   const summaryQuery = useRangeSummary(historyRange);
 
