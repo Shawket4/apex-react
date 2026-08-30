@@ -79,11 +79,15 @@ export function FeeMappingsPage() {
    */
   const filterMeta = React.useMemo(() => {
     const parts: string[] = [];
-    if (filters.company) parts.push(`Company: ${filters.company}`);
+    if (filters.company) parts.push(t('feeMappings.export.filterCompany', { value: filters.company }));
     if (filters.accuracy !== 'all') {
-      parts.push(`Accuracy: ${t(`feeMappings.accuracy.${filters.accuracy}`)}`);
+      parts.push(
+        t('feeMappings.export.filterAccuracy', {
+          value: t(`feeMappings.accuracy.${filters.accuracy}`),
+        }),
+      );
     }
-    if (filters.search) parts.push(`Search: "${filters.search}"`);
+    if (filters.search) parts.push(t('feeMappings.export.filterSearch', { value: filters.search }));
     return parts.length ? parts.join(' · ') : undefined;
   }, [filters, t]);
 
@@ -131,12 +135,11 @@ export function FeeMappingsPage() {
         variant="outline"
         onClick={() => void handleBulkEnrich()}
         disabled={bulkEnrich.isPending}
-        className="gap-1.5"
       >
         {bulkEnrich.isPending ? (
-          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          <Loader2 className="animate-spin motion-reduce:animate-none" aria-hidden="true" />
         ) : (
-          <RefreshCw className="h-3.5 w-3.5" />
+          <RefreshCw aria-hidden="true" />
         )}
         {t('feeMappings.actions.bulkEnrich')}
       </Button>
@@ -144,9 +147,8 @@ export function FeeMappingsPage() {
         size="sm"
         onClick={handleExport}
         disabled={filtered.length === 0}
-        className="gap-1.5"
       >
-        <Download className="h-3.5 w-3.5" />
+        <Download aria-hidden="true" />
         {t('feeMappings.actions.export')}
       </Button>
     </>
@@ -156,23 +158,24 @@ export function FeeMappingsPage() {
     <PageShell
       title={t('feeMappings.pageTitle')}
       description={t('feeMappings.pageSubtitle')}
-      icon={<Banknote className="h-5 w-5" />}
+      icon={<Banknote className="h-5 w-5" aria-hidden="true" />}
       actions={actions}
     >
 
       {/* Error banner */}
       {isError && (
-        <Card className="border-destructive/30 bg-destructive/5">
-          <CardContent className="flex items-start gap-3 p-4">
-            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
-            <div className="flex-1 text-sm">
-              <p className="font-medium">{t('feeMappings.errors.loadFailed')}</p>
+        <Card className="rounded-lg border border-dashed border-warning/40 bg-warning/10 shadow-none">
+          <CardContent className="flex items-start gap-2 px-3 py-2.5 text-[12.5px]">
+            <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-warning" aria-hidden="true" />
+            <div className="min-w-0 flex-1">
+              <p>{t('feeMappings.errors.loadFailed')}</p>
               <Button
-                variant="link"
+                variant="outline"
                 size="sm"
-                className="h-auto p-0"
+                className="mt-2 h-7 gap-1.5 border-warning/40 px-2.5 text-xs text-warning hover:text-warning"
                 onClick={() => void refetch()}
               >
+                <RefreshCw aria-hidden="true" />
                 {t('common.retry')}
               </Button>
             </div>
@@ -182,9 +185,9 @@ export function FeeMappingsPage() {
 
       {/* Stats */}
       {isLoading ? (
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-5">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
           {Array.from({ length: 5 }).map((_, i) => (
-            <Skeleton key={i} className="h-16 rounded-lg" />
+            <Skeleton key={i} className="h-[92px] rounded-lg" />
           ))}
         </div>
       ) : (

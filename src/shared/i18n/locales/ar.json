@@ -1256,7 +1256,10 @@
       "failed": "فشل حذف الخريطة"
     },
     "export": {
-      "empty": "لا يوجد ما يمكن تصديره"
+      "empty": "لا يوجد ما يمكن تصديره",
+      "filterCompany": "الشركة: {{value}}",
+      "filterAccuracy": "الدقة: {{value}}",
+      "filterSearch": "البحث: \"{{value}}\""
     },
     "excel": {
       "sheetName": "خرائط الأسعار",

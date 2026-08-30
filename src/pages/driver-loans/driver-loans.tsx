@@ -157,7 +157,7 @@ export default function DriverLoansPage() {
     <PageShell
       title={t('driverLoans.title')}
       description={driver?.name ?? t('common.loading')}
-      icon={<CreditCard className="h-5 w-5" />}
+      icon={<CreditCard className="h-5 w-5" aria-hidden="true" />}
       actions={
         <>
           <Button
@@ -165,11 +165,11 @@ export default function DriverLoansPage() {
             size="sm"
             onClick={() => navigate(`/drivers/${id}`)}
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="rtl:rotate-180" aria-hidden="true" />
             <span className="hidden sm:inline">{t('common.back')}</span>
           </Button>
           {!canManage && (
-            <Badge variant="outline" className="text-xs">
+            <Badge variant="outline">
               {t('common.viewOnly')}
             </Badge>
           )}
@@ -203,12 +203,12 @@ export default function DriverLoansPage() {
               }
             }}
           >
-            <FileSpreadsheet className="h-4 w-4" />
+            <FileSpreadsheet aria-hidden="true" />
             <span className="hidden sm:inline">{t('driverLoans.export')}</span>
           </Button>
           {canManage && (
             <Button size="sm" onClick={() => navigate(`/drivers/${id}/loans/new`)}>
-              <Plus className="h-4 w-4" />
+              <Plus aria-hidden="true" />
               <span className="hidden sm:inline">{t('driverLoans.addLoan')}</span>
             </Button>
           )}
@@ -280,7 +280,7 @@ export default function DriverLoansPage() {
           action={
             canManage ? (
               <Button onClick={() => navigate(`/drivers/${id}/loans/new`)}>
-                <Plus className="h-4 w-4" />
+                <Plus aria-hidden="true" />
                 {t('driverLoans.addLoan')}
               </Button>
             ) : undefined
@@ -288,16 +288,16 @@ export default function DriverLoansPage() {
         />
       ) : (
         /* Year → Month grouped list */
-        <div className="space-y-4">
+        <div className="space-y-3">
           {years.map((year) => (
             <Card key={year} className="overflow-hidden">
               {/* Year header */}
-              <div className="flex items-center justify-between border-b bg-muted/50 px-4 py-2.5">
-                <div className="flex items-center gap-2 text-sm font-semibold">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
+              <div className="flex items-center justify-between border-b bg-muted/60 px-3 py-2">
+                <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  <Calendar className="h-3 w-3 text-muted-foreground" aria-hidden="true" />
                   {year}
                 </div>
-                <Badge variant="secondary" className="text-xs">
+                <Badge variant="secondary">
                   {Object.values(grouped[year]).flat().length} {t('driverLoans.title').toLowerCase()}
                 </Badge>
               </div>
@@ -306,8 +306,8 @@ export default function DriverLoansPage() {
                 {Object.entries(grouped[year]).map(([month, items]) => (
                   <div key={`${year}-${month}`} className="p-3 md:p-4">
                     {/* Month label */}
-                    <div className="mb-3 inline-flex items-center gap-1.5 rounded-md bg-primary/5 px-2.5 py-1 text-xs font-medium text-primary">
-                      <Calendar className="h-3.5 w-3.5" />
+                    <div className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-muted px-2 py-0.5 text-[10.5px] font-medium text-muted-foreground">
+                      <Calendar className="h-3.5 w-3.5" aria-hidden="true" />
                       {month}
                     </div>
 
@@ -317,10 +317,10 @@ export default function DriverLoansPage() {
                         <div
                           key={loan.ID}
                           className={cn(
-                            'flex items-center justify-between gap-3 rounded-lg border p-3 transition-colors',
+                            'flex items-center justify-between gap-3 rounded-lg border p-3',
                             loan.is_paid
-                              ? 'border-green-200 bg-green-50/50 dark:border-green-900/40 dark:bg-green-950/20'
-                              : 'hover:border-border/80 hover:bg-muted/30',
+                              ? 'border-success/40 bg-success/10'
+                              : '',
                           )}
                         >
                           <div className="flex items-start gap-3">
@@ -328,35 +328,35 @@ export default function DriverLoansPage() {
                               className={cn(
                                 'mt-0.5 rounded-full p-1.5',
                                 loan.is_paid
-                                  ? 'bg-green-100 text-green-600 dark:bg-green-900/40 dark:text-green-400'
-                                  : 'bg-primary/10 text-primary',
+                                  ? 'bg-success/10 text-success'
+                                  : 'bg-muted text-muted-foreground',
                               )}
                             >
                               {loan.is_paid ? (
-                                <CheckCircle className="h-4 w-4" />
+                                <CheckCircle className="h-4 w-4" aria-hidden="true" />
                               ) : (
-                                <DollarSign className="h-4 w-4" />
+                                <DollarSign className="h-4 w-4" aria-hidden="true" />
                               )}
                             </div>
                             <div className="min-w-0 flex-1">
                               <div className="flex flex-wrap items-center gap-2">
-                                <span className="text-sm font-semibold">
+                                <span className="font-mono text-sm font-semibold tabular-nums text-money">
                                   {formatCurrency(loan.amount)}
                                 </span>
                                 {loan.is_paid && (
-                                  <Badge className="bg-green-100 text-green-700 hover:bg-green-100 dark:bg-green-900/40 dark:text-green-400 text-[10px]">
+                                  <Badge variant="success">
                                     {t('driverLoans.paid')}
                                   </Badge>
                                 )}
                               </div>
                               <div className="mt-1 flex flex-wrap items-center gap-3 text-[11px] text-muted-foreground">
                                 <span className="flex items-center gap-1">
-                                  <Clock className="h-3 w-3" />
+                                  <Clock className="h-3 w-3" aria-hidden="true" />
                                   {fmtDate(loan.date)}
                                 </span>
                                 {loan.method && (
                                   <span className="flex items-center gap-1">
-                                    <CreditCard className="h-3 w-3" />
+                                    <CreditCard className="h-3 w-3" aria-hidden="true" />
                                     {loan.method}
                                   </span>
                                 )}
@@ -370,9 +370,11 @@ export default function DriverLoansPage() {
                               variant="ghost"
                               size="icon"
                               className="h-10 w-10 shrink-0 text-destructive hover:text-destructive lg:h-8 lg:w-8"
+                              aria-label={t('common.delete')}
+                              title={t('common.delete')}
                               onClick={() => setDeleteTarget(loan)}
                             >
-                              <Trash2 className="h-4 w-4" />
+                              <Trash2 aria-hidden="true" />
                             </Button>
                           )}
                         </div>

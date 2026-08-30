@@ -67,13 +67,13 @@ export function DriversTable({ onAddDriver }: DriversTableProps) {
         cell: ({ row }) => (
           <div className="flex items-center gap-2">
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
-              <Users className="h-4 w-4" />
+              <Users className="h-4 w-4" aria-hidden="true" />
             </div>
             <div className="min-w-0">
               <p className="truncate font-medium">{row.original.name}</p>
               {row.original.mobile_number && (
                 <p className="flex items-center gap-1 text-xs text-muted-foreground">
-                  <Phone className="h-3 w-3" />
+                  <Phone className="h-3 w-3" aria-hidden="true" />
                   {row.original.mobile_number}
                 </p>
               )}
@@ -86,7 +86,7 @@ export function DriversTable({ onAddDriver }: DriversTableProps) {
         header: t('drivers.fields.transporter'),
         cell: ({ row }) => (
           <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-            <Truck className="h-3.5 w-3.5" />
+            <Truck className="h-3.5 w-3.5" aria-hidden="true" />
             {row.original.transporter || 'Apex'}
           </div>
         ),
@@ -98,12 +98,12 @@ export function DriversTable({ onAddDriver }: DriversTableProps) {
           const approved = row.original.is_approved;
           return approved ? (
             <Badge variant="success">
-              <ShieldCheck className="h-3 w-3" />
+              <ShieldCheck className="h-3 w-3" aria-hidden="true" />
               {t('drivers.status.approved')}
             </Badge>
           ) : (
             <Badge variant="warning">
-              <ShieldAlert className="h-3 w-3" />
+              <ShieldAlert className="h-3 w-3" aria-hidden="true" />
               {t('drivers.status.pending')}
             </Badge>
           );
@@ -114,9 +114,9 @@ export function DriversTable({ onAddDriver }: DriversTableProps) {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       {/* Stats row */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
         <StatCard
           label={t('drivers.stats.total')}
           value={stats.total}
@@ -148,7 +148,7 @@ export function DriversTable({ onAddDriver }: DriversTableProps) {
         />
         {canManage && onAddDriver && (
           <Button onClick={onAddDriver} id="add-driver-btn">
-            <Plus className="h-4 w-4" />
+            <Plus aria-hidden="true" />
             {t('drivers.addDriver')}
           </Button>
         )}
@@ -169,14 +169,14 @@ export function DriversTable({ onAddDriver }: DriversTableProps) {
         emptyState={
           <EmptyState
             lottieSrc="/animations/no_results.json"
-            lottieWidth={100}
-            lottieHeight={100}
+            lottieWidth={120}
+            lottieHeight={120}
             title={t('drivers.noDrivers')}
             description={t('drivers.noDriversDescription')}
             action={
               canManage && onAddDriver ? (
                 <Button onClick={onAddDriver}>
-                  <Plus className="h-4 w-4" />
+                  <Plus aria-hidden="true" />
                   {t('drivers.addDriver')}
                 </Button>
               ) : undefined
