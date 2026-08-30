@@ -43,10 +43,10 @@ function DetailRow({ icon, label, value }: DetailRowProps) {
         {icon}
       </div>
       <div className="min-w-0">
-        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
           {label}
         </p>
-        <p className="truncate font-medium">{value ?? '—'}</p>
+        <p className="font-mono text-sm font-medium tabular-nums" dir="auto">{value ?? <span className="opacity-40">—</span>}</p>
       </div>
     </div>
   );
@@ -77,12 +77,16 @@ export default function FuelEventDetailsPage() {
   if (isLoading) {
     return (
       <PageShell
-        title={<Skeleton className="h-8 w-48" />}
+        title={<Skeleton className="h-8 w-48 rounded-sm" />}
         icon={<Fuel className="h-5 w-5" />}
       >
-        <div className="mx-auto w-full max-w-4xl space-y-4">
-          <Skeleton className="h-32" />
-          <Skeleton className="h-64" />
+        <div className="mx-auto w-full max-w-4xl space-y-3">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+            <Skeleton className="h-[92px] rounded-lg" />
+            <Skeleton className="h-[92px] rounded-lg" />
+            <Skeleton className="h-[92px] rounded-lg" />
+          </div>
+          <Skeleton className="h-64 rounded-lg" />
         </div>
       </PageShell>
     );
@@ -98,7 +102,7 @@ export default function FuelEventDetailsPage() {
           title={t('fuelEvents.loadFailed')}
           action={
             <Button variant="outline" onClick={() => navigate(backTo)}>
-              <ArrowLeft className="h-4 w-4 rtl:rotate-180" />
+              <ArrowLeft className="rtl:rotate-180" />
               {t('common.back')}
             </Button>
           }
@@ -117,11 +121,11 @@ export default function FuelEventDetailsPage() {
         <span className="inline-flex items-center gap-2">
           <span>#{event.ID}</span>
           <span>·</span>
-          <span>{format(event.date, 'PPP')}</span>
+          <span>{format(event.date, 'd MMM yyyy')}</span>
           {event.driver_name && (
             <>
               <span>·</span>
-              <span>{event.driver_name}</span>
+              <span dir="auto">{event.driver_name}</span>
             </>
           )}
         </span>
@@ -130,7 +134,7 @@ export default function FuelEventDetailsPage() {
       actions={
         <>
           <Button variant="outline" size="sm" onClick={() => navigate(backTo)}>
-            <ArrowLeft className="h-4 w-4 rtl:rotate-180" />
+            <ArrowLeft className="rtl:rotate-180" />
             <span className="hidden sm:inline">{t('common.back')}</span>
           </Button>
           {canEditFuel && (
@@ -139,18 +143,18 @@ export default function FuelEventDetailsPage() {
               {...intentProps(() => warmFuelForm(queryClient, 'fuel-event-edit'))}
               onClick={() => navigate(`/fuel-events/${event.ID}/edit`)}
             >
-              <Edit className="h-4 w-4" />
+              <Edit />
               <span className="hidden sm:inline">{t('common.edit')}</span>
             </Button>
           )}
           {canDeleteFuel && (
             <Button variant="destructive" size="sm" onClick={() => setConfirmOpen(true)}>
-              <Trash2 className="h-4 w-4" />
+              <Trash2 />
               <span className="hidden sm:inline">{t('common.delete')}</span>
             </Button>
           )}
           {!canEditFuel && !canDeleteFuel && (
-            <Badge variant="warning" className="gap-1">
+            <Badge variant="warning">
               <AlertTriangle className="h-3 w-3" />
               {t('common.viewOnly')}
             </Badge>
@@ -158,15 +162,15 @@ export default function FuelEventDetailsPage() {
         </>
       }
     >
-      <div className="mx-auto grid w-full max-w-4xl grid-cols-1 gap-4 md:grid-cols-3">
+      <div className="mx-auto grid w-full max-w-4xl grid-cols-1 gap-3 md:grid-cols-3">
         {/* Highlight card — fuel rate */}
-        <Card className={cn('md:col-span-1', eff.bgClassName)}>
-          <CardContent className="space-y-2 p-5">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Gauge className="h-4 w-4" />
+        <Card className={cn('md:col-span-1 shadow-none', eff.bgClassName)}>
+          <CardContent className="space-y-2 p-3">
+            <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+              <Gauge className="h-3 w-3" />
               {t('fuelEvents.fields.fuelRate')}
             </div>
-            <p className={cn('text-3xl font-semibold', eff.className)}>
+            <p className={cn('font-mono text-[22px] font-semibold leading-none tabular-nums', eff.className)}>
               {formatNumber(event.fuel_rate, 1)} {t('fuelEvents.efficiency.unit')}
             </p>
             <div className="flex items-center gap-2">
@@ -179,42 +183,42 @@ export default function FuelEventDetailsPage() {
         </Card>
 
         {/* Highlight card — cost */}
-        <Card>
-          <CardContent className="space-y-2 p-5">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <DollarSign className="h-4 w-4" />
+        <Card className="shadow-none">
+          <CardContent className="space-y-2 p-3">
+            <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+              <DollarSign className="h-3 w-3" />
               {t('fuelEvents.fields.totalPrice')}
             </div>
-            <p className="text-3xl font-semibold">{formatCurrency(event.price)}</p>
-            <p className="text-xs text-muted-foreground">
+            <p className="font-mono text-[22px] font-semibold leading-none tabular-nums text-money">{formatCurrency(event.price)}</p>
+            <p className="font-mono text-xs tabular-nums text-muted-foreground">
               {formatNumber(event.liters, 2)} L × {formatCurrency(event.price_per_liter)}
             </p>
           </CardContent>
         </Card>
 
         {/* Highlight card — distance */}
-        <Card>
-          <CardContent className="space-y-2 p-5">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Gauge className="h-4 w-4" />
+        <Card className="shadow-none">
+          <CardContent className="space-y-2 p-3">
+            <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+              <Gauge className="h-3 w-3" />
               {t('fuelEvents.fields.distance')}
             </div>
-            <p className="text-3xl font-semibold">{formatNumber(distance, 0)} km</p>
-            <p className="text-xs text-muted-foreground">
+            <p className="font-mono text-[22px] font-semibold leading-none tabular-nums">{formatNumber(distance, 0)} km</p>
+            <p className="font-mono text-xs tabular-nums text-muted-foreground">
               {formatNumber(event.odometer_before)} → {formatNumber(event.odometer_after)}
             </p>
           </CardContent>
         </Card>
 
         {/* Details grid */}
-        <Card className="md:col-span-3">
-          <CardContent className="p-5">
-            <h2 className="mb-4 text-base font-semibold">{t('common.details')}</h2>
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <Card className="overflow-hidden shadow-none md:col-span-3">
+          <h2 className="flex items-center gap-2 border-b bg-muted/60 px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{t('common.details')}</h2>
+          <CardContent className="p-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
               <DetailRow
                 icon={<Calendar className="h-4 w-4" />}
                 label={t('fuelEvents.fields.date')}
-                value={format(event.date, 'PPP')}
+                value={format(event.date, 'd MMM yyyy')}
               />
               {event.time && (
                 <DetailRow
@@ -236,16 +240,16 @@ export default function FuelEventDetailsPage() {
               <DetailRow
                 icon={<DollarSign className="h-4 w-4" />}
                 label={t('fuelEvents.fields.pricePerLiter')}
-                value={formatCurrency(event.price_per_liter)}
+                value={<span className="font-mono tabular-nums text-money">{formatCurrency(event.price_per_liter)}</span>}
               />
               <DetailRow
                 icon={<DollarSign className="h-4 w-4" />}
                 label={t('fuelEvents.fields.totalPrice')}
-                value={formatCurrency(event.price)}
+                value={<span className="font-mono tabular-nums text-money">{formatCurrency(event.price)}</span>}
               />
             </div>
-            <Separator className="my-5" />
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+            <Separator className="my-3" />
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <DetailRow
                 icon={<Gauge className="h-4 w-4" />}
                 label={t('fuelEvents.fields.odometerBefore')}
