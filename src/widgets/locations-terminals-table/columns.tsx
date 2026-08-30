@@ -27,7 +27,7 @@ export function useTerminalColumns(): ColumnDef<Terminal>[] {
         header: t('locations.fields.address', 'Address'),
         cell: ({ row }) => (
           <div className="max-w-[280px] truncate text-muted-foreground" dir="auto">
-            {row.original.address || '—'}
+            {row.original.address || <span className="opacity-40">—</span>}
           </div>
         ),
       },
@@ -51,7 +51,7 @@ export function useTerminalColumns(): ColumnDef<Terminal>[] {
         cell: ({ row }) => {
           const radius = row.original.radius_m;
           return (
-            <div className="text-muted-foreground tabular-nums">
+            <div className="font-mono tabular-nums text-muted-foreground">
               {radius != null
                 ? radius
                 : t('locations.fields.radiusDefaultPlaceholder', {
@@ -69,7 +69,7 @@ export function useTerminalColumns(): ColumnDef<Terminal>[] {
           row.original.pin_source ? (
             <PinSourceBadge pinSource={row.original.pin_source} />
           ) : (
-            <span className="text-muted-foreground">—</span>
+            <span className="text-muted-foreground opacity-40">—</span>
           ),
       },
       {
@@ -78,7 +78,7 @@ export function useTerminalColumns(): ColumnDef<Terminal>[] {
         cell: ({ row }) => {
           const companies = row.original.allowed_companies;
           if (!companies.length) {
-            return <span className="text-muted-foreground">—</span>;
+            return <span className="text-muted-foreground opacity-40">—</span>;
           }
           const shown = companies.slice(0, MAX_COMPANY_CHIPS);
           const extra = companies.length - shown.length;
@@ -102,11 +102,7 @@ export function useTerminalColumns(): ColumnDef<Terminal>[] {
           return (
             <div className="text-end">
               <span
-                className={
-                  pinned
-                    ? 'text-xs font-medium text-muted-foreground'
-                    : 'text-xs font-medium text-primary'
-                }
+                className="text-xs font-medium text-primary"
               >
                 {pinned
                   ? t('locations.actions.manage', 'Manage')

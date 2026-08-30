@@ -174,10 +174,10 @@ export function OilChangeForm({
   const loading = carsLoading || driversLoading;
   if (loading) {
     return (
-      <div className="space-y-4">
-        <Skeleton className="h-40 w-full" />
-        <Skeleton className="h-40 w-full" />
-        <Skeleton className="h-56 w-full" />
+      <div className="space-y-6">
+        <Skeleton className="h-40 w-full rounded-lg" />
+        <Skeleton className="h-40 w-full rounded-lg" />
+        <Skeleton className="h-56 w-full rounded-lg" />
       </div>
     );
   }
@@ -189,7 +189,7 @@ export function OilChangeForm({
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
-              <Car className="h-4 w-4 text-muted-foreground" />
+              <Car className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
               {t('oilChanges.form.sections.vehicle')} &amp; {t('oilChanges.form.sections.personnel')}
             </CardTitle>
           </CardHeader>
@@ -238,7 +238,7 @@ export function OilChangeForm({
                     />
                   </FormControl>
                   {driverAutoAssigned && !form.formState.errors.driver_name && (
-                    <div className="absolute bottom-0 left-0 right-0 flex items-center gap-1.5 text-xs text-primary">
+                    <div className="mt-1 flex items-center gap-1.5 text-[11px] font-medium text-primary">
                       <Sparkles className="h-3 w-3 shrink-0" />
                       <span className="truncate">
                         {t('oilChanges.fields.driverAutoAssigned')}
@@ -250,7 +250,7 @@ export function OilChangeForm({
                           form.setValue('driver_name', '', { shouldValidate: true });
                           setDriverAutoAssigned(false);
                         }}
-                        className="ms-auto inline-flex shrink-0 items-center gap-0.5 rounded px-1 py-0.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+                        className="ms-auto inline-flex shrink-0 items-center gap-0.5 rounded px-1 py-0.5 text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       >
                         <X className="h-3 w-3" />
                         <span>{t('common.clear')}</span>
@@ -268,7 +268,7 @@ export function OilChangeForm({
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
-              <History className="h-4 w-4 text-muted-foreground" />
+              <History className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
               {t('oilChanges.title')}
             </CardTitle>
           </CardHeader>
@@ -300,6 +300,7 @@ export function OilChangeForm({
                   <FormControl>
                     <Input
                       type="text"
+                      autoComplete="off"
                       placeholder={t('oilChanges.fields.supervisorPlaceholder')}
                       {...field}
                       value={field.value ?? ''}
@@ -317,7 +318,7 @@ export function OilChangeForm({
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
-              <Wrench className="h-4 w-4 text-muted-foreground" />
+              <Wrench className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
               {t('oilChanges.form.sections.maintenance')}
             </CardTitle>
           </CardHeader>
@@ -333,6 +334,7 @@ export function OilChangeForm({
                       <Input
                         type="number"
                         inputMode="numeric"
+                        autoComplete="off"
                         placeholder="0"
                         {...field}
                         value={field.value ?? ''}
@@ -359,6 +361,7 @@ export function OilChangeForm({
                         <Input
                           type="number"
                           inputMode="numeric"
+                          autoComplete="off"
                           placeholder="0"
                           {...field}
                           value={field.value ?? ''}
@@ -388,6 +391,7 @@ export function OilChangeForm({
                       <Input
                         type="number"
                         inputMode="numeric"
+                        autoComplete="off"
                         placeholder="0"
                         {...field}
                         value={field.value ?? ''}
@@ -415,6 +419,7 @@ export function OilChangeForm({
                           type="number"
                           step="0.01"
                           inputMode="decimal"
+                          autoComplete="off"
                           placeholder="0.00"
                           className="pe-12"
                           {...field}
@@ -425,7 +430,7 @@ export function OilChangeForm({
                             )
                           }
                         />
-                        <span className="pointer-events-none absolute end-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-muted-foreground">
+                        <span className="pointer-events-none absolute end-3 top-1/2 -translate-y-1/2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                           EGP
                         </span>
                       </div>
@@ -449,7 +454,7 @@ export function OilChangeForm({
         </Card>
 
         {/* Actions */}
-        <div className="sticky bottom-0 -mx-4 flex flex-col gap-2 border-t bg-background/90 p-4 backdrop-blur supports-[backdrop-filter]:bg-background/70 md:-mx-6 md:flex-row md:justify-end md:gap-3 md:px-6">
+        <div className="sticky bottom-4 flex flex-col-reverse gap-2 rounded-lg border bg-card p-3 shadow-md sm:flex-row sm:justify-end">
           {showResetChanges && form.formState.isDirty && (
             <Button
               type="button"
@@ -458,7 +463,7 @@ export function OilChangeForm({
               disabled={submitting}
               className="md:me-auto"
             >
-              <RotateCcw className="h-4 w-4" />
+              <RotateCcw />
               {t('common.reset')}
             </Button>
           )}
@@ -472,9 +477,9 @@ export function OilChangeForm({
             disabled={submitting || (mode === 'edit' && !form.formState.isDirty)}
           >
             {submitting ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Loader2 className="animate-spin motion-reduce:animate-none" />
             ) : (
-              <Save className="h-4 w-4" />
+              <Save />
             )}
             {submitLabel ?? t('common.save')}
           </Button>

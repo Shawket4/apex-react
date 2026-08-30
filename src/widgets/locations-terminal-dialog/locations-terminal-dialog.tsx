@@ -14,6 +14,7 @@ import { Input } from '@/shared/ui/input';
 import { Label } from '@/shared/ui/label';
 import { Badge } from '@/shared/ui/badge';
 import { Switch } from '@/shared/ui/switch';
+import { Skeleton } from '@/shared/ui/skeleton';
 import { isValidCoordinate } from '@/shared/lib/coords';
 import {
   TERMINAL_DEFAULT_RADIUS_M,
@@ -129,7 +130,7 @@ export function LocationsTerminalDialog({
       <DialogContent className="flex max-h-[90vh] max-w-2xl flex-col gap-0 overflow-hidden p-0">
         <DialogHeader className="shrink-0 border-b px-6 py-4">
           <DialogTitle className="flex items-center gap-2">
-            <MapPin className="h-4 w-4 text-primary" />
+            <MapPin className="h-4 w-4 text-primary" aria-hidden="true" />
             {t('locations.dialog.editTerminal', 'Edit Terminal')}
           </DialogTitle>
           <DialogDescription className="flex items-center gap-2 truncate" dir="auto">
@@ -163,6 +164,8 @@ export function LocationsTerminalDialog({
             </Label>
             <Input
               id="terminal-address"
+              name="address"
+              autoComplete="street-address"
               dir="auto"
               value={address}
               onChange={(e) => setAddress(e.target.value)}
@@ -178,6 +181,8 @@ export function LocationsTerminalDialog({
               </Label>
               <Input
                 id="terminal-lat"
+                name="lat"
+                autoComplete="off"
                 type="number"
                 step="0.000001"
                 value={lat}
@@ -192,6 +197,8 @@ export function LocationsTerminalDialog({
               </Label>
               <Input
                 id="terminal-lng"
+                name="lng"
+                autoComplete="off"
                 type="number"
                 step="0.000001"
                 value={lng}
@@ -206,6 +213,8 @@ export function LocationsTerminalDialog({
               </Label>
               <Input
                 id="terminal-radius"
+                name="radius_m"
+                autoComplete="off"
                 type="number"
                 step="1"
                 min="1"
@@ -250,9 +259,9 @@ export function LocationsTerminalDialog({
             disabled={!radiusValid || updateTerminal.isPending}
           >
             {updateTerminal.isPending ? (
-              <Loader2 className="me-1.5 h-4 w-4 animate-spin" />
+              <Loader2 className="animate-spin motion-reduce:animate-none" />
             ) : (
-              <Save className="me-1.5 h-4 w-4" />
+              <Save />
             )}
             {t('common.save', 'Save')}
           </Button>
@@ -365,10 +374,10 @@ function ReceiptPatternsSection({ terminalId }: { terminalId: number }) {
   };
 
   return (
-    <div className="space-y-2 rounded-lg border bg-muted/20 p-3">
+    <div className="space-y-2 rounded-lg border bg-muted/40 p-3">
       <div className="flex items-center justify-between gap-2">
         <Label className="flex items-center gap-1.5 text-xs">
-          <Regex className="h-3.5 w-3.5 text-primary" />
+          <Regex className="h-3.5 w-3.5 text-primary" aria-hidden="true" />
           {t('locations.receiptPatterns.title', 'Receipt serialization')}
         </Label>
         {!showForm && (
@@ -376,13 +385,13 @@ function ReceiptPatternsSection({ terminalId }: { terminalId: number }) {
             type="button"
             variant="outline"
             size="sm"
-            className="h-7 gap-1.5 text-xs"
+            className="h-7 px-2.5 gap-1.5 text-xs"
             onClick={() => {
               setForm(emptyPatternForm);
               setShowForm(true);
             }}
           >
-            <Plus className="h-3 w-3" />
+            <Plus />
             {t('locations.receiptPatterns.add', 'Add pattern')}
           </Button>
         )}
@@ -396,23 +405,23 @@ function ReceiptPatternsSection({ terminalId }: { terminalId: number }) {
 
       {/* Existing patterns */}
       {patternsQuery.isLoading ? (
-        <div className="flex items-center gap-2 py-2 text-xs text-muted-foreground">
-          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          {t('common.loading', 'Loading…')}
+        <div className="space-y-2">
+          <Skeleton className="h-10 w-full rounded-none" />
+          <Skeleton className="h-10 w-full rounded-none" />
         </div>
       ) : patterns.length === 0 ? (
-        <p className="py-1 text-xs text-muted-foreground">
+        <p className="py-6 text-center text-xs text-muted-foreground">
           {t('locations.receiptPatterns.empty', 'No receipt patterns yet.')}
         </p>
       ) : (
-        <div className="divide-y overflow-hidden rounded-md border bg-card">
+        <div className="divide-y overflow-hidden rounded-lg border bg-card">
           {patterns.map((pattern) => {
             const companyKey = pattern.company ?? '';
             const busy = deleteBusyCompany === companyKey && deletePattern.isPending;
             return (
               <div
                 key={companyKey || '__all__'}
-                className="flex flex-col gap-1.5 p-2.5 text-xs sm:flex-row sm:items-center sm:justify-between"
+                className="flex flex-col gap-1.5 px-3 py-2.5 text-xs sm:flex-row sm:items-center sm:justify-between"
               >
                 <div className="min-w-0 space-y-0.5">
                   <div className="flex flex-wrap items-center gap-1.5">
@@ -425,7 +434,7 @@ function ReceiptPatternsSection({ terminalId }: { terminalId: number }) {
                         {t('locations.receiptPatterns.inactive', 'Inactive')}
                       </Badge>
                     )}
-                    <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-[11px]">
+                    <code className="inline-flex h-5 items-center rounded border border-border bg-muted px-1.5 font-mono text-[10px] font-medium">
                       {pattern.pattern}
                     </code>
                   </div>
@@ -444,7 +453,7 @@ function ReceiptPatternsSection({ terminalId }: { terminalId: number }) {
                     onClick={() => startEdit(pattern)}
                     aria-label={t('common.edit', 'Edit')}
                   >
-                    <Pencil className="h-3.5 w-3.5" />
+                    <Pencil />
                   </Button>
                   <Button
                     type="button"
@@ -456,9 +465,9 @@ function ReceiptPatternsSection({ terminalId }: { terminalId: number }) {
                     aria-label={t('common.delete', 'Delete')}
                   >
                     {busy ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      <Loader2 className="animate-spin motion-reduce:animate-none" />
                     ) : (
-                      <Trash2 className="h-3.5 w-3.5" />
+                      <Trash2 />
                     )}
                   </Button>
                 </div>
@@ -470,14 +479,16 @@ function ReceiptPatternsSection({ terminalId }: { terminalId: number }) {
 
       {/* Add / edit form */}
       {showForm && (
-        <div className="space-y-2 rounded-md border bg-card p-3">
-          <div className="grid gap-2 sm:grid-cols-2">
+        <div className="space-y-2 rounded-lg border bg-card p-3">
+          <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1">
               <Label htmlFor="rp-company" className="text-xs">
                 {t('locations.receiptPatterns.company', 'Company')}
               </Label>
               <Input
                 id="rp-company"
+                name="company"
+                autoComplete="off"
                 dir="auto"
                 value={form.company}
                 // The upsert is keyed on (terminal, company) — changing the
@@ -496,14 +507,17 @@ function ReceiptPatternsSection({ terminalId }: { terminalId: number }) {
               </Label>
               <Input
                 id="rp-pattern"
+                name="pattern"
+                autoComplete="off"
                 value={form.pattern}
                 onChange={(e) => setForm((prev) => ({ ...prev, pattern: e.target.value }))}
                 placeholder="^WT-\d{5}$"
                 className="font-mono"
                 aria-invalid={regexError || undefined}
+                aria-describedby={regexError ? 'rp-pattern-error' : undefined}
               />
               {regexError && (
-                <p className="text-[11px] font-medium text-destructive">
+                <p id="rp-pattern-error" className="text-[11px] font-medium text-destructive">
                   {t(
                     'locations.receiptPatterns.invalidRegex',
                     'This pattern is not a valid regular expression.',
@@ -518,6 +532,8 @@ function ReceiptPatternsSection({ terminalId }: { terminalId: number }) {
             </Label>
             <Input
               id="rp-description"
+              name="description"
+              autoComplete="off"
               dir="auto"
               value={form.description}
               onChange={(e) => setForm((prev) => ({ ...prev, description: e.target.value }))}
@@ -545,26 +561,26 @@ function ReceiptPatternsSection({ terminalId }: { terminalId: number }) {
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="h-7 gap-1 text-xs"
+                className="h-7 px-2.5 gap-1.5 text-xs"
                 onClick={() => {
                   setForm(emptyPatternForm);
                   setShowForm(false);
                 }}
               >
-                <X className="h-3 w-3" />
+                <X />
                 {t('common.cancel', 'Cancel')}
               </Button>
               <Button
                 type="button"
                 size="sm"
-                className="h-7 gap-1 text-xs"
+                className="h-7 px-2.5 gap-1.5 text-xs"
                 disabled={!canSave}
                 onClick={() => void handleSavePattern()}
               >
                 {upsertPattern.isPending ? (
-                  <Loader2 className="h-3 w-3 animate-spin" />
+                  <Loader2 className="animate-spin motion-reduce:animate-none" />
                 ) : (
-                  <Save className="h-3 w-3" />
+                  <Save />
                 )}
                 {t('locations.receiptPatterns.save', 'Save pattern')}
               </Button>
