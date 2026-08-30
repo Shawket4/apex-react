@@ -40,7 +40,7 @@ export default function TripEditPage() {
       icon={<Edit3 className="h-5 w-5" />}
       actions={
         <Button variant="outline" size="sm" onClick={() => navigate('/trips')}>
-          <ArrowLeft className="h-4 w-4 rtl:rotate-180" />
+          <ArrowLeft className="rtl:rotate-180" />
           <span className="hidden sm:inline">{t('trips.actions.backToList')}</span>
         </Button>
       }

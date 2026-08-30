@@ -108,20 +108,20 @@ export function TripsStatisticsCars({
     >
       <div className="grid gap-6 p-4 md:p-5 lg:grid-cols-2">
         <div>
-          <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <h4 className="mb-3 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
             {t('trips.statistics.cars.byActivity')}
           </h4>
           <RankedList items={byActivity} />
         </div>
         <div>
-          <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <h4 className="mb-3 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
             {hasFinancialAccess
               ? t('trips.statistics.cars.byRevenue')
               : t('trips.statistics.cars.byDistance')}
           </h4>
           <RankedList
             items={byMonetary}
-            barClassName={hasFinancialAccess ? 'bg-success' : 'bg-primary'}
+            barClassName={hasFinancialAccess ? 'bg-money' : 'bg-primary'}
           />
         </div>
       </div>

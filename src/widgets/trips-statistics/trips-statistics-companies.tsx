@@ -83,7 +83,7 @@ export function TripsStatisticsCompanies({
 
   return (
     <div className="space-y-3">
-      <h3 className="px-1 text-xs sm:text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+      <h3 className="px-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
         {t('trips.statistics.companies.heading')}
       </h3>
       {sorted.map((company, idx) => (
@@ -187,7 +187,7 @@ function CompanyCard({
               {formatNumber(company.total_distance, 2)} km
             </span>
             {hasFinancialAccess && (
-              <span className="tabular-nums text-success font-medium">
+              <span className="tabular-nums text-money font-medium">
                 {formatCurrency(
                   company.total_amount || company.total_revenue,
                 )}
@@ -396,6 +396,7 @@ function CompanyGroupTable({
           return (
             <div className="flex items-center gap-1.5 min-w-0">
               <ChevronRight
+                aria-hidden="true"
                 className={cn(
                   'h-3 w-3 text-muted-foreground shrink-0 transition-transform rtl:rotate-180',
                   isExpanded && 'rotate-90 rtl:rotate-90',
@@ -416,7 +417,7 @@ function CompanyGroupTable({
           </span>
         ),
         cell: ({ row }) => (
-          <span className="block text-end tabular-nums text-xs sm:text-sm">
+          <span className="block text-end font-mono tabular-nums text-xs sm:text-sm">
             {formatNumber(row.original.total_trips, 0)}
           </span>
         ),
@@ -429,11 +430,13 @@ function CompanyGroupTable({
             <span className="hidden sm:inline">
               {t('trips.statistics.excel.cols.volume')}
             </span>
-            <span className="sm:hidden">Vol (L)</span>
+            <span className="sm:hidden">
+              {t('trips.statistics.excel.cols.volumeShort')}
+            </span>
           </span>
         ),
         cell: ({ row }) => (
-          <span className="block text-end tabular-nums text-xs sm:text-sm">
+          <span className="block text-end font-mono tabular-nums text-xs sm:text-sm">
             {formatNumber(row.original.total_volume, 2)}
           </span>
         ),
@@ -446,11 +449,13 @@ function CompanyGroupTable({
             <span className="hidden sm:inline">
               {t('trips.statistics.excel.cols.distance')}
             </span>
-            <span className="sm:hidden">Dist (km)</span>
+            <span className="sm:hidden">
+              {t('trips.statistics.excel.cols.distanceShort')}
+            </span>
           </span>
         ),
         cell: ({ row }) => (
-          <span className="block text-end tabular-nums text-xs sm:text-sm">
+          <span className="block text-end font-mono tabular-nums text-xs sm:text-sm">
             {formatNumber(row.original.total_distance, 2)}
           </span>
         ),
@@ -469,11 +474,13 @@ function CompanyGroupTable({
             <span className="hidden lg:inline">
               {t('trips.statistics.excel.cols.revenue')}
             </span>
-            <span className="lg:hidden">Rev</span>
+            <span className="lg:hidden">
+              {t('trips.statistics.excel.cols.revenueShort')}
+            </span>
           </span>
         ),
         cell: ({ row }) => (
-          <span className="block text-end tabular-nums text-success text-xs sm:text-sm font-medium">
+          <span className="block text-end font-mono tabular-nums text-money text-xs sm:text-sm font-medium">
             {formatCurrency(row.original.total_revenue)}
           </span>
         ),
@@ -486,14 +493,18 @@ function CompanyGroupTable({
             <span className="hidden xl:inline">
               {t('trips.statistics.excel.cols.carRent')}
             </span>
-            <span className="xl:hidden">Rent</span>
+            <span className="xl:hidden">
+              {t('trips.statistics.excel.cols.carRentShort')}
+            </span>
           </span>
         ),
         cell: ({ row }) => (
-          <span className="block text-end tabular-nums text-muted-foreground text-xs sm:text-sm">
-            {row.original.car_rental
-              ? formatCurrency(row.original.car_rental)
-              : '—'}
+          <span className="block text-end font-mono tabular-nums text-muted-foreground text-xs sm:text-sm">
+            {row.original.car_rental ? (
+              formatCurrency(row.original.car_rental)
+            ) : (
+              <span className="opacity-40">—</span>
+            )}
           </span>
         ),
         meta: { align: 'end' },
@@ -501,11 +512,17 @@ function CompanyGroupTable({
       {
         accessorKey: 'vat',
         header: () => (
-          <span className="block text-end text-xs sm:text-sm">VAT</span>
+          <span className="block text-end text-xs sm:text-sm">
+            {t('trips.statistics.excel.cols.vat')}
+          </span>
         ),
         cell: ({ row }) => (
-          <span className="block text-end tabular-nums text-muted-foreground text-xs sm:text-sm">
-            {row.original.vat ? formatCurrency(row.original.vat) : '—'}
+          <span className="block text-end font-mono tabular-nums text-muted-foreground text-xs sm:text-sm">
+            {row.original.vat ? (
+              formatCurrency(row.original.vat)
+            ) : (
+              <span className="opacity-40">—</span>
+            )}
           </span>
         ),
         meta: { align: 'end' },
@@ -517,11 +534,13 @@ function CompanyGroupTable({
             <span className="hidden sm:inline">
               {t('trips.statistics.excel.cols.totalAmount')}
             </span>
-            <span className="sm:hidden">Total</span>
+            <span className="sm:hidden">
+              {t('trips.statistics.excel.cols.totalAmountShort')}
+            </span>
           </span>
         ),
         cell: ({ row }) => (
-          <span className="block text-end font-semibold tabular-nums text-xs sm:text-sm">
+          <span className="block text-end font-mono font-semibold tabular-nums text-xs sm:text-sm">
             {formatCurrency(
               row.original.total_with_vat || row.original.total_revenue,
             )}
@@ -537,17 +556,17 @@ function CompanyGroupTable({
   const footer = React.useMemo(() => {
     if (!hasFinancialAccess) {
       return (rows: GroupStat[]) => [
-        <span className="font-bold text-xs sm:text-sm">
+        <span className="font-semibold text-xs sm:text-sm">
           {t('trips.statistics.carTable.totals')}
         </span>,
         <TripsTotal rows={rows} companyTotal={companyTotalTrips} />,
-        <span className="text-xs sm:text-sm">
+        <span className="font-mono tabular-nums text-xs sm:text-sm">
           {formatNumber(
             rows.reduce((s, r) => s + (r.total_volume || 0), 0),
             2,
           )}
         </span>,
-        <span className="text-xs sm:text-sm">
+        <span className="font-mono tabular-nums text-xs sm:text-sm">
           {formatNumber(
             rows.reduce((s, r) => s + (r.total_distance || 0), 0),
             2,
@@ -556,32 +575,32 @@ function CompanyGroupTable({
       ];
     }
     return (rows: GroupStat[]) => [
-      <span className="font-bold text-xs sm:text-sm">
+      <span className="font-semibold text-xs sm:text-sm">
         {t('trips.statistics.carTable.totals')}
       </span>,
       <TripsTotal rows={rows} companyTotal={companyTotalTrips} />,
-      <span className="text-xs sm:text-sm">
+      <span className="font-mono tabular-nums text-xs sm:text-sm">
         {formatNumber(
           rows.reduce((s, r) => s + (r.total_volume || 0), 0),
           2,
         )}
       </span>,
-      <span className="text-xs sm:text-sm">
+      <span className="font-mono tabular-nums text-xs sm:text-sm">
         {formatNumber(
           rows.reduce((s, r) => s + (r.total_distance || 0), 0),
           2,
         )}
       </span>,
-      <span className="text-success text-xs sm:text-sm font-medium">
+      <span className="font-mono tabular-nums text-money text-xs sm:text-sm font-medium">
         {formatCurrency(rows.reduce((s, r) => s + (r.total_revenue || 0), 0))}
       </span>,
-      <span className="text-xs sm:text-sm">
+      <span className="font-mono tabular-nums text-xs sm:text-sm">
         {formatCurrency(rows.reduce((s, r) => s + (r.car_rental || 0), 0))}
       </span>,
-      <span className="text-xs sm:text-sm">
+      <span className="font-mono tabular-nums text-xs sm:text-sm">
         {formatCurrency(rows.reduce((s, r) => s + (r.vat || 0), 0))}
       </span>,
-      <span className="font-bold text-xs sm:text-sm">
+      <span className="font-mono tabular-nums font-semibold text-xs sm:text-sm">
         {formatCurrency(
           rows.reduce(
             (s, r) => s + (r.total_with_vat || r.total_revenue || 0),
@@ -654,7 +673,7 @@ function RoutesSubTable({
 
   if (routes.length === 0) {
     return (
-      <div className="border-l-2 border-primary/30 ms-4 my-2 p-3 text-xs text-muted-foreground italic">
+      <div className="border-s-2 border-primary/30 ms-4 my-2 p-3 text-xs text-muted-foreground italic">
         {t('trips.statistics.companies.noRoutesForGroup', {
           group: group.group_name,
         })}
@@ -663,15 +682,15 @@ function RoutesSubTable({
   }
 
   return (
-    <div className="border-l-2 border-primary/30 ms-4 my-2 me-2">
+    <div className="border-s-2 border-primary/30 ms-4 my-2 me-2">
       <div className="px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-        <RouteIcon className="h-3 w-3" />
+        <RouteIcon aria-hidden="true" className="h-3 w-3" />
         {t('trips.statistics.companies.routesInGroup', {
           count: routes.length,
         })}
       </div>
       <table className="w-full text-xs">
-        <thead className="bg-muted/30 text-[10px] uppercase tracking-wider text-muted-foreground">
+        <thead className="bg-muted/60 text-[10px] uppercase tracking-wider text-muted-foreground">
           <tr>
             <th className="px-3 py-2 text-start font-medium">
               {t('trips.statistics.excel.cols.route')}
@@ -693,13 +712,17 @@ function RoutesSubTable({
                   <span className="hidden lg:inline">
                     {t('trips.statistics.excel.cols.revenue')}
                   </span>
-                  <span className="lg:hidden">Rev</span>
+                  <span className="lg:hidden">
+                    {t('trips.statistics.excel.cols.revenueShort')}
+                  </span>
                 </th>
                 <th className="px-3 py-2 text-end font-medium">
                   <span className="hidden sm:inline">
                     {t('trips.statistics.excel.cols.totalAmount')}
                   </span>
-                  <span className="sm:hidden">Total</span>
+                  <span className="sm:hidden">
+                    {t('trips.statistics.excel.cols.totalAmountShort')}
+                  </span>
                 </th>
               </>
             )}
@@ -712,11 +735,22 @@ function RoutesSubTable({
             return (
               <React.Fragment key={route.route_name}>
                 <tr
+                  role="button"
+                  tabIndex={0}
+                  aria-expanded={isOpen}
                   onClick={() =>
                     setExpandedRoute((prev) =>
                       prev === route.route_name ? null : route.route_name,
                     )
                   }
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setExpandedRoute((prev) =>
+                        prev === route.route_name ? null : route.route_name,
+                      );
+                    }
+                  }}
                   // Hovering a route row warms its per-day drill-down, so the
                   // expand renders from cache instead of a spinner.
                   {...intentProps(() =>
@@ -731,13 +765,14 @@ function RoutesSubTable({
                     }),
                   )}
                   className={cn(
-                    'border-t border-border/50 cursor-pointer transition-colors hover:bg-muted/40',
-                    isOpen && 'bg-muted/30',
+                    'border-t border-border/50 cursor-pointer transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ring-inset',
+                    isOpen && 'bg-muted/40',
                   )}
                 >
                   <td className="px-3 py-2">
                     <div className="flex items-center gap-1.5 min-w-0">
                       <ChevronRight
+                        aria-hidden="true"
                         className={cn(
                           'h-3 w-3 text-muted-foreground shrink-0 transition-transform rtl:rotate-180',
                           isOpen && 'rotate-90 rtl:rotate-90',
@@ -748,21 +783,21 @@ function RoutesSubTable({
                       </span>
                     </div>
                   </td>
-                  <td className="px-3 py-2 text-end tabular-nums">
+                  <td className="px-3 py-2 text-end font-mono tabular-nums">
                     {formatNumber(route.total_trips, 0)}
                   </td>
-                  <td className="px-3 py-2 text-end tabular-nums hidden sm:table-cell">
+                  <td className="px-3 py-2 text-end font-mono tabular-nums hidden sm:table-cell">
                     {formatNumber(route.total_volume, 2)}
                   </td>
-                  <td className="px-3 py-2 text-end tabular-nums hidden md:table-cell">
+                  <td className="px-3 py-2 text-end font-mono tabular-nums hidden md:table-cell">
                     {formatNumber(route.total_distance, 2)}
                   </td>
                   {hasFinancialAccess && (
                     <>
-                      <td className="px-3 py-2 text-end tabular-nums text-success font-medium">
+                      <td className="px-3 py-2 text-end font-mono tabular-nums text-money font-medium">
                         {formatCurrency(route.total_revenue)}
                       </td>
-                      <td className="px-3 py-2 text-end tabular-nums font-semibold">
+                      <td className="px-3 py-2 text-end font-mono tabular-nums font-semibold">
                         {formatCurrency(
                           route.total_with_vat || route.total_revenue,
                         )}
@@ -771,7 +806,7 @@ function RoutesSubTable({
                   )}
                 </tr>
                 {isOpen && (
-                  <tr className="bg-muted/10">
+                  <tr className="bg-muted/40">
                     <td
                       colSpan={hasFinancialAccess ? 6 : 4}
                       className="p-0"
@@ -823,11 +858,12 @@ function RouteBreakdownPanel({
     <button
       type="button"
       onClick={() => setView(value)}
+      aria-pressed={view === value}
       className={cn(
         'inline-flex items-center gap-1 rounded px-2 py-0.5 text-[10px] font-medium transition-colors',
         view === value
           ? 'bg-primary text-primary-foreground'
-          : 'text-muted-foreground hover:bg-muted/60',
+          : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
       )}
     >
       {icon}
@@ -838,15 +874,15 @@ function RouteBreakdownPanel({
   return (
     <div>
       <div className="flex justify-end px-3 pt-2">
-        <div className="inline-flex items-center gap-0.5 rounded-md border border-border/50 bg-muted/30 p-0.5">
+        <div className="inline-flex items-center gap-0.5 rounded-md border border-border/50 bg-muted/40 p-0.5">
           {toggleButton(
             'vehicle',
-            <CarIcon className="h-3 w-3" />,
+            <CarIcon aria-hidden="true" className="h-3 w-3" />,
             t('trips.statistics.companies.perVehicle'),
           )}
           {toggleButton(
             'day',
-            <CalendarIcon className="h-3 w-3" />,
+            <CalendarIcon aria-hidden="true" className="h-3 w-3" />,
             t('trips.statistics.companies.perDay'),
           )}
         </div>
@@ -917,8 +953,8 @@ function DaysSubTable({
 
   if (isLoading) {
     return (
-      <div className="border-l-2 border-success/40 ms-4 my-2 flex items-center gap-2 p-2.5 text-[11px] text-muted-foreground">
-        <Loader2 className="h-3 w-3 animate-spin" />
+      <div className="border-s-2 border-success/40 ms-4 my-2 flex items-center gap-2 p-2.5 text-[11px] text-muted-foreground">
+        <Loader2 className="h-3 w-3 animate-spin motion-reduce:animate-none" />
         {t('common.loading')}
       </div>
     );
@@ -926,7 +962,7 @@ function DaysSubTable({
 
   if (isError) {
     return (
-      <div className="border-l-2 border-destructive/40 ms-4 my-2 p-2.5 text-[11px] text-muted-foreground italic">
+      <div className="border-s-2 border-destructive/40 ms-4 my-2 p-2.5 text-[11px] text-muted-foreground italic">
         {t('trips.statistics.companies.dailyLoadError')}
       </div>
     );
@@ -934,20 +970,20 @@ function DaysSubTable({
 
   if (days.length === 0) {
     return (
-      <div className="border-l-2 border-success/40 ms-4 my-2 p-2.5 text-[11px] text-muted-foreground italic">
+      <div className="border-s-2 border-success/40 ms-4 my-2 p-2.5 text-[11px] text-muted-foreground italic">
         {t('trips.statistics.companies.noDaysForRoute')}
       </div>
     );
   }
 
   return (
-    <div className="border-l-2 border-success/40 ms-4 my-2 me-2">
+    <div className="border-s-2 border-success/40 ms-4 my-2 me-2">
       <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-        <CalendarIcon className="h-3 w-3" />
+        <CalendarIcon aria-hidden="true" className="h-3 w-3" />
         {t('trips.statistics.companies.daysForRoute', { count: days.length })}
       </div>
       <table className="w-full text-[11px] sm:text-xs">
-        <thead className="bg-muted/20 text-[9px] sm:text-[10px] uppercase tracking-wider text-muted-foreground">
+        <thead className="bg-muted/60 text-[10px] uppercase tracking-wider text-muted-foreground">
           <tr>
             <th className="px-3 py-1.5 text-start font-medium">
               {t('trips.statistics.companies.date')}
@@ -959,7 +995,9 @@ function DaysSubTable({
               <span className="hidden sm:inline">
                 {t('trips.statistics.carTable.liters')}
               </span>
-              <span className="sm:hidden">L</span>
+              <span className="sm:hidden">
+                {t('trips.statistics.carTable.litersShort')}
+              </span>
             </th>
             <th className="px-3 py-1.5 text-end font-medium hidden md:table-cell">
               {t('trips.statistics.carTable.distance')}
@@ -969,7 +1007,10 @@ function DaysSubTable({
                 {t('trips.statistics.companies.vehiclesCol')}
               </span>
               <span className="sm:hidden">
-                <CarIcon className="h-3 w-3 inline" />
+                <span className="sr-only">
+                  {t('trips.statistics.companies.vehiclesCol')}
+                </span>
+                <CarIcon aria-hidden="true" className="h-3 w-3 inline" />
               </span>
             </th>
             {hasFinancialAccess && (
@@ -977,7 +1018,9 @@ function DaysSubTable({
                 <span className="hidden lg:inline">
                   {t('trips.statistics.excel.cols.totalAmount')}
                 </span>
-                <span className="lg:hidden">Total</span>
+                <span className="lg:hidden">
+                  {t('trips.statistics.excel.cols.totalAmountShort')}
+                </span>
               </th>
             )}
           </tr>
@@ -986,25 +1029,25 @@ function DaysSubTable({
           {days.map((day) => (
             <tr
               key={day.date}
-              className="border-t border-border/30 hover:bg-muted/30"
+              className="border-t border-border/30 hover:bg-muted/50"
             >
-              <td className="px-3 py-1.5 font-medium tabular-nums">
+              <td className="px-3 py-1.5 font-mono font-medium tabular-nums">
                 {fmtDate(day.date)}
               </td>
-              <td className="px-3 py-1.5 text-end tabular-nums">
+              <td className="px-3 py-1.5 text-end font-mono tabular-nums">
                 {formatNumber(day.trips, 0)}
               </td>
-              <td className="px-3 py-1.5 text-end tabular-nums">
+              <td className="px-3 py-1.5 text-end font-mono tabular-nums">
                 {formatNumber(day.volume, 2)}
               </td>
-              <td className="px-3 py-1.5 text-end tabular-nums hidden md:table-cell">
+              <td className="px-3 py-1.5 text-end font-mono tabular-nums hidden md:table-cell">
                 {formatNumber(day.distance, 2)}
               </td>
-              <td className="px-3 py-1.5 text-end tabular-nums text-muted-foreground">
+              <td className="px-3 py-1.5 text-end font-mono tabular-nums text-muted-foreground">
                 {day.car_count}
               </td>
               {hasFinancialAccess && (
-                <td className="px-3 py-1.5 text-end tabular-nums font-semibold">
+                <td className="px-3 py-1.5 text-end font-mono tabular-nums font-semibold">
                   {formatCurrency(day.revenue)}
                 </td>
               )}
@@ -1031,7 +1074,7 @@ function CarsSubTable({
 
   if (cars.length === 0) {
     return (
-      <div className="border-l-2 border-success/40 ms-4 my-2 p-2.5 text-[11px] text-muted-foreground italic">
+      <div className="border-s-2 border-success/40 ms-4 my-2 p-2.5 text-[11px] text-muted-foreground italic">
         {t('trips.statistics.companies.noCarsForRoute')}
       </div>
     );
@@ -1043,13 +1086,13 @@ function CarsSubTable({
   );
 
   return (
-    <div className="border-l-2 border-success/40 ms-4 my-2 me-2">
+    <div className="border-s-2 border-success/40 ms-4 my-2 me-2">
       <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-        <CarIcon className="h-3 w-3" />
+        <CarIcon aria-hidden="true" className="h-3 w-3" />
         {t('trips.statistics.companies.carsForRoute', { count: cars.length })}
       </div>
       <table className="w-full text-[11px] sm:text-xs">
-        <thead className="bg-muted/20 text-[9px] sm:text-[10px] uppercase tracking-wider text-muted-foreground">
+        <thead className="bg-muted/60 text-[10px] uppercase tracking-wider text-muted-foreground">
           <tr>
             <th className="px-3 py-1.5 text-start font-medium">
               {t('trips.fields.vehicle')}
@@ -1061,7 +1104,9 @@ function CarsSubTable({
               <span className="hidden sm:inline">
                 {t('trips.statistics.carTable.liters')}
               </span>
-              <span className="sm:hidden">L</span>
+              <span className="sm:hidden">
+                {t('trips.statistics.carTable.litersShort')}
+              </span>
             </th>
             <th className="px-3 py-1.5 text-end font-medium hidden md:table-cell">
               {t('trips.statistics.carTable.distance')}
@@ -1070,14 +1115,18 @@ function CarsSubTable({
               <span className="hidden sm:inline">
                 {t('trips.statistics.cars.workingDaysShort')}
               </span>
-              <span className="sm:hidden">Days</span>
+              <span className="sm:hidden">
+                {t('trips.statistics.cars.workingDaysShort')}
+              </span>
             </th>
             {hasFinancialAccess && (
               <th className="px-3 py-1.5 text-end font-medium">
                 <span className="hidden lg:inline">
                   {t('trips.statistics.excel.cols.totalAmount')}
                 </span>
-                <span className="lg:hidden">Total</span>
+                <span className="lg:hidden">
+                  {t('trips.statistics.excel.cols.totalAmountShort')}
+                </span>
               </th>
             )}
           </tr>
@@ -1086,25 +1135,25 @@ function CarsSubTable({
           {sorted.map((car) => (
             <tr
               key={car.car_no_plate}
-              className="border-t border-border/30 hover:bg-muted/30"
+              className="border-t border-border/30 hover:bg-muted/50"
             >
-              <td className="px-3 py-1.5 font-medium tabular-nums">
+              <td className="px-3 py-1.5 font-mono font-medium tabular-nums" dir="auto">
                 {car.car_no_plate}
               </td>
-              <td className="px-3 py-1.5 text-end tabular-nums">
+              <td className="px-3 py-1.5 text-end font-mono tabular-nums">
                 {formatNumber(car.total_trips, 0)}
               </td>
-              <td className="px-3 py-1.5 text-end tabular-nums">
+              <td className="px-3 py-1.5 text-end font-mono tabular-nums">
                 {formatNumber(car.total_volume, 2)}
               </td>
-              <td className="px-3 py-1.5 text-end tabular-nums hidden md:table-cell">
+              <td className="px-3 py-1.5 text-end font-mono tabular-nums hidden md:table-cell">
                 {formatNumber(car.total_distance, 2)}
               </td>
-              <td className="px-3 py-1.5 text-end tabular-nums text-muted-foreground">
+              <td className="px-3 py-1.5 text-end font-mono tabular-nums text-muted-foreground">
                 {car.working_days}
               </td>
               {hasFinancialAccess && (
-                <td className="px-3 py-1.5 text-end tabular-nums font-semibold">
+                <td className="px-3 py-1.5 text-end font-mono tabular-nums font-semibold">
                   {formatCurrency(
                     car.total_with_vat || car.total_revenue || 0,
                   )}
