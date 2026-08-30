@@ -25,6 +25,7 @@ import { useDriverExpenses, useDeleteDriverExpense } from '@/entities/driver-exp
 import type { DriverExpense } from '@/entities/driver-expense/schemas';
 import { usePermissions } from '@/shared/hooks/use-permissions';
 import { PERMISSION_LEVELS } from '@/shared/config/constants';
+import { format } from 'date-fns';
 import { formatCurrency, fmtDate } from '@/shared/lib/format';
 import { cn } from '@/shared/lib/cn';
 
@@ -40,7 +41,7 @@ function groupByYearMonth(expenses: DriverExpense[]) {
   for (const e of sorted) {
     const d = new Date(e.date);
     const year = String(d.getFullYear());
-    const month = d.toLocaleString('default', { month: 'long' });
+    const month = format(d, 'MMMM');
     groups[year] ??= {};
     groups[year][month] ??= [];
     groups[year][month].push(e);
@@ -88,7 +89,7 @@ export default function DriverExpensesPage() {
     <PageShell
       title={t('driverExpenses.title')}
       description={driver?.name ?? t('common.loading')}
-      icon={<Receipt className="h-5 w-5" />}
+      icon={<Receipt className="h-5 w-5" aria-hidden="true" />}
       actions={
         <>
           <Button
@@ -96,17 +97,17 @@ export default function DriverExpensesPage() {
             size="sm"
             onClick={() => navigate(`/drivers/${id}`)}
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="rtl:rotate-180" />
             <span className="hidden sm:inline">{t('common.back')}</span>
           </Button>
           {!canManage && (
-            <Badge variant="outline" className="text-xs">
+            <Badge variant="outline">
               {t('common.viewOnly')}
             </Badge>
           )}
           {canManage && (
             <Button size="sm" onClick={() => navigate(`/drivers/${id}/expenses/new`)}>
-              <Plus className="h-4 w-4" />
+              <Plus />
               <span className="hidden sm:inline">{t('driverExpenses.addExpense')}</span>
             </Button>
           )}
@@ -144,6 +145,14 @@ export default function DriverExpensesPage() {
         </div>
       )}
 
+      {isLoading && (
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Skeleton key={i} className="h-[92px] rounded-lg" />
+          ))}
+        </div>
+      )}
+
       {/* Loading skeleton */}
       {isLoading ? (
         <div className="space-y-3">
@@ -161,7 +170,7 @@ export default function DriverExpensesPage() {
           action={
             canManage ? (
               <Button onClick={() => navigate(`/drivers/${id}/expenses/new`)}>
-                <Plus className="h-4 w-4" />
+                <Plus />
                 {t('driverExpenses.addExpense')}
               </Button>
             ) : undefined
@@ -169,17 +178,20 @@ export default function DriverExpensesPage() {
         />
       ) : (
         /* Year → Month grouped list */
-        <div className="space-y-4">
+        <div className="space-y-3">
           {years.map((year) => (
             <Card key={year} className="overflow-hidden">
               {/* Year header */}
-              <div className="flex items-center justify-between border-b bg-muted/50 px-4 py-2.5">
-                <div className="flex items-center gap-2 text-sm font-semibold">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
+              <div className="flex items-center justify-between border-b bg-muted/60 px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
                   {year}
                 </div>
-                <Badge variant="secondary" className="text-xs">
-                  {Object.values(grouped[year]).flat().length} {t('driverExpenses.title').toLowerCase()}
+                <Badge variant="secondary">
+                  {t('driverExpenses.countLabel', {
+                    count: Object.values(grouped[year]).flat().length,
+                    defaultValue: '{{count}} expenses',
+                  })}
                 </Badge>
               </div>
 
@@ -187,8 +199,8 @@ export default function DriverExpensesPage() {
                 {Object.entries(grouped[year]).map(([month, items]) => (
                   <div key={`${year}-${month}`} className="p-3 md:p-4">
                     {/* Month label */}
-                    <div className="mb-3 inline-flex items-center gap-1.5 rounded-md bg-primary/5 px-2.5 py-1 text-xs font-medium text-primary">
-                      <Calendar className="h-3.5 w-3.5" />
+                    <div className="mb-1.5 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                      <Calendar className="h-3.5 w-3.5" aria-hidden="true" />
                       {month}
                     </div>
 
@@ -198,10 +210,10 @@ export default function DriverExpensesPage() {
                         <div
                           key={expense.ID}
                           className={cn(
-                            'flex items-center justify-between gap-3 rounded-lg border p-3 transition-colors',
+                            'flex items-center justify-between gap-3 rounded-lg border px-3 py-2.5',
                             expense.is_paid
-                              ? 'border-green-200 bg-green-50/50 dark:border-green-900/40 dark:bg-green-950/20'
-                              : 'hover:border-border/80 hover:bg-muted/30',
+                              ? 'border-success/40 bg-success/10'
+                              : '',
                           )}
                         >
                           <div className="flex items-start gap-3">
@@ -209,29 +221,29 @@ export default function DriverExpensesPage() {
                               className={cn(
                                 'mt-0.5 rounded-full p-1.5',
                                 expense.is_paid
-                                  ? 'bg-green-100 text-green-600 dark:bg-green-900/40 dark:text-green-400'
+                                  ? 'bg-success/10 text-success'
                                   : 'bg-destructive/10 text-destructive',
                               )}
                             >
                               {expense.is_paid ? (
-                                <CheckCircle className="h-4 w-4" />
+                                <CheckCircle className="h-4 w-4" aria-hidden="true" />
                               ) : (
-                                <Receipt className="h-4 w-4" />
+                                <Receipt className="h-4 w-4" aria-hidden="true" />
                               )}
                             </div>
                             <div className="min-w-0 flex-1">
                               <div className="flex flex-wrap items-center gap-2">
-                                <span className="text-sm font-semibold">
+                                <span className="font-mono text-sm font-semibold tabular-nums text-money">
                                   {formatCurrency(expense.cost)}
                                 </span>
                                 {expense.category && (
-                                  <Badge variant="secondary" className="text-[10px]">
-                                    <Tag className="mr-1 h-3 w-3" />
-                                    {expense.category}
+                                  <Badge variant="secondary">
+                                    <Tag className="me-1 h-3 w-3" aria-hidden="true" />
+                                    {t(`driverExpenses.categories.${expense.category}`, { defaultValue: expense.category })}
                                   </Badge>
                                 )}
                                 {expense.is_paid && (
-                                  <Badge className="bg-green-100 text-green-700 hover:bg-green-100 dark:bg-green-900/40 dark:text-green-400 text-[10px]">
+                                  <Badge variant="success">
                                     {t('driverExpenses.paid')}
                                   </Badge>
                                 )}
@@ -243,13 +255,13 @@ export default function DriverExpensesPage() {
                               )}
                               <div className="mt-1 flex flex-wrap items-center gap-3 text-[11px] text-muted-foreground">
                                 <span className="flex items-center gap-1">
-                                  <Calendar className="h-3 w-3" />
+                                  <Calendar className="h-3 w-3" aria-hidden="true" />
                                   {fmtDate(expense.date)}
                                 </span>
                                 {expense.payment_method && (
                                   <span className="flex items-center gap-1">
-                                    <CreditCard className="h-3 w-3" />
-                                    {expense.payment_method}
+                                    <CreditCard className="h-3 w-3" aria-hidden="true" />
+                                    {t(`driverExpenses.paymentMethods.${expense.payment_method}`, { defaultValue: expense.payment_method })}
                                   </span>
                                 )}
                               </div>
@@ -263,8 +275,9 @@ export default function DriverExpensesPage() {
                               size="icon"
                               className="h-8 w-8 shrink-0 text-destructive hover:text-destructive"
                               onClick={() => setDeleteTarget(expense)}
+                              aria-label={t('common.delete')}
                             >
-                              <Trash2 className="h-4 w-4" />
+                              <Trash2 />
                             </Button>
                           )}
                         </div>

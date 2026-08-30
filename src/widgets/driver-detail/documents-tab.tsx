@@ -175,7 +175,7 @@ export function DocumentsTab({ driver }: DocumentsTabProps) {
   const hasDirtyFiles = Object.keys(files).length > 0;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {/* Actions — right-aligned header bar */}
       {canEdit && (
         <div className="flex items-center justify-end gap-2">
@@ -191,9 +191,9 @@ export function DocumentsTab({ driver }: DocumentsTabProps) {
               </Button>
               <Button size="sm" onClick={handleSave} disabled={updateDocs.isPending}>
                 {updateDocs.isPending ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <Loader2 className="animate-spin" />
                 ) : (
-                  <Save className="h-4 w-4" />
+                  <Save />
                 )}
                 {t('common.save')}
               </Button>
@@ -219,31 +219,31 @@ export function DocumentsTab({ driver }: DocumentsTabProps) {
             <Card
               key={doc.key}
               className={cn(
-                status === 'expired' && 'border-destructive/30',
-                status === 'warning' && 'border-warning/30',
+                status === 'expired' && 'border-destructive/40',
+                status === 'warning' && 'border-warning/40',
               )}
             >
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between gap-2">
                   <CardTitle className="flex min-w-0 items-center gap-2 text-sm">
-                    <DocIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
+                    <DocIcon className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
                     <span className="truncate">{doc.label}</span>
                   </CardTitle>
                   {status === 'valid' && (
-                    <Badge variant="success" className="gap-1 shrink-0">
-                      <CheckCircle className="h-3 w-3" />
+                    <Badge variant="success" className="shrink-0">
+                      <CheckCircle className="h-3 w-3" aria-hidden="true" />
                       {t('drivers.expiry.valid')}
                     </Badge>
                   )}
                   {status === 'warning' && (
-                    <Badge variant="warning" className="gap-1 shrink-0">
-                      <AlertTriangle className="h-3 w-3" />
+                    <Badge variant="warning" className="shrink-0">
+                      <AlertTriangle className="h-3 w-3" aria-hidden="true" />
                       {t('drivers.expiry.expiresInDays', { days: daysLeft })}
                     </Badge>
                   )}
                   {status === 'expired' && (
-                    <Badge variant="destructive" className="gap-1 shrink-0">
-                      <AlertTriangle className="h-3 w-3" />
+                    <Badge variant="destructive" className="shrink-0">
+                      <AlertTriangle className="h-3 w-3" aria-hidden="true" />
                       {t('drivers.expiry.expired')}
                     </Badge>
                   )}
@@ -268,7 +268,7 @@ export function DocumentsTab({ driver }: DocumentsTabProps) {
                     />
                   ) : (
                     <p className="text-sm font-medium">
-                      {dateValue ? fmtDate(dateValue) : '—'}
+                      {dateValue ? fmtDate(dateValue) : <span className="opacity-40">—</span>}
                     </p>
                   )}
                 </div>
@@ -318,8 +318,8 @@ export function DocumentsTab({ driver }: DocumentsTabProps) {
 
       {/* Dirty-state hint when user has picked files but not saved */}
       {editing && hasDirtyFiles && (
-        <div className="flex items-start gap-2 rounded-md border border-primary/20 bg-primary/5 p-2.5 text-xs text-muted-foreground">
-          <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
+        <div className="flex items-start gap-2 rounded-lg border border-dashed border-border/60 bg-muted/40 px-3 py-2.5 text-xs text-muted-foreground">
+          <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" aria-hidden="true" />
           <span>
             {t('drivers.docs.filesReadyToUpload', { count: Object.keys(files).length })}
           </span>
@@ -337,29 +337,29 @@ export function DocumentsTab({ driver }: DocumentsTabProps) {
               variant="outline"
               size="icon"
               onClick={() => setZoom((z) => Math.max(0.5, z - 0.25))}
-              aria-label="Zoom out"
+              aria-label={t('drivers.docs.zoomOut', { defaultValue: 'Zoom out' })}
             >
-              <ZoomOut className="h-4 w-4" />
+              <ZoomOut />
             </Button>
             <Button
               variant="outline"
               size="icon"
               onClick={() => setZoom((z) => Math.min(3, z + 0.25))}
-              aria-label="Zoom in"
+              aria-label={t('drivers.docs.zoomIn', { defaultValue: 'Zoom in' })}
             >
-              <ZoomIn className="h-4 w-4" />
+              <ZoomIn />
             </Button>
             <Button
               variant="outline"
               size="icon"
               onClick={() => setRotation((r) => r + 90)}
-              aria-label="Rotate"
+              aria-label={t('drivers.docs.rotate', { defaultValue: 'Rotate' })}
             >
-              <RotateCw className="h-4 w-4" />
+              <RotateCw />
             </Button>
           </div>
           <div
-            className="flex items-center justify-center overflow-auto rounded-lg bg-muted/30 p-4"
+            className="flex min-h-[40vh] items-center justify-center overflow-auto rounded-lg bg-muted/40 p-3"
             style={{ maxHeight: '70vh' }}
           >
             {previewUrl && (
@@ -413,29 +413,29 @@ function DocumentImageRow({
 
       {existingImage && (
         <Button variant="outline" size="sm" className="h-7" onClick={onView}>
-          <Eye className="h-3.5 w-3.5" />
+          <Eye />
           {t('common.view')}
         </Button>
       )}
 
       {editing && (
         <>
-          <label
-            htmlFor={fileInputId}
-            className="inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-md border border-input bg-background px-2.5 text-xs font-medium shadow-sm hover:bg-muted/50"
-          >
-            <Upload className="h-3.5 w-3.5" />
-            {existingImage
-              ? t('drivers.docs.replace')
-              : t('drivers.docs.upload')}
-          </label>
           <input
             id={fileInputId}
             type="file"
             accept="image/*"
-            className="hidden"
+            className="peer sr-only"
             onChange={(e) => e.target.files?.[0] && onFileSelect(e.target.files[0])}
           />
+          <label
+            htmlFor={fileInputId}
+            className="inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-md border border-input bg-background px-2.5 text-xs font-medium shadow-sm hover:bg-accent hover:text-accent-foreground peer-focus-visible:ring-2 peer-focus-visible:ring-ring peer-focus-visible:ring-offset-1"
+          >
+            <Upload className="h-3.5 w-3.5" aria-hidden="true" />
+            {existingImage
+              ? t('drivers.docs.replace')
+              : t('drivers.docs.upload')}
+          </label>
         </>
       )}
 
@@ -445,7 +445,7 @@ function DocumentImageRow({
 
       {selectedFile && (
         <span className="flex min-w-0 items-center gap-1 text-primary">
-          <Check className="h-3 w-3 shrink-0" />
+          <Check className="h-3 w-3 shrink-0" aria-hidden="true" />
           <span className="truncate">{selectedFile.name}</span>
         </span>
       )}

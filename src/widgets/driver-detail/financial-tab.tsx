@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { intentProps, preloadChunk } from '@/shared/lib/prefetch';
 import { prefetchDriverExpenses } from '@/entities/driver-expense/queries';
@@ -62,8 +62,9 @@ export function FinancialTab({ driverId }: FinancialTabProps) {
       {links.map((link) => {
         const Icon = link.icon;
         return (
-          <Card
+          <Link
             key={link.key}
+            to={link.to}
             role="button"
             tabIndex={0}
             {...intentProps(() => link.warm())}
@@ -75,20 +76,22 @@ export function FinancialTab({ driverId }: FinancialTabProps) {
               }
             }}
             className={cn(
-              'cursor-pointer transition-colors',
-              'hover:border-primary/40 hover:bg-muted/40',
-              'focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2',
+              'block rounded-lg cursor-pointer transition-colors',
+              'hover:bg-muted/50',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
             )}
           >
-            <CardContent className="flex items-center gap-3 p-4">
-              <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
+            <Card className="transition-colors hover:bg-muted/50">
+            <CardContent className="flex items-center gap-3 px-3 py-2.5">
+              <Icon className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold">{link.label}</p>
                 <p className="truncate text-xs text-muted-foreground">{link.description}</p>
               </div>
-              <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground rtl:rotate-180" />
+              <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground rtl:rotate-180" aria-hidden="true" />
             </CardContent>
-          </Card>
+            </Card>
+          </Link>
         );
       })}
     </div>
