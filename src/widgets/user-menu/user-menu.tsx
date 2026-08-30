@@ -50,8 +50,11 @@ export function UserMenu({ collapsed = false }: UserMenuProps) {
         <Button
           variant="ghost"
           className={cn(
-            "h-auto justify-start gap-2 px-2 py-2 transition-all duration-200 ease-out",
-            collapsed ? "w-9 mx-auto px-0 justify-center" : "w-full"
+            'h-auto px-2 py-2',
+            // Collapsed, the avatar is the only child: an identity block kept
+            // at max-w-0 still contributed the flex gap, which pushed the
+            // avatar off-centre inside the 36px square.
+            collapsed ? 'mx-auto w-9 justify-center px-0' : 'w-full justify-start gap-2',
           )}
           aria-label={t('common.profile')}
         >
@@ -60,20 +63,17 @@ export function UserMenu({ collapsed = false }: UserMenuProps) {
               {initials(user.name)}
             </AvatarFallback>
           </Avatar>
-          <div
-            className={cn(
-              'flex-grow flex items-center justify-between text-start transition-all duration-200 ease-out overflow-hidden',
-              collapsed ? 'max-w-0 opacity-0 pointer-events-none invisible' : 'max-w-40 opacity-100'
-            )}
-          >
-            <div className="flex-grow min-w-0">
-              <p className="truncate text-sm font-medium leading-tight">{user.name}</p>
-              <p className="truncate text-xs text-muted-foreground">
-                {roleLabel(user.permission)}
-              </p>
+          {!collapsed && (
+            <div className="flex min-w-0 flex-grow items-center justify-between text-start">
+              <div className="min-w-0 flex-grow">
+                <p className="truncate text-sm font-medium leading-tight">{user.name}</p>
+                <p className="truncate text-xs text-muted-foreground">
+                  {roleLabel(user.permission)}
+                </p>
+              </div>
+              <ChevronsUpDown className="h-4 w-4 shrink-0 text-muted-foreground ms-1" aria-hidden />
             </div>
-            <ChevronsUpDown className="h-4 w-4 text-muted-foreground shrink-0 ms-1" />
-          </div>
+          )}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
