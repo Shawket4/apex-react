@@ -1,3 +1,16 @@
+/**
+ * DEPRECATED — superseded by the server-side build.
+ *
+ * The oil-change export moved to Go (Apis/ExportOilChanges, built with
+ * excelize in services/OilExcelExport.go). Nothing calls this module any more.
+ * It produces a DIFFERENT workbook to the one users now receive: no master
+ * sheet, no per-vehicle history sheets, and no filter columns. Do not wire it
+ * back up — extend the Go builder instead, or the two will disagree about what
+ * an oil-change export is.
+ *
+ * Kept only so nothing that may still import it breaks; safe to delete once
+ * that is confirmed.
+ */
 import type { TFunction } from 'i18next';
 import { exportToExcel, EXCEL_PALETTE, type ExcelColumn } from '@/shared/lib/excel';
 import type { OilChangeView } from '@/entities/oil-change/schemas';

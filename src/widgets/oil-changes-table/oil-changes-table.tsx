@@ -20,7 +20,9 @@ import { cn } from '@/shared/lib/cn';
 import { format, formatDateTime, formatCurrency } from '@/shared/lib/format';
 import { formatNumber } from '@/shared/lib/format-number';
 import type { OilChangeView } from '@/entities/oil-change/schemas';
+import { useIsMobile } from '@/shared/hooks/use-media-query';
 import { OilChangeFilterChips } from '@/entities/oil-change/filter-chips';
+import { OilChangesMobileList } from './oil-changes-mobile-list';
 import { OilChangeStatusBadge } from './oil-change-status-badge';
 
 interface OilChangesTableProps {
@@ -56,6 +58,7 @@ export function OilChangesTable({
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
 
   const columns = React.useMemo<ColumnDef<OilChangeView>[]>(
     () => [
@@ -226,6 +229,23 @@ export function OilChangesTable({
     ],
     [t, navigate, onDelete, onViewHistory, queryClient],
   );
+
+  // A nine-column table does not survive a phone, so the same rows render as
+  // cards there. One model, two presentations -- the split the trips list uses.
+  if (isMobile) {
+    return (
+      <OilChangesMobileList
+        rows={rows}
+        loading={loading}
+        variant="fleet"
+        emptyState={emptyState}
+        onViewHistory={onViewHistory}
+        onEdit={(row) => navigate(`/oil-changes/${row.ID}/edit`)}
+        onDelete={onDelete}
+        onSelect={(row) => onViewHistory?.(row.car_no_plate)}
+      />
+    );
+  }
 
   return (
     <DataTable

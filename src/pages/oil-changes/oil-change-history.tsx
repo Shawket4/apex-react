@@ -17,11 +17,16 @@ import {
 } from 'lucide-react';
 import type { ColumnDef } from '@tanstack/react-table';
 import { PageShell } from '@/shared/ui/page-shell';
+import { toast } from '@/shared/ui/toast';
+import { extractErrorMessage } from '@/shared/api/errors';
+import { saveAs } from 'file-saver';
 import { Button } from '@/shared/ui/button';
 import { StatCard } from '@/shared/ui/stat-card';
 import { EmptyState } from '@/shared/ui/empty-state';
 import { ConfirmDialog } from '@/shared/ui/confirm-dialog';
 import { DataTable } from '@/shared/ui/data-table';
+import { useIsMobile } from '@/shared/hooks/use-media-query';
+import { OilChangesMobileList } from '@/widgets/oil-changes-table/oil-changes-mobile-list';
 import { Skeleton } from '@/shared/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip';
 import {
@@ -33,11 +38,12 @@ import type { OilChangeView } from '@/entities/oil-change/schemas';
 import { format, formatCurrency, formatDateTime } from '@/shared/lib/format';
 import { formatNumber, formatCompactCurrency } from '@/shared/lib/format-number';
 import { OilChangeStatusBadge } from '@/widgets/oil-changes-table/oil-change-status-badge';
-import { exportOilChangesHistory } from '@/widgets/oil-changes-table/oil-changes-excel';
+import { exportOilChangesExcel } from '@/entities/oil-change/api';
 import { cn } from '@/shared/lib/cn';
 
 export default function OilChangeHistoryPage() {
   const { t } = useTranslation();
+  const isMobile = useIsMobile();
   const navigate = useNavigate();
   const { carId } = useParams<{ carId: string }>();
   const carNoPlate = carId ? decodeURIComponent(carId) : '';
@@ -230,10 +236,46 @@ export default function OilChangeHistoryPage() {
   /* ------------------------------------------------------------------------ */
 
   const handleExport = async () => {
-    if (history.length === 0) return;
     setExporting(true);
     try {
-      await exportOilChangesHistory({ rows: history, carNoPlate, t });
+      const { blob, filename } = await exportOilChangesExcel({
+        title: t('oilChanges.title'),
+        subtitle: t('oilChanges.subtitle'),
+        master: t('oilChanges.export.masterSheet'),
+        car_plate: t('oilChanges.fields.carPlate'),
+        date: t('oilChanges.fields.date'),
+        supervisor: t('oilChanges.fields.supervisor'),
+        driver: t('oilChanges.fields.driver'),
+        odometer_at_change: t('oilChanges.fields.odometerAtChange'),
+        current_odometer: t('oilChanges.fields.currentOdometer'),
+        km_used: t('oilChanges.fields.kmUsed'),
+        km_remaining: t('oilChanges.fields.kmRemaining'),
+        interval: t('oilChanges.fields.mileage'),
+        status: t('common.status'),
+        cost: t('oilChanges.fields.cost'),
+        filters: t('oilChanges.fields.filters'),
+        oil_filter: t('oilChanges.filters.oilLabel'),
+        fuel_filter: t('oilChanges.filters.fuelLabel'),
+        water_filter: t('oilChanges.filters.waterLabel'),
+        total_vehicles: t('oilChanges.stats.totalVehicles'),
+        total_cost: t('oilChanges.stats.totalCost'),
+        status_good: t('oilChanges.status.good'),
+        status_warning: t('oilChanges.status.warning'),
+        status_critical: t('oilChanges.status.critical'),
+        totals: t('oilChanges.fields.totals'),
+        yes: t('common.yes'),
+        no: t('common.no'),
+      });
+      saveAs(blob, filename);
+    } catch (err) {
+      // A 404 means there is nothing recorded yet -- say that, rather than
+      // reporting a failure, because nothing actually went wrong.
+      const status = (err as { response?: { status?: number } })?.response?.status;
+      if (status === 404) {
+        toast.error(t('oilChanges.export.empty'));
+      } else {
+        toast.error(extractErrorMessage(err, t('oilChanges.export.failed')));
+      }
     } finally {
       setExporting(false);
     }
@@ -386,11 +428,22 @@ export default function OilChangeHistoryPage() {
             />
           </div>
 
-          <DataTable
-            columns={columns}
-            data={history}
-            onRowClick={(row) => navigate(`/oil-changes/${row.ID}/edit`)}
-          />
+          {/* Same rows, card layout on a phone -- see the fleet table. */}
+          {isMobile ? (
+            <OilChangesMobileList
+              rows={history}
+              variant="history"
+              onEdit={(row) => navigate(`/oil-changes/${row.ID}/edit`)}
+              onDelete={(row) => setPendingDelete(row)}
+              onSelect={(row) => navigate(`/oil-changes/${row.ID}/edit`)}
+            />
+          ) : (
+            <DataTable
+              columns={columns}
+              data={history}
+              onRowClick={(row) => navigate(`/oil-changes/${row.ID}/edit`)}
+            />
+          )}
         </>
       )}
 

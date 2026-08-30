@@ -81,3 +81,40 @@ export function selectHistoryForCarPlate(
       return b.ID - a.ID;
     });
 }
+
+/* -------------------------------------------------------------------------- */
+/* Export                                                                      */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Ask the Go backend for the workbook.
+ *
+ * The build moved off the browser: the client could only ever export what it
+ * already held, which meant the fleet screen produced latest-per-vehicle and
+ * the history screen produced one truck, and nothing produced the fleet's
+ * history. The server returns both shapes in one file — a master sheet of the
+ * latest change per vehicle, then a sheet per vehicle.
+ *
+ * Labels travel with the request so the sheet reads in the user's language
+ * without a second set of strings living on the server.
+ */
+export async function exportOilChangesExcel(
+  labels: Record<string, string>,
+): Promise<{ blob: Blob; filename: string }> {
+  const response = await apiClient.post('/api/ExportOilChanges', labels, {
+    responseType: 'blob',
+  });
+
+  const blob = new Blob([response.data as BlobPart], {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  });
+
+  let filename = 'oil-changes.xlsx';
+  const disposition = response.headers?.['content-disposition'];
+  if (typeof disposition === 'string') {
+    const match = disposition.match(/filename="?([^";]+)"?/i);
+    if (match?.[1]) filename = match[1];
+  }
+
+  return { blob, filename };
+}

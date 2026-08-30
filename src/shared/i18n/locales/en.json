@@ -1226,6 +1226,11 @@
       "deleted": "Oil change deleted",
       "saveFailed": "Failed to save oil change",
       "deleteFailed": "Failed to delete oil change"
+    },
+    "export": {
+      "masterSheet": "Fleet",
+      "empty": "There are no oil-change records to export yet.",
+      "failed": "Could not build the spreadsheet."
     }
   },
   "commandPalette": {

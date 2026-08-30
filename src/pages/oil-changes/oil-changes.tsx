@@ -13,6 +13,9 @@ import {
   Truck,
 } from 'lucide-react';
 import { PageShell } from '@/shared/ui/page-shell';
+import { toast } from '@/shared/ui/toast';
+import { extractErrorMessage } from '@/shared/api/errors';
+import { saveAs } from 'file-saver';
 import { Button } from '@/shared/ui/button';
 import { StatCard } from '@/shared/ui/stat-card';
 import { EmptyState } from '@/shared/ui/empty-state';
@@ -32,7 +35,7 @@ import {
   OilChangesFilters,
   type StatusFilterValue,
 } from '@/widgets/oil-changes-table/oil-changes-filters';
-import { exportOilChangesFleet } from '@/widgets/oil-changes-table/oil-changes-excel';
+import { exportOilChangesExcel } from '@/entities/oil-change/api';
 
 /* -------------------------------------------------------------------------- */
 /* URL helpers                                                                 */
@@ -148,10 +151,46 @@ export default function OilChangesPage() {
   };
 
   const handleExport = async () => {
-    if (filtered.length === 0) return;
     setExporting(true);
     try {
-      await exportOilChangesFleet({ rows: filtered, t });
+      const { blob, filename } = await exportOilChangesExcel({
+        title: t('oilChanges.title'),
+        subtitle: t('oilChanges.subtitle'),
+        master: t('oilChanges.export.masterSheet'),
+        car_plate: t('oilChanges.fields.carPlate'),
+        date: t('oilChanges.fields.date'),
+        supervisor: t('oilChanges.fields.supervisor'),
+        driver: t('oilChanges.fields.driver'),
+        odometer_at_change: t('oilChanges.fields.odometerAtChange'),
+        current_odometer: t('oilChanges.fields.currentOdometer'),
+        km_used: t('oilChanges.fields.kmUsed'),
+        km_remaining: t('oilChanges.fields.kmRemaining'),
+        interval: t('oilChanges.fields.mileage'),
+        status: t('common.status'),
+        cost: t('oilChanges.fields.cost'),
+        filters: t('oilChanges.fields.filters'),
+        oil_filter: t('oilChanges.filters.oilLabel'),
+        fuel_filter: t('oilChanges.filters.fuelLabel'),
+        water_filter: t('oilChanges.filters.waterLabel'),
+        total_vehicles: t('oilChanges.stats.totalVehicles'),
+        total_cost: t('oilChanges.stats.totalCost'),
+        status_good: t('oilChanges.status.good'),
+        status_warning: t('oilChanges.status.warning'),
+        status_critical: t('oilChanges.status.critical'),
+        totals: t('oilChanges.fields.totals'),
+        yes: t('common.yes'),
+        no: t('common.no'),
+      });
+      saveAs(blob, filename);
+    } catch (err) {
+      // A 404 means there is nothing recorded yet -- say that, rather than
+      // reporting a failure, because nothing actually went wrong.
+      const status = (err as { response?: { status?: number } })?.response?.status;
+      if (status === 404) {
+        toast.error(t('oilChanges.export.empty'));
+      } else {
+        toast.error(extractErrorMessage(err, t('oilChanges.export.failed')));
+      }
     } finally {
       setExporting(false);
     }
