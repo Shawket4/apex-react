@@ -134,10 +134,7 @@ export default function DashboardPage() {
       )}
 
       {/* ---- fleet + exceptions ---- */}
-      {/* items-start: grid stretches its items to the tallest by default, and
-          the exceptions panel usually holds two rows against the fleet grid's
-          twenty — which left a card that was three-quarters empty. */}
-      <div className="grid items-start gap-3 lg:grid-cols-[1.6fr_1fr]">
+      <div className="grid gap-3 lg:grid-cols-[1.6fr_1fr]">
         <section className="overflow-hidden rounded-lg border bg-card">
           <PanelHead
             title={t('dashboard.fleet.title')}
@@ -1016,13 +1013,6 @@ function CategoryBars({ categories }: { categories: { key: string; out: string }
 /* enough to earn one of its own.                                              */
 /* -------------------------------------------------------------------------- */
 
-/**
- * How many rows each attention column shows before deferring to "View all".
- * The panel is a prompt to go and look, not the register — and two columns of
- * very different lengths leave one of them staring at empty card.
- */
-const ATTENTION_VISIBLE_ROWS = 8;
-
 function AttentionPanel({
   attention,
   pending,
@@ -1031,15 +1021,8 @@ function AttentionPanel({
   pending: boolean;
 }) {
   const { t } = useTranslation();
-  const allDocs = attention?.documents ?? [];
-  const allOil = attention?.oil_changes ?? [];
-  // Cap by row count, not by pixel height. A max-height cut the last row
-  // through the middle, which reads as a rendering fault; slicing the array
-  // ends on a row boundary and lets the header say how many were held back.
-  // Both columns take the same cap so one long list cannot leave the other
-  // sitting above half a panel of nothing.
-  const docs = allDocs.slice(0, ATTENTION_VISIBLE_ROWS);
-  const oil = allOil.slice(0, ATTENTION_VISIBLE_ROWS);
+  const docs = attention?.documents ?? [];
+  const oil = attention?.oil_changes ?? [];
 
   if (pending) {
     return (
@@ -1068,11 +1051,11 @@ function AttentionPanel({
   return (
     <section className="overflow-hidden rounded-lg border bg-card">
       <PanelHead title={t('dashboard.attention.title')} />
-      <div className="grid items-start gap-3 p-3 md:grid-cols-2">
+      <div className="grid gap-3 p-3 md:grid-cols-2">
         <AttentionColumn
           title={t('dashboard.attention.documents')}
           shown={docs.length}
-          total={attention?.documents_total ?? allDocs.length}
+          total={attention?.documents_total ?? docs.length}
           empty={t('dashboard.attention.noDocuments')}
           href="/cars"
         >
@@ -1098,7 +1081,7 @@ function AttentionPanel({
         <AttentionColumn
           title={t('dashboard.attention.oilChanges')}
           shown={oil.length}
-          total={attention?.oil_changes_total ?? allOil.length}
+          total={attention?.oil_changes_total ?? oil.length}
           empty={t('dashboard.attention.noOilChanges')}
           href="/oil-changes"
         >
@@ -1164,12 +1147,10 @@ function AttentionColumn({
         <p className="py-6 text-center text-xs text-muted-foreground">{empty}</p>
       ) : (
         <>
-          {/* No inner scroll. A max-height here cut the last visible row
-              through the middle, which reads as a rendering fault rather than
-              as "there is more"; and a scroll container nested in the page
-              scroll steals the wheel when the pointer crosses it. The page
-              scrolls, the column just ends. */}
-          <div className="grid gap-2">{children}</div>
+          {/* The server sends every match now, so the column scrolls rather
+              than pushing the rest of the dashboard down a screen. The cap is
+              roughly six rows — enough that the list reads as a list. */}
+          <div className="grid max-h-[19.5rem] gap-2 overflow-y-auto pr-1">{children}</div>
           <Link
             to={href}
             className="mt-2 inline-block rounded-sm text-[11px] text-muted-foreground underline underline-offset-2 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
