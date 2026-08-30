@@ -215,7 +215,7 @@ export default function OilChangesPage() {
       ) : (
         <>
           {/* KPI cards */}
-          <div className="grid grid-cols-2 gap-2.5 md:grid-cols-3 lg:grid-cols-5">
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
             <StatCard
               label={t('oilChanges.stats.totalVehicles')}
               value={String(stats.totalVehicles)}
@@ -277,7 +277,7 @@ export default function OilChangesPage() {
             onViewHistory={handleViewHistory}
             onDelete={(row) => setPendingDelete(row)}
             emptyState={
-              <div className="flex flex-col items-center gap-2 py-8 text-sm">
+              <div className="flex flex-col items-center gap-2 py-6 text-center text-xs">
                 <span className="text-muted-foreground">
                   {t('oilChanges.empty.noMatches')}
                 </span>

@@ -70,7 +70,7 @@ export default function OilChangeEditPage() {
         <span className="flex items-center gap-3">
           {t('oilChanges.edit.title')}
           {record && (
-            <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
+            <span className="rounded-full bg-muted px-2 py-0.5 font-mono text-[10.5px] font-medium tabular-nums text-muted-foreground">
               ID: {record.ID}
             </span>
           )}
@@ -99,10 +99,10 @@ export default function OilChangeEditPage() {
           }
         />
       ) : isLoading || carsLoading || !initialValues ? (
-        <div className="space-y-4">
-          <Skeleton className="h-40 w-full" />
-          <Skeleton className="h-40 w-full" />
-          <Skeleton className="h-56 w-full" />
+        <div className="space-y-3">
+          <Skeleton className="h-40 w-full rounded-lg" />
+          <Skeleton className="h-40 w-full rounded-lg" />
+          <Skeleton className="h-56 w-full rounded-lg" />
         </div>
       ) : (
         <OilChangeForm

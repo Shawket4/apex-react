@@ -33,10 +33,10 @@ export function ServiceCarsTable({
       header: t('serviceInvoices.fields.plateNumber'),
       cell: ({ row }: any) => (
         <div className="flex items-center gap-3">
-          <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
-            <Truck className="h-4 w-4 text-primary" />
+          <div className="h-8 w-8 rounded-md bg-muted flex items-center justify-center">
+            <Truck className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
           </div>
-          <div className="font-black tracking-tight text-lg">{row.getValue('car_no_plate')}</div>
+          <div className="font-mono text-[15px] font-semibold tabular-nums" dir="auto">{row.getValue('car_no_plate')}</div>
         </div>
       ),
     },
@@ -45,7 +45,7 @@ export function ServiceCarsTable({
       header: t('nav.trucks'),
       cell: ({ row }: any) => (
         <Badge variant="outline" className="font-medium">
-          {row.getValue('car_type') || '-'}
+          {row.getValue('car_type') || <span className="opacity-40">—</span>}
         </Badge>
       ),
     },
@@ -58,15 +58,15 @@ export function ServiceCarsTable({
       cell: ({ row }: any) => {
         const car = row.original as Car;
         return (
-          <div className="text-right">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="gap-2 hover:bg-primary/5 hover:text-primary transition-all group"
+          <div className="text-end">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="gap-2"
               onClick={() => onSelect(car)}
             >
-              <span className="font-semibold text-xs uppercase tracking-wider">{t('common.view')}</span>
-              <ChevronRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+              <span className="text-xs">{t('common.view')}</span>
+              <ChevronRight className="h-4 w-4 rtl:rotate-180" aria-hidden="true" />
             </Button>
           </div>
         );

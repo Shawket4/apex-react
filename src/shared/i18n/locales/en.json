@@ -72,6 +72,10 @@
     "filters": "Filters",
     "apply": "Apply"
   },
+  "placeholder": {
+    "speedViolations": "Speed violations tracking and telemetry radar are currently being compiled.",
+    "comingSoon": "This module will be refactored next. The scaffold, architecture, and API wiring are ready."
+  },
   "nav": {
     "overview": "Overview",
     "operations": "Operations",
