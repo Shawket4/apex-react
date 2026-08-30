@@ -14,7 +14,6 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import { useLocation } from 'react-router-dom';
-import { format } from 'date-fns';
 import type { ServiceInvoice } from '@/entities/service-invoice/schemas';
 import { Button } from '@/shared/ui/button';
 import { Card, CardContent } from '@/shared/ui/card';
@@ -22,7 +21,7 @@ import { Badge } from '@/shared/ui/badge';
 import { StatCard } from '@/shared/ui/stat-card';
 import { EmptyState } from '@/shared/ui/empty-state';
 import { cn } from '@/shared/lib/cn';
-import { formatNumber } from '@/shared/lib/format';
+import { format as fmtDate, formatNumber } from '@/shared/lib/format';
 
 interface ServiceInvoiceDetailsProps {
   invoice: ServiceInvoice;
@@ -46,6 +45,10 @@ export function ServiceInvoiceDetails({
   // Use stateInvoice if it matches the current ID, otherwise use propInvoice
   const invoice = (stateInvoice?.ID === propInvoice.ID) ? stateInvoice : propInvoice;
 
+  // `date` is only `z.string()` on the schema, so an empty or non-ISO value
+  // must degrade to a dash rather than throw out of the whole details view.
+  const dateLabel = fmtDate(invoice.date, 'd MMM yyyy');
+
   const handlePrint = () => {
     window.print();
   };
@@ -63,7 +66,8 @@ export function ServiceInvoiceDetails({
               {t('serviceInvoices.receipt.title')} #{invoice.ID}
             </h1>
             <p className="mt-0.5 text-[11.5px] text-muted-foreground">
-              {invoice.plate_number} · {format(new Date(invoice.date), 'd MMM yyyy')}
+              {invoice.plate_number} ·{' '}
+              {dateLabel || <span className="opacity-40">—</span>}
             </p>
           </div>
         </div>
@@ -87,7 +91,7 @@ export function ServiceInvoiceDetails({
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3 print:gap-2">
             <StatCard
               label={t('serviceInvoices.fields.date')}
-              value={format(new Date(invoice.date), 'd MMM yyyy')}
+              value={dateLabel || '—'}
               icon={Calendar}
               tone="primary"
             />
@@ -170,19 +174,19 @@ export function ServiceInvoiceDetails({
                           {isMatched && (
                             <div className="absolute top-2 start-2 flex items-center gap-1">
                               {matchType === 'semantic' && (
-                                <div className="flex items-center gap-1.5 bg-primary/10 px-2 py-0.5 rounded-full text-[9px] font-black text-primary uppercase tracking-tighter border border-primary/20 print:bg-primary/5">
+                                <div className="flex items-center gap-1.5 bg-primary/10 px-2 py-0.5 rounded-full text-[9px] font-medium text-primary uppercase tracking-tighter border border-primary/40 print:bg-primary/5">
                                   <Sparkles className="h-2.5 w-2.5" aria-hidden="true" />
                                   <span>{t('serviceInvoices.search.matchPercent', { percent: Math.round((1 - (item.distance || 0)) * 100) })}</span>
                                 </div>
                               )}
                               {matchType === 'keyword' && (
-                                <div className="flex items-center gap-1.5 bg-muted px-2 py-0.5 rounded-full text-[9px] font-black text-muted-foreground uppercase tracking-tighter border border-border print:bg-muted">
+                                <div className="flex items-center gap-1.5 bg-muted px-2 py-0.5 rounded-full text-[9px] font-medium text-muted-foreground uppercase tracking-tighter border border-border print:bg-muted">
                                   <Search className="h-2.5 w-2.5" aria-hidden="true" />
                                   <span>{t('serviceInvoices.search.keyword')}</span>
                                 </div>
                               )}
                               {matchType === 'both' && (
-                                <div className="flex items-center gap-1 bg-primary/10 px-2 py-0.5 rounded-full text-[9px] font-black text-primary uppercase tracking-tighter border border-primary/40 print:bg-primary/5">
+                                <div className="flex items-center gap-1 bg-primary/10 px-2 py-0.5 rounded-full text-[9px] font-medium text-primary uppercase tracking-tighter border border-primary/40 print:bg-primary/5">
                                   <Sparkles className="h-2.5 w-2.5" aria-hidden="true" />
                                   <Search className="h-2.5 w-2.5" aria-hidden="true" />
                                   <span>{t('serviceInvoices.search.hybrid')}</span>

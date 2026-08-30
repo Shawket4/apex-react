@@ -361,8 +361,8 @@ function Amount({ row, className }: { row: Transaction; className?: string }) {
     <span
       dir="ltr"
       className={cn(
-        'whitespace-nowrap font-mono font-semibold tabular-nums text-money',
-        isIn && 'text-money',
+        'whitespace-nowrap font-mono font-semibold tabular-nums',
+        isIn ? 'text-money' : 'text-foreground',
         row.fee != null && 'cursor-help border-b border-dotted border-muted-foreground/50',
         className,
       )}

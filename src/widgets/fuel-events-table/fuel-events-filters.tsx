@@ -217,8 +217,10 @@ function MethodButton({
       {typeof count === 'number' && (
         <span
           className={cn(
-            'hidden rounded-full bg-muted px-2 py-0.5 font-mono text-[10.5px] font-medium tabular-nums text-foreground sm:inline-block',
-            active ? '' : '',
+            'hidden rounded-full px-2 py-0.5 font-mono text-[10.5px] font-medium tabular-nums sm:inline-block',
+            active
+              ? 'bg-primary-foreground/20 text-primary-foreground'
+              : 'bg-muted text-muted-foreground',
           )}
         >
           {count}

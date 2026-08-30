@@ -142,7 +142,7 @@ export function PartyPicker({
           />
           <CommandList>
             <CommandEmpty>
-              <span className="block px-3 py-2 text-sm text-muted-foreground">
+              <span className="block px-3 py-6 text-center text-xs text-muted-foreground">
                 {t('fleetExpenses.party.noMatch')}
               </span>
             </CommandEmpty>

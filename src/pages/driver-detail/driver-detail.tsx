@@ -106,7 +106,7 @@ export default function DriverDetailPage() {
           title={t('common.notFound')}
           action={
             <Button variant="outline" asChild>
-              <Link to="/drivers" onClick={() => navigate('/drivers')}>
+              <Link to="/drivers">
                 <ArrowLeft className="rtl:rotate-180" aria-hidden="true" />
                 {t('common.back')}
               </Link>
@@ -143,7 +143,7 @@ export default function DriverDetailPage() {
         actions={
           <>
             <Button variant="outline" size="sm" asChild>
-              <Link to="/drivers" onClick={() => navigate('/drivers')} aria-label={t('common.back')}>
+              <Link to="/drivers" aria-label={t('common.back')}>
                 <ArrowLeft className="rtl:rotate-180" aria-hidden="true" />
                 <span className="hidden sm:inline">{t('common.back')}</span>
               </Link>

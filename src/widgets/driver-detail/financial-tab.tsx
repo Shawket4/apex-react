@@ -65,10 +65,11 @@ export function FinancialTab({ driverId }: FinancialTabProps) {
           <Link
             key={link.key}
             to={link.to}
-            role="button"
-            tabIndex={0}
             {...intentProps(() => link.warm())}
-            onClick={() => navigate(link.to)}
+            onClick={(e) => {
+              e.preventDefault();
+              navigate(link.to);
+            }}
             onKeyDown={(e) => {
               if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault();

@@ -355,8 +355,8 @@ export default function OilChangeHistoryPage() {
                 full: formatCurrency(stats.totalCost),
                 compact: formatCompactCurrency(stats.totalCost),
               }}
+              valueClassName="font-mono text-money"
               icon={Droplets}
-              tone="primary"
             />
             <StatCard
               label={t('oilChanges.history.stats.avgCost')}
@@ -364,6 +364,7 @@ export default function OilChangeHistoryPage() {
                 full: formatCurrency(stats.avgCost),
                 compact: formatCompactCurrency(stats.avgCost),
               }}
+              valueClassName="font-mono text-money"
               icon={User}
             />
             <StatCard

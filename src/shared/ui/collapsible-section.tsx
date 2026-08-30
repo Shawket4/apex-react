@@ -64,9 +64,10 @@ export function CollapsibleSection({
           !alwaysOpen &&
             'cursor-pointer select-none transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring',
         )}
-        role={alwaysOpen ? undefined : 'button'}
-        tabIndex={alwaysOpen ? undefined : 0}
-        aria-expanded={alwaysOpen ? undefined : isOpen}
+        // The disclosure control is the inner <button>; the row itself must not
+        // also be a button, or the header is two tab stops and two identical
+        // "expanded" announcements for one section. The click handler stays
+        // here — the button's click bubbles up to it and fires it exactly once.
         onClick={alwaysOpen ? undefined : toggle}
         onKeyDown={
           alwaysOpen

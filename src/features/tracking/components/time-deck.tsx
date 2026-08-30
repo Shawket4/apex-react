@@ -608,15 +608,14 @@ function LegRail({
                     style={{ background: `rgb(${r} ${g} ${b})` }}
                   />
                   {cut && '‹'}#{tripId}
-                  <span className={tripActive ? 'text-muted-foreground' : 'text-muted-foreground'}>
+                  <span className="text-muted-foreground">
                     · {members.length} {t('tracking.legsShort', 'legs')}
                   </span>
                   {cut && '›'}
                 </span>
                 <span
                   className={cn(
-                    'ps-3 font-mono text-[9px] tabular-nums',
-                    tripActive ? 'text-muted-foreground' : 'text-muted-foreground',
+                    'ps-3 font-mono text-[9px] tabular-nums text-muted-foreground',
                   )}
                 >
                   {first.fromName ?? '—'} → {last.toName ?? '—'}
@@ -680,8 +679,7 @@ function LegRail({
                     </span>
                     <span
                       className={cn(
-                        'ps-3 font-mono text-[9px] tabular-nums',
-                        active ? 'text-muted-foreground' : 'text-muted-foreground',
+                        'ps-3 font-mono text-[9px] tabular-nums text-muted-foreground',
                       )}
                     >
                       {timeFmt.format(seg.leg.depart).slice(0, 5)}–

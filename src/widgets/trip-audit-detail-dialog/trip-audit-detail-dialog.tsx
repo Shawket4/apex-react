@@ -856,7 +856,7 @@ function FlagDetails({ flag }: { flag: TripFlag }) {
             )}
             {lat != null && lng != null && (
               <span className="ms-2 font-mono tabular-nums" dir="ltr">
-                ({formatNumber(lat, 5)}, {formatNumber(lng, 5)})
+                ({lat.toFixed(5)}, {lng.toFixed(5)})
               </span>
             )}
           </p>

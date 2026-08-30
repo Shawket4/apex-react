@@ -111,6 +111,7 @@ function FilterTab({
       onClick={onClick}
       className={cn(
         'inline-flex h-7 items-center gap-1.5 rounded px-2.5 text-xs font-medium transition-colors',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
         active
           ? 'bg-background text-foreground shadow-sm'
           : 'text-muted-foreground hover:text-foreground',

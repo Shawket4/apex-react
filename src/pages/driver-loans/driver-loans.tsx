@@ -243,11 +243,13 @@ export default function DriverLoansPage() {
           <StatCard
             label={t('driverLoans.stats.totalAmount')}
             value={formatCurrency(stats.totalAmount)}
+            valueClassName="font-mono text-money"
             icon={DollarSign}
           />
           <StatCard
             label={t('driverLoans.stats.average')}
             value={formatCurrency(stats.avgAmount)}
+            valueClassName="font-mono text-money"
             icon={DollarSign}
           />
           <StatCard
@@ -258,6 +260,7 @@ export default function DriverLoansPage() {
           <StatCard
             label={t('driverLoans.stats.unpaid')}
             value={formatCurrency(stats.unpaidAmount)}
+            valueClassName="font-mono text-money"
             icon={DollarSign}
           />
         </div>

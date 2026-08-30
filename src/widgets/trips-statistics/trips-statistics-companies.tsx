@@ -187,7 +187,7 @@ function CompanyCard({
               {formatNumber(company.total_distance, 2)} km
             </span>
             {hasFinancialAccess && (
-              <span className="tabular-nums text-money font-medium">
+              <span className="font-mono tabular-nums text-money font-medium">
                 {formatCurrency(
                   company.total_amount || company.total_revenue,
                 )}
@@ -249,7 +249,7 @@ function CompanyPie({
         height={240}
         className="sm:h-[280px] md:h-[300px]"
       >
-        <div className="flex h-full items-center justify-center text-xs text-muted-foreground px-4 text-center">
+        <div className="flex h-full items-center justify-center px-4 py-6 text-center text-xs text-muted-foreground">
           {t('trips.statistics.companies.noGroupBreakdown')}
         </div>
       </ChartCard>
@@ -628,7 +628,7 @@ function CompanyGroupTable({
 
   if (groups.length === 0) {
     return (
-      <div className="flex items-center justify-center rounded-lg border bg-muted/20 p-6 sm:p-8 text-xs sm:text-sm text-muted-foreground text-center">
+      <div className="rounded-lg border bg-muted/20 py-6 text-center text-xs text-muted-foreground">
         {t('trips.statistics.companies.noBreakdown')}
       </div>
     );
@@ -673,7 +673,7 @@ function RoutesSubTable({
 
   if (routes.length === 0) {
     return (
-      <div className="border-s-2 border-primary/30 ms-4 my-2 p-3 text-xs text-muted-foreground italic">
+      <div className="ms-4 my-2 px-3 py-6 text-center text-xs text-muted-foreground">
         {t('trips.statistics.companies.noRoutesForGroup', {
           group: group.group_name,
         })}
@@ -962,7 +962,7 @@ function DaysSubTable({
 
   if (isError) {
     return (
-      <div className="border-s-2 border-destructive/40 ms-4 my-2 p-2.5 text-[11px] text-muted-foreground italic">
+      <div className="ms-4 my-2 px-3 py-6 text-center text-xs text-muted-foreground">
         {t('trips.statistics.companies.dailyLoadError')}
       </div>
     );
@@ -970,7 +970,7 @@ function DaysSubTable({
 
   if (days.length === 0) {
     return (
-      <div className="border-s-2 border-success/40 ms-4 my-2 p-2.5 text-[11px] text-muted-foreground italic">
+      <div className="ms-4 my-2 px-3 py-6 text-center text-xs text-muted-foreground">
         {t('trips.statistics.companies.noDaysForRoute')}
       </div>
     );
@@ -1074,7 +1074,7 @@ function CarsSubTable({
 
   if (cars.length === 0) {
     return (
-      <div className="border-s-2 border-success/40 ms-4 my-2 p-2.5 text-[11px] text-muted-foreground italic">
+      <div className="ms-4 my-2 px-3 py-6 text-center text-xs text-muted-foreground">
         {t('trips.statistics.companies.noCarsForRoute')}
       </div>
     );

@@ -28,6 +28,6 @@ export const zIntegerNonNegative = z
 /** ISO date string YYYY-MM-DD */
 export const zDateString = z
   .string()
-  .regex(/^\d{4}-\d{2}-\d{2}$/, {
+  .refine((v) => /^\d{4}-\d{2}-\d{2}$/.test(v), () => ({
     message: i18n.t('validation.invalidDate', { defaultValue: 'Invalid date' }),
-  });
+  }));

@@ -110,7 +110,7 @@ export default function FleetExpensesMessagesPage() {
               onClick={() => setStatus(s)}
               aria-pressed={status === s}
               className={cn(
-                'min-h-11 shrink-0 whitespace-nowrap rounded-full border px-3.5 py-1 text-xs font-medium transition-colors lg:min-h-8 lg:px-3',
+                'min-h-11 shrink-0 whitespace-nowrap rounded-full border px-3.5 py-1 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:min-h-8 lg:px-3',
                 status === s
                   ? 'border-primary bg-primary text-primary-foreground'
                   : 'bg-card text-muted-foreground hover:bg-accent',
@@ -124,7 +124,7 @@ export default function FleetExpensesMessagesPage() {
             onClick={() => setIncludeMedia((v) => !v)}
             aria-pressed={includeMedia}
             className={cn(
-              'min-h-11 shrink-0 whitespace-nowrap rounded-full border border-dashed px-3.5 py-1 text-xs font-medium transition-colors lg:min-h-8 lg:px-3',
+              'min-h-11 shrink-0 whitespace-nowrap rounded-full border border-dashed px-3.5 py-1 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:min-h-8 lg:px-3',
               includeMedia
                 ? 'border-primary bg-primary text-primary-foreground'
                 : 'bg-card text-muted-foreground hover:bg-accent',
@@ -262,7 +262,7 @@ function MessageCard({
           <Link
             to={`/fleet-expenses/${message.transaction_id}/edit`}
             state={{ from: 'messages' }}
-            className="font-semibold text-primary hover:underline"
+            className="rounded font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             {message.status === 'matched'
               ? t('messages.toTransaction', { id: message.transaction_id })

@@ -191,7 +191,7 @@ function RoutesTable({
           <span className="block text-end">{t('trips.statistics.excel.cols.carRent')}</span>
         ),
         cell: ({ row }) => (
-          <span className="block text-end tabular-nums text-muted-foreground">
+          <span className="block text-end font-mono tabular-nums text-muted-foreground">
             {row.original.car_rental ? (
               formatCurrency(row.original.car_rental)
             ) : (
@@ -207,7 +207,7 @@ function RoutesTable({
           <span className="block text-end">{t('trips.statistics.excel.cols.vat')}</span>
         ),
         cell: ({ row }) => (
-          <span className="block text-end tabular-nums text-muted-foreground">
+          <span className="block text-end font-mono tabular-nums text-muted-foreground">
             {row.original.vat ? (
               formatCurrency(row.original.vat)
             ) : (
@@ -223,7 +223,7 @@ function RoutesTable({
           <span className="block text-end">{t('trips.statistics.excel.cols.totalAmount')}</span>
         ),
         cell: ({ row }) => (
-          <span className="block text-end font-semibold tabular-nums">
+          <span className="block text-end font-mono font-semibold tabular-nums text-money">
             {formatCurrency(
               row.original.total_with_vat || row.original.total_revenue,
             )}

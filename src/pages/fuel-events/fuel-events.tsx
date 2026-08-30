@@ -382,8 +382,8 @@ export default function FuelEventsPage() {
   <StatCard
     label={t('fuelEvents.stats.totalCost')}
     value={{
-      full: <span className="text-money">{formatCurrency(stats.totalCost)}</span>,
-      compact: <span className="text-money">{formatCompactCurrency(stats.totalCost)}</span>,
+      full: <span className="font-mono text-money">{formatCurrency(stats.totalCost)}</span>,
+      compact: <span className="font-mono text-money">{formatCompactCurrency(stats.totalCost)}</span>,
     }}
     icon={DollarSign}
     tone="default"
@@ -391,8 +391,8 @@ export default function FuelEventsPage() {
   <StatCard
     label={t('fuelEvents.stats.costPerDay')}
     value={{
-      full: <span className="text-money">{formatCurrency(stats.avgCostPerDay)}</span>,
-      compact: <span className="text-money">{formatCompactCurrency(stats.avgCostPerDay)}</span>,
+      full: <span className="font-mono text-money">{formatCurrency(stats.avgCostPerDay)}</span>,
+      compact: <span className="font-mono text-money">{formatCompactCurrency(stats.avgCostPerDay)}</span>,
     }}
     subvalue={t('fuelEvents.stats.dayPeriod', { count: stats.days })}
     icon={TrendingUp}

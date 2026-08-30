@@ -522,6 +522,10 @@
     "deleteConfirmDescription": "هل أنت متأكد من حذف هذا المصروف بقيمة {{amount}}؟ لا يمكن التراجع عن هذا الإجراء.",
     "paid": "مدفوع",
     "countLabel": "{{count}} مصروف",
+    "countLabel_zero": "لا مصاريف",
+    "countLabel_two": "مصروفان",
+    "countLabel_few": "{{count}} مصاريف",
+    "countLabel_many": "{{count}} مصروفًا",
     "countLabel_other": "{{count}} مصروفات",
     "categories": {
       "Fuel": "وقود",

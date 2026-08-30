@@ -46,7 +46,6 @@ export default function LoginPage() {
     <div className="flex min-h-dvh flex-col bg-background md:flex-row">
       {/* Brand panel — hidden on mobile */}
       <aside className="relative hidden flex-1 items-center justify-center overflow-hidden bg-primary p-12 text-primary-foreground md:flex">
-        <div className="absolute inset-0" />
         <div className="relative max-w-md space-y-6">
           <div className="flex items-center gap-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-white/10 backdrop-blur">

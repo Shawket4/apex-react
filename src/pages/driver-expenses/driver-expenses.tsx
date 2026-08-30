@@ -25,8 +25,7 @@ import { useDriverExpenses, useDeleteDriverExpense } from '@/entities/driver-exp
 import type { DriverExpense } from '@/entities/driver-expense/schemas';
 import { usePermissions } from '@/shared/hooks/use-permissions';
 import { PERMISSION_LEVELS } from '@/shared/config/constants';
-import { format } from 'date-fns';
-import { formatCurrency, fmtDate } from '@/shared/lib/format';
+import { format, formatCurrency, fmtDate } from '@/shared/lib/format';
 import { cn } from '@/shared/lib/cn';
 
 /* ─────────────────────────────────────────────────────────────────────────── */
@@ -125,11 +124,13 @@ export default function DriverExpensesPage() {
           <StatCard
             label={t('driverExpenses.stats.totalAmount')}
             value={formatCurrency(stats.totalAmount)}
+            valueClassName="font-mono text-money"
             icon={DollarSign}
           />
           <StatCard
             label={t('driverExpenses.stats.average')}
             value={formatCurrency(stats.avgAmount)}
+            valueClassName="font-mono text-money"
             icon={DollarSign}
           />
           <StatCard
@@ -140,6 +141,7 @@ export default function DriverExpensesPage() {
           <StatCard
             label={t('driverExpenses.stats.unpaid')}
             value={formatCurrency(stats.unpaidAmount)}
+            valueClassName="font-mono text-money"
             icon={DollarSign}
           />
         </div>
@@ -148,7 +150,7 @@ export default function DriverExpensesPage() {
       {isLoading && (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
           {Array.from({ length: 5 }).map((_, i) => (
-            <Skeleton key={i} className="h-[92px] rounded-lg" />
+            <Skeleton key={i} className="h-[70px] rounded-lg" />
           ))}
         </div>
       )}

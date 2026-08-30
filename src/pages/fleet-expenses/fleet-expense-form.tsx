@@ -437,7 +437,7 @@ export default function FleetExpenseFormPage({ mode }: { mode: 'create' | 'edit'
                       aria-pressed={form.watch('direction') === d}
                       onClick={() => form.setValue('direction', d, { shouldDirty: true })}
                       className={cn(
-                        'flex-1 text-sm font-medium transition-colors',
+                        'flex-1 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring',
                         form.watch('direction') === d
                           ? 'bg-primary text-primary-foreground'
                           : 'bg-card text-muted-foreground hover:bg-accent',

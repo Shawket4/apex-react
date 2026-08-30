@@ -327,9 +327,10 @@ export default function FleetExpensesPage() {
                   compact: formatCompactNumber(Number(stats?.total_out ?? 0)),
                 }
           }
+          valueClassName="font-mono text-money"
           subvalue={t('fleetExpenses.stats.records', { count: stats?.count ?? 0 })}
           icon={TrendingDown}
-          tone="primary"
+          tone="default"
         />
         <StatCard
           label={t('fleetExpenses.stats.fees')}
@@ -341,6 +342,7 @@ export default function FleetExpensesPage() {
                   compact: formatCompactNumber(Number(stats?.total_fees ?? 0)),
                 }
           }
+          valueClassName="font-mono text-money"
           subvalue={t('fleetExpenses.stats.feesHint')}
           icon={Wallet}
         />
@@ -719,7 +721,7 @@ export default function FleetExpensesPage() {
             preloadChunk('fleet-expenses-messages');
             prefetchMessagesFirstPage(queryClient);
           })}
-          className="inline-block py-1 font-semibold text-primary hover:underline"
+          className="inline-block rounded py-1 font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           {t('fleetExpenses.reviewLink')} ›
         </Link>
@@ -777,7 +779,7 @@ function FilterChip({
       className={cn(
         // 44px minimum tap height on touch widths; compact again with a
         // pointer at lg and up.
-        'min-h-11 shrink-0 whitespace-nowrap rounded-full border px-3.5 py-1 text-xs font-medium transition-colors lg:min-h-8 lg:px-3',
+        'min-h-11 shrink-0 whitespace-nowrap rounded-full border px-3.5 py-1 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:min-h-8 lg:px-3',
         active
           ? 'border-primary bg-primary text-primary-foreground'
           : 'bg-card text-muted-foreground hover:bg-accent',

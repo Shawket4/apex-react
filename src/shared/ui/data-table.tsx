@@ -230,7 +230,6 @@ export function DataTable<TData, TValue>({
                             'cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring',
                           isExpanded && 'bg-muted/40',
                         )}
-                        role={onRowClick || canExpand ? 'button' : undefined}
                         tabIndex={onRowClick || canExpand ? 0 : undefined}
                         aria-expanded={canExpand ? !!isExpanded : undefined}
                         onClick={() => {

@@ -464,7 +464,7 @@ function KpiStrip({
           <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
             {t('tripAudit.kpi.needsReview', 'Awaiting review')}
           </p>
-          <p
+          <div
             className={cn(
               'font-mono text-[22px] font-semibold leading-none tabular-nums',
               allClear ? 'text-success' : '',
@@ -477,7 +477,7 @@ function KpiStrip({
             ) : (
               <span className="opacity-40">—</span>
             )}
-          </p>
+          </div>
           <p className="mt-1.5 min-h-[17px] truncate text-[11.5px] text-muted-foreground">
             {allClear
               ? t('tripAudit.kpi.allClearSub', 'nothing needs your attention')
