@@ -105,6 +105,16 @@ export function OilChangesMobileList({
             <Field label={t('oilChanges.fields.kmUsed')}>
               {formatNumber(row.kmUsed, 0)} km
             </Field>
+            {/* Sits beside km used because the pair is the arithmetic: how far
+                it has gone against how far it has left. Negative reads as
+                overdue, so it takes the destructive colour rather than a minus
+                sign nobody looks twice at. */}
+            <Field
+              label={t('oilChanges.fields.kmRemaining')}
+              className={cn(row.kmRemaining < 0 && 'font-semibold text-destructive')}
+            >
+              {formatNumber(row.kmRemaining, 0)} km
+            </Field>
             <Field label={t('oilChanges.fields.cost')} money>
               {formatCurrency(row.cost)}
             </Field>
@@ -180,11 +190,13 @@ function Field({
   children,
   money,
   wide,
+  className,
 }: {
   label: string;
   children: React.ReactNode;
   money?: boolean;
   wide?: boolean;
+  className?: string;
 }) {
   return (
     <div className={cn('min-w-0', wide && 'col-span-2')}>
@@ -195,6 +207,7 @@ function Field({
         className={cn(
           'truncate font-mono text-[12px] tabular-nums',
           money && 'font-semibold text-money',
+          className,
         )}
       >
         {children}
