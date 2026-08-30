@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import {
   Users,
@@ -84,12 +84,12 @@ export default function DriverDetailPage() {
   if (isLoading) {
     return (
       <PageShell
-        title={<Skeleton className="h-8 w-48" />}
-        icon={<Users className="h-5 w-5" />}
+        title={<Skeleton className="h-8 w-48 rounded-sm" />}
+        icon={<Users className="h-5 w-5" aria-hidden="true" />}
       >
-        <div className="mx-auto w-full max-w-4xl space-y-4">
-          <Skeleton className="h-32" />
-          <Skeleton className="h-64" />
+        <div className="flex w-full flex-col gap-3">
+          <Skeleton className="h-9 w-72 rounded-lg" />
+          <Skeleton className="h-64 rounded-lg" />
         </div>
       </PageShell>
     );
@@ -98,16 +98,18 @@ export default function DriverDetailPage() {
   /* ── Not found ── */
   if (!driver) {
     return (
-      <PageShell title={t('common.notFound')} icon={<Users className="h-5 w-5" />}>
+      <PageShell title={t('common.notFound')} icon={<Users className="h-5 w-5" aria-hidden="true" />}>
         <EmptyState
           lottieSrc="/animations/warning.lottie"
           lottieWidth={100}
           lottieHeight={100}
           title={t('common.notFound')}
           action={
-            <Button variant="outline" onClick={() => navigate('/drivers')}>
-              <ArrowLeft className="h-4 w-4 rtl:rotate-180" />
-              {t('common.back')}
+            <Button variant="outline" asChild>
+              <Link to="/drivers" onClick={() => navigate('/drivers')}>
+                <ArrowLeft className="rtl:rotate-180" aria-hidden="true" />
+                {t('common.back')}
+              </Link>
             </Button>
           }
         />
@@ -120,44 +122,46 @@ export default function DriverDetailPage() {
       <PageShell
         title={driver.name}
         description={
-          <span className="inline-flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
-            <span className="tabular-nums">#{driver.ID}</span>
+          <span className="inline-flex flex-wrap items-center gap-x-2 gap-y-1 text-[11.5px] text-muted-foreground">
+            <span className="font-mono tabular-nums">#{driver.ID}</span>
             <span>·</span>
             <span>{driver.transporter || 'Apex'}</span>
             <span>·</span>
             {driver.is_approved ? (
-              <Badge variant="success" className="gap-1">
-                <ShieldCheck className="h-3 w-3" />
+              <Badge variant="success">
+                <ShieldCheck className="h-3 w-3" aria-hidden="true" />
                 {t('drivers.status.approved')}
               </Badge>
             ) : (
-              <Badge variant="warning" className="gap-1">
+              <Badge variant="warning">
                 {t('drivers.status.pending')}
               </Badge>
             )}
           </span>
         }
-        icon={<Users className="h-5 w-5" />}
+        icon={<Users className="h-5 w-5" aria-hidden="true" />}
         actions={
           <>
-            <Button variant="outline" size="sm" onClick={() => navigate('/drivers')}>
-              <ArrowLeft className="h-4 w-4 rtl:rotate-180" />
-              <span className="hidden sm:inline">{t('common.back')}</span>
+            <Button variant="outline" size="sm" asChild>
+              <Link to="/drivers" onClick={() => navigate('/drivers')} aria-label={t('common.back')}>
+                <ArrowLeft className="rtl:rotate-180" aria-hidden="true" />
+                <span className="hidden sm:inline">{t('common.back')}</span>
+              </Link>
             </Button>
             {canManage ? (
               <>
-                <Button variant="outline" size="sm" onClick={() => setShowEditDialog(true)}>
-                  <Edit className="h-4 w-4" />
+                <Button variant="outline" size="sm" onClick={() => setShowEditDialog(true)} aria-label={t('common.edit')}>
+                  <Edit aria-hidden="true" />
                   <span className="hidden sm:inline">{t('common.edit')}</span>
                 </Button>
-                <Button variant="destructive" size="sm" onClick={() => setShowDeleteDialog(true)}>
-                  <Trash2 className="h-4 w-4" />
+                <Button variant="destructive" size="sm" onClick={() => setShowDeleteDialog(true)} aria-label={t('common.delete')}>
+                  <Trash2 aria-hidden="true" />
                   <span className="hidden sm:inline">{t('common.delete')}</span>
                 </Button>
               </>
             ) : (
-              <Badge variant="warning" className="gap-1">
-                <AlertTriangle className="h-3 w-3" />
+              <Badge variant="warning">
+                <AlertTriangle className="h-3 w-3" aria-hidden="true" />
                 {t('common.viewOnly')}
               </Badge>
             )}
@@ -166,10 +170,10 @@ export default function DriverDetailPage() {
       >
         {/* Pending approval banner — styled to match fuel-events paired banner */}
         {canManage && !driver.is_approved && (
-          <div className="flex flex-col gap-2 rounded-md border border-warning/30 bg-warning/5 p-2.5 text-xs sm:flex-row sm:items-center sm:gap-3">
+          <div className="flex flex-col gap-2 rounded-lg border border-dashed border-warning/40 bg-warning/10 px-3 py-2.5 text-[12.5px] sm:flex-row sm:items-center sm:gap-3">
             <div className="flex items-start gap-2 sm:flex-1">
-              <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-warning" />
-              <span className="text-muted-foreground">
+              <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-warning" aria-hidden="true" />
+              <span className="min-w-0">
                 {t('drivers.pendingApprovalBanner')}
               </span>
             </div>
@@ -178,12 +182,12 @@ export default function DriverDetailPage() {
                 size="sm"
                 onClick={() => approveMutation.mutate(driver.ID)}
                 disabled={approveMutation.isPending}
-                className="h-8"
+                className="h-7 px-2.5 gap-1.5"
               >
                 {approveMutation.isPending ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  <Loader2 className="animate-spin motion-reduce:animate-none" aria-hidden="true" />
                 ) : (
-                  <ShieldCheck className="h-3.5 w-3.5" />
+                  <ShieldCheck aria-hidden="true" />
                 )}
                 {t('drivers.approve')}
               </Button>
@@ -192,12 +196,12 @@ export default function DriverDetailPage() {
                 size="sm"
                 onClick={() => rejectMutation.mutate(driver.ID)}
                 disabled={rejectMutation.isPending}
-                className="h-8"
+                className="h-7 px-2.5 gap-1.5"
               >
                 {rejectMutation.isPending ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  <Loader2 className="animate-spin motion-reduce:animate-none" aria-hidden="true" />
                 ) : (
-                  <ShieldX className="h-3.5 w-3.5" />
+                  <ShieldX aria-hidden="true" />
                 )}
                 {t('drivers.reject')}
               </Button>
