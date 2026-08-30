@@ -960,6 +960,7 @@
           "trips": "Trips",
           "distance": "Distance"
         },
+        "other": "Other",
         "projectedRevenue": "Projected monthly revenue",
         "projectedRevenueNote": "Based on {{avg}} daily average over {{days}} days (multiplied by {{monthDays}} days)",
         "min": "Min",

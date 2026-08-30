@@ -178,15 +178,19 @@ export function TripsStatisticsTimeline({
       ...series,
     ];
     if (hasOther) {
-      arr.push({ key: OTHER_KEY, label: 'Other', color: CHART_OTHER_COLOR });
+      arr.push({
+        key: OTHER_KEY,
+        label: t('trips.statistics.timeline.other', { defaultValue: 'Other' }),
+        color: CHART_OTHER_COLOR,
+      });
     }
     return arr;
-  }, [series, hasOther]);
+  }, [series, hasOther, t]);
 
   const formatValue = (v: number) => {
     if (metric === 'revenue') return formatCurrency(v);
     if (metric === 'volume') return `${formatNumber(v, 2)} L`;
-    if (metric === 'distance') return `${formatNumber(v, 1)} ${t('common.unit.km')}`;
+    if (metric === 'distance') return `${formatNumber(v, 0)} ${t('common.unit.km')}`;
     return formatNumber(v, 0);
   };
 
@@ -285,7 +289,7 @@ export function TripsStatisticsTimeline({
         </div>
       ) : (
         <>
-          <div className="px-3 pt-2 pb-1" style={{ height: '360px' }}>
+          <div className="p-3" style={{ height: '360px' }}>
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart
                 data={chartData}
@@ -315,11 +319,11 @@ export function TripsStatisticsTimeline({
                 <XAxis
                   dataKey="date"
                   tickFormatter={(d: string) => format(d, 'd MMM')}
-                  tick={{ fontSize: 11 }}
+                  tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
                 />
                 <YAxis
                   tickFormatter={(v: number) => formatCompactNumber(v, 0)}
-                  tick={{ fontSize: 11 }}
+                  tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
                 />
                 <Tooltip
                   content={({ active: _active, payload, label }) => {
@@ -333,13 +337,13 @@ export function TripsStatisticsTimeline({
                     return (
                       <div className="rounded-lg border bg-background p-2 shadow-sm">
                         <div className="mb-1 text-xs font-medium">
-                          {format(String(label), 'PPP')}
+                          {format(String(label), 'd MMM yyyy')}
                         </div>
                         <div className="space-y-1">
                           {/* Total line */}
                           <div className="mb-1 flex items-center justify-between gap-4 border-b pb-1 text-xs font-bold">
                             <span>{t('trips.statistics.carTable.total')}</span>
-                            <span className="tabular">{formatValue(total)}</span>
+                            <span className="font-mono tabular-nums">{formatValue(total)}</span>
                           </div>
 
                           {payload.map((entry: any) => {
@@ -357,7 +361,7 @@ export function TripsStatisticsTimeline({
                                   />
                                   <span>{displayLabel}</span>
                                 </div>
-                                <span className="font-semibold tabular">
+                                <span className="font-mono font-semibold tabular-nums">
                                   {formatValue(entry.value)}
                                 </span>
                               </div>
@@ -397,10 +401,10 @@ export function TripsStatisticsTimeline({
               <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                 {projection && (
                   <div>
-                    <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                       {t('trips.statistics.timeline.projectedRevenue')}
                     </p>
-                    <p className="text-xl font-bold tracking-tight text-success">
+                    <p className="font-mono text-xl font-semibold tracking-tight tabular-nums text-money">
                       {formatCurrency(projection.total)}
                     </p>
                     <p className="mt-0.5 text-[10px] text-muted-foreground">
@@ -416,26 +420,26 @@ export function TripsStatisticsTimeline({
                 {dailyStats && (
                   <div className="grid grid-cols-3 gap-4 border-t pt-3 sm:border-t-0 sm:pt-0">
                     <div>
-                      <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                      <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                         {t('trips.statistics.timeline.min')}
                       </p>
-                      <p className="text-sm font-bold tabular-nums">
+                      <p className="font-mono text-sm font-semibold tabular-nums">
                         {formatValue(dailyStats.min)}
                       </p>
                     </div>
                     <div>
-                      <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                      <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                         {t('trips.statistics.timeline.max')}
                       </p>
-                      <p className="text-sm font-bold tabular-nums">
+                      <p className="font-mono text-sm font-semibold tabular-nums">
                         {formatValue(dailyStats.max)}
                       </p>
                     </div>
                     <div>
-                      <p className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                      <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                         {t('trips.statistics.timeline.avg')}
                       </p>
-                      <p className="text-sm font-bold tabular-nums">
+                      <p className="font-mono text-sm font-semibold tabular-nums">
                         {formatValue(dailyStats.avg)}
                       </p>
                     </div>

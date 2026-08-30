@@ -81,14 +81,19 @@ export function TripsStatistics({ filters }: TripsStatisticsProps) {
 
   if (isLoading) {
     return (
-      <div className="space-y-3">
+      <div className="space-y-3 md:space-y-4">
+        <div className="flex items-center justify-between gap-2">
+          <Skeleton className="h-4 w-24 rounded-sm" />
+          <Skeleton className="h-8 w-28 rounded-md" />
+        </div>
+        <Skeleton className="h-9 w-64 rounded-lg" />
         <div className="grid grid-cols-2 gap-2.5 md:grid-cols-3 lg:grid-cols-5">
           {Array.from({ length: 5 }).map((_, i) => (
-            <Skeleton key={i} className="h-[88px] w-full" />
+            <Skeleton key={i} className="h-[88px] w-full rounded-lg" />
           ))}
         </div>
-        <Skeleton className="h-[360px] w-full" />
-        <Skeleton className="h-[400px] w-full" />
+        <Skeleton className="h-[360px] w-full rounded-lg" />
+        <Skeleton className="h-[400px] w-full rounded-lg" />
       </div>
     );
   }
@@ -151,10 +156,14 @@ export function TripsStatistics({ filters }: TripsStatisticsProps) {
     <div className="space-y-3 md:space-y-4">
       {/* Header strip with export button */}
       <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        <div
+          className="flex items-center gap-2 text-xs text-muted-foreground"
+          aria-live="polite"
+          aria-atomic="true"
+        >
           {isFetching && (
             <span className="inline-flex items-center gap-1.5">
-              <Loader2 className="h-3 w-3 animate-spin" />
+              <Loader2 className="h-3 w-3 animate-spin motion-reduce:animate-none" />
               {t('common.refreshing')}
             </span>
           )}
@@ -163,9 +172,8 @@ export function TripsStatistics({ filters }: TripsStatisticsProps) {
           variant="outline"
           size="sm"
           onClick={() => void handleExport()}
-          className="gap-1.5"
         >
-          <Download className="h-3.5 w-3.5" />
+          <Download />
           <span className="hidden sm:inline">
             {t('trips.statistics.exportExcel')}
           </span>

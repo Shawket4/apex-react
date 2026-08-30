@@ -137,7 +137,7 @@ export function TripsStatisticsSummary({
               })}
               icon={Truck}
               tone="primary"
-              className="h-full cursor-pointer transition-colors hover:bg-accent/40"
+              className="h-full cursor-pointer transition-colors hover:bg-muted/50"
             />
           </button>
         </PopoverTrigger>
@@ -149,14 +149,14 @@ export function TripsStatisticsSummary({
           <dl className="space-y-2 text-sm">
             <div className="flex items-baseline justify-between gap-3">
               <dt>{t('trips.statistics.kpi.logicalTrips')}</dt>
-              <dd className="font-semibold tabular-nums">
+              <dd className="font-mono font-semibold tabular-nums">
                 {formatNumber(totals.trips, 0)}
               </dd>
             </div>
             {hasReceipts && (
               <div className="flex items-baseline justify-between gap-3">
                 <dt>{t('trips.statistics.kpi.receipts')}</dt>
-                <dd className="font-semibold tabular-nums">
+                <dd className="font-mono font-semibold tabular-nums">
                   {formatNumber(totals.receipts, 0)}
                 </dd>
               </div>
@@ -184,11 +184,11 @@ export function TripsStatisticsSummary({
       <StatCard
         label={t('trips.statistics.kpi.totalDistance')}
         value={{
-          full: `${formatNumber(totals.distance, 2)} km`,
+          full: `${formatNumber(totals.distance, 0)} km`,
           compact: `${formatCompactNumber(totals.distance, 1)} km`,
         }}
         subvalue={t('trips.statistics.kpi.distancePerTrip', {
-          n: formatNumber(totals.distance / safeTrips, 2),
+          n: formatNumber(totals.distance / safeTrips, 0),
         })}
         icon={MapPin}
       />
@@ -204,7 +204,8 @@ export function TripsStatisticsSummary({
             n: formatCurrency(totals.revenue / safeTrips),
           })}
           icon={DollarSign}
-          tone="success"
+          tone="default"
+          valueClassName="text-money"
         />
       ) : (
         <StatCard
@@ -225,7 +226,8 @@ export function TripsStatisticsSummary({
             n: formatCurrency(totals.vat),
           })}
           icon={TrendingUp}
-          tone="success"
+          tone="default"
+          valueClassName="text-money"
         />
       ) : (
         <StatCard

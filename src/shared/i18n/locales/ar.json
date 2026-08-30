@@ -965,6 +965,7 @@
           "trips": "الرحلات",
           "distance": "المسافة"
         },
+        "other": "أخرى",
         "projectedRevenue": "الإيرادات الشهرية المتوقعة",
         "projectedRevenueNote": "بناءً على متوسط يومي {{avg}} على مدار {{days}} يوماً (مضروباً في {{monthDays}} يوماً)",
         "min": "الحد الأدنى",
