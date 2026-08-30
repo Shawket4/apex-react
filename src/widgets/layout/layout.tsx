@@ -46,7 +46,13 @@ export function Layout() {
             onOpenCommandPalette={() => setPaletteOpen(true)}
           />
         </div>
-        <main className="flex-1 overflow-y-auto overflow-x-hidden">
+        {/* `relative` is load-bearing, not decoration. An absolutely positioned
+            descendant with no positioned ancestor resolves against the initial
+            containing block, which puts it at its static position in DOCUMENT
+            space — outside this scroll container — and stretches
+            documentElement.scrollHeight to match. That is how a page-wide
+            overscroll appears from a 1px .sr-only label. */}
+        <main className="relative flex-1 overflow-y-auto overflow-x-hidden">
           <Outlet />
         </main>
       </div>

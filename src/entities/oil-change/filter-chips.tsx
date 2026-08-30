@@ -49,7 +49,9 @@ export function OilChangeFilterChips({
             key={key}
             title={label}
             className={cn(
-              'inline-flex h-4 min-w-4 items-center justify-center rounded-[3px] px-1 text-[9px] font-semibold leading-none',
+              // relative: .sr-only is position:absolute, and without a
+              // positioned ancestor it escapes to the initial containing block.
+              'relative inline-flex h-4 min-w-4 items-center justify-center rounded-[3px] px-1 text-[9px] font-semibold leading-none',
               on[key]
                 ? 'bg-primary/10 text-primary'
                 : 'border border-dashed border-muted-foreground/30 text-muted-foreground/50',
