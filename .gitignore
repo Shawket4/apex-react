@@ -31,3 +31,6 @@ e2e/report/
 
 # skills installed by `npx skills add` (SHAs recorded in .audit/PLAN.md)
 .agents/
+
+# Visual baselines: local only — they are a change detector, not source
+e2e/__screenshots__/
