@@ -1207,7 +1207,16 @@
       "validation": {
         "fillRequired": "Please fill in all required fields with valid values"
       },
-      "newDropoffHint": "New drop-off point will be created"
+      "newDropoffHint": "New drop-off point will be created",
+      "placeholders": {
+        "company": "Watanya…",
+        "terminal": "Cairo…",
+        "dropOffPoint": "Qena…"
+      }
+    },
+    "units": {
+      "km": "km",
+      "min": "min"
     },
     "filters": {
       "searchPlaceholder": "Search company, terminal, drop-off…",
@@ -1247,7 +1256,8 @@
       "title": "Bulk OSRM enrichment",
       "processed": "Processed",
       "succeeded": "Succeeded",
-      "failed": "Failed"
+      "failed": "Failed",
+      "delta": "Δ"
     },
     "delete": {
       "confirmTitle": "Delete fee mapping?",

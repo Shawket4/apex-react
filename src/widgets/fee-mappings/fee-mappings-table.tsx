@@ -42,21 +42,21 @@ export function FeeMappingsTable({
       accessorKey: 'company',
       header: () => <span>{t('feeMappings.fields.company')}</span>,
       cell: ({ row }) => (
-        <span className="font-medium">{row.original.company}</span>
+        <span className="font-medium" dir="auto">{row.original.company}</span>
       ),
     },
     {
       accessorKey: 'terminal',
       header: () => <span>{t('feeMappings.fields.terminal')}</span>,
       cell: ({ row }) => (
-        <span className="text-muted-foreground">{row.original.terminal}</span>
+        <span className="text-muted-foreground" dir="auto">{row.original.terminal}</span>
       ),
     },
     {
       accessorKey: 'dropOffPoint',
       header: () => <span>{t('feeMappings.fields.dropOffPoint')}</span>,
       cell: ({ row }) => (
-        <span className="block max-w-[180px] truncate" title={row.original.dropOffPoint}>
+        <span className="block max-w-[180px] truncate" dir="auto" title={row.original.dropOffPoint}>
           {row.original.dropOffPoint}
         </span>
       ),
@@ -83,7 +83,7 @@ export function FeeMappingsTable({
         const v = row.original.osrmDistanceKm;
         return (
           <span className="block text-end font-mono tabular-nums text-muted-foreground">
-            {v != null ? formatNumber(v, 2) : '—'}
+            {v != null ? formatNumber(v, 2) : <span className="opacity-40">—</span>}
           </span>
         );
       },
@@ -99,7 +99,13 @@ export function FeeMappingsTable({
         const v = row.original.osrmDurationMin;
         return (
           <span className="block text-end font-mono tabular-nums text-muted-foreground">
-            {v != null ? `${v.toFixed(0)} min` : '—'}
+            {v != null ? (
+              <>
+                {formatNumber(v, 0)}&nbsp;{t('feeMappings.units.min', 'min')}
+              </>
+            ) : (
+              <span className="opacity-40">—</span>
+            )}
           </span>
         );
       },
@@ -127,7 +133,7 @@ export function FeeMappingsTable({
         <span className="block text-end">{t('feeMappings.fields.fee')}</span>
       ),
       cell: ({ row }) => (
-        <span className="block text-end font-semibold tabular-nums">
+        <span className="block text-end font-mono tabular-nums text-money">
           {formatCurrency(row.original.fee)}
         </span>
       ),
@@ -156,8 +162,13 @@ export function FeeMappingsTable({
                   ? t('feeMappings.actions.updateLocation')
                   : t('feeMappings.actions.setLocation')
               }
+              aria-label={
+                hasLoc
+                  ? t('feeMappings.actions.updateLocation')
+                  : t('feeMappings.actions.setLocation')
+              }
             >
-              <MapPin className="h-3.5 w-3.5" />
+              <MapPin aria-hidden="true" />
             </Button>
             <Button
               size="icon"
@@ -165,8 +176,9 @@ export function FeeMappingsTable({
               className="h-7 w-7 text-primary hover:bg-primary/10"
               onClick={() => onEdit(m)}
               title={t('common.edit')}
+              aria-label={t('common.edit')}
             >
-              <Pencil className="h-3.5 w-3.5" />
+              <Pencil aria-hidden="true" />
             </Button>
             <Button
               size="icon"
@@ -174,8 +186,9 @@ export function FeeMappingsTable({
               className="h-7 w-7 text-destructive hover:bg-destructive/10"
               onClick={() => onDelete(m)}
               title={t('common.delete')}
+              aria-label={t('common.delete')}
             >
-              <Trash2 className="h-3.5 w-3.5" />
+              <Trash2 aria-hidden="true" />
             </Button>
           </div>
         );

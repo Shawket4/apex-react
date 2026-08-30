@@ -1207,7 +1207,16 @@
       "validation": {
         "fillRequired": "يرجى ملء جميع الحقول المطلوبة بقيم صحيحة"
       },
-      "newDropoffHint": "سيتم إنشاء نقطة تسليم جديدة"
+      "newDropoffHint": "سيتم إنشاء نقطة تسليم جديدة",
+      "placeholders": {
+        "company": "وطنية…",
+        "terminal": "القاهرة…",
+        "dropOffPoint": "قنا…"
+      }
+    },
+    "units": {
+      "km": "كم",
+      "min": "د"
     },
     "filters": {
       "searchPlaceholder": "البحث عن شركة، محطة، نقطة تسليم…",
@@ -1247,7 +1256,8 @@
       "title": "إثراء OSRM المجمع",
       "processed": "تمت المعالجة",
       "succeeded": "نجحت",
-      "failed": "فشلت"
+      "failed": "فشلت",
+      "delta": "Δ"
     },
     "delete": {
       "confirmTitle": "حذف خريطة الأسعار؟",

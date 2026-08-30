@@ -10,6 +10,7 @@ import {
   SelectValue,
 } from '@/shared/ui/select';
 import { Button } from '@/shared/ui/button';
+import { formatNumber } from '@/shared/lib/format';
 import type { AccuracyKind, FeeMapping } from '@/entities/fee-mapping/schemas';
 
 export interface FeeMappingsFilterState {
@@ -53,13 +54,17 @@ export function FeeMappingsFilters({
     <div className="flex flex-col gap-3 rounded-lg border bg-card px-3 py-2.5 sm:flex-row sm:items-center">
       {/* Search */}
       <div className="relative flex-1 min-w-0">
-        <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
         <Input
           type="search"
           placeholder={t('feeMappings.filters.searchPlaceholder')}
+          aria-label={t('feeMappings.filters.searchPlaceholder')}
+          name="search"
+          autoComplete="off"
+          spellCheck={false}
           value={state.search}
           onChange={(e) => onChange({ ...state, search: e.target.value })}
-          className="ps-9"
+          className="h-8 ps-9"
         />
       </div>
 
@@ -70,7 +75,7 @@ export function FeeMappingsFilters({
             onChange({ ...state, company: v === 'all' ? '' : v })
           }
         >
-          <SelectTrigger className="h-9 w-[180px]">
+          <SelectTrigger className="h-8 w-auto min-w-32">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -89,7 +94,7 @@ export function FeeMappingsFilters({
             onChange({ ...state, accuracy: v as AccuracyKind | 'all' })
           }
         >
-          <SelectTrigger className="h-9 w-[180px]">
+          <SelectTrigger className="h-8 w-auto min-w-32">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -113,17 +118,17 @@ export function FeeMappingsFilters({
           <Button
             variant="ghost"
             size="sm"
-            className="h-9 gap-1 text-xs"
+            className="gap-1.5"
             onClick={() => onChange({ search: '', company: '', accuracy: 'all' })}
           >
-            <X className="h-3.5 w-3.5" />
+            <X aria-hidden="true" />
             {t('common.clear')}
           </Button>
         )}
       </div>
 
-      <span className="ms-auto whitespace-nowrap text-xs tabular-nums text-muted-foreground">
-        {filteredCount} / {mappings.length}
+      <span className="ms-auto whitespace-nowrap font-mono text-xs tabular-nums text-muted-foreground">
+        {formatNumber(filteredCount, 0)} / {formatNumber(mappings.length, 0)}
       </span>
     </div>
   );
