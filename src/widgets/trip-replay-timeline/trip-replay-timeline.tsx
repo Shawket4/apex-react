@@ -48,9 +48,9 @@ export interface TripReplayTimelineProps {
 }
 
 const PIN_KIND_CLASS: Record<ReplayEventPin['kind'], string> = {
-  delivery: 'bg-sky-500',
-  stop: 'bg-amber-500',
-  flag: 'bg-red-500',
+  delivery: 'bg-primary',
+  stop: 'bg-warning',
+  flag: 'bg-destructive',
 };
 
 export const TripReplayTimeline = React.forwardRef<
@@ -169,6 +169,25 @@ export const TripReplayTimeline = React.forwardRef<
     if (e.pointerType !== 'mouse') hidePreview();
   };
 
+  /* Keyboard scrub — the band is a slider, so arrows/Home/End must move it.  */
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (disabled) return;
+    const step = model.spanMs / 100;
+    const current = Number(
+      bandRef.current?.getAttribute('aria-valuenow') ?? model.startMs,
+    );
+    let next: number | null = null;
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowDown') next = current - step;
+    else if (e.key === 'ArrowRight' || e.key === 'ArrowUp') next = current + step;
+    else if (e.key === 'Home') next = model.startMs;
+    else if (e.key === 'End') next = model.endMs;
+    if (next == null) return;
+    e.preventDefault();
+    const ms = Math.min(model.endMs, Math.max(model.startMs, next));
+    showPreviewAt(ms);
+    onScrub(ms);
+  };
+
   const handlePointerLeave = (e: React.PointerEvent<HTMLDivElement>) => {
     if (draggingRef.current) return; // captured drag continues off-element
     hidePreview();
@@ -229,7 +248,7 @@ export const TripReplayTimeline = React.forwardRef<
         {/* Tooltip */}
         <div
           ref={tooltipRef}
-          className="pointer-events-none absolute -top-6 z-30 -translate-x-1/2 whitespace-nowrap rounded-md border bg-card/95 px-2 py-0.5 text-[10px] font-medium tabular-nums text-foreground shadow-lg backdrop-blur transition-opacity"
+          className="pointer-events-none absolute -top-6 z-30 -translate-x-1/2 whitespace-nowrap rounded-md border bg-card/95 px-2 py-0.5 text-[10px] font-medium tabular-nums text-foreground shadow-md backdrop-blur transition-opacity"
           style={{ opacity: 0, left: '0%' }}
         />
 
@@ -242,7 +261,8 @@ export const TripReplayTimeline = React.forwardRef<
           aria-valuemax={model.endMs}
           aria-valuenow={model.startMs}
           aria-disabled={disabled || undefined}
-          tabIndex={-1}
+          tabIndex={disabled ? -1 : 0}
+          onKeyDown={handleKeyDown}
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={endDrag}
@@ -250,7 +270,8 @@ export const TripReplayTimeline = React.forwardRef<
           onPointerLeave={handlePointerLeave}
           className={cn(
             // touch-none: the browser must never hijack the drag for scrolling.
-            'relative h-9 touch-none overflow-hidden rounded-lg border bg-muted/50',
+            'relative h-9 touch-none overflow-hidden rounded-lg border bg-muted',
+            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
             disabled
               ? 'cursor-not-allowed opacity-40'
               : dragging
@@ -290,7 +311,7 @@ export const TripReplayTimeline = React.forwardRef<
           {nightBlocks.map((n) => (
             <div
               key={n.key}
-              className="absolute inset-y-0 bg-slate-950/35 dark:bg-black/45"
+              className="absolute inset-y-0 bg-black/35 dark:bg-black/45"
               style={{ left: `${n.left}%`, width: `${n.width}%` }}
               title={t('tripReplay.timeline.night', 'Night permit window (20:00–07:00)')}
             />
@@ -333,7 +354,7 @@ export const TripReplayTimeline = React.forwardRef<
             >
               <span
                 className={cn(
-                  'h-3 w-3 rounded-full border border-background shadow transition-transform group-hover:scale-125',
+                  'h-3 w-3 rounded-full border border-background shadow-sm',
                   PIN_KIND_CLASS[pin.kind],
                 )}
               />
@@ -356,7 +377,7 @@ export const TripReplayTimeline = React.forwardRef<
                 title={seg.label}
                 aria-label={seg.label}
                 className={cn(
-                  'relative flex cursor-pointer items-center gap-1 rounded-full border px-1.5 py-0.5 text-[10px] font-semibold tabular-nums transition-colors hover:bg-muted',
+                  'relative flex cursor-pointer items-center gap-1.5 rounded-full bg-muted px-2 py-0.5 text-[10.5px] font-medium tabular-nums text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground',
                   'after:absolute after:inset-x-0 after:-inset-y-2 after:content-[""]', // taller hit
                   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
                   disabled && 'pointer-events-none opacity-40',
@@ -367,7 +388,9 @@ export const TripReplayTimeline = React.forwardRef<
                   style={{ backgroundColor: seg.color }}
                 />
                 {seg.seq}
-                {seg.night && <Moon className="h-2.5 w-2.5 text-primary" />}
+                {seg.night && (
+                  <Moon className="h-2.5 w-2.5 text-primary" aria-hidden="true" />
+                )}
               </button>
             ))}
           </div>

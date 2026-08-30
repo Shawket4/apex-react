@@ -61,7 +61,7 @@ export function PinTab({ driverId, driverName }: PinTabProps) {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-sm">
-          <Key className="h-4 w-4 text-muted-foreground" />
+          <Key className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
           {t('drivers.pin.title')}
         </CardTitle>
       </CardHeader>
@@ -71,14 +71,14 @@ export function PinTab({ driverId, driverName }: PinTabProps) {
         </p>
 
         {pin && (
-          <div className="flex flex-col items-stretch gap-3 rounded-md border bg-muted/30 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-col items-stretch gap-3 rounded-lg border bg-muted/40 p-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="min-w-0">
               <p className="mb-1 text-xs text-muted-foreground">
                 {t('drivers.pin.currentPin')}
               </p>
               <p
                 className={cn(
-                  'font-mono text-2xl font-semibold tabular-nums tracking-[0.25em]',
+                  'font-mono text-[22px] leading-none font-semibold tabular-nums tracking-[0.25em]',
                   !showPin && 'tracking-[0.2em]',
                 )}
                 dir="ltr"
@@ -95,7 +95,7 @@ export function PinTab({ driverId, driverName }: PinTabProps) {
                     onClick={() => setShowPin((s) => !s)}
                     aria-label={showPin ? t('auth.hidePassword') : t('auth.showPassword')}
                   >
-                    {showPin ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    {showPin ? <EyeOff /> : <Eye />}
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent side="top">
@@ -112,9 +112,9 @@ export function PinTab({ driverId, driverName }: PinTabProps) {
                     aria-label={t('drivers.pin.copy')}
                   >
                     {copied ? (
-                      <Check className="h-4 w-4 text-success" />
+                      <Check className="text-success" />
                     ) : (
-                      <Copy className="h-4 w-4" />
+                      <Copy />
                     )}
                   </Button>
                 </TooltipTrigger>
@@ -134,16 +134,16 @@ export function PinTab({ driverId, driverName }: PinTabProps) {
               variant={pin ? 'outline' : 'default'}
             >
               {regenerate.isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader2 className="animate-spin" />
               ) : (
-                <RefreshCw className="h-4 w-4" />
+                <RefreshCw />
               )}
               {pin ? t('drivers.pin.regenerate') : t('drivers.pin.generate')}
             </Button>
           </div>
         ) : (
-          <div className="flex items-start gap-2 rounded-md border bg-muted/30 p-2.5 text-xs text-muted-foreground">
-            <Lock className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+          <div className="flex items-start gap-2 rounded-lg border bg-muted/40 p-3 text-xs text-muted-foreground">
+            <Lock className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
             <span>{t('drivers.pin.noPermission')}</span>
           </div>
         )}

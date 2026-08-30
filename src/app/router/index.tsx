@@ -93,26 +93,26 @@ const SpeedViolationsPage = lazyNamed(placeholderLoader, 'SpeedViolationsPage');
 
 /**
  * Lightweight skeleton shown while a route chunk is being fetched. Uses
- * the same outer paddings as `PageShell` so the layout doesn't reflow when
- * the real page mounts.
+ * the same outer frame as the dashboard (the design reference: max-w-6xl,
+ * gap-3, p-3 sm:p-4) so the layout doesn't reflow when the real page mounts.
  */
 function PageLoadingFallback() {
   return (
-    <div className="flex flex-1 flex-col gap-6 p-4 md:p-6 lg:p-8">
-      <div className="flex items-start justify-between gap-4">
-        <div className="space-y-2">
-          <Skeleton className="h-8 w-48" />
-          <Skeleton className="h-4 w-64" />
+    <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 p-3 sm:p-4">
+      <div className="flex items-center justify-between gap-3">
+        <div className="space-y-1.5">
+          <Skeleton className="h-6 w-48 rounded-sm" />
+          <Skeleton className="h-3.5 w-64 rounded-sm" />
         </div>
-        <Skeleton className="h-9 w-24" />
+        <Skeleton className="h-7 w-24 rounded-full" />
       </div>
-      <Skeleton className="h-10 w-full max-w-md" />
-      <div className="grid grid-cols-2 gap-2.5 md:grid-cols-4">
+      <Skeleton className="h-9 w-full max-w-md" />
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {Array.from({ length: 4 }, (_, i) => (
-          <Skeleton key={i} className="h-20" />
+          <Skeleton key={i} className="h-[92px] rounded-lg" />
         ))}
       </div>
-      <Skeleton className="h-96 w-full" />
+      <Skeleton className="h-96 w-full rounded-lg" />
     </div>
   );
 }

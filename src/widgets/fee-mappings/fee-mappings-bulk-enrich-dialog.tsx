@@ -9,6 +9,7 @@ import {
 } from '@/shared/ui/dialog';
 import { Button } from '@/shared/ui/button';
 import { cn } from '@/shared/lib/cn';
+import { formatNumber } from '@/shared/lib/format';
 import type { EnrichmentResult } from '@/entities/fee-mapping/schemas';
 
 interface BulkEnrichDialogProps {
@@ -46,7 +47,7 @@ export function BulkEnrichDialog({ results, onOpenChange }: BulkEnrichDialogProp
           <DialogTitle>{t('feeMappings.bulkEnrich.title')}</DialogTitle>
         </DialogHeader>
 
-        <div className="flex flex-1 flex-col gap-3 overflow-y-auto px-6 py-4">
+        <div className="flex flex-1 flex-col gap-3 overflow-y-auto overscroll-contain px-6 py-4">
           {/* Summary stats */}
           <div className="grid grid-cols-3 gap-2">
             <SummaryCard
@@ -67,7 +68,7 @@ export function BulkEnrichDialog({ results, onOpenChange }: BulkEnrichDialogProp
           </div>
 
           {/* Per-row results */}
-          <div className="overflow-hidden rounded-md border">
+          <div className="overflow-hidden rounded-lg border">
             <ul className="divide-y">
               {results.map((r) => (
                 <li
@@ -78,22 +79,22 @@ export function BulkEnrichDialog({ results, onOpenChange }: BulkEnrichDialogProp
                   )}
                 >
                   {r.error ? (
-                    <XCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-destructive" />
+                    <XCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-destructive" aria-hidden="true" />
                   ) : (
-                    <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-success" />
+                    <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-success" aria-hidden="true" />
                   )}
                   <div className="min-w-0 flex-1">
-                    <div className="truncate font-medium">{r.drop_off_point}</div>
+                    <div className="truncate font-medium" dir="auto">{r.drop_off_point}</div>
                     {r.error ? (
                       <div className="text-destructive">{r.error}</div>
                     ) : (
-                      <div className="text-muted-foreground tabular-nums">
-                        {r.osrm_distance_km?.toFixed(2)} km · {r.osrm_duration_min?.toFixed(0)} min
+                      <div className="font-mono text-muted-foreground tabular-nums">
+                        {r.osrm_distance_km != null ? formatNumber(r.osrm_distance_km, 2) : '—'}&nbsp;{t('feeMappings.units.km', 'km')} · {r.osrm_duration_min != null ? formatNumber(r.osrm_duration_min, 0) : '—'}&nbsp;{t('feeMappings.units.min', 'min')}
                         {r.discrepancy_km != null && (
                           <>
                             {' '}
-                            · Δ {r.discrepancy_km > 0 ? '+' : ''}
-                            {r.discrepancy_km.toFixed(2)} km
+                            · {t('feeMappings.bulkEnrich.delta', 'Δ')} {r.discrepancy_km > 0 ? '+' : ''}
+                            {formatNumber(r.discrepancy_km, 2)}&nbsp;{t('feeMappings.units.km', 'km')}
                           </>
                         )}
                       </div>
@@ -107,7 +108,7 @@ export function BulkEnrichDialog({ results, onOpenChange }: BulkEnrichDialogProp
 
         <DialogFooter className="shrink-0 border-t px-6 py-3">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            <X className="me-1.5 h-3.5 w-3.5" />
+            <X aria-hidden="true" />
             {t('common.close')}
           </Button>
         </DialogFooter>
@@ -126,14 +127,14 @@ function SummaryCard({
   tone: 'neutral' | 'success' | 'destructive';
 }) {
   const cls = {
-    neutral: 'bg-muted text-foreground',
-    success: 'bg-success/10 text-success',
-    destructive: 'bg-destructive/10 text-destructive',
+    neutral: 'border-border bg-muted text-foreground',
+    success: 'border-success/40 bg-success/10 text-success',
+    destructive: 'border-destructive/40 bg-destructive/10 text-destructive',
   }[tone];
   return (
-    <div className={cn('rounded-md p-2.5 text-center', cls)}>
-      <div className="text-2xl font-bold tabular-nums">{value}</div>
-      <div className="text-[10px] uppercase tracking-wider opacity-80">{label}</div>
+    <div className={cn('rounded-lg border p-3 text-center', cls)}>
+      <div className="font-mono text-[22px] font-semibold leading-none tabular-nums">{formatNumber(value, 0)}</div>
+      <div className="text-[10px] font-semibold uppercase tracking-wider opacity-80">{label}</div>
     </div>
   );
 }

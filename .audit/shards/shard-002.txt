@@ -1,0 +1,16 @@
+# shard-002  loc=2499  files=14
+# groups: shared/lib/maps, shared/lib/prefetch, shared/scope
+777	src/shared/lib/maps/google-provider.tsx
+529	src/shared/lib/maps/leaflet-provider.tsx
+121	src/shared/lib/maps/map-pool.ts
+248	src/shared/lib/maps/marker-svg.ts
+143	src/shared/lib/maps/types.ts
+28	src/shared/lib/prefetch/assets.ts
+147	src/shared/lib/prefetch/chunks.ts
+63	src/shared/lib/prefetch/forms.ts
+19	src/shared/lib/prefetch/index.ts
+24	src/shared/lib/prefetch/intent.ts
+81	src/shared/lib/prefetch/routes.ts
+2	src/shared/scope/index.ts
+222	src/shared/scope/scope.ts
+95	src/shared/scope/use-scope.ts

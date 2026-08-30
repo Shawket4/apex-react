@@ -82,7 +82,7 @@ export default function OilChangeHistoryPage() {
         header: '#',
         cell: ({ row }) => (
           <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <Hash className="h-3 w-3 shrink-0" />
+            <Hash className="h-3 w-3 shrink-0" aria-hidden="true" />
             {row.original.ID}
           </span>
         ),
@@ -93,8 +93,8 @@ export default function OilChangeHistoryPage() {
         header: t('oilChanges.fields.date'),
         cell: ({ row }) => (
           <div className="flex items-center gap-2 text-sm">
-            <Calendar className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-            {format(row.original.date, 'dd MMM yyyy')}
+            <Calendar className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
+            {format(row.original.date, 'd MMM yyyy')}
           </div>
         ),
       },
@@ -102,14 +102,14 @@ export default function OilChangeHistoryPage() {
         accessorKey: 'driver_name',
         header: t('oilChanges.fields.driver'),
         cell: ({ row }) => (
-          <span className="text-sm">{row.original.driver_name || '—'}</span>
+          <span className="text-sm">{row.original.driver_name || <span className="opacity-40">—</span>}</span>
         ),
       },
       {
         accessorKey: 'super_visor',
         header: t('oilChanges.fields.supervisor'),
         cell: ({ row }) => (
-          <span className="text-sm">{row.original.super_visor || '—'}</span>
+          <span className="text-sm">{row.original.super_visor || <span className="opacity-40">—</span>}</span>
         ),
       },
       {
@@ -153,7 +153,7 @@ export default function OilChangeHistoryPage() {
         accessorKey: 'cost',
         header: t('oilChanges.fields.cost'),
         cell: ({ row }) => (
-          <span className="font-semibold tabular-nums">
+          <span className="font-mono text-sm font-semibold tabular-nums text-money">
             {formatCurrency(row.original.cost)}
           </span>
         ),
@@ -165,11 +165,11 @@ export default function OilChangeHistoryPage() {
         cell: ({ row }) =>
           row.original.lastUpdated ? (
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <Clock className="h-3 w-3 shrink-0" />
+              <Clock className="h-3 w-3 shrink-0" aria-hidden="true" />
               {formatDateTime(row.original.lastUpdated)}
             </div>
           ) : (
-            <span className="text-xs text-muted-foreground">—</span>
+            <span className="text-xs text-muted-foreground opacity-40">—</span>
           ),
       },
       {
@@ -187,8 +187,11 @@ export default function OilChangeHistoryPage() {
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8"
-                  onClick={() => navigate(`/oil-changes/${row.original.ID}/edit`)}
+                  className="h-7 w-7"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/oil-changes/${row.original.ID}/edit`);
+                  }}
                   aria-label={t('common.edit')}
                 >
                   <Edit className="h-4 w-4" />
@@ -202,8 +205,11 @@ export default function OilChangeHistoryPage() {
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className={cn('h-8 w-8 text-destructive hover:text-destructive')}
-                  onClick={() => setPendingDelete(row.original)}
+                  className={cn('h-7 w-7 text-destructive hover:text-destructive')}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setPendingDelete(row.original);
+                  }}
                   aria-label={t('common.delete')}
                 >
                   <Trash2 className="h-4 w-4" />
@@ -265,8 +271,8 @@ export default function OilChangeHistoryPage() {
       title={
         <span className="flex items-center gap-3">
           {t('oilChanges.history.title')}
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-0.5 text-sm font-medium">
-            <CarIcon className="h-3.5 w-3.5" />
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2 py-0.5 text-[10.5px] font-medium">
+            <CarIcon className="h-3.5 w-3.5" aria-hidden="true" />
             {carNoPlate}
           </span>
         </span>
@@ -313,12 +319,12 @@ export default function OilChangeHistoryPage() {
         />
       ) : isLoading ? (
         <>
-          <div className="grid grid-cols-2 gap-2.5 md:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
             {Array.from({ length: 4 }, (_, i) => (
-              <Skeleton key={i} className="h-20 w-full" />
+              <Skeleton key={i} className="h-20 w-full rounded-lg" />
             ))}
           </div>
-          <Skeleton className="h-96 w-full" />
+          <Skeleton className="h-96 w-full rounded-lg" />
         </>
       ) : history.length === 0 ? (
         <EmptyState
@@ -336,7 +342,7 @@ export default function OilChangeHistoryPage() {
         />
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-2.5 md:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
             <StatCard
               label={t('oilChanges.history.stats.totalRecords')}
               value={String(stats.count)}
@@ -349,8 +355,8 @@ export default function OilChangeHistoryPage() {
                 full: formatCurrency(stats.totalCost),
                 compact: formatCompactCurrency(stats.totalCost),
               }}
+              valueClassName="font-mono text-money"
               icon={Droplets}
-              tone="primary"
             />
             <StatCard
               label={t('oilChanges.history.stats.avgCost')}
@@ -358,6 +364,7 @@ export default function OilChangeHistoryPage() {
                 full: formatCurrency(stats.avgCost),
                 compact: formatCompactCurrency(stats.avgCost),
               }}
+              valueClassName="font-mono text-money"
               icon={User}
             />
             <StatCard
@@ -396,7 +403,7 @@ export default function OilChangeHistoryPage() {
         description={
           pendingDelete
             ? t('oilChanges.delete.descriptionRecord', {
-                date: format(pendingDelete.date, 'dd MMM yyyy'),
+                date: format(pendingDelete.date, 'd MMM yyyy'),
               })
             : ''
         }

@@ -1,9 +1,11 @@
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useServiceInvoice } from '@/entities/service-invoice/queries';
 import { ServiceInvoiceDetails } from '@/widgets/service-invoice-details/service-invoice-details';
 import { Skeleton } from '@/shared/ui/skeleton';
 
 export default function ServiceInvoiceDetailsPage() {
+  const { t } = useTranslation();
   const { id } = useParams();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -13,17 +15,17 @@ export default function ServiceInvoiceDetailsPage() {
 
   if (isLoading) {
     return (
-      <div className="container max-w-5xl mx-auto py-8 px-4 space-y-6">
-        <Skeleton className="h-12 w-1/3" />
-        <Skeleton className="h-[800px] w-full" />
+      <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 p-4 md:p-6 lg:p-8">
+        <Skeleton className="h-5 w-1/3 rounded-sm" />
+        <Skeleton className="h-96 w-full rounded-lg" />
       </div>
     );
   }
 
-  if (!invoice) return null;
+  if (!invoice) return <p className="py-6 text-center text-xs text-muted-foreground">{t('common.noResults')}</p>;
 
   return (
-    <div className="container max-w-6xl mx-auto py-8 px-4">
+    <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 p-4 md:p-6 lg:p-8">
       <ServiceInvoiceDetails
         invoice={invoice}
         onBack={() => navigate('/service-invoices')}

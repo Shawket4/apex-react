@@ -97,12 +97,15 @@ export default function UsersPage() {
             size="icon"
             onClick={() => refetch()}
             disabled={isLoading || isRefetching}
-            className="h-9 w-9"
+            aria-label={t('common.refresh')}
           >
-            <RefreshCw className={isRefetching ? 'h-4 w-4 animate-spin' : 'h-4 w-4'} />
+            <RefreshCw
+              aria-hidden="true"
+              className={isRefetching ? 'h-4 w-4 animate-spin' : 'h-4 w-4'}
+            />
           </Button>
-          <Button onClick={handleCreate} className="h-9 gap-2">
-            <Plus className="h-4 w-4" />
+          <Button onClick={handleCreate}>
+            <Plus className="h-4 w-4" aria-hidden="true" />
             <span className="hidden sm:inline">{t('users.addUser')}</span>
           </Button>
         </div>

@@ -1,0 +1,15 @@
+# shard-007  loc=2092  files=13
+# groups: widgets/driver-detail, entities/driver-expense, pages/driver-expenses, widgets/driver-form, entities/driver-loan
+453	src/widgets/driver-detail/documents-tab.tsx
+95	src/widgets/driver-detail/financial-tab.tsx
+305	src/widgets/driver-detail/overview-tab.tsx
+152	src/widgets/driver-detail/pin-tab.tsx
+23	src/entities/driver-expense/api.ts
+65	src/entities/driver-expense/queries.ts
+84	src/entities/driver-expense/schemas.ts
+250	src/pages/driver-expenses/driver-expense-new.tsx
+302	src/pages/driver-expenses/driver-expenses.tsx
+221	src/widgets/driver-form/driver-form.tsx
+23	src/entities/driver-loan/api.ts
+65	src/entities/driver-loan/queries.ts
+54	src/entities/driver-loan/schemas.ts

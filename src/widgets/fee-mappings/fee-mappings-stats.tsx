@@ -2,6 +2,7 @@ import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Check, ChevronDown, ChevronUp, MinusCircle, MapPin } from 'lucide-react';
 import { cn } from '@/shared/lib/cn';
+import { formatNumber } from '@/shared/lib/format';
 import { calculateAccuracy, type FeeMapping } from '@/entities/fee-mapping/schemas';
 
 interface FeeMappingsStatsProps {
@@ -39,41 +40,41 @@ export function FeeMappingsStats({ mappings }: FeeMappingsStatsProps) {
       key: 'total',
       label: t('feeMappings.stats.total'),
       value: stats.total,
-      icon: <MapPin className="h-3.5 w-3.5" />,
+      icon: <MapPin className="h-3.5 w-3.5" aria-hidden="true" />,
       tone: 'neutral',
     },
     {
       key: 'accurate',
       label: t('feeMappings.stats.accurate'),
       value: stats.accurate,
-      icon: <Check className="h-3.5 w-3.5" />,
+      icon: <Check className="h-3.5 w-3.5" aria-hidden="true" />,
       tone: 'success',
     },
     {
       key: 'conservative',
       label: t('feeMappings.stats.conservative'),
       value: stats.conservative,
-      icon: <ChevronDown className="h-3.5 w-3.5" />,
+      icon: <ChevronDown className="h-3.5 w-3.5" aria-hidden="true" />,
       tone: 'info',
     },
     {
       key: 'overestimate',
       label: t('feeMappings.stats.overestimate'),
       value: stats.overestimate,
-      icon: <ChevronUp className="h-3.5 w-3.5" />,
+      icon: <ChevronUp className="h-3.5 w-3.5" aria-hidden="true" />,
       tone: 'destructive',
     },
     {
       key: 'unknown',
       label: t('feeMappings.stats.unknown'),
       value: stats.unknown,
-      icon: <MinusCircle className="h-3.5 w-3.5" />,
+      icon: <MinusCircle className="h-3.5 w-3.5" aria-hidden="true" />,
       tone: 'muted',
     },
   ];
 
   return (
-    <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-5">
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
       {items.map((it) => (
         <StatCard {...it} key={it.key} />
       ))}
@@ -95,7 +96,7 @@ function StatCard({
   const toneClasses: Record<typeof tone, string> = {
     neutral: 'bg-primary/10 text-primary',
     success: 'bg-success/10 text-success',
-    info: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
+    info: 'bg-warning/10 text-warning',
     destructive: 'bg-destructive/10 text-destructive',
     muted: 'bg-muted text-muted-foreground',
   };
@@ -110,10 +111,10 @@ function StatCard({
         {icon}
       </span>
       <div className="min-w-0">
-        <p className="truncate text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
+        <p className="truncate text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
           {label}
         </p>
-        <p className="text-lg font-semibold leading-tight tabular-nums">{value}</p>
+        <p className="font-mono text-[22px] font-semibold leading-none tabular-nums">{formatNumber(value, 0)}</p>
       </div>
     </div>
   );

@@ -78,7 +78,7 @@ export function FleetPanel({
     <aside
       className={cn(
         'pointer-events-auto absolute inset-y-0 start-0 z-30 flex w-[300px] max-w-[86vw] flex-col',
-        'border-e bg-card/95 shadow-xl backdrop-blur transition-transform duration-200',
+        'border-e bg-card/95 shadow-lg backdrop-blur transition-transform duration-200',
         open ? 'translate-x-0' : '-translate-x-full rtl:translate-x-full',
       )}
       aria-hidden={!open}
@@ -87,9 +87,13 @@ export function FleetPanel({
         <div className="relative flex-1">
           <Search className="pointer-events-none absolute start-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
           <input
+            type="search"
+            name="fleet-search"
+            autoComplete="off"
+            spellCheck={false}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder={t('tracking.searchPlaceholder', 'Search plate or codename')}
+            placeholder={t('tracking.searchPlaceholder', 'Search plate or codename…')}
             className="h-8 w-full rounded-md border bg-background ps-8 pe-2 text-xs outline-none focus-visible:ring-2 focus-visible:ring-ring"
           />
         </div>
@@ -97,7 +101,7 @@ export function FleetPanel({
           type="button"
           onClick={onClose}
           aria-label={t('common.close', 'Close')}
-          className="grid h-8 w-8 place-items-center rounded-md text-muted-foreground hover:bg-muted"
+          className="grid h-8 w-8 place-items-center rounded-md text-muted-foreground hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <X className="h-4 w-4" />
         </button>
@@ -110,8 +114,7 @@ export function FleetPanel({
           return (
             <React.Fragment key={g}>
               <div
-                className="flex items-center gap-1.5 px-2 pb-1 pt-2.5 font-mono text-[9px] font-semibold uppercase tracking-widest"
-                style={{ color: STATUS_COLOR[g] }}
+                className="flex items-center gap-1.5 px-2 pb-1 pt-2.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground"
               >
                 {t(`tracking.group.${g}`, g)}
                 <span className="font-normal text-muted-foreground">· {members.length}</span>
@@ -124,24 +127,25 @@ export function FleetPanel({
                   <div
                     key={v.id}
                     className={cn(
-                      'group flex items-center gap-2 rounded-lg border border-transparent px-2 py-1.5',
+                      'group flex items-center gap-2 rounded-lg border border-transparent px-2 py-1.5 transition-colors',
                       selected
-                        ? 'border-primary/40 bg-primary/5'
-                        : 'hover:bg-muted/60',
-                      hidden && 'opacity-50',
+                        ? 'border-primary bg-primary/10 text-primary'
+                        : 'hover:bg-muted/50',
+                      hidden && 'opacity-70',
                     )}
                   >
                     <span
-                      className="h-2.5 w-2.5 shrink-0 rounded-full ring-2 ring-background"
+                      aria-hidden="true"
+                      className="h-1.5 w-1.5 shrink-0 rounded-full"
                       style={{ background: STATUS_COLOR[groupOf(v, lv)] }}
                     />
                     <button
                       type="button"
                       onClick={() => onSelect(v.id)}
-                      className="min-w-0 flex-1 text-start"
+                      className="min-w-0 flex-1 text-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
                       <div className="flex items-baseline gap-1.5">
-                        <span className="font-mono text-sm font-bold tabular-nums">
+                        <span className="font-mono text-sm font-semibold tabular-nums">
                           {plateDigits(v.plate)}
                         </span>
                         <span className="truncate text-[10px] text-muted-foreground">
@@ -164,7 +168,7 @@ export function FleetPanel({
                       type="button"
                       onClick={() => onToggleHidden(v.id)}
                       aria-label={t(hidden ? 'tracking.show' : 'tracking.hide', hidden ? 'Show' : 'Hide')}
-                      className="grid h-7 w-7 shrink-0 place-items-center rounded-md text-muted-foreground opacity-0 transition-opacity hover:bg-muted group-hover:opacity-100 focus-visible:opacity-100"
+                      className="grid h-7 w-7 shrink-0 place-items-center rounded-md text-muted-foreground opacity-0 transition-opacity hover:bg-accent hover:text-accent-foreground group-hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
                       {hidden ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
                     </button>
@@ -172,7 +176,7 @@ export function FleetPanel({
                       type="button"
                       onClick={() => onFocus(v.id)}
                       aria-label={t('tracking.focus', 'Focus on map')}
-                      className="grid h-7 w-7 shrink-0 place-items-center rounded-md text-muted-foreground hover:bg-primary/10 hover:text-primary"
+                      className="grid h-7 w-7 shrink-0 place-items-center rounded-md text-muted-foreground hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
                       <Crosshair className="h-3.5 w-3.5" />
                     </button>

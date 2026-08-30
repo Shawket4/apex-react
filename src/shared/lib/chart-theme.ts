@@ -12,8 +12,8 @@ import type { TooltipProps } from 'recharts';
  */
 export const CHART_SERIES_COLORS = [
   'hsl(var(--primary))',
-  '#10B981', // emerald — works on both light & dark backgrounds
-  '#F59E0B', // amber
+  'hsl(var(--success))', // emerald — success token
+  'hsl(var(--money))', // amber — money token
   '#8B5CF6', // violet
   '#EC4899', // pink
   '#06B6D4', // cyan
@@ -25,7 +25,7 @@ export const CHART_SERIES_COLORS = [
  * The "Other" bucket color — neutral so it doesn't compete visually with the
  * named series.
  */
-export const CHART_OTHER_COLOR = '#6B7280';
+export const CHART_OTHER_COLOR = 'hsl(var(--muted-foreground))';
 
 /**
  * Slugify a string for use in SVG element IDs.
@@ -58,10 +58,10 @@ export const themedTooltipProps: Pick<
   contentStyle: {
     background: 'hsl(var(--popover))',
     border: '1px solid hsl(var(--border))',
-    borderRadius: 8,
+    borderRadius: 'calc(var(--radius) - 2px)',
     color: 'hsl(var(--popover-foreground))',
     fontSize: 12,
-    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
+    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
   },
   itemStyle: {
     color: 'hsl(var(--popover-foreground))',

@@ -59,7 +59,7 @@ export function DuplicateComparisonDialog({
       <DialogContent className="max-w-2xl">
         <DialogHeader>
           <div className="flex items-start gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-warning/15 text-warning">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-warning/10 text-warning">
               <AlertTriangle className="h-5 w-5" />
             </div>
             <div>
@@ -73,7 +73,7 @@ export function DuplicateComparisonDialog({
           </div>
         </DialogHeader>
 
-        <ScrollArea className="max-h-[60vh] pr-2">
+        <ScrollArea className="max-h-[60vh] pe-2">
           <div className="space-y-4">
             {duplicate.duplicates.map((dup, idx) => {
               const existing =
@@ -98,8 +98,8 @@ export function DuplicateComparisonDialog({
                 },
                 {
                   label: t('trips.fields.date'),
-                  existing: existing.date ? format(existing.date, 'PPP') : '—',
-                  next: newTrip.date ? format(newTrip.date, 'PPP') : '—',
+                  existing: existing.date ? format(existing.date, 'd MMM yyyy') : '—',
+                  next: newTrip.date ? format(newTrip.date, 'd MMM yyyy') : '—',
                 },
                 {
                   label: t('trips.fields.vehicle'),
@@ -147,21 +147,21 @@ export function DuplicateComparisonDialog({
               return (
                 <div
                   key={`${dup.receipt_no}-${idx}`}
-                  className="rounded-lg border bg-card"
+                  className="overflow-hidden rounded-lg border bg-card"
                 >
-                  <div className="flex items-center justify-between border-b px-3 py-2">
+                  <div className="flex items-center justify-between gap-2 border-b bg-muted/60 px-3 py-2">
                     <div>
-                      <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                         {t('trips.form.duplicate.duplicateNumber', {
                           n: idx + 1,
                         })}
                       </span>
-                      <span className="ms-2 text-sm font-semibold tabular-nums">
+                      <span className="ms-2 font-mono text-sm font-semibold tabular-nums">
                         #{dup.receipt_no}
                       </span>
                     </div>
                     {(dup.existing_parent || dup.existing_standalone) && (
-                      <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                      <span className="rounded-full bg-muted px-2 py-0.5 text-[10.5px] font-medium text-muted-foreground">
                         {dup.existing_parent
                           ? t('trips.form.duplicate.existingParent')
                           : t('trips.form.duplicate.existingStandalone')}
@@ -210,7 +210,7 @@ export function DuplicateComparisonDialog({
             onClick={onForceProceed}
             disabled={loading}
           >
-            {loading && <Loader2 className="h-4 w-4 animate-spin" />}
+            {loading && <Loader2 className="animate-spin motion-reduce:animate-none" />}
             {forceLabel}
           </Button>
         </DialogFooter>
@@ -244,7 +244,7 @@ function DiffRow({ label, existing, next, changed }: DiffRowProps) {
             changed && 'bg-warning/10',
           )}
         >
-          <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
             {label}
           </span>
           <span className="truncate font-medium tabular-nums">{existing}</span>
@@ -258,7 +258,7 @@ function DiffRow({ label, existing, next, changed }: DiffRowProps) {
             changed && 'bg-warning/10',
           )}
         >
-          <span className="text-[10px] uppercase tracking-wider text-muted-foreground sm:hidden">
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground sm:hidden">
             {label}
           </span>
           <span

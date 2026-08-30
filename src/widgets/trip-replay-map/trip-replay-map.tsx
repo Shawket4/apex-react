@@ -1,4 +1,6 @@
 import * as React from 'react';
+import { useTranslation } from 'react-i18next';
+import { Loader2 } from 'lucide-react';
 import { cn } from '@/shared/lib/cn';
 import { DEFAULT_MAP_CENTER } from '@/shared/lib/coords';
 import { isGoogleMapsConfigured } from '@/shared/lib/maps/google-provider';
@@ -34,6 +36,7 @@ export interface TripReplayMapProps {
 
 export const TripReplayMap = React.forwardRef<TripReplayMapHandle, TripReplayMapProps>(
   function TripReplayMap({ scene, onPinClick, onReady, className }, ref) {
+    const { t } = useTranslation();
     const containerRef = React.useRef<HTMLDivElement>(null);
     const adapterRef = React.useRef<ReplayMapAdapter | null>(null);
     const [ready, setReady] = React.useState(false);
@@ -127,8 +130,15 @@ export const TripReplayMap = React.forwardRef<TripReplayMapHandle, TripReplayMap
       <div className={cn('relative h-full w-full', className)}>
         <div ref={containerRef} className="h-full w-full" />
         {!ready && (
-          <div className="absolute inset-0 flex items-center justify-center bg-muted/30">
-            <div className="h-6 w-6 animate-spin rounded-full border-2 border-current border-t-transparent text-muted-foreground" />
+          <div
+            role="status"
+            aria-label={t('common.loading', 'Loading…')}
+            className="absolute inset-0 flex items-center justify-center bg-muted/40"
+          >
+            <Loader2
+              className="h-7 w-7 animate-spin text-primary motion-reduce:animate-none"
+              aria-hidden="true"
+            />
           </div>
         )}
       </div>

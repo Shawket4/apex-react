@@ -1,0 +1,28 @@
+# shard-001  loc=2468  files=26
+# groups: shared/api, shared/auth, shared/config, shared/hooks, shared/i18n, shared/lib
+201	src/shared/api/client.ts
+75	src/shared/api/errors.ts
+19	src/shared/api/query.ts
+83	src/shared/auth/store.ts
+68	src/shared/config/constants.ts
+17	src/shared/config/env.ts
+12	src/shared/hooks/use-debounce.ts
+146	src/shared/hooks/use-etit-live.ts
+13	src/shared/hooks/use-layout-store.ts
+21	src/shared/hooks/use-media-query.ts
+7	src/shared/hooks/use-mounted.ts
+27	src/shared/hooks/use-permissions.ts
+46	src/shared/i18n/index.ts
+38	src/shared/lib/animations.ts
+201	src/shared/lib/cairo.ts
+84	src/shared/lib/chart-theme.ts
+6	src/shared/lib/cn.ts
+72	src/shared/lib/coords.ts
+356	src/shared/lib/excel.ts
+44	src/shared/lib/format-number.ts
+128	src/shared/lib/format.ts
+359	src/shared/lib/fuel.ts
+135	src/shared/lib/money.ts
+239	src/shared/lib/normalize.ts
+47	src/shared/lib/polyline.ts
+24	src/shared/lib/zod-utils.ts

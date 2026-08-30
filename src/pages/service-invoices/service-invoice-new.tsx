@@ -25,7 +25,7 @@ export default function ServiceInvoiceNewPage() {
   };
 
   return (
-    <div className="container max-w-5xl mx-auto py-8 px-4">
+    <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 p-4 md:p-6 lg:p-8">
       <ServiceInvoiceForm
         submitting={createMutation.isPending}
         onBack={() => navigate('/service-invoices')}

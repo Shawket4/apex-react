@@ -111,9 +111,11 @@ export function ZoneFormDialog({
                 name="name"
                 render={({ field }) => (
                   <FormItem className="sm:col-span-2">
-                    <FormLabel>{t('zones.fields.name', 'Zone Name')} *</FormLabel>
+                    <FormLabel>
+                      {t('zones.fields.name', 'Zone Name')} <span className="text-destructive">*</span>
+                    </FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder={t('zones.fields.namePlaceholder', 'e.g. Headquarters')} />
+                      <Input {...field} placeholder={t('zones.fields.namePlaceholder', 'e.g. Headquarters…')} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -125,7 +127,9 @@ export function ZoneFormDialog({
                 name="lat"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t('zones.fields.lat', 'Latitude')} *</FormLabel>
+                    <FormLabel>
+                      {t('zones.fields.lat', 'Latitude')} <span className="text-destructive">*</span>
+                    </FormLabel>
                     <FormControl>
                       <Input
                         type="number"
@@ -144,7 +148,9 @@ export function ZoneFormDialog({
                 name="lng"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t('zones.fields.lng', 'Longitude')} *</FormLabel>
+                    <FormLabel>
+                      {t('zones.fields.lng', 'Longitude')} <span className="text-destructive">*</span>
+                    </FormLabel>
                     <FormControl>
                       <Input
                         type="number"
@@ -163,7 +169,9 @@ export function ZoneFormDialog({
                 name="radius_m"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>{t('zones.fields.radius', 'Radius (meters)')} *</FormLabel>
+                    <FormLabel>
+                      {t('zones.fields.radius', 'Radius (meters)')} <span className="text-destructive">*</span>
+                    </FormLabel>
                     <FormControl>
                       <Input
                         type="number"
@@ -182,7 +190,7 @@ export function ZoneFormDialog({
                 control={form.control}
                 name="active"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm sm:mt-6">
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 sm:mt-6">
                     <div className="space-y-0.5">
                       <FormLabel>{t('zones.fields.active', 'Active')}</FormLabel>
                     </div>
@@ -212,11 +220,13 @@ export function ZoneFormDialog({
             </div>
 
             <DialogFooter className="pt-4">
-              <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 {t('common.cancel', 'Cancel')}
               </Button>
               <Button type="submit" disabled={loading}>
-                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {loading && (
+                  <Loader2 className="animate-spin motion-reduce:animate-none" aria-hidden="true" />
+                )}
                 {isEdit ? t('common.save', 'Save') : t('common.create', 'Create')}
               </Button>
             </DialogFooter>

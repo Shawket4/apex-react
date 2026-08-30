@@ -3,7 +3,7 @@
     "appName": "أبيكس",
     "tagline": "إدارة أسطول",
     "search": "بحث",
-    "searchPlaceholder": "ابحث...",
+    "searchPlaceholder": "ابحث…",
     "refreshing": "تحديث",
     "filter": "تصفية",
     "clearFilters": "مسح الفلاتر",
@@ -18,6 +18,9 @@
     "createSuccess": "تم الإنشاء بنجاح",
     "confirm": "تأكيد",
     "close": "إغلاق",
+    "openMenu": "فتح القائمة",
+    "expandSidebar": "توسيع الشريط الجانبي",
+    "collapseSidebar": "طي الشريط الجانبي",
     "exit": "خروج",
     "back": "رجوع",
     "actions": "إجراءات",
@@ -43,6 +46,9 @@
     "view": "عرض",
     "remove": "إزالة",
     "options": "خيارات",
+    "loadingMap": "جارٍ تحميل الخريطة…",
+    "previousMonth": "الشهر السابق",
+    "nextMonth": "الشهر التالي",
     "selectedCount": "تم تحديد {{count}}",
     "saving": "جاري الحفظ...",
     "select": "اختر",
@@ -68,6 +74,10 @@
     "next": "التالي",
     "filters": "فلاتر",
     "apply": "تطبيق"
+  },
+  "placeholder": {
+    "speedViolations": "يجري حاليًا تجميع تتبع مخالفات السرعة ورادار القياس عن بُعد.",
+    "comingSoon": "ستتم إعادة هيكلة هذه الوحدة لاحقًا. الهيكل والبنية وربط الواجهة البرمجية جاهزة."
   },
   "nav": {
     "overview": "نظرة عامة",
@@ -97,7 +107,8 @@
     "zones": "المناطق الميتة",
     "locations": "المواقع",
     "tripAudit": "تدقيق الرحلات",
-    "expensesReview": "قائمة المراجعة"
+    "expensesReview": "قائمة المراجعة",
+    "primary": "التنقل الرئيسي"
   },
   "auth": {
     "loginTitle": "مرحباً بعودتك",
@@ -247,7 +258,9 @@
       "distance": "المسافة المقطوعة",
       "fuelRate": "كفاءة الوقود",
       "selectCar": "اختر مركبة...",
-      "selectDriver": "اختر سائقاً..."
+      "selectDriver": "اختر سائقاً...",
+      "km": "كم",
+      "carAndDriver": "المركبة والسائق"
     },
     "efficiency": {
       "excluded": "مستبعد من المتوسط",
@@ -305,6 +318,16 @@
     }
   },
   "settings": {
+    "petroapp": {
+      "title": "إعدادات PetroApp",
+      "description": "تحديث رمز التكامل وملف الارتباط الخاصين بـ PetroApp.",
+      "token": "الرمز",
+      "cookie": "ملف الارتباط",
+      "tokenPlaceholder": "أدخل الرمز…",
+      "cookiePlaceholder": "أدخل ملف الارتباط…",
+      "updated": "تم تحديث رمز PetroApp بنجاح",
+      "updateFailed": "فشل تحديث الرمز"
+    },
     "theme": "السمة",
     "themeLight": "فاتح",
     "themeDark": "داكن",
@@ -343,7 +366,17 @@
     "pageNotFoundTitle": "الصفحة غير موجودة",
     "pageNotFoundDescription": "الصفحة التي تبحث عنها غير موجودة أو تم نقلها.",
     "goHome": "الذهاب إلى لوحة التحكم",
-    "invalidId": "معرف غير صالح"
+    "invalidId": "معرف غير صالح",
+    "unauthorized": "غير مصرح",
+    "forbidden": "ممنوع الوصول",
+    "notFound": "غير موجود",
+    "network": "خطأ في الشبكة",
+    "networkCheck": "خطأ في الشبكة — يرجى التحقق من اتصالك."
+  },
+  "validation": {
+    "positive": "يجب أن يكون رقماً موجباً",
+    "nonNegative": "يجب أن يكون صفراً أو أكبر",
+    "invalidDate": "تاريخ غير صالح"
   },
   "datePicker": {
     "today": "اليوم",
@@ -369,7 +402,9 @@
     "downloading": "جاري التحميل...",
     "done": "تم تصدير {{count}} سجل",
     "failed": "فشل التصدير",
-    "nothingToExport": "لا يوجد ما يمكن تصديره"
+    "nothingToExport": "لا يوجد ما يمكن تصديره",
+    "generated": "تاريخ الإنشاء",
+    "totals": "الإجمالي"
   },
   "drivers": {
     "subtitle": "إدارة سائقي الأسطول ومستنداتهم",
@@ -448,6 +483,9 @@
       "noImage": "لم يتم رفع صورة",
       "upload": "رفع",
       "replace": "استبدال",
+      "zoomOut": "تصغير",
+      "zoomIn": "تكبير",
+      "rotate": "تدوير",
       "filesReadyToUpload": "{{count}} ملف جاهز للرفع",
       "filesReadyToUpload_other": "{{count}} ملفات جاهزة للرفع"
     },
@@ -483,6 +521,38 @@
     "deleteConfirmTitle": "حذف المصروف؟",
     "deleteConfirmDescription": "هل أنت متأكد من حذف هذا المصروف بقيمة {{amount}}؟ لا يمكن التراجع عن هذا الإجراء.",
     "paid": "مدفوع",
+    "countLabel": "{{count}} مصروف",
+    "countLabel_zero": "لا مصاريف",
+    "countLabel_two": "مصروفان",
+    "countLabel_few": "{{count}} مصاريف",
+    "countLabel_many": "{{count}} مصروفًا",
+    "countLabel_other": "{{count}} مصروفات",
+    "categories": {
+      "Fuel": "وقود",
+      "Maintenance": "صيانة",
+      "Repairs": "إصلاحات",
+      "Insurance": "تأمين",
+      "Tickets": "مخالفات",
+      "Tolls": "رسوم طرق",
+      "Parking": "انتظار",
+      "Meals": "وجبات",
+      "Accommodation": "إقامة",
+      "Phone": "هاتف",
+      "Equipment": "معدات",
+      "Supplies": "مستلزمات",
+      "Training": "تدريب",
+      "Other": "أخرى"
+    },
+    "paymentMethods": {
+      "Cash": "نقدي",
+      "Credit Card": "بطاقة ائتمان",
+      "Debit Card": "بطاقة خصم",
+      "Mobile Payment": "دفع عبر الهاتف",
+      "Bank Transfer": "تحويل بنكي",
+      "Company Card": "بطاقة الشركة",
+      "Reimbursement": "تعويض",
+      "Other": "أخرى"
+    },
     "fields": {
       "amount": "المبلغ",
       "date": "التاريخ",
@@ -899,6 +969,7 @@
           "trips": "الرحلات",
           "distance": "المسافة"
         },
+        "other": "أخرى",
         "projectedRevenue": "الإيرادات الشهرية المتوقعة",
         "projectedRevenueNote": "بناءً على متوسط يومي {{avg}} على مدار {{days}} يوماً (مضروباً في {{monthDays}} يوماً)",
         "min": "الحد الأدنى",
@@ -964,11 +1035,16 @@
         "cols": {
           "trips": "الرحلات",
           "volume": "الكمية (لتر)",
+          "volumeShort": "لتر",
           "distance": "المسافة (كم)",
+          "distanceShort": "كم",
           "revenue": "الإيرادات",
+          "revenueShort": "إيراد",
           "vat": "الضريبة",
           "carRent": "إيجار السيارة",
+          "carRentShort": "إيجار",
           "totalAmount": "الإجمالي",
+          "totalAmountShort": "إجمالي",
           "totalWithVat": "الإجمالي شاملاً الضريبة",
           "group": "المجموعة",
           "route": "المسار",
@@ -984,6 +1060,7 @@
         "subtitle": "{{count}} سيارة · اضغط على أي عمود للترتيب",
         "totals": "الإجماليات",
         "liters": "الكمية (لتر)",
+        "litersShort": "لتر",
         "distance": "المسافة (كم)",
         "baseRevenue": "الإيراد الأساسي",
         "vat": "الضريبة",
@@ -1121,6 +1198,8 @@
     }
   },
   "commandPalette": {
+    "title": "لوحة الأوامر",
+    "description": "ابحث عن الإجراءات والسائقين والصفحات.",
     "quickAddTrip": "إضافة رحلة سريعة",
     "selectCompany": "اختر الشركة",
     "goBack": "للرجوع",
@@ -1159,7 +1238,16 @@
       "validation": {
         "fillRequired": "يرجى ملء جميع الحقول المطلوبة بقيم صحيحة"
       },
-      "newDropoffHint": "سيتم إنشاء نقطة تسليم جديدة"
+      "newDropoffHint": "سيتم إنشاء نقطة تسليم جديدة",
+      "placeholders": {
+        "company": "وطنية…",
+        "terminal": "القاهرة…",
+        "dropOffPoint": "قنا…"
+      }
+    },
+    "units": {
+      "km": "كم",
+      "min": "د"
     },
     "filters": {
       "searchPlaceholder": "البحث عن شركة، محطة، نقطة تسليم…",
@@ -1199,7 +1287,8 @@
       "title": "إثراء OSRM المجمع",
       "processed": "تمت المعالجة",
       "succeeded": "نجحت",
-      "failed": "فشلت"
+      "failed": "فشلت",
+      "delta": "Δ"
     },
     "delete": {
       "confirmTitle": "حذف خريطة الأسعار؟",
@@ -1208,7 +1297,10 @@
       "failed": "فشل حذف الخريطة"
     },
     "export": {
-      "empty": "لا يوجد ما يمكن تصديره"
+      "empty": "لا يوجد ما يمكن تصديره",
+      "filterCompany": "الشركة: {{value}}",
+      "filterAccuracy": "الدقة: {{value}}",
+      "filterSearch": "البحث: \"{{value}}\""
     },
     "excel": {
       "sheetName": "خرائط الأسعار",
@@ -1339,6 +1431,11 @@
       "password": "كلمة المرور",
       "createdAt": "تاريخ الإنشاء"
     },
+    "placeholders": {
+      "name": "الاسم الكامل",
+      "email": "name@example.com",
+      "phone": "‎+201…"
+    },
     "permissions": {
       "user": "مستخدم",
       "manager": "مدير",
@@ -1439,7 +1536,16 @@
       "compartments": "عيون التنك",
       "addCompartment": "إضافة عين",
       "compartmentIndex": "عين {{index}}",
-      "licenses": "الرخص والتواريخ"
+      "licenses": "الرخص والتواريخ",
+      "removeCompartment": "إزالة العين"
+    },
+    "types": {
+      "noTrailer": "بدون مقطورة",
+      "trailer": "مقطورة",
+      "truck": "شاحنة"
+    },
+    "units": {
+      "litre": "لتر"
     },
     "status": {
       "expired": "مستندات منتهية",
@@ -1460,7 +1566,7 @@
     "scanNow": "إجراء مسح الآن",
     "fields": {
       "name": "اسم المنطقة",
-      "namePlaceholder": "مثل المقر الرئيسي",
+      "namePlaceholder": "مثل المقر الرئيسي…",
       "lat": "خط العرض",
       "lng": "خط الطول",
       "radius": "نصف القطر (بالأمتار)",
@@ -1597,6 +1703,8 @@
     },
     "principal": "الأصل",
     "readOnlySource": "للقراءة فقط — يملكه نظام آخر",
+    "sourceFuel": "عملية وقود",
+    "sourceLoan": "قرض",
     "readOnlyExplain": "هذا الصف قادم من نظام الوقود أو القروض ويظهر هنا للتقارير فقط. عدّله من وحدته الأصلية.",
     "includeFuel": "أحداث الوقود",
     "includeLoans": "قروض السائقين",
@@ -1972,6 +2080,14 @@
       "warning": "تحذير",
       "critical": "حرج"
     },
+    "units": {
+      "km": "كم",
+      "kmh": "{{v}} كم/س",
+      "m": "م",
+      "h": "س",
+      "min": "د",
+      "s": "ث"
+    },
     "flagDetails": {
       "stoppedFor": "توقف لمدة",
       "actual": "الفعلي",
@@ -2063,6 +2179,9 @@
       "kmOptimal": "كم مثالي",
       "speed": "السرعة",
       "kmh": "كم/س",
+      "unitHour": "س",
+      "unitMinute": "د",
+      "unitSecond": "ث",
       "leg": "من {{from}} إلى {{to}}",
       "betweenLegs": "متوقف بين المراحل",
       "stoppedFor": "توقف {{duration}}",
@@ -2107,9 +2226,16 @@
   },
   "tracking": {
     "fleet": "الأسطول",
-    "searchPlaceholder": "ابحث باللوحة أو الاسم",
+    "searchPlaceholder": "ابحث باللوحة أو الاسم…",
     "kmh": "كم/س",
     "km": "كم",
+    "unit": {
+      "h": "س",
+      "m": "د"
+    },
+    "routeStart": "بداية المسار",
+    "routeEnd": "نهاية المسار",
+    "beyondRangeLine": "يمتد خارج النطاق المحمّل",
     "focus": "تركيز",
     "replay": "إعادة التشغيل",
     "hide": "إخفاء",
@@ -2162,5 +2288,9 @@
     "beyondRangeHint": "تمتد هذه المرحلة خارج المدة المحملة — تم جلب أيامها الناقصة للعرض المقفول.",
     "legsShort": "مراحل",
     "lockTrip": "قصر التشغيل على هذه الرحلة"
+  },
+  "maps": {
+    "centerOnMarkers": "توسيط الخريطة على العلامات",
+    "toggleSatellite": "تبديل عرض القمر الصناعي"
   }
 }

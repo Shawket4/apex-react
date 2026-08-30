@@ -106,27 +106,27 @@ function FlatTable({
       {
         accessorKey: 'car_no_plate',
         header: t('fuelEvents.fields.carPlate'),
-        cell: ({ row }) => <span className="font-medium">{row.original.car_no_plate}</span>,
+        cell: ({ row }) => <span className="font-mono font-medium tabular-nums">{row.original.car_no_plate}</span>,
       },
       {
         accessorKey: 'driver_name',
         header: t('fuelEvents.fields.driver'),
-        cell: ({ row }) => row.original.driver_name || '—',
+        cell: ({ row }) => row.original.driver_name ? <span dir="auto" className="truncate">{row.original.driver_name}</span> : <span className="opacity-40">—</span>,
       },
       {
         accessorKey: 'date',
         header: t('fuelEvents.fields.date'),
-        cell: ({ row }) => format(row.original.date, 'MMM d, yyyy'),
+        cell: ({ row }) => format(row.original.date, 'd MMM yyyy'),
       },
       {
         accessorKey: 'liters',
         header: t('fuelEvents.fields.liters'),
-        cell: ({ row }) => `${formatNumber(row.original.liters, 2)} L`,
+        cell: ({ row }) => <span className="tabular-nums">{`${formatNumber(row.original.liters, 2)} L`}</span>,
       },
       {
         accessorKey: 'price',
         header: t('fuelEvents.fields.totalPrice'),
-        cell: ({ row }) => formatCurrency(row.original.price),
+        cell: ({ row }) => <span className="font-mono tabular-nums text-money">{formatCurrency(row.original.price)}</span>,
       },
       {
         accessorKey: 'fuel_rate',
@@ -139,8 +139,9 @@ function FlatTable({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <span
+                    tabIndex={0}
                     className={cn(
-                      'cursor-help font-medium underline decoration-dotted underline-offset-2',
+                      'cursor-help rounded-sm font-medium tabular-nums underline decoration-dotted underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                       a.className,
                     )}
                   >
@@ -158,7 +159,7 @@ function FlatTable({
                     {a.partnerRate !== undefined && a.partnerDate && (
                       <div className="text-muted-foreground">
                         {t('fuelEvents.efficiency.pairedWithDetail', {
-                          date: format(a.partnerDate, 'MMM d'),
+                          date: format(a.partnerDate, 'd MMM'),
                           rate: formatNumber(a.partnerRate, 2),
                           unit: t('fuelEvents.efficiency.unit'),
                         })}
@@ -170,7 +171,7 @@ function FlatTable({
             );
           }
           return (
-            <span className={cn('font-medium', a?.className)}>
+            <span className={cn('font-medium tabular-nums', a?.className)}>
               {formatNumber(rate, 1)} {t('fuelEvents.efficiency.unit')}
             </span>
           );
@@ -195,7 +196,7 @@ function FlatTable({
           return (
             <Badge
               variant={variant as 'success' | 'warning' | 'destructive' | 'secondary' | 'default'}
-              className="gap-1"
+              className={cn(a.status === 'paired' && 'border-primary/40 bg-primary/10 text-primary')}
             >
               {a.status === 'paired' && <Link2 className="h-3 w-3" />}
               {t(a.labelKey)}
@@ -276,12 +277,12 @@ function GroupCard({
   const filterHidAll = originalCount > 0 && visibleEvents.length === 0;
 
   return (
-    <Card className="flex flex-col overflow-hidden">
+    <Card className="flex flex-col overflow-hidden shadow-none">
       {/* Header */}
       <div
         className={cn(
-          'border-b bg-card p-3 md:p-4',
-          !alwaysOpen && 'cursor-pointer select-none transition-colors hover:bg-muted/40',
+          'border-b bg-card p-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring',
+          !alwaysOpen && 'cursor-pointer select-none transition-colors hover:bg-muted/50',
         )}
         onClick={alwaysOpen ? undefined : (e) => {
           // Ignore clicks on the export button
@@ -305,16 +306,20 @@ function GroupCard({
         {/* Row 1: group name + trend + chevron + export */}
         <div className="flex items-center gap-2">
           <div className="flex min-w-0 flex-1 items-center gap-2">
-            <span className="truncate text-sm font-semibold md:text-base" title={groupKey}>
+            <span
+              className={cn('truncate text-[15px] font-semibold', grouping === 'vehicle' && 'font-mono tabular-nums')}
+              dir={grouping === 'driver' ? 'auto' : undefined}
+              title={groupKey}
+            >
               {groupKey}
             </span>
             <TrendIcon className={cn('h-3.5 w-3.5 shrink-0', trendClass)} />
             {summary.pairedCount > 0 && (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <span className="inline-flex shrink-0 items-center gap-0.5 rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">
-                    <Link2 className="h-2.5 w-2.5" />
-                    {summary.pairedCount}
+                  <span className="inline-flex shrink-0 items-center gap-0.5 rounded-full bg-primary/10 px-2 py-0.5 text-[10.5px] font-medium text-primary">
+                    <Link2 className="h-3 w-3" />
+                    <span className="font-mono tabular-nums">{summary.pairedCount}</span>
                   </span>
                 </TooltipTrigger>
                 <TooltipContent side="top">
@@ -335,11 +340,11 @@ function GroupCard({
                   if (visibleEvents.length > 0 && !exporting) onExport(visibleEvents);
                 }}
                 disabled={exporting || visibleEvents.length === 0}
-                className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
+                className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
                 aria-label={t('common.export')}
               >
                 {exporting ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  <Loader2 className="h-3.5 w-3.5 animate-spin motion-reduce:animate-none" />
                 ) : (
                   <Download className="h-3.5 w-3.5" />
                 )}
@@ -351,9 +356,10 @@ function GroupCard({
           {!alwaysOpen && (
             <ChevronDown
               className={cn(
-                'h-4 w-4 shrink-0 text-muted-foreground transition-transform',
+                'h-3 w-3 shrink-0 text-muted-foreground transition-transform duration-200',
                 isOpen && 'rotate-180',
               )}
+              aria-hidden
             />
           )}
         </div>
@@ -372,6 +378,7 @@ function GroupCard({
           <Stat
             icon={<DollarSign className="h-3 w-3" />}
             label={formatCurrency(summary.totalCost)}
+            className="font-mono text-money"
           />
           <span className="text-muted-foreground">
             {t('fuelEvents.stats.events', { count: summary.eventCount })}
@@ -384,8 +391,8 @@ function GroupCard({
       {isOpen && (
         <CardContent className="p-0">
           {filterHidAll ? (
-            <div className="flex flex-col items-center justify-center gap-1.5 px-4 py-8 text-center">
-              <FilterX className="h-6 w-6 text-muted-foreground/60" />
+            <div className="flex flex-col items-center justify-center gap-1.5 px-3 py-6 text-center text-xs text-muted-foreground">
+              <FilterX className="h-6 w-6 text-muted-foreground/60" aria-hidden />
               <p className="text-xs text-muted-foreground">
                 {t('fuelEvents.noMatchingEvents')}
               </p>
@@ -405,21 +412,21 @@ function GroupCard({
                         preloadChunk('fuel-event-details');
                         prefetchFuelEvent(queryClient, e.ID);
                       })}
-                      className="grid w-full grid-cols-[1fr_auto] gap-x-3 gap-y-1 px-3 py-2.5 text-start transition-colors hover:bg-muted/50 md:px-4"
+                      className="grid w-full grid-cols-[1fr_auto] gap-x-3 gap-y-1 px-3 py-2.5 text-start transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring md:px-4"
                     >
                       <div className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
                         <CalendarIcon className="h-3 w-3 shrink-0" />
-                        <span className="shrink-0">{format(e.date, 'MMM d, yyyy')}</span>
+                        <span className="shrink-0">{format(e.date, 'd MMM yyyy')}</span>
                         {grouping === 'driver' && (
                           <>
                             <span>·</span>
-                            <span className="truncate">{e.car_no_plate}</span>
+                            <span className="shrink-0 font-mono tabular-nums text-foreground">{e.car_no_plate}</span>
                           </>
                         )}
                         {grouping === 'vehicle' && e.driver_name && (
                           <>
                             <span>·</span>
-                            <span className="truncate">{e.driver_name}</span>
+                            <span className="truncate" dir="auto">{e.driver_name}</span>
                           </>
                         )}
                         {a?.status === 'paired' && (
@@ -433,16 +440,16 @@ function GroupCard({
                           </Tooltip>
                         )}
                       </div>
-                      <span className="text-sm font-semibold tabular-nums">
+                      <span className="font-mono text-sm font-semibold tabular-nums text-money">
                         {formatCurrency(e.price)}
                       </span>
 
                       <div className="flex items-center gap-3 text-xs">
-                        <span className="flex items-center gap-1 text-muted-foreground">
+                        <span className="flex items-center gap-1 tabular-nums text-muted-foreground">
                           <Droplet className="h-3 w-3" />
                           {formatNumber(e.liters, 2)} L
                         </span>
-                        <span className="flex items-center gap-1 text-muted-foreground">
+                        <span className="flex items-center gap-1 tabular-nums text-muted-foreground">
                           <Gauge className="h-3 w-3" />
                           {formatNumber(distance, 0)} km
                         </span>
@@ -451,8 +458,9 @@ function GroupCard({
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <span
+                              tabIndex={0}
                               className={cn(
-                                'cursor-help text-xs font-medium underline decoration-dotted underline-offset-2',
+                                'cursor-help rounded-sm text-xs font-medium tabular-nums underline decoration-dotted underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                                 a.className,
                               )}
                             >
@@ -470,7 +478,7 @@ function GroupCard({
                               {a.partnerRate !== undefined && a.partnerDate && (
                                 <div className="text-muted-foreground">
                                   {t('fuelEvents.efficiency.pairedWithDetail', {
-                                    date: format(a.partnerDate, 'MMM d'),
+                                    date: format(a.partnerDate, 'd MMM'),
                                     rate: formatNumber(a.partnerRate, 2),
                                     unit: t('fuelEvents.efficiency.unit'),
                                   })}
@@ -480,11 +488,11 @@ function GroupCard({
                           </TooltipContent>
                         </Tooltip>
                       ) : (
-                        <span className={cn('text-xs font-medium', a?.className)}>
-                          {formatNumber(displayRate, 1)} {t('fuelEvents.efficiency.unit')}
+                        <span className={cn('inline-flex items-center gap-1.5 text-xs font-medium tabular-nums', a?.className)}>
+                          <span>{formatNumber(displayRate, 1)} {t('fuelEvents.efficiency.unit')}</span>
                           {a?.status === 'excluded' && (
-                            <span className="ms-1 text-[10px] text-muted-foreground">
-                              ({t('fuelEvents.efficiency.excluded')})
+                            <span className="rounded-full bg-muted px-2 py-0.5 text-[10.5px] font-medium text-muted-foreground">
+                              {t('fuelEvents.efficiency.excluded')}
                             </span>
                           )}
                         </span>
@@ -524,20 +532,20 @@ function Stat({
 
 function GroupCardSkeleton() {
   return (
-    <Card className="overflow-hidden">
-      <div className="border-b bg-card p-3 md:p-4">
+    <Card className="overflow-hidden shadow-none">
+      <div className="border-b bg-card p-3">
         <div className="flex items-center gap-2">
-          <Skeleton className="h-5 flex-1" />
+          <Skeleton className="h-5 flex-1 rounded-sm" />
           <Skeleton className="h-5 w-5 rounded" />
         </div>
         <div className="mt-2 flex gap-3">
-          <Skeleton className="h-3 w-16" />
-          <Skeleton className="h-3 w-20" />
-          <Skeleton className="h-3 w-24" />
+          <Skeleton className="h-3 w-16 rounded-sm" />
+          <Skeleton className="h-3 w-20 rounded-sm" />
+          <Skeleton className="h-3 w-24 rounded-sm" />
         </div>
       </div>
-      <div className="p-3 md:p-4">
-        <Skeleton className="h-14 w-full" />
+      <div className="p-3">
+        <Skeleton className="h-10 w-full rounded-none" />
       </div>
     </Card>
   );

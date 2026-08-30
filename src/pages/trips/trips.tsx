@@ -365,9 +365,9 @@ export default function TripsPage() {
           disabled={isExporting || total === 0}
         >
           {isExporting ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
+            <Loader2 className="animate-spin motion-reduce:animate-none" />
           ) : (
-            <Download className="h-4 w-4" />
+            <Download />
           )}
           <span className="hidden sm:inline">{t('common.export')}</span>
         </Button>
@@ -380,9 +380,9 @@ export default function TripsPage() {
         disabled={isExportingWatanya || !from || !to}
       >
         {isExportingWatanya ? (
-          <Loader2 className="h-4 w-4 animate-spin" />
+          <Loader2 className="animate-spin motion-reduce:animate-none" />
         ) : (
-          <FileSpreadsheet className="h-4 w-4" />
+          <FileSpreadsheet />
         )}
         <span className="hidden sm:inline">
           {t('trips.actions.watanyaReport')}
@@ -393,7 +393,7 @@ export default function TripsPage() {
         size="sm"
         {...intentProps(() => warmTripForm(queryClient))}
       >
-        <Plus className="h-4 w-4" />
+        <Plus />
         <span className="hidden sm:inline">{t('trips.actions.add')}</span>
       </Button>
     </>
@@ -459,7 +459,7 @@ export default function TripsPage() {
                     aria-expanded={showMoreFilters}
                     onClick={() => setShowMoreFilters((v) => !v)}
                   >
-                    <SlidersHorizontal className="h-3.5 w-3.5" />
+                    <SlidersHorizontal />
                     {t('common.filters')}
                     {refinementCount > 0 && (
                       <span className="rounded-full bg-primary px-1.5 text-[10px] font-semibold text-primary-foreground">
@@ -494,7 +494,7 @@ export default function TripsPage() {
                     onClick={handleResetFilters}
                     className="h-9 gap-1.5"
                   >
-                    <FilterX className="h-3.5 w-3.5" />
+                    <FilterX />
                     {t('common.clear')}
                   </Button>
                 )}
@@ -537,7 +537,7 @@ export default function TripsPage() {
                     onClick={() => navigate('/trips/new')}
                     {...intentProps(() => warmTripForm(queryClient))}
                   >
-                    <Plus className="h-4 w-4" />
+                    <Plus />
                     {t('trips.actions.add')}
                   </Button>
                 }

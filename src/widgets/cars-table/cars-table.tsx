@@ -114,7 +114,7 @@ export function CarsTable({ onAddCar, onEditCar }: CarsTableProps) {
               <CarIcon className="h-4 w-4" />
             </div>
             <div className="min-w-0">
-              <p className="truncate font-medium">{row.original.car_no_plate}</p>
+              <p className="font-medium tabular-nums" dir="auto">{row.original.car_no_plate}</p>
               <p className="flex items-center gap-1 text-xs text-muted-foreground">
                 <Truck className="h-3 w-3" />
                 {row.original.car_type}
@@ -139,7 +139,7 @@ export function CarsTable({ onAddCar, onEditCar }: CarsTableProps) {
         cell: ({ row }) => (
           <div className="flex items-center gap-2 text-sm">
             <Gauge className="h-3.5 w-3.5 text-muted-foreground" />
-            {row.original.tank_capacity?.toLocaleString()} L
+            <span className="font-mono tabular-nums">{row.original.tank_capacity?.toLocaleString()}</span> {t('cars.units.litre', 'L')}
           </div>
         ),
       },
@@ -151,7 +151,7 @@ export function CarsTable({ onAddCar, onEditCar }: CarsTableProps) {
           if (hasExpiredDocs(car)) {
             return (
               <Badge variant="destructive">
-                <ShieldAlert className="h-3 w-3 mr-1" />
+                <ShieldAlert className="h-3 w-3" />
                 {t('cars.status.expired')}
               </Badge>
             );
@@ -159,14 +159,14 @@ export function CarsTable({ onAddCar, onEditCar }: CarsTableProps) {
           if (hasExpiringSoonDocs(car)) {
             return (
               <Badge variant="warning">
-                <Clock className="h-3 w-3 mr-1" />
+                <Clock className="h-3 w-3" />
                 {t('cars.status.expiring')}
               </Badge>
             );
           }
           return (
             <Badge variant="success">
-              <ShieldCheck className="h-3 w-3 mr-1" />
+              <ShieldCheck className="h-3 w-3" />
               {t('cars.status.valid')}
             </Badge>
           );
@@ -179,12 +179,14 @@ export function CarsTable({ onAddCar, onEditCar }: CarsTableProps) {
             <Button
               variant="ghost"
               size="icon"
+              aria-label={t('cars.editCar')}
+              title={t('cars.editCar')}
               onClick={(e) => {
                 e.stopPropagation();
                 onEditCar?.(row.original);
               }}
             >
-              <Edit className="h-4 w-4" />
+              <Edit />
             </Button>
           </div>
         ),
@@ -194,8 +196,8 @@ export function CarsTable({ onAddCar, onEditCar }: CarsTableProps) {
   );
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+    <div className="space-y-3">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatCard
           label={t('cars.stats.total')}
           value={stats.total}
@@ -232,7 +234,7 @@ export function CarsTable({ onAddCar, onEditCar }: CarsTableProps) {
         />
         {canManage && onAddCar && (
           <Button onClick={onAddCar}>
-            <Plus className="h-4 w-4 mr-2" />
+            <Plus />
             {t('cars.addCar')}
           </Button>
         )}
@@ -252,7 +254,7 @@ export function CarsTable({ onAddCar, onEditCar }: CarsTableProps) {
             action={
               canManage && onAddCar ? (
                 <Button onClick={onAddCar}>
-                  <Plus className="h-4 w-4 mr-2" />
+                  <Plus />
                   {t('cars.addCar')}
                 </Button>
               ) : undefined

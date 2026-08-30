@@ -1,0 +1,334 @@
+
+Running 46 tests using 1 worker
+
+[WebServer] (node:96645) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   1 [chromium] › e2e/visual.spec.ts:82:5 › public routes › login (10.9s)
+  ✓   2 [chromium] › e2e/visual.spec.ts:82:5 › public routes › not-found (12.4s)
+  ✓   3 [chromium] › e2e/visual.spec.ts:82:5 › public routes › not-found-catchall (5.6s)
+  ✓   4 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › dashboard (12.5s)
+/Users/shawket/React/apex-react/e2e/__screenshots__/chromium/fuel-events.png is re-generated, writing actual.
+  ✓   5 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › fuel-events (14.5s)
+/Users/shawket/React/apex-react/e2e/__screenshots__/chromium/fuel-events-new.png is re-generated, writing actual.
+  ✓   6 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › fuel-events-new (8.6s)
+[visual] fuel-event-details: networkidle not reached in 15000ms, capturing anyway
+  ✓   7 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › fuel-event-details (24.1s)
+/Users/shawket/React/apex-react/e2e/__screenshots__/chromium/fuel-event-edit.png is re-generated, writing actual.
+  ✓   8 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › fuel-event-edit (9.6s)
+[visual] trips: networkidle not reached in 15000ms, capturing anyway
+  ✘   9 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › trips (22.6s)
+[visual] trips-new: networkidle not reached in 15000ms, capturing anyway
+  ✓  10 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › trips-new (17.4s)
+[visual] trips-multi-container-edit: networkidle not reached in 15000ms, capturing anyway
+  ✓  11 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › trips-multi-container-edit (32.9s)
+[visual] trips-parent-route-summary: networkidle not reached in 15000ms, capturing anyway
+  ✓  12 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › trips-parent-route-summary (17.5s)
+[visual] oil-changes: networkidle not reached in 15000ms, capturing anyway
+  ✘  13 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › oil-changes (24.2s)
+[visual] oil-changes-new: networkidle not reached in 15000ms, capturing anyway
+  ✓  14 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › oil-changes-new (28.5s)
+/Users/shawket/React/apex-react/e2e/__screenshots__/chromium/oil-change-edit.png is re-generated, writing actual.
+  ✓  15 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › oil-change-edit (24.2s)
+/Users/shawket/React/apex-react/e2e/__screenshots__/chromium/oil-change-history.png is re-generated, writing actual.
+  ✓  16 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › oil-change-history (40.4s)
+[visual] service-invoices: networkidle not reached in 15000ms, capturing anyway
+  ✓  17 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › service-invoices (27.5s)
+  ✓  18 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › service-invoices-new (32.0s)
+/Users/shawket/React/apex-react/e2e/__screenshots__/chromium/service-invoice-details.png is re-generated, writing actual.
+  ✓  19 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › service-invoice-details (7.4s)
+[visual] service-invoice-edit: networkidle not reached in 15000ms, capturing anyway
+  ✘  20 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › service-invoice-edit (23.2s)
+[visual] trucks: networkidle not reached in 15000ms, capturing anyway
+  ✓  21 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › trucks (34.8s)
+/Users/shawket/React/apex-react/e2e/__screenshots__/chromium/cars.png is re-generated, writing actual.
+  ✓  22 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › cars (34.2s)
+  ✓  23 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › tires (1.9s)
+  ✓  24 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › tablets (9.9s)
+  ✓  25 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › speed-violations (7.6s)
+/Users/shawket/React/apex-react/e2e/__screenshots__/chromium/drivers.png is re-generated, writing actual.
+  ✓  26 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › drivers (8.1s)
+  ✘  27 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › driver-detail (1.0m)
+[visual] driver-expenses: networkidle not reached in 15000ms, capturing anyway
+  ✓  28 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › driver-expenses (26.8s)
+[visual] driver-expenses-new: networkidle not reached in 15000ms, capturing anyway
+  ✓  29 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › driver-expenses-new (24.0s)
+  ✓  30 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › driver-loans (11.7s)
+[visual] driver-loans-new: networkidle not reached in 15000ms, capturing anyway
+  ✓  31 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › driver-loans-new (19.7s)
+  ✓  32 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › vendors (59.2s)
+[visual] fleet-expenses: networkidle not reached in 15000ms, capturing anyway
+  ✘  33 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › fleet-expenses (22.2s)
+[visual] fleet-expenses-messages: networkidle not reached in 15000ms, capturing anyway
+  ✘  34 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › fleet-expenses-messages (24.2s)
+  ✓  35 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › fleet-expenses-review-redirect (9.5s)
+  ✓  36 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › fleet-expenses-new (5.1s)
+  ✓  37 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › fleet-expense-edit (2.7s)
+/Users/shawket/React/apex-react/e2e/__screenshots__/chromium/fee-mappings.png is re-generated, writing actual.
+  ✓  38 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › fee-mappings (5.7s)
+[visual] etit: networkidle not reached in 15000ms, capturing anyway
+  ✓  39 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › etit (30.1s)
+[visual] zones: networkidle not reached in 15000ms, capturing anyway
+  ✓  40 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › zones (19.0s)
+/Users/shawket/React/apex-react/e2e/__screenshots__/chromium/locations.png is re-generated, writing actual.
+  ✓  41 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › locations (12.3s)
+  ✓  42 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › trip-audit (9.3s)
+[visual] trip-replay: networkidle not reached in 15000ms, capturing anyway
+  ✓  43 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › trip-replay (16.4s)
+/Users/shawket/React/apex-react/e2e/__screenshots__/chromium/users.png is re-generated, writing actual.
+  ✓  44 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › users (5.4s)
+  ✓  45 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › logs (4.9s)
+  ✓  46 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › settings (2.0s)
+
+
+  1) [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › trips ──────────────────────────
+
+    Error: expect(page).toHaveScreenshot(expected) failed
+
+    Timeout: 5000ms
+      Failed to re-generate expected.
+      Timeout 5000ms exceeded.
+
+      Snapshot: trips.png
+
+    Call log:
+      - Expect "toHaveScreenshot(trips.png)" with timeout 5000ms
+        - verifying given screenshot expectation
+      - taking page screenshot
+        - disabled all CSS animations
+      - waiting for fonts to load...
+      - Timeout 5000ms exceeded.
+
+
+      69 |   }
+      70 |   await expandViewportToContent(page);
+    > 71 |   await expect(page).toHaveScreenshot(`${route.name}.png`, {
+         |                      ^
+      72 |     fullPage: true,
+      73 |     maxDiffPixelRatio: 0.01,
+      74 |   });
+        at screenshotRoute (/Users/shawket/React/apex-react/e2e/visual.spec.ts:71:22)
+        at /Users/shawket/React/apex-react/e2e/visual.spec.ts:104:7
+
+    attachment #1: trips (image/png) ───────────────────────────────────────────────────────────────
+    e2e/__screenshots__/chromium/trips.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: e2e/test-results/visual-authenticated-routes-trips-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    e2e/test-results/visual-authenticated-routes-trips-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace e2e/test-results/visual-authenticated-routes-trips-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  2) [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › oil-changes ────────────────────
+
+    Error: expect(page).toHaveScreenshot(expected) failed
+
+    Timeout: 5000ms
+      Failed to re-generate expected.
+      Timeout 5000ms exceeded.
+
+      Snapshot: oil-changes.png
+
+    Call log:
+      - Expect "toHaveScreenshot(oil-changes.png)" with timeout 5000ms
+        - verifying given screenshot expectation
+      - taking page screenshot
+        - disabled all CSS animations
+      - waiting for fonts to load...
+      - Timeout 5000ms exceeded.
+
+
+      69 |   }
+      70 |   await expandViewportToContent(page);
+    > 71 |   await expect(page).toHaveScreenshot(`${route.name}.png`, {
+         |                      ^
+      72 |     fullPage: true,
+      73 |     maxDiffPixelRatio: 0.01,
+      74 |   });
+        at screenshotRoute (/Users/shawket/React/apex-react/e2e/visual.spec.ts:71:22)
+        at /Users/shawket/React/apex-react/e2e/visual.spec.ts:104:7
+
+    attachment #1: oil-changes (image/png) ─────────────────────────────────────────────────────────
+    e2e/__screenshots__/chromium/oil-changes.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: e2e/test-results/visual-authenticated-routes-oil-changes-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    e2e/test-results/visual-authenticated-routes-oil-changes-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace e2e/test-results/visual-authenticated-routes-oil-changes-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  3) [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › service-invoice-edit ───────────
+
+    Error: expect(page).toHaveScreenshot(expected) failed
+
+    Timeout: 5000ms
+      Failed to re-generate expected.
+      Timeout 5000ms exceeded.
+
+      Snapshot: service-invoice-edit.png
+
+    Call log:
+      - Expect "toHaveScreenshot(service-invoice-edit.png)" with timeout 5000ms
+        - verifying given screenshot expectation
+      - taking page screenshot
+        - disabled all CSS animations
+      - waiting for fonts to load...
+      - Timeout 5000ms exceeded.
+
+
+      69 |   }
+      70 |   await expandViewportToContent(page);
+    > 71 |   await expect(page).toHaveScreenshot(`${route.name}.png`, {
+         |                      ^
+      72 |     fullPage: true,
+      73 |     maxDiffPixelRatio: 0.01,
+      74 |   });
+        at screenshotRoute (/Users/shawket/React/apex-react/e2e/visual.spec.ts:71:22)
+        at /Users/shawket/React/apex-react/e2e/visual.spec.ts:104:7
+
+    attachment #1: service-invoice-edit (image/png) ────────────────────────────────────────────────
+    e2e/__screenshots__/chromium/service-invoice-edit.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: e2e/test-results/visual-authenticated-routes-service-invoice-edit-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    e2e/test-results/visual-authenticated-routes-service-invoice-edit-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace e2e/test-results/visual-authenticated-routes-service-invoice-edit-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  4) [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › driver-detail ──────────────────
+
+    Test timeout of 60000ms exceeded.
+
+    Error: page.goto: Test timeout of 60000ms exceeded.
+    Call log:
+      - navigating to "http://localhost:5173/drivers/1", waiting until "load"
+
+
+      62 | async function screenshotRoute(page: Page, route: Route) {
+      63 |   await page.setViewportSize(BASE_VIEWPORT);
+    > 64 |   await page.goto(route.path as string);
+         |              ^
+      65 |   try {
+      66 |     await page.waitForLoadState('networkidle', { timeout: NETWORK_IDLE_CAP_MS });
+      67 |   } catch {
+        at screenshotRoute (/Users/shawket/React/apex-react/e2e/visual.spec.ts:64:14)
+        at /Users/shawket/React/apex-react/e2e/visual.spec.ts:104:7
+
+    Error Context: e2e/test-results/visual-authenticated-routes-driver-detail-chromium/error-context.md
+
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    e2e/test-results/visual-authenticated-routes-driver-detail-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace e2e/test-results/visual-authenticated-routes-driver-detail-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  5) [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › fleet-expenses ─────────────────
+
+    Error: expect(page).toHaveScreenshot(expected) failed
+
+    Timeout: 5000ms
+      Failed to re-generate expected.
+      Timeout 5000ms exceeded.
+
+      Snapshot: fleet-expenses.png
+
+    Call log:
+      - Expect "toHaveScreenshot(fleet-expenses.png)" with timeout 5000ms
+        - verifying given screenshot expectation
+      - taking page screenshot
+        - disabled all CSS animations
+      - waiting for fonts to load...
+      - Timeout 5000ms exceeded.
+
+
+      69 |   }
+      70 |   await expandViewportToContent(page);
+    > 71 |   await expect(page).toHaveScreenshot(`${route.name}.png`, {
+         |                      ^
+      72 |     fullPage: true,
+      73 |     maxDiffPixelRatio: 0.01,
+      74 |   });
+        at screenshotRoute (/Users/shawket/React/apex-react/e2e/visual.spec.ts:71:22)
+        at /Users/shawket/React/apex-react/e2e/visual.spec.ts:104:7
+
+    attachment #1: fleet-expenses (image/png) ──────────────────────────────────────────────────────
+    e2e/__screenshots__/chromium/fleet-expenses.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: e2e/test-results/visual-authenticated-routes-fleet-expenses-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    e2e/test-results/visual-authenticated-routes-fleet-expenses-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace e2e/test-results/visual-authenticated-routes-fleet-expenses-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  6) [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › fleet-expenses-messages ────────
+
+    Error: expect(page).toHaveScreenshot(expected) failed
+
+    Timeout: 5000ms
+      Failed to re-generate expected.
+      Timeout 5000ms exceeded.
+
+      Snapshot: fleet-expenses-messages.png
+
+    Call log:
+      - Expect "toHaveScreenshot(fleet-expenses-messages.png)" with timeout 5000ms
+        - verifying given screenshot expectation
+      - taking page screenshot
+        - disabled all CSS animations
+      - waiting for fonts to load...
+      - Timeout 5000ms exceeded.
+
+
+      69 |   }
+      70 |   await expandViewportToContent(page);
+    > 71 |   await expect(page).toHaveScreenshot(`${route.name}.png`, {
+         |                      ^
+      72 |     fullPage: true,
+      73 |     maxDiffPixelRatio: 0.01,
+      74 |   });
+        at screenshotRoute (/Users/shawket/React/apex-react/e2e/visual.spec.ts:71:22)
+        at /Users/shawket/React/apex-react/e2e/visual.spec.ts:104:7
+
+    attachment #1: fleet-expenses-messages (image/png) ─────────────────────────────────────────────
+    e2e/__screenshots__/chromium/fleet-expenses-messages.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: e2e/test-results/visual-authenticated-routes-fleet-expenses-messages-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    e2e/test-results/visual-authenticated-routes-fleet-expenses-messages-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace e2e/test-results/visual-authenticated-routes-fleet-expenses-messages-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  6 failed
+    [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › trips ───────────────────────────
+    [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › oil-changes ─────────────────────
+    [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › service-invoice-edit ────────────
+    [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › driver-detail ───────────────────
+    [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › fleet-expenses ──────────────────
+    [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › fleet-expenses-messages ─────────
+  40 passed (14.4m)

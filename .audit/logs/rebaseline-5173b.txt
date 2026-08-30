@@ -1,0 +1,59 @@
+
+Running 46 tests using 1 worker
+
+[WebServer] (node:7073) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   1 [chromium] › e2e/visual.spec.ts:82:5 › public routes › login (11.1s)
+  ✓   2 [chromium] › e2e/visual.spec.ts:82:5 › public routes › not-found (8.3s)
+  ✓   3 [chromium] › e2e/visual.spec.ts:82:5 › public routes › not-found-catchall (5.6s)
+  ✓   4 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › dashboard (10.5s)
+  ✓   5 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › fuel-events (5.6s)
+  ✓   6 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › fuel-events-new (2.4s)
+  ✓   7 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › fuel-event-details (10.3s)
+  ✓   8 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › fuel-event-edit (12.8s)
+  ✓   9 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › trips (10.5s)
+  ✓  10 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › trips-new (4.0s)
+/Users/shawket/React/apex-react/e2e/__screenshots__/chromium/trips-multi-container-edit.png is re-generated, writing actual.
+  ✓  11 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › trips-multi-container-edit (4.2s)
+  ✓  12 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › trips-parent-route-summary (4.0s)
+/Users/shawket/React/apex-react/e2e/__screenshots__/chromium/oil-changes.png is re-generated, writing actual.
+  ✓  13 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › oil-changes (3.6s)
+/Users/shawket/React/apex-react/e2e/__screenshots__/chromium/oil-changes-new.png is re-generated, writing actual.
+  ✓  14 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › oil-changes-new (2.8s)
+  ✓  15 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › oil-change-edit (2.6s)
+  ✓  16 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › oil-change-history (3.0s)
+/Users/shawket/React/apex-react/e2e/__screenshots__/chromium/service-invoices.png is re-generated, writing actual.
+  ✓  17 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › service-invoices (4.0s)
+  ✓  18 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › service-invoices-new (2.5s)
+  ✓  19 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › service-invoice-details (2.6s)
+/Users/shawket/React/apex-react/e2e/__screenshots__/chromium/service-invoice-edit.png is re-generated, writing actual.
+  ✓  20 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › service-invoice-edit (3.3s)
+  ✓  21 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › trucks (2.6s)
+  ✓  22 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › cars (3.0s)
+  ✓  23 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › tires (2.7s)
+  ✓  24 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › tablets (2.7s)
+  ✓  25 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › speed-violations (3.1s)
+  ✓  26 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › drivers (3.6s)
+  ✓  27 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › driver-detail (3.6s)
+  ✓  28 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › driver-expenses (3.7s)
+  ✓  29 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › driver-expenses-new (3.0s)
+  ✓  30 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › driver-loans (4.1s)
+  ✓  31 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › driver-loans-new (3.4s)
+  ✓  32 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › vendors (2.8s)
+/Users/shawket/React/apex-react/e2e/__screenshots__/chromium/fleet-expenses.png is re-generated, writing actual.
+  ✓  33 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › fleet-expenses (5.7s)
+  ✓  34 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › fleet-expenses-messages (2.9s)
+  ✓  35 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › fleet-expenses-review-redirect (2.9s)
+  ✓  36 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › fleet-expenses-new (2.2s)
+  ✓  37 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › fleet-expense-edit (2.4s)
+  ✓  38 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › fee-mappings (3.1s)
+  ✓  39 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › etit (4.1s)
+  ✓  40 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › zones (3.0s)
+  ✓  41 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › locations (3.7s)
+  ✓  42 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › trip-audit (3.5s)
+  ✓  43 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › trip-replay (3.6s)
+  ✓  44 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › users (3.7s)
+  ✓  45 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › logs (2.4s)
+  ✓  46 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › settings (2.6s)
+
+  46 passed (3.3m)

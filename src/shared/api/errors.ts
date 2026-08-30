@@ -1,4 +1,5 @@
 import type { AxiosError } from 'axios';
+import i18n from '@/shared/i18n';
 
 export class ApiError extends Error {
   status?: number;
@@ -13,28 +14,28 @@ export class ApiError extends Error {
 }
 
 export class UnauthorizedError extends ApiError {
-  constructor(message = 'Unauthorized') {
+  constructor(message = i18n.t('errors.unauthorized', { defaultValue: 'Unauthorized' })) {
     super(message, 401);
     this.name = 'UnauthorizedError';
   }
 }
 
 export class ForbiddenError extends ApiError {
-  constructor(message = 'Forbidden') {
+  constructor(message = i18n.t('errors.forbidden', { defaultValue: 'Forbidden' })) {
     super(message, 403);
     this.name = 'ForbiddenError';
   }
 }
 
 export class NotFoundError extends ApiError {
-  constructor(message = 'Not found') {
+  constructor(message = i18n.t('errors.notFound', { defaultValue: 'Not found' })) {
     super(message, 404);
     this.name = 'NotFoundError';
   }
 }
 
 export class NetworkError extends ApiError {
-  constructor(message = 'Network error') {
+  constructor(message = i18n.t('errors.network', { defaultValue: 'Network error' })) {
     super(message);
     this.name = 'NetworkError';
   }
@@ -47,14 +48,19 @@ export function toApiError(error: unknown): ApiError {
   const ax = error as AxiosError<{ message?: string; error?: string }>;
 
   if (!ax.response) {
-    return new NetworkError(ax.message || 'Network error — please check your connection.');
+    return new NetworkError(
+      ax.message ||
+        i18n.t('errors.networkCheck', {
+          defaultValue: 'Network error — please check your connection.',
+        }),
+    );
   }
 
   const message =
     ax.response.data?.message ||
     ax.response.data?.error ||
     ax.message ||
-    'An unexpected error occurred';
+    i18n.t('errors.unexpected.message', { defaultValue: 'An unexpected error occurred' });
 
   switch (ax.response.status) {
     case 401:
@@ -68,7 +74,10 @@ export function toApiError(error: unknown): ApiError {
   }
 }
 
-export function extractErrorMessage(error: unknown, fallback = 'Something went wrong'): string {
+export function extractErrorMessage(
+  error: unknown,
+  fallback = i18n.t('errors.generic', { defaultValue: 'Something went wrong' }),
+): string {
   if (error instanceof ApiError) return error.message;
   if (error instanceof Error) return error.message;
   return fallback;

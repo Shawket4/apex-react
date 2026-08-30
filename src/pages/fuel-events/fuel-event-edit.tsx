@@ -59,7 +59,7 @@ export default function FuelEventEditPage() {
       icon={<Fuel className="h-5 w-5" />}
       actions={
         <Button variant="outline" size="sm" onClick={() => navigate(-1)}>
-          <ArrowLeft className="h-4 w-4 rtl:rotate-180" />
+          <ArrowLeft className="rtl:rotate-180" />
           {t('common.back')}
         </Button>
       }
@@ -78,10 +78,10 @@ export default function FuelEventEditPage() {
             }
           />
         ) : isLoading || !initialValues ? (
-          <div className="space-y-4">
-            <Skeleton className="h-40" />
-            <Skeleton className="h-56" />
-            <Skeleton className="h-40" />
+          <div className="space-y-3">
+            <Skeleton className="h-40 rounded-lg" />
+            <Skeleton className="h-56 rounded-lg" />
+            <Skeleton className="h-40 rounded-lg" />
           </div>
         ) : (
           <FuelEventForm

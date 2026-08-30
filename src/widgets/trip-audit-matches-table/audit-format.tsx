@@ -45,12 +45,12 @@ export function formatDurationSecs(secs: number | null | undefined): string {
  */
 export function RatioBadge({ ratio }: { ratio: number | null | undefined }) {
   if (ratio == null || !Number.isFinite(ratio)) {
-    return <span className="text-muted-foreground">—</span>;
+    return <span className="opacity-40">—</span>;
   }
   const variant = ratio <= 1.2 ? 'success' : ratio <= 1.5 ? 'warning' : 'destructive';
   return (
     <Badge variant={variant} className="tabular-nums" dir="ltr">
-      {ratio.toFixed(2)}×
+      {formatNumber(ratio, 2)}×
     </Badge>
   );
 }

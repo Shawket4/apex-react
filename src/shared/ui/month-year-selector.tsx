@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { Button } from './button';
 import {
   Select,
   SelectContent,
@@ -38,7 +39,7 @@ export function MonthYearSelector({
   minYear,
   maxYear,
 }: MonthYearSelectorProps) {
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const locale = i18n.language.startsWith('ar') ? 'ar-EG' : 'en-GB';
 
   const currentYear = new Date().getFullYear();
@@ -72,21 +73,23 @@ export function MonthYearSelector({
 
   return (
     <div className="mb-3 flex items-center gap-1.5">
-      <button
+      <Button
         type="button"
+        variant="ghost"
+        size="icon"
+        className="h-7 w-7"
         onClick={goPrev}
-        className="rounded p-1 hover:bg-muted"
-        aria-label="Previous month"
+        aria-label={t('common.previousMonth', { defaultValue: 'Previous month' })}
       >
-        <ChevronLeft className="h-3.5 w-3.5 rtl:rotate-180" />
-      </button>
+        <ChevronLeft className="rtl:rotate-180" />
+      </Button>
 
       <div className="flex flex-1 items-center justify-center gap-1">
         <Select
           value={String(month)}
           onValueChange={(v) => onChange(Number(v), year)}
         >
-          <SelectTrigger className="h-8 w-auto gap-1 border-none bg-transparent px-2 text-sm font-semibold shadow-none focus:ring-1">
+          <SelectTrigger className="h-8 w-auto gap-1 border-none bg-transparent px-2 text-sm font-semibold shadow-none">
             <SelectValue>{monthNames[month]}</SelectValue>
           </SelectTrigger>
           <SelectContent>
@@ -102,7 +105,7 @@ export function MonthYearSelector({
           value={String(year)}
           onValueChange={(v) => onChange(month, Number(v))}
         >
-          <SelectTrigger className="h-8 w-auto gap-1 border-none bg-transparent px-2 text-sm font-semibold shadow-none focus:ring-1">
+          <SelectTrigger className="h-8 w-auto gap-1 border-none bg-transparent px-2 text-sm font-semibold shadow-none">
             <SelectValue>{year}</SelectValue>
           </SelectTrigger>
           <SelectContent>
@@ -115,14 +118,16 @@ export function MonthYearSelector({
         </Select>
       </div>
 
-      <button
+      <Button
         type="button"
+        variant="ghost"
+        size="icon"
+        className="h-7 w-7"
         onClick={goNext}
-        className="rounded p-1 hover:bg-muted"
-        aria-label="Next month"
+        aria-label={t('common.nextMonth', { defaultValue: 'Next month' })}
       >
-        <ChevronRight className="h-3.5 w-3.5 rtl:rotate-180" />
-      </button>
+        <ChevronRight className="rtl:rotate-180" />
+      </Button>
     </div>
   );
 }

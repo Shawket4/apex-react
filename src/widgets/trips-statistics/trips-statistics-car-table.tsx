@@ -45,7 +45,7 @@ export function TripsStatisticsCarTable({
         accessorKey: 'car_no_plate',
         header: () => t('trips.fields.vehicle'),
         cell: ({ row }) => (
-          <span className="font-medium tabular-nums">
+          <span className="font-mono font-medium tabular-nums" dir="auto">
             {row.original.car_no_plate}
           </span>
         ),
@@ -58,7 +58,7 @@ export function TripsStatisticsCarTable({
           </span>
         ),
         cell: ({ row }) => (
-          <span className="block text-end tabular-nums">
+          <span className="block text-end font-mono tabular-nums">
             {formatNumber(row.original.liters, 2)}
           </span>
         ),
@@ -72,7 +72,7 @@ export function TripsStatisticsCarTable({
           </span>
         ),
         cell: ({ row }) => (
-          <span className="block text-end tabular-nums">
+          <span className="block text-end font-mono tabular-nums">
             {formatNumber(row.original.distance, 2)}
           </span>
         ),
@@ -92,7 +92,7 @@ export function TripsStatisticsCarTable({
           </span>
         ),
         cell: ({ row }) => (
-          <span className="block text-end tabular-nums text-success">
+          <span className="block text-end font-mono tabular-nums text-money">
             {formatCurrency(row.original.base_revenue)}
           </span>
         ),
@@ -106,8 +106,12 @@ export function TripsStatisticsCarTable({
           </span>
         ),
         cell: ({ row }) => (
-          <span className="block text-end tabular-nums text-muted-foreground">
-            {row.original.vat > 0 ? formatCurrency(row.original.vat) : '—'}
+          <span className="block text-end font-mono tabular-nums text-muted-foreground">
+            {row.original.vat > 0 ? (
+              formatCurrency(row.original.vat)
+            ) : (
+              <span className="opacity-40">—</span>
+            )}
           </span>
         ),
         meta: { align: 'end' },
@@ -120,8 +124,12 @@ export function TripsStatisticsCarTable({
           </span>
         ),
         cell: ({ row }) => (
-          <span className="block text-end tabular-nums text-muted-foreground">
-            {row.original.rent > 0 ? formatCurrency(row.original.rent) : '—'}
+          <span className="block text-end font-mono tabular-nums text-muted-foreground">
+            {row.original.rent > 0 ? (
+              formatCurrency(row.original.rent)
+            ) : (
+              <span className="opacity-40">—</span>
+            )}
           </span>
         ),
         meta: { align: 'end' },
@@ -135,7 +143,7 @@ export function TripsStatisticsCarTable({
           </span>
         ),
         cell: ({ row }) => (
-          <span className="block text-end font-semibold tabular-nums">
+          <span className="block text-end font-mono font-semibold tabular-nums">
             {formatCurrency(
               row.original.base_revenue + row.original.vat + row.original.rent,
             )}
@@ -151,33 +159,45 @@ export function TripsStatisticsCarTable({
   const footer = React.useMemo(() => {
     if (!hasFinancialAccess) {
       return (rows: CarTotalsRow[]) => [
-        <span className="font-bold">{t('trips.statistics.carTable.totals')}</span>,
-        formatNumber(
-          rows.reduce((s, r) => s + (r.liters || 0), 0),
-          2,
-        ),
-        formatNumber(
-          rows.reduce((s, r) => s + (r.distance || 0), 0),
-          2,
-        ),
+        <span className="font-semibold">{t('trips.statistics.carTable.totals')}</span>,
+        <span className="font-mono tabular-nums">
+          {formatNumber(
+            rows.reduce((s, r) => s + (r.liters || 0), 0),
+            2,
+          )}
+        </span>,
+        <span className="font-mono tabular-nums">
+          {formatNumber(
+            rows.reduce((s, r) => s + (r.distance || 0), 0),
+            2,
+          )}
+        </span>,
       ];
     }
     return (rows: CarTotalsRow[]) => [
-      <span className="font-bold">{t('trips.statistics.carTable.totals')}</span>,
-      formatNumber(
-        rows.reduce((s, r) => s + (r.liters || 0), 0),
-        2,
-      ),
-      formatNumber(
-        rows.reduce((s, r) => s + (r.distance || 0), 0),
-        2,
-      ),
-      <span className="text-success">
+      <span className="font-semibold">{t('trips.statistics.carTable.totals')}</span>,
+      <span className="font-mono tabular-nums">
+        {formatNumber(
+          rows.reduce((s, r) => s + (r.liters || 0), 0),
+          2,
+        )}
+      </span>,
+      <span className="font-mono tabular-nums">
+        {formatNumber(
+          rows.reduce((s, r) => s + (r.distance || 0), 0),
+          2,
+        )}
+      </span>,
+      <span className="font-mono tabular-nums text-money">
         {formatCurrency(rows.reduce((s, r) => s + (r.base_revenue || 0), 0))}
       </span>,
-      formatCurrency(rows.reduce((s, r) => s + (r.vat || 0), 0)),
-      formatCurrency(rows.reduce((s, r) => s + (r.rent || 0), 0)),
-      <span className="font-bold">
+      <span className="font-mono tabular-nums">
+        {formatCurrency(rows.reduce((s, r) => s + (r.vat || 0), 0))}
+      </span>,
+      <span className="font-mono tabular-nums">
+        {formatCurrency(rows.reduce((s, r) => s + (r.rent || 0), 0))}
+      </span>,
+      <span className="font-mono tabular-nums font-semibold">
         {formatCurrency(
           rows.reduce(
             (s, r) =>

@@ -21,17 +21,17 @@ const TONE_CLASSES: Record<
   { card: string; value: string; label: string }
 > = {
   good: {
-    card: 'border-success/30 bg-success/5',
+    card: 'border-success/40 bg-success/10',
     value: 'text-success',
     label: 'text-success',
   },
   warning: {
-    card: 'border-warning/30 bg-warning/5',
+    card: 'border-warning/40 bg-warning/10',
     value: 'text-warning',
     label: 'text-warning',
   },
   critical: {
-    card: 'border-destructive/30 bg-destructive/5',
+    card: 'border-destructive/40 bg-destructive/10',
     value: 'text-destructive',
     label: 'text-destructive',
   },
@@ -67,30 +67,30 @@ export function OilChangeStatusPreview({
   const tone = TONE_CLASSES[status];
 
   return (
-    <div className={cn('rounded-lg border p-4', tone.card)}>
+    <div className={cn('rounded-lg border p-3', tone.card)}>
       <div className="flex items-start gap-3">
-        <Gauge className={cn('mt-0.5 h-5 w-5 shrink-0', tone.value)} />
+        <Gauge className={cn('mt-0.5 h-3.5 w-3.5 shrink-0', tone.value)} aria-hidden="true" />
         <div className="flex-1 space-y-1.5">
-          <p className={cn('text-xs font-semibold uppercase tracking-wider', tone.label)}>
+          <p className={cn('text-[10px] font-semibold uppercase tracking-wider', tone.label)}>
             {t(`oilChanges.status.${status}`)}
           </p>
           <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1 text-sm">
             <span className="text-muted-foreground">
               {t('oilChanges.preview.used')}:{' '}
-              <span className="font-semibold text-foreground tabular-nums">
+              <span className="font-mono font-semibold tabular-nums text-foreground">
                 {formatNumber(kmUsed, 0)} km
               </span>
             </span>
             <span className="text-muted-foreground">
               {t('oilChanges.preview.remaining')}:{' '}
-              <span className={cn('font-semibold tabular-nums', tone.value)}>
+              <span className={cn('font-mono font-semibold tabular-nums', tone.value)}>
                 {formatNumber(kmRemaining, 0)} km
               </span>
             </span>
           </div>
           {kmRemaining < 0 && (
             <p className="flex items-center gap-1 text-xs text-destructive">
-              <AlertCircle className="h-3 w-3" />
+              <AlertCircle className="h-3 w-3" aria-hidden="true" />
               {t('oilChanges.preview.overdue')}
             </p>
           )}

@@ -121,17 +121,17 @@ export function FeeMappingLocationDialog({
       <DialogContent className="flex max-h-[90vh] max-w-2xl flex-col gap-0 overflow-hidden p-0">
         <DialogHeader className="shrink-0 border-b px-6 py-4">
           <DialogTitle className="flex items-center gap-2">
-            <MapPin className="h-4 w-4 text-primary" />
+            <MapPin className="h-4 w-4 text-primary" aria-hidden="true" />
             {t('feeMappings.location.title')}
           </DialogTitle>
-          <DialogDescription className="truncate">
+          <DialogDescription className="truncate" dir="auto">
             {mapping
-              ? `${mapping.company} · ${mapping.terminal} → ${mapping.dropOffPoint}`
+              ? `${mapping.company} · ${mapping.terminal} · ${mapping.dropOffPoint}`
               : ''}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex flex-1 flex-col gap-3 overflow-y-auto px-6 py-4">
+        <div className="flex flex-1 flex-col gap-3 overflow-y-auto overscroll-contain px-6 py-4">
           {/* Coord inputs */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
@@ -140,11 +140,14 @@ export function FeeMappingLocationDialog({
               </Label>
               <Input
                 id="loc-lat"
+                name="lat"
                 type="number"
+                inputMode="decimal"
+                autoComplete="off"
                 step="0.000001"
                 value={lat}
                 onChange={(e) => setLat(e.target.value)}
-                placeholder="30.044420"
+                placeholder="30.044420…"
                 className="font-mono"
               />
             </div>
@@ -154,11 +157,14 @@ export function FeeMappingLocationDialog({
               </Label>
               <Input
                 id="loc-lng"
+                name="lng"
                 type="number"
+                inputMode="decimal"
+                autoComplete="off"
                 step="0.000001"
                 value={lng}
                 onChange={(e) => setLng(e.target.value)}
-                placeholder="31.235712"
+                placeholder="31.235712…"
                 className="font-mono"
               />
             </div>
@@ -181,31 +187,35 @@ export function FeeMappingLocationDialog({
 
           {/* Existing OSRM info (read-only context) */}
           {mapping && mapping.osrmDistanceKm != null && (
-            <div className="grid grid-cols-3 gap-2 rounded-md border bg-muted/30 p-2 text-xs">
+            <div className="grid grid-cols-3 gap-2 rounded-lg border bg-muted/40 p-3 text-[12px]">
               <div>
                 <div className="text-muted-foreground">
                   {t('feeMappings.fields.distanceManual')}
                 </div>
-                <div className="font-semibold tabular-nums">
-                  {formatNumber(mapping.distance, 2)} km
+                <div className="font-mono tabular-nums">
+                  {formatNumber(mapping.distance, 2)}&nbsp;{t('feeMappings.units.km', 'km')}
                 </div>
               </div>
               <div>
                 <div className="text-muted-foreground">
                   {t('feeMappings.fields.osrmDistance')}
                 </div>
-                <div className="font-semibold tabular-nums">
-                  {formatNumber(mapping.osrmDistanceKm, 2)} km
+                <div className="font-mono tabular-nums">
+                  {formatNumber(mapping.osrmDistanceKm, 2)}&nbsp;{t('feeMappings.units.km', 'km')}
                 </div>
               </div>
               <div>
                 <div className="text-muted-foreground">
                   {t('feeMappings.fields.osrmDuration')}
                 </div>
-                <div className="font-semibold tabular-nums">
-                  {mapping.osrmDurationMin != null
-                    ? `${mapping.osrmDurationMin.toFixed(0)} min`
-                    : '—'}
+                <div className="font-mono tabular-nums">
+                  {mapping.osrmDurationMin != null ? (
+                    <>
+                      {formatNumber(mapping.osrmDurationMin, 0)}&nbsp;{t('feeMappings.units.min', 'min')}
+                    </>
+                  ) : (
+                    <span className="opacity-40">—</span>
+                  )}
                 </div>
               </div>
             </div>
@@ -221,9 +231,9 @@ export function FeeMappingLocationDialog({
             disabled={!coordValid || setLocation.isPending}
           >
             {setLocation.isPending ? (
-              <Loader2 className="me-1.5 h-4 w-4 animate-spin" />
+              <Loader2 className="animate-spin motion-reduce:animate-none" aria-hidden="true" />
             ) : (
-              <Save className="me-1.5 h-4 w-4" />
+              <Save aria-hidden="true" />
             )}
             {t('feeMappings.location.saveAndEnrich')}
           </Button>

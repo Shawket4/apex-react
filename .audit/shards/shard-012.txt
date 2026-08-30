@@ -1,0 +1,12 @@
+# shard-012  loc=2461  files=10
+# groups: pages/fuel-events, widgets/fuel-events-table, widgets/header, widgets/language-toggle, widgets/layout
+276	src/pages/fuel-events/fuel-event-details.tsx
+100	src/pages/fuel-events/fuel-event-edit.tsx
+56	src/pages/fuel-events/fuel-event-new.tsx
+494	src/pages/fuel-events/fuel-events.tsx
+320	src/widgets/fuel-events-table/fuel-events-excel.ts
+454	src/widgets/fuel-events-table/fuel-events-filters.tsx
+622	src/widgets/fuel-events-table/fuel-events-table.tsx
+46	src/widgets/header/header.tsx
+38	src/widgets/language-toggle/language-toggle.tsx
+55	src/widgets/layout/layout.tsx

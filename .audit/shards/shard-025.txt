@@ -1,0 +1,17 @@
+# shard-025  loc=1948  files=15
+# groups: widgets/trip-replay-leg-rail, widgets/trip-replay-map, widgets/trip-replay-timeline, entities/trip-statistics, entities/trip-summary
+2	src/widgets/trip-replay-leg-rail/index.ts
+189	src/widgets/trip-replay-leg-rail/trip-replay-leg-rail.tsx
+268	src/widgets/trip-replay-map/google-adapter.ts
+9	src/widgets/trip-replay-map/index.ts
+227	src/widgets/trip-replay-map/leaflet-adapter.ts
+137	src/widgets/trip-replay-map/trip-replay-map.tsx
+62	src/widgets/trip-replay-map/types.ts
+6	src/widgets/trip-replay-timeline/index.ts
+381	src/widgets/trip-replay-timeline/trip-replay-timeline.tsx
+60	src/entities/trip-statistics/api.ts
+79	src/entities/trip-statistics/queries.ts
+280	src/entities/trip-statistics/schemas.ts
+83	src/entities/trip-summary/api.ts
+22	src/entities/trip-summary/queries.ts
+143	src/entities/trip-summary/schemas.ts

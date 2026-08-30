@@ -1,0 +1,8 @@
+# shard-026  loc=2171  files=6
+# groups: pages/trips, widgets/trips-statistics
+51	src/pages/trips/trip-edit.tsx
+27	src/pages/trips/trip-new.tsx
+606	src/pages/trips/trips.tsx
+216	src/widgets/trips-statistics/trips-statistics-car-table.tsx
+153	src/widgets/trips-statistics/trips-statistics-cars.tsx
+1118	src/widgets/trips-statistics/trips-statistics-companies.tsx

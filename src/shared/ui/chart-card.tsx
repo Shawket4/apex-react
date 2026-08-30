@@ -58,9 +58,9 @@ export function ChartCard({
 
   return (
     <Card className={cn('flex flex-col overflow-hidden', className)}>
-      <div className="flex items-start justify-between gap-3 border-b px-4 py-3 md:px-5 md:py-4">
+      <div className="flex items-start justify-between gap-2 border-b bg-muted/60 px-3 py-2">
         <div className="min-w-0">
-          <h3 className="text-sm font-semibold tracking-tight md:text-base">
+          <h3 className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
             {title}
           </h3>
           {description && (
@@ -72,7 +72,7 @@ export function ChartCard({
         )}
       </div>
       <div
-        className={cn(padded && 'p-4 md:p-5', bodyClassName)}
+        className={cn(padded && 'p-3', bodyClassName)}
         style={heightStyle}
       >
         {children}

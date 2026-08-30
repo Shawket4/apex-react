@@ -15,6 +15,7 @@ import { useParentContainers } from '@/entities/trip/queries';
 import { type ReceiptImage } from '@/entities/trip/schemas';
 import { receiptBatchApi } from '@/entities/receipt-batch/api';
 import { cn } from '@/shared/lib/cn';
+import { OVERLAY_Z } from '@/shared/ui/z-index';
 
 interface TripReceiptBatchDialogProps {
   parentId: number | null;
@@ -86,17 +87,17 @@ export function TripReceiptBatchDialog({
           {isLoading ? (
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
               {Array.from({ length: 6 }).map((_, i) => (
-                <Skeleton key={i} className="aspect-square w-full" />
+                <Skeleton key={i} className="aspect-square w-full rounded-lg" />
               ))}
             </div>
           ) : images.length === 0 ? (
-            <div className="flex flex-col items-center justify-center gap-2 py-4 text-center">
+            <div className="flex flex-col items-center justify-center gap-2 py-0 text-center">
               <EmptyState
                 lottieSrc="/animations/receipt.lottie"
-                lottieWidth={140}
-                lottieHeight={140}
+                lottieWidth={120}
+                lottieHeight={120}
                 title={t('trips.receiptBatch.noImages')}
-                className="border-0 bg-transparent py-4 shadow-none"
+                className="border-0 bg-transparent py-6 shadow-none"
               />
             </div>
           ) : (
@@ -106,15 +107,17 @@ export function TripReceiptBatchDialog({
                   key={image.ID ?? idx}
                   type="button"
                   onClick={() => setEnlargedIndex(idx)}
-                  className="group relative aspect-square overflow-hidden rounded-md border bg-muted/30 transition-all hover:ring-2 hover:ring-primary"
+                  className="group relative aspect-square overflow-hidden rounded-lg border bg-muted/40 transition-colors hover:border-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <img
                     src={receiptBatchApi.imageUrl(image.image_path)}
                     alt={t('trips.receiptBatch.imageAlt', { n: idx + 1 })}
                     loading="lazy"
-                    className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                    width={400}
+                    height={400}
+                    className="h-full w-full object-cover"
                   />
-                  <span className="absolute bottom-1 end-1 rounded bg-card/90 px-1.5 py-0.5 text-[10px] font-medium tabular-nums">
+                  <span className="absolute bottom-1 end-1 rounded-full bg-muted px-2 py-0.5 font-mono text-[10.5px] font-medium tabular-nums text-foreground">
                     {idx + 1} / {images.length}
                   </span>
                 </button>
@@ -127,16 +130,19 @@ export function TripReceiptBatchDialog({
       {/* Lightbox */}
       {enlargedIndex != null && images[enlargedIndex] && (
         <div
-          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/90 p-4"
+          className={`fixed inset-0 ${OVERLAY_Z} flex items-center justify-center bg-black/90 p-4 pointer-events-auto`}
           onClick={() => setEnlargedIndex(null)}
+          role="dialog"
+          aria-modal="true"
+          aria-label={t('trips.receiptBatch.dialogTitle')}
         >
           <button
             type="button"
             onClick={() => setEnlargedIndex(null)}
-            className="absolute end-4 top-4 inline-flex h-9 w-9 items-center justify-center rounded-full bg-card/20 text-white backdrop-blur-sm transition-colors hover:bg-card/30"
+            className="absolute end-4 top-4 inline-flex h-9 w-9 items-center justify-center rounded-full bg-card/20 text-primary-foreground backdrop-blur-sm transition-colors hover:bg-card/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             aria-label={t('common.close')}
           >
-            <X className="h-5 w-5" />
+            <X className="h-4 w-4" />
           </button>
           {images.length > 1 && (
             <>
@@ -150,11 +156,11 @@ export function TripReceiptBatchDialog({
                   );
                 }}
                 className={cn(
-                  'absolute start-4 h-12 w-12 rounded-full bg-card/20 text-white backdrop-blur-sm hover:bg-card/30',
+                  'absolute start-4 rounded-full bg-card/20 text-primary-foreground backdrop-blur-sm hover:bg-card/30',
                 )}
                 aria-label={t('trips.pagination.previousPage')}
               >
-                <ChevronLeft className="h-6 w-6 rtl:rotate-180" />
+                <ChevronLeft className="rtl:rotate-180" />
               </Button>
               <Button
                 size="icon"
@@ -163,10 +169,10 @@ export function TripReceiptBatchDialog({
                   e.stopPropagation();
                   setEnlargedIndex((enlargedIndex + 1) % images.length);
                 }}
-                className="absolute end-4 h-12 w-12 rounded-full bg-card/20 text-white backdrop-blur-sm hover:bg-card/30"
+                className="absolute end-4 rounded-full bg-card/20 text-primary-foreground backdrop-blur-sm hover:bg-card/30"
                 aria-label={t('trips.pagination.nextPage')}
               >
-                <ChevronRight className="h-6 w-6 rtl:rotate-180" />
+                <ChevronRight className="rtl:rotate-180" />
               </Button>
             </>
           )}
@@ -177,9 +183,11 @@ export function TripReceiptBatchDialog({
             <img
               src={receiptBatchApi.imageUrl(images[enlargedIndex].image_path)}
               alt={t('trips.receiptBatch.imageAlt', { n: enlargedIndex + 1 })}
+              width={1200}
+              height={1200}
               className="max-h-[90vh] max-w-[90vw] object-contain"
             />
-            <div className="absolute bottom-2 start-1/2 -translate-x-1/2 rounded-full bg-card/80 px-3 py-1 text-xs font-medium tabular-nums backdrop-blur-sm">
+            <div className="absolute bottom-2 start-1/2 -translate-x-1/2 rtl:translate-x-1/2 rounded-full bg-card/80 px-3 py-1 text-xs font-medium tabular-nums backdrop-blur-sm">
               {enlargedIndex + 1} / {images.length}
             </div>
           </div>

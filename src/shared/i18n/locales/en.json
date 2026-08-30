@@ -3,7 +3,7 @@
     "appName": "Apex",
     "tagline": "Fleet Management",
     "search": "Search",
-    "searchPlaceholder": "Search...",
+    "searchPlaceholder": "Search…",
     "refreshing": "Refreshing",
     "filter": "Filter",
     "clearFilters": "Clear filters",
@@ -18,6 +18,9 @@
     "createSuccess": "Created successfully",
     "confirm": "Confirm",
     "close": "Close",
+    "openMenu": "Open menu",
+    "expandSidebar": "Expand sidebar",
+    "collapseSidebar": "Collapse sidebar",
     "exit": "Exit",
     "back": "Back",
     "actions": "Actions",
@@ -43,6 +46,9 @@
     "view": "View",
     "remove": "Remove",
     "options": "Options",
+    "loadingMap": "Loading map…",
+    "previousMonth": "Previous month",
+    "nextMonth": "Next month",
     "selectedCount": "{{count}} selected",
     "saving": "Saving...",
     "select": "Select",
@@ -68,6 +74,10 @@
     "next": "Next",
     "filters": "Filters",
     "apply": "Apply"
+  },
+  "placeholder": {
+    "speedViolations": "Speed violations tracking and telemetry radar are currently being compiled.",
+    "comingSoon": "This module will be refactored next. The scaffold, architecture, and API wiring are ready."
   },
   "nav": {
     "overview": "Overview",
@@ -97,7 +107,8 @@
     "zones": "Dead Zones",
     "locations": "Locations",
     "tripAudit": "Trip Audit",
-    "expensesReview": "Review queue"
+    "expensesReview": "Review queue",
+    "primary": "Main navigation"
   },
   "auth": {
     "loginTitle": "Welcome back",
@@ -247,7 +258,9 @@
       "distance": "Distance traveled",
       "fuelRate": "Fuel efficiency",
       "selectCar": "Select a vehicle...",
-      "selectDriver": "Select a driver..."
+      "selectDriver": "Select a driver...",
+      "km": "km",
+      "carAndDriver": "Vehicle & Driver"
     },
     "efficiency": {
       "excluded": "Excluded from avg",
@@ -305,6 +318,16 @@
     }
   },
   "settings": {
+    "petroapp": {
+      "title": "PetroApp Configuration",
+      "description": "Update the PetroApp integration token and cookie.",
+      "token": "Token",
+      "cookie": "Cookie",
+      "tokenPlaceholder": "Enter token…",
+      "cookiePlaceholder": "Enter cookie…",
+      "updated": "PetroApp token updated successfully",
+      "updateFailed": "Failed to update token"
+    },
     "theme": "Theme",
     "themeLight": "Light",
     "themeDark": "Dark",
@@ -343,7 +366,17 @@
     "pageNotFoundTitle": "Page not found",
     "pageNotFoundDescription": "The page you're looking for doesn't exist or has been moved.",
     "goHome": "Go to dashboard",
-    "invalidId": "Invalid ID"
+    "invalidId": "Invalid ID",
+    "unauthorized": "Unauthorized",
+    "forbidden": "Forbidden",
+    "notFound": "Not found",
+    "network": "Network error",
+    "networkCheck": "Network error — please check your connection."
+  },
+  "validation": {
+    "positive": "Must be a positive number",
+    "nonNegative": "Must be zero or greater",
+    "invalidDate": "Invalid date"
   },
   "datePicker": {
     "today": "Today",
@@ -369,7 +402,9 @@
     "downloading": "Preparing download...",
     "done": "Exported {{count}} rows",
     "failed": "Export failed",
-    "nothingToExport": "Nothing to export"
+    "nothingToExport": "Nothing to export",
+    "generated": "Generated",
+    "totals": "TOTALS"
   },
   "drivers": {
     "subtitle": "Manage fleet drivers and their documents",
@@ -448,6 +483,9 @@
       "noImage": "No image uploaded",
       "upload": "Upload",
       "replace": "Replace",
+      "zoomOut": "Zoom out",
+      "zoomIn": "Zoom in",
+      "rotate": "Rotate",
       "filesReadyToUpload": "{{count}} file ready to upload",
       "filesReadyToUpload_other": "{{count}} files ready to upload"
     },
@@ -483,6 +521,34 @@
     "deleteConfirmTitle": "Delete expense?",
     "deleteConfirmDescription": "Are you sure you want to delete this expense of {{amount}}? This cannot be undone.",
     "paid": "Paid",
+    "countLabel": "{{count}} expense",
+    "countLabel_other": "{{count}} expenses",
+    "categories": {
+      "Fuel": "Fuel",
+      "Maintenance": "Maintenance",
+      "Repairs": "Repairs",
+      "Insurance": "Insurance",
+      "Tickets": "Tickets",
+      "Tolls": "Tolls",
+      "Parking": "Parking",
+      "Meals": "Meals",
+      "Accommodation": "Accommodation",
+      "Phone": "Phone",
+      "Equipment": "Equipment",
+      "Supplies": "Supplies",
+      "Training": "Training",
+      "Other": "Other"
+    },
+    "paymentMethods": {
+      "Cash": "Cash",
+      "Credit Card": "Credit Card",
+      "Debit Card": "Debit Card",
+      "Mobile Payment": "Mobile Payment",
+      "Bank Transfer": "Bank Transfer",
+      "Company Card": "Company Card",
+      "Reimbursement": "Reimbursement",
+      "Other": "Other"
+    },
     "fields": {
       "amount": "Amount",
       "date": "Date",
@@ -894,6 +960,7 @@
           "trips": "Trips",
           "distance": "Distance"
         },
+        "other": "Other",
         "projectedRevenue": "Projected monthly revenue",
         "projectedRevenueNote": "Based on {{avg}} daily average over {{days}} days (multiplied by {{monthDays}} days)",
         "min": "Min",
@@ -950,6 +1017,7 @@
         "subtitle": "{{count}} vehicles · click any column to sort",
         "totals": "Totals",
         "liters": "Volume (L)",
+        "litersShort": "L",
         "distance": "Distance (km)",
         "baseRevenue": "Base revenue",
         "vat": "VAT",
@@ -970,11 +1038,16 @@
         "cols": {
           "trips": "Trips",
           "volume": "Volume (L)",
+          "volumeShort": "Vol (L)",
           "distance": "Distance (km)",
+          "distanceShort": "Dist (km)",
           "revenue": "Revenue",
+          "revenueShort": "Rev",
           "vat": "VAT",
           "carRent": "Car rent",
+          "carRentShort": "Rent",
           "totalAmount": "Total amount",
+          "totalAmountShort": "Total",
           "totalWithVat": "Total with VAT",
           "group": "Group",
           "route": "Route",
@@ -1121,6 +1194,8 @@
     }
   },
   "commandPalette": {
+    "title": "Command palette",
+    "description": "Search for actions, drivers, and pages.",
     "quickAddTrip": "Quick Add Trip",
     "selectCompany": "Select Company",
     "goBack": "to go back",
@@ -1159,7 +1234,16 @@
       "validation": {
         "fillRequired": "Please fill in all required fields with valid values"
       },
-      "newDropoffHint": "New drop-off point will be created"
+      "newDropoffHint": "New drop-off point will be created",
+      "placeholders": {
+        "company": "Watanya…",
+        "terminal": "Cairo…",
+        "dropOffPoint": "Qena…"
+      }
+    },
+    "units": {
+      "km": "km",
+      "min": "min"
     },
     "filters": {
       "searchPlaceholder": "Search company, terminal, drop-off…",
@@ -1199,7 +1283,8 @@
       "title": "Bulk OSRM enrichment",
       "processed": "Processed",
       "succeeded": "Succeeded",
-      "failed": "Failed"
+      "failed": "Failed",
+      "delta": "Δ"
     },
     "delete": {
       "confirmTitle": "Delete fee mapping?",
@@ -1208,7 +1293,10 @@
       "failed": "Failed to delete mapping"
     },
     "export": {
-      "empty": "Nothing to export"
+      "empty": "Nothing to export",
+      "filterCompany": "Company: {{value}}",
+      "filterAccuracy": "Accuracy: {{value}}",
+      "filterSearch": "Search: \"{{value}}\""
     },
     "excel": {
       "sheetName": "Fee Mappings",
@@ -1339,6 +1427,11 @@
       "password": "Password",
       "createdAt": "Created at"
     },
+    "placeholders": {
+      "name": "Full name",
+      "email": "name@example.com",
+      "phone": "+201…"
+    },
     "permissions": {
       "user": "User",
       "manager": "Manager",
@@ -1439,7 +1532,16 @@
       "compartments": "Tank Compartments",
       "addCompartment": "Add Compartment",
       "compartmentIndex": "Comp {{index}}",
-      "licenses": "Licenses & Dates"
+      "licenses": "Licenses & Dates",
+      "removeCompartment": "Remove compartment"
+    },
+    "types": {
+      "noTrailer": "No Trailer",
+      "trailer": "Trailer",
+      "truck": "Truck"
+    },
+    "units": {
+      "litre": "L"
     },
     "status": {
       "expired": "Expired Docs",
@@ -1460,7 +1562,7 @@
     "scanNow": "Run scan now",
     "fields": {
       "name": "Zone Name",
-      "namePlaceholder": "e.g. Headquarters",
+      "namePlaceholder": "e.g. Headquarters…",
       "lat": "Latitude",
       "lng": "Longitude",
       "radius": "Radius (meters)",
@@ -1597,6 +1699,8 @@
     },
     "principal": "Principal",
     "readOnlySource": "Read-only — owned by another system",
+    "sourceFuel": "Fuel event",
+    "sourceLoan": "Loan",
     "readOnlyExplain": "This row comes from the fuel or loans system and is shown here for reporting only. Edit it in its own module.",
     "includeFuel": "Fuel events",
     "includeLoans": "Driver loans",
@@ -1964,6 +2068,14 @@
       "warning": "Warning",
       "critical": "Critical"
     },
+    "units": {
+      "km": "km",
+      "kmh": "{{v}} km/h",
+      "m": "m",
+      "h": "h",
+      "min": "m",
+      "s": "s"
+    },
     "flagDetails": {
       "stoppedFor": "Stopped for",
       "actual": "Actual",
@@ -2055,6 +2167,9 @@
       "kmOptimal": "km optimal",
       "speed": "Speed",
       "kmh": "km/h",
+      "unitHour": "h",
+      "unitMinute": "m",
+      "unitSecond": "s",
       "leg": "{{from}} → {{to}}",
       "betweenLegs": "At a stop between legs",
       "stoppedFor": "stopped {{duration}}",
@@ -2099,9 +2214,16 @@
   },
   "tracking": {
     "fleet": "Fleet",
-    "searchPlaceholder": "Search plate or codename",
+    "searchPlaceholder": "Search plate or codename…",
     "kmh": "km/h",
     "km": "km",
+    "unit": {
+      "h": "h",
+      "m": "m"
+    },
+    "routeStart": "Route start",
+    "routeEnd": "Route end",
+    "beyondRangeLine": "continues beyond the loaded range",
     "focus": "Focus",
     "replay": "Replay",
     "hide": "Hide",
@@ -2154,5 +2276,9 @@
     "beyondRangeHint": "This leg extends past the loaded range — its missing days were fetched for the locked view.",
     "legsShort": "legs",
     "lockTrip": "Lock playback to this trip"
+  },
+  "maps": {
+    "centerOnMarkers": "Center map on markers",
+    "toggleSatellite": "Toggle satellite view"
   }
 }

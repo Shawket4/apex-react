@@ -1,0 +1,21 @@
+# shard-029  loc=1439  files=19
+# groups: pages/users, widgets/users-table, entities/whatsapp, widgets/whatsapp-gateway-card, entities/zone, widgets/zone-form-dialog, widgets/zone-map-picker, pages/zones, widgets/zones-table
+148	src/pages/users/users.tsx
+261	src/widgets/users-table/users-table.tsx
+23	src/entities/whatsapp/api.ts
+52	src/entities/whatsapp/queries.ts
+9	src/entities/whatsapp/schemas.ts
+1	src/widgets/whatsapp-gateway-card/index.ts
+143	src/widgets/whatsapp-gateway-card/whatsapp-gateway-card.tsx
+55	src/entities/zone/api.ts
+3	src/entities/zone/index.ts
+114	src/entities/zone/queries.ts
+40	src/entities/zone/schemas.ts
+1	src/widgets/zone-form-dialog/index.ts
+228	src/widgets/zone-form-dialog/zone-form-dialog.tsx
+1	src/widgets/zone-map-picker/index.ts
+95	src/widgets/zone-map-picker/zone-map-picker.tsx
+113	src/pages/zones/zones.tsx
+116	src/widgets/zones-table/columns.tsx
+1	src/widgets/zones-table/index.ts
+35	src/widgets/zones-table/zones-table.tsx

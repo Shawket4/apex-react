@@ -474,7 +474,8 @@ export default function TrackingPage() {
           type="button"
           onClick={() => setPanelOpen(true)}
           aria-label={t('tracking.fleet', 'Fleet')}
-          className="pointer-events-auto grid h-9 w-9 shrink-0 place-items-center rounded-full border bg-card/90 shadow backdrop-blur hover:bg-card"
+          aria-expanded={panelOpen}
+          className="pointer-events-auto grid h-8 w-8 shrink-0 place-items-center rounded-md border bg-card/90 shadow-sm backdrop-blur transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ring-offset-1"
         >
           <List className="h-4 w-4" />
         </button>
@@ -491,20 +492,20 @@ export default function TrackingPage() {
         <div className="pointer-events-auto flex shrink-0 items-center gap-2">
           <div
             className={cn(
-              'flex h-9 items-center gap-1.5 rounded-full border bg-card/90 px-3 font-mono text-[10px] font-semibold uppercase tracking-wider shadow backdrop-blur',
+              'inline-flex h-8 items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium backdrop-blur',
               fleet.connection === 'live'
-                ? 'text-success'
+                ? 'border-success/40 bg-success/10 text-success'
                 : fleet.connection === 'connecting'
-                  ? 'text-muted-foreground'
-                  : 'text-destructive',
+                  ? 'border-border bg-muted text-muted-foreground'
+                  : 'border-warning/40 bg-warning/10 text-warning',
             )}
           >
             <span
               className={cn(
                 'h-1.5 w-1.5 rounded-full',
-                fleet.connection === 'live' && 'animate-pulse bg-success',
-                fleet.connection === 'connecting' && 'bg-muted-foreground',
-                fleet.connection === 'down' && 'bg-destructive',
+                fleet.connection === 'live' && 'animate-pulse motion-reduce:animate-none bg-success',
+                fleet.connection === 'connecting' && 'animate-pulse motion-reduce:animate-none bg-muted-foreground',
+                fleet.connection === 'down' && 'bg-warning',
               )}
             />
             {t(`tracking.conn.${fleet.connection}`, fleet.connection)}
@@ -513,7 +514,7 @@ export default function TrackingPage() {
                 type="button"
                 onClick={fleet.refresh}
                 aria-label={t('common.refresh', 'Refresh')}
-                className="ms-1 grid h-5 w-5 place-items-center rounded-full hover:bg-muted"
+                className="ms-1 grid h-5 w-5 place-items-center rounded-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ring-offset-1"
               >
                 <RefreshCw className="h-3 w-3" />
               </button>
@@ -530,10 +531,10 @@ export default function TrackingPage() {
             }
             aria-label={t('tracking.mapType', 'Satellite')}
             className={cn(
-              'grid h-9 w-9 place-items-center rounded-full border shadow backdrop-blur',
+              'grid h-8 w-8 place-items-center rounded-md border shadow-sm backdrop-blur transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ring-offset-1',
               satellite
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-card/90 hover:bg-card',
+                ? 'bg-primary text-primary-foreground hover:bg-primary/90'
+                : 'bg-card/90 hover:bg-accent hover:text-accent-foreground',
             )}
           >
             <Layers className="h-4 w-4" />
@@ -542,7 +543,8 @@ export default function TrackingPage() {
             type="button"
             onClick={toggleFullscreen}
             aria-label={t('tracking.fullscreen', 'Fullscreen')}
-            className="grid h-9 w-9 place-items-center rounded-full border bg-card/90 shadow backdrop-blur hover:bg-card"
+            aria-pressed={fullscreen}
+            className="grid h-8 w-8 place-items-center rounded-md border bg-card/90 shadow-sm backdrop-blur transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ring-offset-1"
           >
             {fullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
           </button>

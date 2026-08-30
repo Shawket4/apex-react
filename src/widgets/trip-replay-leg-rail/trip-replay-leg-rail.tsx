@@ -69,7 +69,7 @@ export function TripReplayLegRail({
     // the map behind it.
     <div
       className={cn(
-        'pointer-events-auto flex max-h-full w-72 flex-col overflow-hidden rounded-xl border bg-card/85 shadow-xl backdrop-blur-md',
+        'pointer-events-auto flex max-h-full w-72 flex-col overflow-hidden rounded-lg border bg-card/85 shadow-lg backdrop-blur-md',
         className,
       )}
       onPointerDown={(e) => e.stopPropagation()}
@@ -78,7 +78,7 @@ export function TripReplayLegRail({
       onWheel={(e) => e.stopPropagation()}
     >
       <div className="flex items-center justify-between border-b px-3 py-2">
-        <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+        <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
           {t('tripReplay.legRail.title', 'Legs')}
         </span>
         <Button
@@ -117,14 +117,14 @@ export function TripReplayLegRail({
                   'w-full cursor-pointer rounded-lg border p-2 text-start transition-colors',
                   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
                   active
-                    ? 'border-primary/60 bg-primary/10'
-                    : 'hover:bg-muted/60',
+                    ? 'border-primary bg-primary/10 text-primary'
+                    : 'hover:bg-muted/50',
                   disabled && 'pointer-events-none opacity-50',
                 )}
               >
                 <div className="flex items-center gap-1.5">
                   <span
-                    className="inline-block h-2 w-2 shrink-0 rounded-full"
+                    className="inline-block h-1.5 w-1.5 shrink-0 rounded-full"
                     style={{ backgroundColor: legColor(leg.legType) }}
                   />
                   <span className="min-w-0 flex-1 truncate text-xs font-semibold" dir="auto">
@@ -133,6 +133,7 @@ export function TripReplayLegRail({
                   {leg.night && (
                     <Moon
                       className="h-3 w-3 shrink-0 text-primary"
+                      role="img"
                       aria-label={t('tripReplay.legRail.night', 'Night window')}
                     />
                   )}
@@ -153,21 +154,21 @@ export function TripReplayLegRail({
                 </div>
 
                 <div
-                  className="mt-1 text-[10px] tabular-nums text-muted-foreground"
+                  className="mt-1 font-mono text-[11px] tabular-nums text-muted-foreground"
                   dir="ltr"
                 >
                   {formatCairoTime(new Date(leg.departMs!), i18n.language)} →{' '}
                   {formatCairoTime(new Date(leg.arriveMs!), i18n.language)}
                 </div>
 
-                <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] tabular-nums text-muted-foreground">
-                  <span dir="ltr">
+                <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] tabular-nums text-muted-foreground">
+                  <span className="font-mono" dir="ltr">
                     {leg.actualKm != null ? leg.actualKm.toFixed(1) : '—'} /{' '}
                     {leg.osrmKm != null ? leg.osrmKm.toFixed(1) : '—'}{' '}
                     {t('tripReplay.legRail.km', 'km')}
                   </span>
                   {excessKm != null && excessKm > 0.05 && (
-                    <Badge variant="warning" className="px-1 py-0 text-[9px]" dir="ltr">
+                    <Badge variant="warning" className="shrink-0" dir="ltr">
                       +{excessKm.toFixed(1)} {t('tripReplay.legRail.km', 'km')}
                     </Badge>
                   )}

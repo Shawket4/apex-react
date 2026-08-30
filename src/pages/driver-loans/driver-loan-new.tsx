@@ -72,16 +72,16 @@ export default function AddDriverLoanPage() {
     <PageShell
       title={t('driverLoans.addLoan')}
       description={driver?.name ?? t('common.loading')}
-      icon={<CreditCard className="h-5 w-5" />}
+      icon={<CreditCard className="h-5 w-5" aria-hidden="true" />}
       actions={
         <Button variant="ghost" size="sm" onClick={goBack}>
-          <ArrowLeft className="h-4 w-4" />
+          <ArrowLeft className="rtl:rotate-180" aria-hidden="true" />
           <span className="hidden sm:inline">{t('common.back')}</span>
         </Button>
       }
     >
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="mx-auto max-w-2xl space-y-6">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="mx-auto max-w-2xl space-y-3">
           {/* Type — advance and loan subtract identically; they differ in what
               they mean, so the choice is an explicit toggle, defaulting to
               advance to match the backend's own default. */}
@@ -98,6 +98,7 @@ export default function AddDriverLoanPage() {
                         key={k}
                         type="button"
                         className="min-h-11 sm:min-h-9"
+                        aria-pressed={field.value === k}
                         variant={field.value === k ? 'default' : 'outline'}
                         onClick={() => field.onChange(k)}
                       >
@@ -111,7 +112,7 @@ export default function AddDriverLoanPage() {
             )}
           />
 
-          <div className="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-x-4 gap-y-3 sm:grid-cols-2">
             {/* Amount */}
             <FormField
               control={form.control}
@@ -119,7 +120,7 @@ export default function AddDriverLoanPage() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>
-                    <DollarSign className="mr-1 inline h-3.5 w-3.5" />
+                    <DollarSign className="me-1 inline h-3.5 w-3.5" aria-hidden="true" />
                     {t('driverLoans.fields.amount')} *
                   </FormLabel>
                   <FormControl>
@@ -128,6 +129,8 @@ export default function AddDriverLoanPage() {
                       step="any"
                       min="0"
                       placeholder="0"
+                      autoComplete="off"
+                      inputMode="decimal"
                       {...field}
                       onChange={(e) => field.onChange(e.target.valueAsNumber || '')}
                     />
@@ -144,7 +147,7 @@ export default function AddDriverLoanPage() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>
-                    <Calendar className="mr-1 inline h-3.5 w-3.5" />
+                    <Calendar className="me-1 inline h-3.5 w-3.5" aria-hidden="true" />
                     {t('driverLoans.fields.date')} *
                   </FormLabel>
                   <FormControl>
@@ -167,12 +170,13 @@ export default function AddDriverLoanPage() {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>
-                  <CreditCard className="mr-1 inline h-3.5 w-3.5" />
+                  <CreditCard className="me-1 inline h-3.5 w-3.5" aria-hidden="true" />
                   {t('driverLoans.fields.method')} *
                 </FormLabel>
                 <FormControl>
                   <Input
                     placeholder={t('driverLoans.fields.methodPlaceholder')}
+                    autoComplete="off"
                     {...field}
                   />
                 </FormControl>
@@ -198,9 +202,9 @@ export default function AddDriverLoanPage() {
               className="min-h-11 w-full sm:min-h-9 sm:w-auto"
             >
               {addMutation.isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader2 className="animate-spin motion-reduce:animate-none" aria-hidden="true" />
               ) : (
-                <Save className="h-4 w-4" />
+                <Save aria-hidden="true" />
               )}
               {addMutation.isPending ? t('common.saving') : t('common.save')}
             </Button>

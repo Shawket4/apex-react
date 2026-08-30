@@ -76,8 +76,13 @@ export default function FleetExpensesMessagesPage() {
       icon={<Inbox className="h-5 w-5" />}
       actions={
         <div className="flex flex-wrap items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => navigate('/fleet-expenses')}>
-            <ArrowLeft className="h-4 w-4 rtl:rotate-180" />
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate('/fleet-expenses')}
+            aria-label={t('messages.backToExpenses')}
+          >
+            <ArrowLeft className="rtl:rotate-180" />
             <span className="hidden sm:inline">{t('messages.backToExpenses')}</span>
           </Button>
           <Button
@@ -85,8 +90,11 @@ export default function FleetExpensesMessagesPage() {
             size="sm"
             onClick={() => void query.refetch()}
             disabled={query.isFetching}
+            aria-label={t('common.refresh')}
           >
-            <RefreshCw className={cn('h-4 w-4', query.isFetching && 'animate-spin')} />
+            <RefreshCw
+              className={cn(query.isFetching && 'animate-spin motion-reduce:animate-none')}
+            />
             <span className="hidden sm:inline">{t('common.refresh')}</span>
           </Button>
         </div>
@@ -100,10 +108,11 @@ export default function FleetExpensesMessagesPage() {
               key={s}
               type="button"
               onClick={() => setStatus(s)}
+              aria-pressed={status === s}
               className={cn(
-                'min-h-11 shrink-0 whitespace-nowrap rounded-full border px-3.5 py-1 text-xs font-semibold transition-colors lg:min-h-8 lg:px-3',
+                'min-h-11 shrink-0 whitespace-nowrap rounded-full border px-3.5 py-1 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:min-h-8 lg:px-3',
                 status === s
-                  ? 'border-foreground bg-foreground text-background'
+                  ? 'border-primary bg-primary text-primary-foreground'
                   : 'bg-card text-muted-foreground hover:bg-accent',
               )}
             >
@@ -115,9 +124,9 @@ export default function FleetExpensesMessagesPage() {
             onClick={() => setIncludeMedia((v) => !v)}
             aria-pressed={includeMedia}
             className={cn(
-              'min-h-11 shrink-0 whitespace-nowrap rounded-full border border-dashed px-3.5 py-1 text-xs font-semibold transition-colors lg:min-h-8 lg:px-3',
+              'min-h-11 shrink-0 whitespace-nowrap rounded-full border border-dashed px-3.5 py-1 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:min-h-8 lg:px-3',
               includeMedia
-                ? 'border-foreground bg-foreground text-background'
+                ? 'border-primary bg-primary text-primary-foreground'
                 : 'bg-card text-muted-foreground hover:bg-accent',
             )}
           >
@@ -126,11 +135,16 @@ export default function FleetExpensesMessagesPage() {
         </div>
 
         <div className="relative max-w-md">
-          <Search className="pointer-events-none absolute start-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Search
+            className="pointer-events-none absolute start-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+            aria-hidden="true"
+          />
           <Input
+            type="search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={t('messages.searchPlaceholder')}
+            aria-label={t('messages.searchPlaceholder')}
             className="ps-9"
             dir="auto"
           />
@@ -141,7 +155,7 @@ export default function FleetExpensesMessagesPage() {
       {query.isLoading ? (
         <div className="space-y-3">
           {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-28 w-full" />
+            <Skeleton key={i} className="h-28 w-full rounded-lg" />
           ))}
         </div>
       ) : messages.length === 0 ? (
@@ -208,11 +222,11 @@ function MessageCard({
     : t(`messages.status.${message.status}`, message.status);
 
   return (
-    <div className="rounded-lg border bg-card p-3 sm:p-4">
+    <div className="rounded-lg border bg-card p-3">
       <div className="mb-2 flex flex-wrap items-center justify-between gap-x-2 gap-y-1">
         <span
           className={cn(
-            'rounded-full px-2 py-0.5 text-xs font-medium',
+            'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium',
             STATUS_TONE[message.status] ?? STATUS_TONE.ignored,
           )}
         >
@@ -230,7 +244,7 @@ function MessageCard({
         className="whitespace-pre-wrap break-words rounded-md bg-muted/50 p-3 text-sm leading-relaxed [overflow-wrap:anywhere]"
       >
         {message.body || (
-          <span className="italic text-muted-foreground">{t('messages.emptyBody')}</span>
+          <span className="text-xs text-muted-foreground">{t('messages.emptyBody')}</span>
         )}
       </p>
 
@@ -248,7 +262,7 @@ function MessageCard({
           <Link
             to={`/fleet-expenses/${message.transaction_id}/edit`}
             state={{ from: 'messages' }}
-            className="font-semibold text-primary hover:underline"
+            className="rounded font-semibold text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             {message.status === 'matched'
               ? t('messages.toTransaction', { id: message.transaction_id })
@@ -258,7 +272,7 @@ function MessageCard({
       ) : message.status === 'ignored' && canAct ? (
         <div className="mt-2.5">
           <Button
-            variant="secondary"
+            variant="outline"
             className="min-h-11 w-full sm:min-h-9 sm:w-auto"
             onClick={() =>
               navigate(`/fleet-expenses/new?raw_message_id=${message.id}`, {

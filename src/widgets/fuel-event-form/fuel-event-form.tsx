@@ -192,10 +192,10 @@ export function FuelEventForm({
 
   if (loading) {
     return (
-      <div className="space-y-4">
-        <Skeleton className="h-40 w-full" />
-        <Skeleton className="h-56 w-full" />
-        <Skeleton className="h-40 w-full" />
+      <div className="space-y-6">
+        <Skeleton className="h-40 w-full rounded-lg" />
+        <Skeleton className="h-56 w-full rounded-lg" />
+        <Skeleton className="h-40 w-full rounded-lg" />
       </div>
     );
   }
@@ -207,8 +207,8 @@ export function FuelEventForm({
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
-              <Car className="h-4 w-4 text-muted-foreground" />
-              {t('fuelEvents.fields.car')} &amp; {t('fuelEvents.fields.driver')}
+              <Car className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+              {t('fuelEvents.fields.carAndDriver')}
             </CardTitle>
           </CardHeader>
           <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -256,8 +256,8 @@ export function FuelEventForm({
                     />
                   </FormControl>
                   {driverAutoAssigned && !form.formState.errors.driver_name && (
-                    <div className="absolute bottom-0 left-0 right-0 flex items-center gap-1.5 text-xs text-primary">
-                      <Sparkles className="h-3 w-3 shrink-0" />
+                    <div className="absolute inset-x-0 bottom-0 flex items-center gap-1.5 text-xs text-primary">
+                      <Sparkles className="h-3 w-3 shrink-0" aria-hidden="true" />
                       <span className="truncate">{t('fuelEvents.fields.driverAutoAssigned')}</span>
                       <button
                         type="button"
@@ -266,9 +266,9 @@ export function FuelEventForm({
                           form.setValue('driver_name', '', { shouldValidate: true });
                           setDriverAutoAssigned(false);
                         }}
-                        className="ms-auto inline-flex shrink-0 items-center gap-0.5 rounded px-1 py-0.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+                        className="ms-auto inline-flex shrink-0 items-center gap-0.5 rounded px-1 py-0.5 text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                       >
-                        <X className="h-3 w-3" />
+                        <X className="h-3 w-3" aria-hidden="true" />
                         <span>{t('common.clear')}</span>
                       </button>
                     </div>
@@ -284,7 +284,7 @@ export function FuelEventForm({
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
-              <Droplet className="h-4 w-4 text-muted-foreground" />
+              <Droplet className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
               {t('fuelEvents.title')}
             </CardTitle>
           </CardHeader>
@@ -318,7 +318,8 @@ export function FuelEventForm({
                       type="number"
                       step="0.01"
                       inputMode="decimal"
-                      placeholder="0.00"
+                      placeholder="0.00…"
+                      autoComplete="off"
                       {...field}
                       value={field.value ?? ''}
                       onChange={(e) =>
@@ -342,7 +343,8 @@ export function FuelEventForm({
                       type="number"
                       step="0.01"
                       inputMode="decimal"
-                      placeholder="0.00"
+                      placeholder="0.00…"
+                      autoComplete="off"
                       {...field}
                       value={field.value ?? ''}
                       onChange={(e) =>
@@ -363,7 +365,7 @@ export function FuelEventForm({
             <FormItem>
               <FormLabel>{t('fuelEvents.fields.totalPrice')}</FormLabel>
               <FormControl>
-                <div className="flex h-10 w-full items-center rounded-md border border-input bg-muted/30 px-3 text-sm font-semibold shadow-sm">
+                <div className="flex h-9 w-full items-center rounded-md border border-input bg-muted/40 px-3 font-mono text-sm font-semibold tabular-nums text-money shadow-sm">
                   {formatCurrency(calc.totalPrice)}
                 </div>
               </FormControl>
@@ -376,7 +378,7 @@ export function FuelEventForm({
         <Card>
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-base">
-              <Gauge className="h-4 w-4 text-muted-foreground" />
+              <Gauge className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
               {t('fuelEvents.fields.odometerBefore')} / {t('fuelEvents.fields.odometerAfter')}
             </CardTitle>
           </CardHeader>
@@ -392,7 +394,8 @@ export function FuelEventForm({
                       <Input
                         type="number"
                         inputMode="numeric"
-                        placeholder="0"
+                        placeholder="0…"
+                        autoComplete="off"
                         {...field}
                         value={field.value ?? ''}
                         onChange={(e) =>
@@ -414,7 +417,8 @@ export function FuelEventForm({
                       <Input
                         type="number"
                         inputMode="numeric"
-                        placeholder="0"
+                        placeholder="0…"
+                        autoComplete="off"
                         {...field}
                         value={field.value ?? ''}
                         onChange={(e) =>
@@ -430,13 +434,24 @@ export function FuelEventForm({
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div className="rounded-lg border bg-card p-3">
-                <p className="text-xs text-muted-foreground">{t('fuelEvents.fields.distance')}</p>
-                <p className="text-xl font-semibold">{formatNumber(calc.distance, 0)} km</p>
+                <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  {t('fuelEvents.fields.distance')}
+                </p>
+                <p className="font-mono text-[22px] font-semibold leading-none tabular-nums">
+                  {formatNumber(calc.distance, 0)} {t('fuelEvents.fields.km')}
+                </p>
               </div>
               <div className={cn('rounded-lg border p-3', efficiency.bgClassName)}>
-                <p className="text-xs text-muted-foreground">{t('fuelEvents.fields.fuelRate')}</p>
+                <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  {t('fuelEvents.fields.fuelRate')}
+                </p>
                 <div className="flex items-center justify-between">
-                  <p className={cn('text-xl font-semibold', efficiency.className)}>
+                  <p
+                    className={cn(
+                      'font-mono text-[22px] font-semibold leading-none tabular-nums',
+                      efficiency.className,
+                    )}
+                  >
                     {formatNumber(calc.fuelRate, 1)} {t('fuelEvents.efficiency.unit')}
                   </p>
                   <div className="flex items-center gap-1">
@@ -448,7 +463,7 @@ export function FuelEventForm({
                 </div>
                 {!efficiency.isValid && calc.fuelRate > 0 && (
                   <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
-                    <Info className="h-3 w-3" />
+                    <Info className="h-3 w-3" aria-hidden="true" />
                     {t('fuelEvents.efficiency.excludedReason', {
                       min: FUEL_EFFICIENCY.MIN_VALID,
                       max: FUEL_EFFICIENCY.MAX_VALID,
@@ -470,7 +485,7 @@ export function FuelEventForm({
               disabled={submitting}
               className="md:me-auto"
             >
-              <RotateCcw className="h-4 w-4" />
+              <RotateCcw aria-hidden="true" />
               {t('common.reset')}
             </Button>
           )}
@@ -484,9 +499,9 @@ export function FuelEventForm({
             disabled={submitting || (mode === 'edit' && !form.formState.isDirty)}
           >
             {submitting ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Loader2 className="animate-spin motion-reduce:animate-none" aria-hidden="true" />
             ) : (
-              <Save className="h-4 w-4" />
+              <Save aria-hidden="true" />
             )}
             {submitLabel ?? t('common.save')}
           </Button>

@@ -51,7 +51,7 @@ export function TripsMobileList({
     return (
       <div className="space-y-2">
         {Array.from({ length: 8 }).map((_, i) => (
-          <Skeleton key={i} className="h-[84px] w-full rounded-xl" />
+          <Skeleton key={i} className="h-[84px] w-full rounded-lg" />
         ))}
       </div>
     );
@@ -62,7 +62,7 @@ export function TripsMobileList({
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border bg-card">
+    <div className="overflow-hidden rounded-lg border bg-card">
       {days.map((day) => (
         <section key={day.date}>
           {/* Sticky to the page scroll, so the day you are inside stays named.
@@ -70,10 +70,10 @@ export function TripsMobileList({
               partial page would be confidently wrong. */}
           <h3
             className="sticky top-0 z-10 flex items-baseline justify-between gap-3 border-y
-                       bg-muted/95 px-3 py-1.5 backdrop-blur
-                       supports-[backdrop-filter]:bg-muted/80"
+                       bg-muted/80 px-3 py-1.5 backdrop-blur
+                       supports-[backdrop-filter]:bg-muted/60"
           >
-            <span className="text-[11px] font-semibold uppercase tracking-wider">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
               {format(day.date, 'EEE d MMM yyyy')}
             </span>
             <span className="text-[11px] tabular-nums text-muted-foreground">
@@ -140,14 +140,14 @@ function MobileRow({
             setOpen((v) => !v);
           }
         }}
-        className="cursor-pointer px-3 py-2.5 transition-colors hover:bg-muted/40
+        className="cursor-pointer px-3 py-2.5 transition-colors hover:bg-muted/50
                    focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset
                    focus-visible:ring-ring active:bg-muted/60"
       >
         <div className="flex items-baseline justify-between gap-2">
           <span className="flex min-w-0 items-baseline gap-2">
             {isGroup && (
-              <span className="inline-flex shrink-0 items-baseline gap-1 rounded bg-accent px-1.5 text-[10px] font-semibold text-accent-foreground">
+              <span className="inline-flex shrink-0 items-baseline gap-1 rounded-full bg-muted px-2 py-0.5 text-[10.5px] font-medium text-muted-foreground">
                 <Layers className="h-2.5 w-2.5 self-center" aria-hidden />
                 {containers.length}
               </span>
@@ -168,7 +168,10 @@ function MobileRow({
             <Truncate className="max-w-[110px]">{row.company}</Truncate>
             <ChevronDown
               aria-hidden
-              className={cn('h-3.5 w-3.5 transition-transform', open && 'rotate-180')}
+              className={cn(
+                'h-3.5 w-3.5 transition-transform duration-200',
+                open && 'rotate-180',
+              )}
             />
           </span>
         </div>
@@ -230,7 +233,7 @@ function MobileRow({
       )}
 
       {open && (
-        <div className="border-t bg-muted/30 px-3 py-2.5">
+        <div className="border-t bg-muted/40 px-3 py-2.5">
           <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-[12.5px]">
             <Field label={t('trips.fields.driver')}>{head.driver_name}</Field>
             <Field label={t('trips.fields.vehicle')}>{head.car_no_plate}</Field>
@@ -243,7 +246,7 @@ function MobileRow({
               figure on every child would be a lie. */}
           {isGroup && (
             <div className="mt-3 border-t pt-2">
-              <p className="mb-1.5 flex items-center gap-1.5 text-[10.5px] font-semibold uppercase tracking-wider text-muted-foreground">
+              <p className="mb-1.5 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                 <Layers className="h-3 w-3" aria-hidden />
                 {t('trips.mobile.containers', { count: containers.length })}
               </p>

@@ -1,0 +1,8 @@
+# shard-021  loc=1599  files=6
+# groups: widgets/trip-audit-detail-dialog, widgets/trip-audit-matches-table, widgets/trip-audit-queue
+1	src/widgets/trip-audit-detail-dialog/index.ts
+1275	src/widgets/trip-audit-detail-dialog/trip-audit-detail-dialog.tsx
+56	src/widgets/trip-audit-matches-table/audit-format.tsx
+6	src/widgets/trip-audit-matches-table/index.ts
+1	src/widgets/trip-audit-queue/index.ts
+260	src/widgets/trip-audit-queue/trip-audit-queue.tsx

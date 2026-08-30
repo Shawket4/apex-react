@@ -40,7 +40,7 @@ export function useDropoffColumns(): ColumnDef<DropOffPoint>[] {
         cell: ({ row }) => {
           const radius = row.original.radius_m;
           return (
-            <div className="text-muted-foreground tabular-nums">
+            <div className="font-mono text-muted-foreground tabular-nums">
               {radius != null
                 ? radius
                 : t('locations.fields.radiusDefaultPlaceholder', {
@@ -58,7 +58,7 @@ export function useDropoffColumns(): ColumnDef<DropOffPoint>[] {
           row.original.pin_source ? (
             <PinSourceBadge pinSource={row.original.pin_source} />
           ) : (
-            <span className="text-muted-foreground">—</span>
+            <span className="opacity-40">—</span>
           ),
       },
       {
@@ -67,10 +67,10 @@ export function useDropoffColumns(): ColumnDef<DropOffPoint>[] {
         cell: ({ row }) => {
           const { lat, long } = row.original;
           if (!isValidCoordinate(lat, long)) {
-            return <span className="text-muted-foreground">—</span>;
+            return <span className="opacity-40">—</span>;
           }
           return (
-            <div className="text-muted-foreground tabular-nums" dir="ltr">
+            <div className="font-mono text-muted-foreground tabular-nums" dir="ltr">
               {Number(lat).toFixed(5)}, {Number(long).toFixed(5)}
             </div>
           );

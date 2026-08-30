@@ -83,8 +83,8 @@ export function FuelEventsFilterPopover({ active, onChange }: FilterPopoverProps
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button variant={count > 0 ? 'default' : 'outline'} size="sm" className="h-9 gap-1.5">
-          <Filter className="h-3.5 w-3.5" />
+        <Button variant={count > 0 ? 'default' : 'outline'} size="sm" className="h-8 gap-1.5">
+          <Filter />
           <span className="hidden sm:inline">{t('common.filter')}</span>
           {count > 0 && (
             <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-primary-foreground px-1 text-[10px] font-semibold text-primary">
@@ -95,14 +95,14 @@ export function FuelEventsFilterPopover({ active, onChange }: FilterPopoverProps
       </PopoverTrigger>
       <PopoverContent align="end" className="w-60 p-2">
         <div className="flex items-center justify-between px-2 py-1.5">
-          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
             {t('fuelEvents.filters.byStatus')}
           </p>
           {count > 0 && (
             <button
               type="button"
               onClick={clear}
-              className="inline-flex items-center gap-0.5 text-[11px] text-muted-foreground hover:text-foreground"
+              className="inline-flex items-center gap-0.5 rounded-sm text-[11px] text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <X className="h-3 w-3" />
               {t('fuelEvents.filters.clearFilter')}
@@ -119,11 +119,11 @@ export function FuelEventsFilterPopover({ active, onChange }: FilterPopoverProps
                   type="button"
                   onClick={() => toggle(key)}
                   className={cn(
-                    'flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm transition-colors',
-                    selected ? 'bg-accent text-accent-foreground' : 'hover:bg-accent/60',
+                    'flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                    selected ? 'bg-primary/10 text-primary' : 'hover:bg-accent hover:text-accent-foreground',
                   )}
                 >
-                  <span className={cn('h-2 w-2 rounded-full', meta.dot)} />
+                  <span className={cn('h-1.5 w-1.5 rounded-full', meta.dot)} aria-hidden />
                   <span className="flex-1 text-start">{t(meta.labelKey)}</span>
                   {selected && <Check className="h-3.5 w-3.5 text-primary" />}
                 </button>
@@ -156,8 +156,8 @@ export function FuelEventsMethodControl({ value, onChange, counts }: MethodContr
 
   return (
     <div
-      className="inline-flex h-9 items-center gap-0.5 rounded-md border bg-muted/40 p-0.5"
-      role="tablist"
+      className="flex items-center gap-1.5"
+      role="group"
       aria-label={t('fuelEvents.method.label')}
     >
       <MethodButton
@@ -203,33 +203,30 @@ function MethodButton({
   count?: number;
 }) {
   return (
-    <button
+    <Button
       type="button"
-      role="tab"
-      aria-selected={active}
+      variant={active ? 'default' : 'outline'}
+      size="sm"
+      aria-pressed={active}
       disabled={disabled}
       onClick={onClick}
-      className={cn(
-        'inline-flex h-7 items-center gap-1.5 rounded px-2.5 text-xs font-medium transition-colors',
-        active
-          ? 'bg-background text-foreground shadow-sm'
-          : 'text-muted-foreground hover:text-foreground',
-        disabled && 'cursor-not-allowed opacity-40 hover:text-muted-foreground',
-      )}
+      className={cn('h-7 text-xs', disabled && 'cursor-not-allowed opacity-50')}
     >
       {icon}
       <span>{label}</span>
       {typeof count === 'number' && (
         <span
           className={cn(
-            'hidden rounded-full px-1 text-[10px] font-semibold tabular-nums sm:inline-block',
-            active ? 'bg-muted text-foreground' : 'bg-background text-muted-foreground',
+            'hidden rounded-full px-2 py-0.5 font-mono text-[10.5px] font-medium tabular-nums sm:inline-block',
+            active
+              ? 'bg-primary-foreground/20 text-primary-foreground'
+              : 'bg-muted text-muted-foreground',
           )}
         >
           {count}
         </span>
       )}
-    </button>
+    </Button>
   );
 }
 
@@ -254,9 +251,9 @@ export function FuelEventsSortControl({
   const DirectionIcon = direction === 'desc' ? ArrowDownWideNarrow : ArrowUpNarrowWide;
 
   return (
-    <div className="inline-flex h-9 items-center">
+    <div className="inline-flex h-8 items-center">
       <Select value={sortKey} onValueChange={(v) => onSortKeyChange(v as FuelEventSortKey)}>
-        <SelectTrigger className="h-9 w-[130px] gap-1 rounded-e-none border-e-0 text-xs">
+        <SelectTrigger className="h-8 w-auto min-w-32 gap-2 rounded-e-none border-e-0">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -271,14 +268,14 @@ export function FuelEventsSortControl({
         variant="outline"
         size="icon"
         onClick={onDirectionToggle}
-        className="h-9 w-9 rounded-s-none"
+        className="h-8 w-8 rounded-s-none"
         aria-label={
           direction === 'desc'
             ? t('fuelEvents.sort.directionDesc')
             : t('fuelEvents.sort.directionAsc')
         }
       >
-        <DirectionIcon className="h-3.5 w-3.5" />
+        <DirectionIcon />
       </Button>
     </div>
   );

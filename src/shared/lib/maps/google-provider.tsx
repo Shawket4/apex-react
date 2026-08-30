@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { Locate, Layers } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { setOptions, importLibrary } from '@googlemaps/js-api-loader';
 import { Button } from '@/shared/ui/button';
 import { cn } from '@/shared/lib/cn';
@@ -50,20 +51,19 @@ function injectInfoWindowStyles() {
     .gm-style-iw-c {
       padding: 0 !important;
       border-radius: 12px !important;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.15), 0 1px 4px rgba(0,0,0,0.08) !important;
-      border: 1px solid rgba(0,0,0,0.07) !important;
+      box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1) !important;
+      border: 1px solid hsl(var(--border)) !important;
       overflow: hidden !important;
     }
     .dark .gm-style-iw-c {
       background-color: hsl(var(--card, 222 47% 11%)) !important;
-      border-color: rgba(255,255,255,0.07) !important;
-      box-shadow: 0 4px 24px rgba(0,0,0,0.5) !important;
+      border-color: hsl(var(--border)) !important;
     }
     .dark .gm-style-iw-tc::after { background: hsl(var(--card, 222 47% 11%)) !important; }
     .gm-style-iw-d { overflow: hidden !important; padding: 0 !important; }
-    .gm-ui-hover-effect { top: 6px !important; inset-inline-end: 6px !important; opacity: 0.5 !important; }
+    .gm-ui-hover-effect { top: 6px !important; inset-inline-end: 6px !important; opacity: 0.7 !important; }
     .gm-ui-hover-effect:hover { opacity: 1 !important; }
-    .dark .gm-ui-hover-effect > span { background-color: #94a3b8 !important; }
+    .dark .gm-ui-hover-effect > span { background-color: hsl(var(--muted-foreground)) !important; }
   `;
   document.head.appendChild(style);
 }
@@ -128,6 +128,11 @@ function smoothFlyTo(
   durationMs = 800,
 ): FlyToken {
   const token: FlyToken = { cancelled: false, rafId: null };
+  if (globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches) {
+    map.setCenter(target);
+    map.setZoom(targetZoom);
+    return token;
+  }
   const startCenter = map.getCenter();
   const startZoom = map.getZoom() ?? 11;
   if (!startCenter) {
@@ -207,6 +212,7 @@ export function GoogleMapView({
   suppressRoute,
   className,
 }: MapViewProps) {
+  const { t } = useTranslation();
   const containerRef = React.useRef<HTMLDivElement>(null);
   const mapRef = React.useRef<google.maps.Map | null>(null);
   const infoWindowRef = React.useRef<google.maps.InfoWindow | null>(null);
@@ -750,27 +756,28 @@ export function GoogleMapView({
         style={{ bottom: 128 + bottomOffset }}
       >
         <Button
-          variant="secondary"
+          variant="outline"
           size="icon"
-          className="h-9 w-9 rounded-full shadow-lg backdrop-blur-md bg-card/90 hover:bg-card"
+          className="h-8 w-8 rounded-md backdrop-blur-md"
           onClick={centerOnMarkers}
-          title="Center on markers"
-          aria-label="Center map on markers"
+          title={t('maps.centerOnMarkers', { defaultValue: 'Center map on markers' })}
+          aria-label={t('maps.centerOnMarkers', { defaultValue: 'Center map on markers' })}
         >
-          <Locate className="h-4 w-4" />
+          <Locate />
         </Button>
         <Button
-          variant={isSatellite ? 'default' : 'secondary'}
+          variant={isSatellite ? 'default' : 'outline'}
           size="icon"
           className={cn(
-            'h-9 w-9 rounded-full shadow-lg backdrop-blur-md',
-            !isSatellite && 'bg-card/90 hover:bg-card',
+            'h-8 w-8 rounded-md backdrop-blur-md',
+            !isSatellite && '',
           )}
           onClick={toggleSatellite}
-          title="Toggle satellite"
-          aria-label="Toggle satellite view"
+          aria-pressed={isSatellite}
+          title={t('maps.toggleSatellite', { defaultValue: 'Toggle satellite view' })}
+          aria-label={t('maps.toggleSatellite', { defaultValue: 'Toggle satellite view' })}
         >
-          <Layers className="h-4 w-4" />
+          <Layers />
         </Button>
       </div>
     </div>

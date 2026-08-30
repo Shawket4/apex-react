@@ -25,8 +25,8 @@ export function Placeholder({ titleKey, icon: Icon }: PlaceholderProps) {
         title={t(titleKey)}
         description={
           isSpeedViolations
-            ? 'Speed violations tracking and telemetry radar are currently being compiled.'
-            : 'This module will be refactored next. The scaffold, architecture, and API wiring are ready.'
+            ? t('placeholder.speedViolations')
+            : t('placeholder.comingSoon')
         }
       />
     </PageShell>

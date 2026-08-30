@@ -116,7 +116,7 @@ export function TripsMissingDataFilter({ value, onChange }: MissingDataFilterPro
                 onChange('');
                 setOpen(false);
               }}
-              className="inline-flex items-center gap-0.5 text-[11px] text-muted-foreground hover:text-foreground"
+              className="inline-flex items-center gap-0.5 rounded-sm text-[11px] text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <X className="h-3 w-3" />
               {t('common.clear')}
@@ -137,9 +137,10 @@ export function TripsMissingDataFilter({ value, onChange }: MissingDataFilterPro
                   }}
                   className={cn(
                     'flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm transition-colors',
+                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                     selected
-                      ? 'bg-accent text-accent-foreground'
-                      : 'hover:bg-accent/60',
+                      ? 'bg-primary/10 text-primary'
+                      : 'hover:bg-accent',
                   )}
                 >
                   <Icon className="h-3.5 w-3.5 text-muted-foreground" />
@@ -187,35 +188,31 @@ export function TripsReceiptStatusControl({
 
   return (
     <div
-      // Height is auto, not h-9. Fixed height plus wrapping labels is what
-      // burst this control open: the words wrapped inside each chip, the chip
-      // grew past its parent, and the whole thing looked broken.
-      className="inline-flex max-w-full flex-wrap items-center gap-0.5 rounded-md border bg-muted/40 p-0.5"
-      role="tablist"
+      // The row wraps, it does not scroll: the labels are long enough that a
+      // fixed-width strip burst open on a phone. Each pill keeps its own line
+      // of text on one line (Button is `whitespace-nowrap`) and the short
+      // labels below sm keep the wrap rare.
+      className="flex max-w-full flex-wrap items-center gap-1.5"
+      role="group"
       aria-label={t('trips.filters.receiptStatus')}
     >
       {RECEIPT_STATUS_OPTIONS.map((opt) => {
         const Icon = opt.icon;
         const active = opt.value === value;
         return (
-          <button
+          <Button
             key={opt.value || 'all'}
             type="button"
-            role="tab"
-            aria-selected={active}
+            size="sm"
+            variant={active ? 'default' : 'outline'}
+            aria-pressed={active}
             onClick={() => onChange(opt.value)}
-            className={cn(
-              'inline-flex h-7 shrink-0 items-center gap-1.5 whitespace-nowrap rounded px-2.5',
-              'text-xs font-medium transition-colors',
-              active
-                ? 'bg-background text-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground',
-            )}
+            className="h-7 gap-1.5 text-xs"
           >
             {Icon && <Icon className="h-3 w-3 shrink-0" />}
             <span className="sm:hidden">{t(opt.shortKey)}</span>
             <span className="hidden sm:inline">{t(opt.labelKey)}</span>
-          </button>
+          </Button>
         );
       })}
     </div>

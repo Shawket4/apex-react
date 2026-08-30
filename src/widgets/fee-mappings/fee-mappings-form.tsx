@@ -169,14 +169,14 @@ export function FeeMappingsForm({
   };
 
   return (
-    <Card>
-      <CardContent className="p-4 sm:p-5">
+    <Card className="shadow-none">
+      <CardContent className="p-3">
         <form onSubmit={(e) => void handleSubmit(e)}>
           <div className="mb-3 flex items-center gap-2">
             <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-primary">
-              {isEdit ? <Pencil className="h-3 w-3" /> : <Plus className="h-3 w-3" />}
+              {isEdit ? <Pencil className="h-3 w-3" aria-hidden="true" /> : <Plus className="h-3 w-3" aria-hidden="true" />}
             </span>
-            <h3 className="text-sm font-semibold">
+            <h3 className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
               {isEdit ? t('feeMappings.form.editTitle') : t('feeMappings.form.createTitle')}
             </h3>
           </div>
@@ -200,7 +200,7 @@ export function FeeMappingsForm({
                   )
                 }
                 allowCustom
-                placeholder="Watanya"
+                placeholder={t('feeMappings.form.placeholders.company', 'Watanya…')}
               />
             </div>
 
@@ -217,7 +217,7 @@ export function FeeMappingsForm({
                 onSelect={(terminal) =>
                   update({ terminal: terminal.name, terminal_id: terminal.ID })
                 }
-                placeholder="Cairo"
+                placeholder={t('feeMappings.form.placeholders.terminal', 'Cairo…')}
                 disabled={!form.company}
               />
             </div>
@@ -233,12 +233,12 @@ export function FeeMappingsForm({
                 value={form.drop_off_point}
                 onChange={(v) => update({ drop_off_point: v })}
                 allowCustom
-                placeholder="Qena"
+                placeholder={t('feeMappings.form.placeholders.dropOffPoint', 'Qena…')}
                 disabled={!form.company}
               />
               {isNewDropoff && (
                 <p className="flex items-start gap-1 text-[11px] text-muted-foreground">
-                  <Sparkles className="mt-0.5 h-3 w-3 shrink-0 text-primary" />
+                  <Sparkles className="mt-0.5 h-3 w-3 shrink-0 text-primary" aria-hidden="true" />
                   <span dir="auto">
                     {t(
                       'feeMappings.form.newDropoffHint',
@@ -274,12 +274,12 @@ export function FeeMappingsForm({
           <div className="mt-3 flex justify-end gap-2">
             {isEdit && (
               <Button type="button" variant="outline" size="sm" onClick={onCancelEdit}>
-                <X className="me-1.5 h-3.5 w-3.5" />
+                <X aria-hidden="true" />
                 {t('common.cancel')}
               </Button>
             )}
             <Button type="submit" size="sm" disabled={isPending}>
-              {isPending && <Loader2 className="me-1.5 h-3.5 w-3.5 animate-spin" />}
+              {isPending && <Loader2 className="animate-spin motion-reduce:animate-none" aria-hidden="true" />}
               {isEdit ? t('feeMappings.form.save') : t('feeMappings.form.add')}
             </Button>
           </div>
@@ -320,7 +320,10 @@ function Field({
       </Label>
       <Input
         id={id}
+        name={id}
         type={type}
+        inputMode={type === 'number' ? 'decimal' : undefined}
+        autoComplete="off"
         step={step}
         value={value}
         onChange={(e) => onChange(e.target.value)}

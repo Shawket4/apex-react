@@ -1,0 +1,18 @@
+# shard-014  loc=1937  files=16
+# groups: widgets/locations-terminal-dialog, widgets/locations-terminals-table, entities/maint-stock, entities/mapping, entities/oil-change, widgets/oil-change-form
+1	src/widgets/locations-terminal-dialog/index.ts
+577	src/widgets/locations-terminal-dialog/locations-terminal-dialog.tsx
+122	src/widgets/locations-terminals-table/columns.tsx
+1	src/widgets/locations-terminals-table/index.ts
+30	src/widgets/locations-terminals-table/locations-terminals-table.tsx
+38	src/entities/maint-stock/api.ts
+44	src/entities/maint-stock/queries.ts
+43	src/entities/maint-stock/schemas.ts
+30	src/entities/mapping/api.ts
+82	src/entities/mapping/queries.ts
+36	src/entities/mapping/schemas.ts
+83	src/entities/oil-change/api.ts
+104	src/entities/oil-change/queries.ts
+160	src/entities/oil-change/schemas.ts
+485	src/widgets/oil-change-form/oil-change-form.tsx
+101	src/widgets/oil-change-form/oil-change-status-preview.tsx

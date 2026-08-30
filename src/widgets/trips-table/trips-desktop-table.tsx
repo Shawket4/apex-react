@@ -81,7 +81,7 @@ export function TripsDesktopTable({
       <div className="w-full overflow-x-auto">
         <table className="w-full caption-bottom border-collapse text-sm">
           <thead>
-            <tr className="border-b bg-muted/40 text-[10.5px] uppercase tracking-wider text-muted-foreground">
+            <tr className="border-b bg-muted/60 text-[10px] uppercase tracking-wider text-muted-foreground">
               <Th className="w-9" srOnly>
                 {t('trips.columns.expand', { defaultValue: 'Expand' })}
               </Th>
@@ -211,17 +211,27 @@ function Row({
   return (
     <>
       <tr
+        role="button"
+        tabIndex={0}
+        aria-expanded={isExpanded}
         onClick={onToggle}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onToggle();
+          }
+        }}
         className={cn(
-          'cursor-pointer border-b transition-colors hover:bg-muted/40',
-          isExpanded && 'bg-muted/30',
+          'cursor-pointer border-b transition-colors hover:bg-muted/50',
+          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring',
+          isExpanded && 'bg-muted/40',
         )}
       >
         <Td align="center">
           <ChevronRight
             aria-hidden
             className={cn(
-              'h-4 w-4 text-muted-foreground transition-transform',
+              'h-4 w-4 text-muted-foreground transition-transform duration-200',
               isExpanded && 'rotate-90',
             )}
           />
@@ -231,8 +241,8 @@ function Row({
           <div className="flex items-center gap-2">
             {isGroup && (
               <span
-                className="inline-flex shrink-0 items-center gap-1 rounded bg-accent px-1.5
-                           text-[10px] font-semibold text-accent-foreground"
+                className="inline-flex shrink-0 items-center gap-1 rounded-full bg-muted px-2 py-0.5
+                           text-[10.5px] font-medium text-muted-foreground"
                 title={t('trips.mobile.containers', { count: containers.length })}
               >
                 <Layers className="h-3 w-3" />
@@ -300,7 +310,7 @@ function Row({
       </tr>
 
       {isExpanded && (
-        <tr className="border-b bg-muted/20">
+        <tr className="border-b bg-muted/40">
           <td colSpan={COLUMNS + 1} className="px-3 py-3">
             <Expanded row={row} showRevenue={showRevenue} onOpenReceipt={onOpenReceipt} onOpenMap={onOpenMap} />
           </td>
@@ -367,8 +377,8 @@ function DistanceMoney({ row, showRevenue }: { row: TripRow; showRevenue: boolea
         title={row.kmIsMax ? t('trips.mobile.maxDistanceHint') : undefined}
       >
         {row.kmIsMax
-          ? t('trips.mobile.maxDistance', { km: formatNumber(row.km, 1) })
-          : `${formatNumber(row.km, 1)} km`}
+          ? t('trips.mobile.maxDistance', { km: formatNumber(row.km, 0) })
+          : `${formatNumber(row.km, 0)} km`}
       </div>
       {canSee ? (
         <Popover>
@@ -387,7 +397,7 @@ function DistanceMoney({ row, showRevenue }: { row: TripRow; showRevenue: boolea
           </PopoverTrigger>
           <PopoverContent
             align="end"
-            className="w-72 bg-popover text-popover-foreground shadow-lg"
+            className="w-72"
             onClick={(e) => e.stopPropagation()}
           >
             <RevenueBreakdown containers={row.containers} />
@@ -434,7 +444,7 @@ function Expanded({
   // child would be a lie: containers differ in volume, destination and earnings.
   return (
     <div>
-      <p className="mb-2 flex items-center gap-1.5 text-[10.5px] font-semibold uppercase tracking-wider text-muted-foreground">
+      <p className="mb-2 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
         <Layers className="h-3 w-3" aria-hidden />
         {t('trips.mobile.containers', { count: row.containers.length })}
       </p>

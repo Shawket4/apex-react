@@ -12,15 +12,15 @@ export function Header({ onOpenMobileMenu, onOpenCommandPalette }: HeaderProps) 
   const { t } = useTranslation();
 
   return (
-    <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center gap-2 border-b bg-background/80 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/60 md:px-6 print:hidden">
+    <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center gap-2 border-b bg-background/80 px-3 backdrop-blur supports-[backdrop-filter]:bg-background/60 sm:px-4 print:hidden">
       <Button
         variant="ghost"
         size="icon"
-        className="lg:hidden"
+        className="h-8 w-8 lg:hidden"
         onClick={onOpenMobileMenu}
-        aria-label="Open menu"
+        aria-label={t('common.openMenu')}
       >
-        <Menu className="h-5 w-5" />
+        <Menu />
       </Button>
 
       <div className="flex flex-1 items-center justify-center">
@@ -37,8 +37,8 @@ export function Header({ onOpenMobileMenu, onOpenCommandPalette }: HeaderProps) 
       >
         <Search className="h-4 w-4" />
         <span className="hidden sm:inline">{t('common.search')}</span>
-        <kbd className="pointer-events-none hidden items-center gap-1 rounded border bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground sm:inline-flex">
-          <span className="text-xs">⌘</span>K
+        <kbd className="pointer-events-none hidden h-5 select-none items-center rounded border border-border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground sm:inline-flex">
+          ⌘K
         </kbd>
       </Button>
     </header>

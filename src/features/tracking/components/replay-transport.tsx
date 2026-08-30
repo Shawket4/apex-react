@@ -21,19 +21,20 @@ export interface TransportTick {
   ghost: ReplaySample | null;
 }
 
-const timeFmt = new Intl.DateTimeFormat('en-GB', {
-  timeZone: 'Africa/Cairo',
-  hour12: false,
-  hour: '2-digit',
-  minute: '2-digit',
-  second: '2-digit',
-});
+const makeTimeFmt = (locale: string) =>
+  new Intl.DateTimeFormat(locale, {
+    timeZone: 'Africa/Cairo',
+    hour12: false,
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  });
 
-function fmtDelta(ms: number): string {
+function fmtDelta(ms: number, unitH: string, unitM: string): string {
   const mins = Math.round(Math.abs(ms) / 60_000);
   const h = Math.floor(mins / 60);
   const m = mins % 60;
-  const span = h > 0 ? `${h}h ${m}m` : `${m}m`;
+  const span = h > 0 ? `${h}${unitH} ${m}${unitM}` : `${m}${unitM}`;
   return ms >= 0 ? `−${span}` : `+${span}`;
 }
 
@@ -54,7 +55,9 @@ export const ReplayTransport = React.forwardRef<
     className?: string;
   }
 >(function ReplayTransport({ track, stopTimes = [], ghost = null, onTick, className }, ref) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const locale = i18n.language.startsWith('ar') ? 'ar-EG' : 'en-GB';
+  const timeFmt = React.useMemo(() => makeTimeFmt(locale), [locale]);
   const cursor = React.useMemo(() => createCursorStore(track.startMs), [track]);
   const [playing, setPlaying] = React.useState(false);
   const [speed, setSpeed] = React.useState(16);
@@ -134,7 +137,7 @@ export const ReplayTransport = React.forwardRef<
   const arrivalDeltaMs = ghost ? track.endMs - ghost.endMs : 0;
 
   return (
-    <div className={cn('space-y-2 p-2.5', className)}>
+    <div className={cn('space-y-2 p-3', className)}>
       <div className="flex items-center gap-3">
         <span className="w-[70px] shrink-0 text-end font-mono text-[11px] font-semibold tabular-nums">
           {timeFmt.format(new Date(value))}
@@ -147,7 +150,7 @@ export const ReplayTransport = React.forwardRef<
               return (
                 <span
                   key={i}
-                  className="absolute top-0 h-2 w-[3px] rounded-sm bg-amber-500/80"
+                  className="absolute top-0 h-2 w-[3px] rounded-sm bg-warning/80"
                   style={{ insetInlineStart: `${p}%` }}
                 />
               );
@@ -161,7 +164,8 @@ export const ReplayTransport = React.forwardRef<
             value={value}
             onChange={(e) => seek(Number(e.target.value))}
             aria-label={t('tracking.scrub', 'Playback position')}
-            className="relative z-10 h-2 w-full cursor-pointer appearance-none rounded-full accent-primary"
+            dir="ltr"
+            className="relative z-10 h-2 w-full cursor-pointer appearance-none rounded-full accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ring-offset-2"
             style={{
               background: `linear-gradient(to right, hsl(var(--primary)) ${pct}%, hsl(var(--muted)) ${pct}%)`,
             }}
@@ -180,7 +184,7 @@ export const ReplayTransport = React.forwardRef<
             setPlaying(false);
           }}
           aria-label={t('tracking.restart', 'Restart')}
-          className="grid h-8 w-8 place-items-center rounded-lg border bg-background hover:bg-muted"
+          className="grid h-8 w-8 place-items-center rounded-md border bg-background shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ring-offset-1"
         >
           <RotateCcw className="h-3.5 w-3.5" />
         </button>
@@ -188,7 +192,7 @@ export const ReplayTransport = React.forwardRef<
           type="button"
           onClick={() => setPlaying((p) => !p)}
           aria-label={playing ? t('tracking.pause', 'Pause') : t('tracking.play', 'Play')}
-          className="grid h-8 w-12 place-items-center rounded-lg bg-primary text-primary-foreground shadow hover:bg-primary/90"
+          className="grid h-8 w-12 place-items-center rounded-md bg-primary text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ring-offset-1"
         >
           {playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
         </button>
@@ -200,10 +204,10 @@ export const ReplayTransport = React.forwardRef<
               aria-pressed={speed === s}
               onClick={() => setSpeed(s)}
               className={cn(
-                'rounded-md border px-1.5 py-1 font-mono text-[10px] font-semibold tabular-nums',
+                'rounded-md border px-1.5 py-1 font-mono text-[10px] font-semibold tabular-nums transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ring-offset-1',
                 speed === s
-                  ? 'border-primary/50 bg-primary/10 text-primary'
-                  : 'bg-background text-muted-foreground hover:bg-muted',
+                  ? 'border-primary bg-primary/10 text-primary'
+                  : 'bg-background text-muted-foreground hover:bg-accent hover:text-accent-foreground',
               )}
             >
               {s}×
@@ -221,21 +225,21 @@ export const ReplayTransport = React.forwardRef<
                 emit(cursor.get());
               }}
               className={cn(
-                'flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-[11px] font-semibold',
+                'flex h-8 items-center gap-1.5 rounded-md border px-2.5 text-[11px] font-semibold shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ring-offset-1',
                 racing
-                  ? 'border-emerald-600/50 bg-emerald-600/10 text-emerald-600'
-                  : 'bg-background text-muted-foreground hover:bg-muted',
+                  ? 'border-success/40 bg-success/10 text-success'
+                  : 'bg-background text-muted-foreground hover:bg-accent hover:text-accent-foreground',
               )}
             >
-              <Flag className="h-3.5 w-3.5" />
+              <Flag className="h-3.5 w-3.5" aria-hidden="true" />
               {t('tracking.raceOptimal', 'Race optimal')}
             </button>
             {racing && (
               <span
                 className={cn(
-                  'rounded-md px-2 py-1 font-mono text-[10.5px] font-bold tabular-nums',
+                  'rounded-md px-2 py-1 font-mono text-[10.5px] font-semibold tabular-nums',
                   arrivalDeltaMs >= 0
-                    ? 'bg-emerald-600/10 text-emerald-600'
+                    ? 'bg-success/10 text-success'
                     : 'bg-destructive/10 text-destructive',
                 )}
                 title={t(
@@ -243,7 +247,7 @@ export const ReplayTransport = React.forwardRef<
                   'Optimal arrival vs actual arrival',
                 )}
               >
-                {fmtDelta(arrivalDeltaMs)}
+                {fmtDelta(arrivalDeltaMs, t('tracking.unit.h', 'h'), t('tracking.unit.m', 'm'))}
               </span>
             )}
           </div>

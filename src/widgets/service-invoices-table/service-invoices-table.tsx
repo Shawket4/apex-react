@@ -21,6 +21,7 @@ import {
 } from '@/shared/ui/dropdown-menu';
 import { Badge } from '@/shared/ui/badge';
 import { formatNumber } from '@/shared/lib/format';
+import { format } from 'date-fns';
 
 interface ServiceInvoicesTableProps {
   data: ServiceInvoice[];
@@ -53,14 +54,14 @@ export function ServiceInvoicesTable({
       header: t('serviceInvoices.fields.date'),
       cell: ({ row }: any) => {
         const date = new Date(row.getValue('date'));
-        return <div className="font-medium">{date.toISOString().split('T')[0]}</div>;
+        return <div className="font-mono tabular-nums">{format(date, 'd MMM yyyy')}</div>;
       },
     },
     {
       accessorKey: 'plate_number',
       header: t('serviceInvoices.fields.plateNumber'),
       cell: ({ row }: any) => (
-        <div className="font-black tracking-tight">{row.getValue('plate_number')}</div>
+        <div className="font-semibold" dir="auto">{row.getValue('plate_number')}</div>
       ),
     },
     {
@@ -71,7 +72,7 @@ export function ServiceInvoicesTable({
       accessorKey: 'meter_reading',
       header: t('serviceInvoices.fields.meterReading'),
       cell: ({ row }: any) => (
-        <div className="text-right font-mono">{formatNumber(row.getValue('meter_reading'))} {t('common.unit.km')}</div>
+        <div className="text-end font-mono">{formatNumber(row.getValue('meter_reading'))} {t('common.unit.km')}</div>
       ),
     },
     {
@@ -82,8 +83,8 @@ export function ServiceInvoicesTable({
         if (!isSearchResults || !count) return null;
         
         return (
-          <Badge variant="secondary" className="gap-1 bg-primary/10 text-primary border-primary/20">
-            <Sparkles className="h-3 w-3" />
+          <Badge variant="secondary" className="border-primary/40 bg-primary/10 text-primary">
+            <Sparkles className="h-3 w-3" aria-hidden="true" />
             {count}
           </Badge>
         );
@@ -94,11 +95,11 @@ export function ServiceInvoicesTable({
       cell: ({ row }: any) => {
         const invoice = row.original as ServiceInvoice;
         return (
-          <div className="text-right">
+          <div className="text-end">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="h-8 w-8 p-0">
-                  <MoreHorizontal className="h-4 w-4" />
+                <Button variant="ghost" className="h-8 w-8 p-0" aria-label={t('common.actions')}>
+                  <MoreHorizontal aria-hidden="true" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
@@ -108,7 +109,7 @@ export function ServiceInvoicesTable({
                     : `/service-invoices/${invoice.ID}`;
                   navigate(url, { state: { invoice } });
                 }}>
-                  <Eye className="mr-2 h-4 w-4" />
+                  <Eye className="me-2 h-4 w-4" aria-hidden="true" />
                   {t('common.view')}
                 </DropdownMenuItem>
                 <DropdownMenuItem
@@ -118,7 +119,7 @@ export function ServiceInvoicesTable({
                     prefetchServiceInvoice(queryClient, invoice.ID);
                   })}
                 >
-                  <Edit className="mr-2 h-4 w-4" />
+                  <Edit className="me-2 h-4 w-4" aria-hidden="true" />
                   {t('common.edit')}
                 </DropdownMenuItem>
                 {onDelete && (
@@ -126,7 +127,7 @@ export function ServiceInvoicesTable({
                     className="text-destructive focus:bg-destructive/10 focus:text-destructive"
                     onClick={() => onDelete(invoice.ID)}
                   >
-                    <Trash2 className="mr-2 h-4 w-4" />
+                    <Trash2 className="me-2 h-4 w-4" aria-hidden="true" />
                     {t('common.delete')}
                   </DropdownMenuItem>
                 )}

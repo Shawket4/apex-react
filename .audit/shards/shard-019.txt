@@ -1,0 +1,12 @@
+# shard-019  loc=2007  files=10
+# groups: entities/transaction, entities/trip
+218	src/entities/transaction/api.ts
+205	src/entities/transaction/categories.ts
+35	src/entities/transaction/defaults.ts
+310	src/entities/transaction/queries.ts
+280	src/entities/transaction/schemas.ts
+47	src/entities/transaction/vehicles.ts
+211	src/entities/trip/api.ts
+78	src/entities/trip/defaults.ts
+179	src/entities/trip/queries.ts
+444	src/entities/trip/schemas.ts

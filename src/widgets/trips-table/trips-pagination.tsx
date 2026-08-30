@@ -111,7 +111,7 @@ export function TripsPagination({
             onValueChange={(v) => onLimitChange(Number(v))}
             disabled={loading}
           >
-            <SelectTrigger className="h-7 w-[70px] text-xs">
+            <SelectTrigger className="h-8 w-[70px] text-xs">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -134,6 +134,8 @@ export function TripsPagination({
             </span>
             <Input
               type="number"
+              inputMode="numeric"
+              aria-label={t('trips.pagination.goTo')}
               min={1}
               max={pages}
               value={jumpValue}
@@ -142,12 +144,12 @@ export function TripsPagination({
                 if (e.key === 'Enter') handleJump();
               }}
               placeholder={String(page)}
-              className="h-7 w-16 text-xs"
+              className="h-8 w-16 text-xs"
             />
             <Button
               size="sm"
               variant="ghost"
-              className="h-7 px-2 text-xs"
+              className="h-8 px-2 text-xs"
               disabled={!jumpValue || loading}
               onClick={handleJump}
             >
@@ -167,7 +169,7 @@ export function TripsPagination({
             {...intend(1)}
             aria-label={t('trips.pagination.firstPage')}
           >
-            <ChevronsLeft className="h-4 w-4 rtl:rotate-180" />
+            <ChevronsLeft aria-hidden className="h-4 w-4 rtl:rotate-180" />
           </Button>
           <Button
             size="icon"
@@ -178,7 +180,7 @@ export function TripsPagination({
             {...intend(page - 1)}
             aria-label={t('trips.pagination.previousPage')}
           >
-            <ChevronLeft className="h-4 w-4 rtl:rotate-180" />
+            <ChevronLeft aria-hidden className="h-4 w-4 rtl:rotate-180" />
           </Button>
           <div className="hidden items-center gap-0.5 sm:flex">
             {getPageNumbers(page, pages).map((entry, i) =>
@@ -187,7 +189,7 @@ export function TripsPagination({
                   key={`e-${i}`}
                   className="inline-flex h-8 w-8 items-center justify-center text-muted-foreground"
                 >
-                  <MoreHorizontal className="h-4 w-4" />
+                  <MoreHorizontal aria-hidden className="h-4 w-4" />
                 </span>
               ) : (
                 <Button
@@ -195,6 +197,7 @@ export function TripsPagination({
                   size="icon"
                   variant={entry === page ? 'default' : 'ghost'}
                   className="h-8 w-8 text-xs tabular-nums"
+                  aria-current={entry === page ? 'page' : undefined}
                   onClick={() => onPageChange(entry)}
                   {...intend(entry)}
                   disabled={loading}
@@ -216,7 +219,7 @@ export function TripsPagination({
             {...intend(page + 1)}
             aria-label={t('trips.pagination.nextPage')}
           >
-            <ChevronRight className="h-4 w-4 rtl:rotate-180" />
+            <ChevronRight aria-hidden className="h-4 w-4 rtl:rotate-180" />
           </Button>
           <Button
             size="icon"
@@ -227,7 +230,7 @@ export function TripsPagination({
             {...intend(pages)}
             aria-label={t('trips.pagination.lastPage')}
           >
-            <ChevronsRight className="h-4 w-4 rtl:rotate-180" />
+            <ChevronsRight aria-hidden className="h-4 w-4 rtl:rotate-180" />
           </Button>
         </div>
       </div>

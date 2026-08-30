@@ -16,6 +16,7 @@ import {
 import { legColor, legId } from '../map/layers';
 import type { LegSegment } from '../use-history';
 import { cn } from '@/shared/lib/cn';
+import { Skeleton } from '@/shared/ui/skeleton';
 import { indexAt, SPEEDS } from '../playback';
 import type { HistoryData } from '../use-history';
 import type { RangeSummary } from '../schemas';
@@ -51,34 +52,38 @@ export function createCursorStore(initial = 0): CursorStore {
   };
 }
 
-const timeFmt = new Intl.DateTimeFormat('en-GB', {
-  timeZone: 'Africa/Cairo',
-  hour12: false,
-  hour: '2-digit',
-  minute: '2-digit',
-  second: '2-digit',
-});
+const localeOf = (lang: string) => (lang.startsWith('ar') ? 'ar-EG' : 'en-GB');
 
-function fmtSecs(secs: number): string {
-  if (secs <= 0) return '0m';
+const makeTimeFmt = (locale: string) =>
+  new Intl.DateTimeFormat(locale, {
+    timeZone: 'Africa/Cairo',
+    hour12: false,
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  });
+
+function fmtSecs(secs: number, unitH: string, unitM: string): string {
+  if (secs <= 0) return `0${unitM}`;
   const h = Math.floor(secs / 3600);
   const m = Math.floor((secs % 3600) / 60);
-  return h > 0 ? `${h}h ${m}m` : `${m}m`;
+  return h > 0 ? `${h}${unitH} ${m}${unitM}` : `${m}${unitM}`;
 }
 
 /** The 60fps half: cursor readout + scrubber. Isolated so playback re-renders
  *  only this subtree. */
-const fullFmt = new Intl.DateTimeFormat('en-GB', {
-  timeZone: 'Africa/Cairo',
-  hour12: false,
-  weekday: 'short',
-  day: 'numeric',
-  month: 'short',
-  year: 'numeric',
-  hour: '2-digit',
-  minute: '2-digit',
-  second: '2-digit',
-});
+const makeFullFmt = (locale: string) =>
+  new Intl.DateTimeFormat(locale, {
+    timeZone: 'Africa/Cairo',
+    hour12: false,
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  });
 
 /** The leg whose [depart, arrive] holds `ms`, if any. */
 export function legAt(legs: LegSegment[], ms: number): LegSegment | null {
@@ -102,7 +107,10 @@ function ScrubRow({
   legs: LegSegment[];
   onScrub: (ms: number) => void;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const locale = localeOf(i18n.language);
+  const timeFmt = React.useMemo(() => makeTimeFmt(locale), [locale]);
+  const fullFmt = React.useMemo(() => makeFullFmt(locale), [locale]);
   const startMs = track.startMs;
   const endMs = track.endMs;
   const value = React.useSyncExternalStore(cursor.subscribe, cursor.get);
@@ -125,10 +133,11 @@ function ScrubRow({
         {fullFmt.format(new Date(value || startMs))}
         {current && currentColor && (
           <span
-            className="flex min-w-0 items-center gap-1.5 rounded-full border px-2 py-0.5 text-[10px] font-semibold"
+            className="flex min-w-0 items-center gap-1.5 rounded-full border px-2 py-0.5 text-[10.5px] font-medium"
             style={{ borderColor: `rgb(${currentColor.join(' ')} / .5)` }}
           >
             <span
+              aria-hidden="true"
               className="h-1.5 w-1.5 shrink-0 rounded-full"
               style={{ background: `rgb(${currentColor.join(' ')})` }}
             />
@@ -140,7 +149,7 @@ function ScrubRow({
       </span>
       <span
         className={cn(
-          'shrink-0 rounded-md px-1.5 py-0.5 font-mono text-[11px] font-bold tabular-nums',
+          'shrink-0 rounded-md px-1.5 py-0.5 font-mono text-[11px] font-semibold tabular-nums',
           speeding ? 'bg-destructive/10 text-destructive' : 'bg-muted text-foreground',
         )}
       >
@@ -183,7 +192,7 @@ function ScrubRow({
             return (
               <span
                 key={i}
-                className="absolute top-0 h-2 w-[3px] rounded-sm bg-amber-500/80"
+                className="absolute top-0 h-2 w-[3px] rounded-sm bg-warning/80"
                 style={{ insetInlineStart: `${p}%` }}
               />
             );
@@ -196,8 +205,9 @@ function ScrubRow({
           step={1000}
           value={value || startMs}
           onChange={(e) => onScrub(Number(e.target.value))}
-          aria-label="scrub"
-          className="relative z-10 h-2 w-full cursor-pointer appearance-none rounded-full bg-muted accent-primary"
+          aria-label={t('tracking.scrub', 'Playback position')}
+          dir="ltr"
+          className="relative z-10 h-2 w-full cursor-pointer appearance-none rounded-full bg-muted accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ring-offset-2"
           style={{
             background: `linear-gradient(to right, hsl(var(--primary)) ${pct}%, hsl(var(--muted)) ${pct}%)`,
           }}
@@ -281,9 +291,9 @@ export function TimeDeck({
   const locked = lockedStops !== null;
 
   return (
-    <div className="pointer-events-auto w-full rounded-t-2xl border border-b-0 bg-card/95 shadow-2xl backdrop-blur md:mx-auto md:max-w-3xl">
+    <div className="pointer-events-auto w-full rounded-t-lg border border-b-0 bg-card/95 shadow-lg backdrop-blur md:mx-auto md:max-w-3xl">
       {/* header strip: day progress + stats + exit */}
-      <div className="flex items-center gap-3 border-b px-3 py-1.5">
+      <div className="flex items-center gap-3 border-b bg-muted/60 px-3 py-2">
         {history.totalCount > 1 && (
           <div className="flex min-w-0 flex-1 items-center gap-2">
             <div className="flex min-w-0 flex-1 gap-0.5">
@@ -294,7 +304,7 @@ export function TimeDeck({
                   className={cn(
                     'h-1 min-w-1 flex-1 rounded-sm',
                     d.status === 'loaded' && 'bg-success',
-                    d.status === 'pending' && 'animate-pulse bg-muted',
+                    d.status === 'pending' && 'animate-pulse bg-muted motion-reduce:animate-none',
                     d.status === 'error' && 'bg-destructive',
                   )}
                 />
@@ -310,8 +320,8 @@ export function TimeDeck({
             <span className="font-semibold text-foreground tabular-nums">
               {summary.mileageKm.toFixed(1)} {t('tracking.km', 'km')}
             </span>
-            <span className="tabular-nums">{fmtSecs(summary.activeSecs)} ▲</span>
-            <span className="tabular-nums">{fmtSecs(summary.idleSecs)} ●</span>
+            <span className="tabular-nums">{fmtSecs(summary.activeSecs, t('tracking.unit.h', 'h'), t('tracking.unit.m', 'm'))} ▲</span>
+            <span className="tabular-nums">{fmtSecs(summary.idleSecs, t('tracking.unit.h', 'h'), t('tracking.unit.m', 'm'))} ●</span>
             <span className="tabular-nums">
               {summary.stopCount} {t('tracking.stops', 'stops')}
             </span>
@@ -319,7 +329,7 @@ export function TimeDeck({
         )}
         {beyondRange && (
           <span
-            className="shrink-0 rounded-full border border-amber-500/50 bg-amber-500/10 px-2 py-0.5 font-mono text-[9px] font-semibold text-amber-600"
+            className="shrink-0 rounded-full border border-warning/40 bg-warning/10 px-2.5 py-1 text-[11px] font-medium text-warning"
             title={t('tracking.beyondRangeHint', 'This leg extends past the loaded range — its missing days were fetched for the locked view.')}
           >
             ‹ {t('tracking.beyondRange', 'beyond range')} ›
@@ -329,13 +339,13 @@ export function TimeDeck({
           type="button"
           onClick={onExit}
           aria-label={t('common.exit', 'Exit')}
-          className="ms-auto grid h-6 w-6 shrink-0 place-items-center rounded-md text-muted-foreground hover:bg-destructive/15 hover:text-destructive"
+          className="ms-auto grid h-6 w-6 shrink-0 place-items-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ring-offset-1"
         >
           <X className="h-3.5 w-3.5" />
         </button>
       </div>
 
-      <div className="space-y-2 px-3 py-2.5">
+      <div className="space-y-2 p-3">
         {track ? (
           <>
             <ScrubRow
@@ -350,7 +360,7 @@ export function TimeDeck({
                 type="button"
                 onClick={onRestart}
                 aria-label={t('tracking.restart', 'Restart')}
-                className="grid h-8 w-8 place-items-center rounded-lg border bg-background hover:bg-muted"
+                className="grid h-8 w-8 place-items-center rounded-md border bg-background shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ring-offset-1"
               >
                 <RotateCcw className="h-3.5 w-3.5" />
               </button>
@@ -360,7 +370,7 @@ export function TimeDeck({
                     type="button"
                     onClick={() => onJumpLeg(-1)}
                     aria-label={t('tracking.prevLeg', 'Previous leg')}
-                    className="grid h-8 w-8 place-items-center rounded-lg border bg-background hover:bg-muted"
+                    className="grid h-8 w-8 place-items-center rounded-md border bg-background shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ring-offset-1"
                   >
                     <SkipBack className="h-3.5 w-3.5 rtl:rotate-180" />
                   </button>
@@ -368,7 +378,7 @@ export function TimeDeck({
                     type="button"
                     onClick={() => onJumpLeg(1)}
                     aria-label={t('tracking.nextLeg', 'Next leg')}
-                    className="grid h-8 w-8 place-items-center rounded-lg border bg-background hover:bg-muted"
+                    className="grid h-8 w-8 place-items-center rounded-md border bg-background shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ring-offset-1"
                   >
                     <SkipForward className="h-3.5 w-3.5 rtl:rotate-180" />
                   </button>
@@ -378,7 +388,7 @@ export function TimeDeck({
                 type="button"
                 onClick={onPlayPause}
                 aria-label={playing ? t('tracking.pause', 'Pause') : t('tracking.play', 'Play')}
-                className="grid h-8 w-12 place-items-center rounded-lg bg-primary text-primary-foreground shadow hover:bg-primary/90"
+                className="grid h-8 w-12 place-items-center rounded-md bg-primary text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ring-offset-1"
               >
                 {playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
               </button>
@@ -390,10 +400,10 @@ export function TimeDeck({
                     aria-pressed={speed === s}
                     onClick={() => onSpeed(s)}
                     className={cn(
-                      'rounded-md border px-1.5 py-1 font-mono text-[10px] font-semibold tabular-nums',
+                      'rounded-md border px-1.5 py-1 font-mono text-[10px] font-semibold tabular-nums transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ring-offset-1',
                       speed === s
-                        ? 'border-primary/50 bg-primary/10 text-primary'
-                        : 'bg-background text-muted-foreground hover:bg-muted',
+                        ? 'border-primary bg-primary/10 text-primary'
+                        : 'bg-background text-muted-foreground hover:bg-accent hover:text-accent-foreground',
                     )}
                   >
                     {s}×
@@ -407,11 +417,12 @@ export function TimeDeck({
                   aria-pressed={follow}
                   onClick={onToggleFollow}
                   title={t('tracking.follow', 'Follow the truck')}
+                  aria-label={t('tracking.follow', 'Follow the truck')}
                   className={cn(
-                    'grid h-8 w-8 place-items-center rounded-lg border',
+                    'grid h-8 w-8 place-items-center rounded-md border shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ring-offset-1',
                     follow
-                      ? 'border-primary/50 bg-primary/10 text-primary'
-                      : 'bg-background text-muted-foreground hover:bg-muted',
+                      ? 'border-primary bg-primary/10 text-primary'
+                      : 'bg-background text-muted-foreground hover:bg-accent hover:text-accent-foreground',
                   )}
                 >
                   <LocateFixed className="h-3.5 w-3.5" />
@@ -421,11 +432,12 @@ export function TimeDeck({
                   aria-pressed={showStops}
                   onClick={onToggleStops}
                   title={t('tracking.stops', 'Stops')}
+                  aria-label={t('tracking.stops', 'Stops')}
                   className={cn(
-                    'grid h-8 w-8 place-items-center rounded-lg border',
+                    'grid h-8 w-8 place-items-center rounded-md border shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ring-offset-1',
                     showStops
-                      ? 'border-amber-500/50 bg-amber-500/10 text-amber-600'
-                      : 'bg-background text-muted-foreground hover:bg-muted',
+                      ? 'border-primary bg-primary/10 text-primary'
+                      : 'bg-background text-muted-foreground hover:bg-accent hover:text-accent-foreground',
                   )}
                 >
                   <MapPinned className="h-3.5 w-3.5" />
@@ -435,11 +447,12 @@ export function TimeDeck({
                   aria-pressed={showIgnitions}
                   onClick={onToggleIgnitions}
                   title={t('tracking.ignitions', 'Ignitions')}
+                  aria-label={t('tracking.ignitions', 'Ignitions')}
                   className={cn(
-                    'grid h-8 w-8 place-items-center rounded-lg border',
+                    'grid h-8 w-8 place-items-center rounded-md border shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ring-offset-1',
                     showIgnitions
-                      ? 'border-muted-foreground/40 bg-muted text-foreground'
-                      : 'bg-background text-muted-foreground hover:bg-muted',
+                      ? 'border-primary bg-primary/10 text-primary'
+                      : 'bg-background text-muted-foreground hover:bg-accent hover:text-accent-foreground',
                   )}
                 >
                   <Flame className="h-3.5 w-3.5" />
@@ -449,11 +462,12 @@ export function TimeDeck({
                   aria-pressed={showPins}
                   onClick={onTogglePins}
                   title={t('tracking.places', 'Places')}
+                  aria-label={t('tracking.places', 'Places')}
                   className={cn(
-                    'grid h-8 w-8 place-items-center rounded-lg border',
+                    'grid h-8 w-8 place-items-center rounded-md border shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ring-offset-1',
                     showPins
-                      ? 'border-primary/50 bg-primary/10 text-primary'
-                      : 'bg-background text-muted-foreground hover:bg-muted',
+                      ? 'border-primary bg-primary/10 text-primary'
+                      : 'bg-background text-muted-foreground hover:bg-accent hover:text-accent-foreground',
                   )}
                 >
                   <MapPin className="h-3.5 w-3.5" />
@@ -463,11 +477,12 @@ export function TimeDeck({
                   aria-pressed={showLegs}
                   onClick={onToggleLegs}
                   title={t('tracking.legs', 'Legs')}
+                  aria-label={t('tracking.legs', 'Legs')}
                   className={cn(
-                    'grid h-8 w-8 place-items-center rounded-lg border',
+                    'grid h-8 w-8 place-items-center rounded-md border shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ring-offset-1',
                     showLegs
-                      ? 'border-violet-500/50 bg-violet-500/10 text-violet-600'
-                      : 'bg-background text-muted-foreground hover:bg-muted',
+                      ? 'border-primary bg-primary/10 text-primary'
+                      : 'bg-background text-muted-foreground hover:bg-accent hover:text-accent-foreground',
                   )}
                 >
                   <Route className="h-3.5 w-3.5" />
@@ -490,15 +505,16 @@ export function TimeDeck({
             )}
           </>
         ) : history.isLoading ? (
-          <p className="py-1 text-center text-xs text-muted-foreground">
-            {t('tracking.loadingDay', 'Loading the first day…')}
-          </p>
+          <div className="space-y-2" aria-busy="true" aria-label={t('tracking.loadingDay', 'Loading the first day…')}>
+            <Skeleton className="h-3.5 w-2/3 rounded-sm" />
+            <Skeleton className="h-8 w-full rounded-md" />
+          </div>
         ) : history.isError ? (
-          <p className="py-1 text-center text-xs text-destructive">
+          <p className="py-6 text-center text-xs text-muted-foreground">
             {t('tracking.historyFailed', 'History failed to load')}
           </p>
         ) : (
-          <p className="py-1 text-center text-xs text-muted-foreground">
+          <p className="py-6 text-center text-xs text-muted-foreground">
             {t('tracking.noPoints', 'No GPS points in this range.')}
           </p>
         )}
@@ -526,7 +542,9 @@ function LegRail({
   onActivateLeg: (id: string) => void;
   onActivateTrip: (tripId: number) => void;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const locale = localeOf(i18n.language);
+  const timeFmt = React.useMemo(() => makeTimeFmt(locale), [locale]);
   const [expanded, setExpanded] = React.useState<Set<number>>(new Set());
 
   const trips = React.useMemo(() => {
@@ -557,10 +575,18 @@ function LegRail({
             <div
               className={cn(
                 'flex shrink-0 items-center overflow-hidden rounded-lg border transition-opacity',
-                tripActive ? 'border-transparent text-white' : 'bg-background',
+                tripActive ? '' : 'bg-background',
                 anyLock && !tripActive && !open && 'opacity-40',
               )}
-              style={tripActive ? { background: `rgb(${r} ${g} ${b})` } : undefined}
+              style={
+                tripActive
+                  ? {
+                      background: `rgb(${r} ${g} ${b} / .12)`,
+                      borderColor: `rgb(${r} ${g} ${b} / .5)`,
+                      color: `rgb(${r} ${g} ${b})`,
+                    }
+                  : undefined
+              }
             >
               <button
                 type="button"
@@ -573,27 +599,27 @@ function LegRail({
                     return next;
                   })
                 }
-                className="flex flex-col items-start px-2 py-1 text-start"
+                className="flex flex-col items-start px-2 py-1 text-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ring-offset-1"
               >
-                <span className="flex items-center gap-1.5 font-mono text-[10px] font-bold">
+                <span className="flex items-center gap-1.5 font-mono text-[10px] font-semibold">
                   <span
+                    aria-hidden="true"
                     className="h-1.5 w-1.5 rounded-full"
-                    style={{ background: tripActive ? '#fff' : `rgb(${r} ${g} ${b})` }}
+                    style={{ background: `rgb(${r} ${g} ${b})` }}
                   />
                   {cut && '‹'}#{tripId}
-                  <span className={tripActive ? 'text-white/80' : 'text-muted-foreground'}>
+                  <span className="text-muted-foreground">
                     · {members.length} {t('tracking.legsShort', 'legs')}
                   </span>
                   {cut && '›'}
                 </span>
                 <span
                   className={cn(
-                    'ps-3 font-mono text-[9px] tabular-nums',
-                    tripActive ? 'text-white/80' : 'text-muted-foreground',
+                    'ps-3 font-mono text-[9px] tabular-nums text-muted-foreground',
                   )}
                 >
                   {first.fromName ?? '—'} → {last.toName ?? '—'}
-                  {km > 0 && ` · ${km.toFixed(0)} km`}
+                  {km > 0 && ` · ${km.toFixed(0)} ${t('tracking.km', 'km')}`}
                 </span>
               </button>
               <button
@@ -601,10 +627,11 @@ function LegRail({
                 aria-pressed={tripActive}
                 onClick={() => onActivateTrip(tripId)}
                 title={t('tracking.lockTrip', 'Lock playback to this trip')}
+                aria-label={t('tracking.lockTrip', 'Lock playback to this trip')}
                 className={cn(
-                  'grid h-full w-7 place-items-center border-s',
+                  'grid h-full w-7 place-items-center border-s focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ring-inset',
                   tripActive
-                    ? 'border-white/25 text-white'
+                    ? 'border-border/60'
                     : 'text-muted-foreground hover:bg-muted',
                 )}
               >
@@ -624,16 +651,25 @@ function LegRail({
                     onClick={() => onActivateLeg(id)}
                     title={`${seg.leg.fromName ?? '—'} → ${seg.leg.toName ?? '—'}`}
                     className={cn(
-                      'flex shrink-0 flex-col items-start gap-0 rounded-lg border px-2 py-1 text-start transition-opacity',
-                      active ? 'border-transparent text-white' : 'bg-background hover:bg-muted',
+                      'flex shrink-0 flex-col items-start gap-0 rounded-lg border px-2 py-1 text-start transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ring-offset-1',
+                      active ? '' : 'bg-background hover:bg-muted',
                       anyLock && !active && 'opacity-40 hover:opacity-100',
                     )}
-                    style={active ? { background: `rgb(${lr} ${lg} ${lb})` } : undefined}
+                    style={
+                      active
+                        ? {
+                            background: `rgb(${lr} ${lg} ${lb} / .12)`,
+                            borderColor: `rgb(${lr} ${lg} ${lb} / .5)`,
+                            color: `rgb(${lr} ${lg} ${lb})`,
+                          }
+                        : undefined
+                    }
                   >
-                    <span className="flex items-center gap-1.5 font-mono text-[10px] font-bold">
+                    <span className="flex items-center gap-1.5 font-mono text-[10px] font-semibold">
                       <span
+                        aria-hidden="true"
                         className="h-1.5 w-1.5 rounded-full"
-                        style={{ background: active ? '#fff' : `rgb(${lr} ${lg} ${lb})` }}
+                        style={{ background: `rgb(${lr} ${lg} ${lb})` }}
                       />
                       {seg.cutStart && '‹'}
                       <span className={active ? '' : 'text-foreground'}>
@@ -643,13 +679,12 @@ function LegRail({
                     </span>
                     <span
                       className={cn(
-                        'ps-3 font-mono text-[9px] tabular-nums',
-                        active ? 'text-white/80' : 'text-muted-foreground',
+                        'ps-3 font-mono text-[9px] tabular-nums text-muted-foreground',
                       )}
                     >
                       {timeFmt.format(seg.leg.depart).slice(0, 5)}–
                       {timeFmt.format(seg.leg.arrive).slice(0, 5)}
-                      {seg.leg.actualKm != null && ` · ${seg.leg.actualKm.toFixed(0)} km`}
+                      {seg.leg.actualKm != null && ` · ${seg.leg.actualKm.toFixed(0)} ${t('tracking.km', 'km')}`}
                     </span>
                   </button>
                 );

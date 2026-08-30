@@ -34,7 +34,7 @@ export default function FuelEventNewPage() {
       icon={<Fuel className="h-5 w-5" />}
       actions={
         <Button variant="outline" size="sm" onClick={() => navigate(-1)}>
-          <ArrowLeft className="h-4 w-4 rtl:rotate-180" />
+          <ArrowLeft className="rtl:rotate-180" />
           {t('common.back')}
         </Button>
       }

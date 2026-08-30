@@ -1,0 +1,30 @@
+# shard-004  loc=2267  files=28
+# groups: shared/ui, (src root), app, app/providers
+205	src/shared/ui/map-view.tsx
+127	src/shared/ui/month-year-selector.tsx
+262	src/shared/ui/multi-select.tsx
+36	src/shared/ui/native-select.tsx
+42	src/shared/ui/page-shell.tsx
+31	src/shared/ui/popover.tsx
+22	src/shared/ui/progress.tsx
+106	src/shared/ui/ranked-list.tsx
+39	src/shared/ui/scroll-area.tsx
+135	src/shared/ui/search-input.tsx
+227	src/shared/ui/searchable-select.tsx
+147	src/shared/ui/select.tsx
+23	src/shared/ui/separator.tsx
+77	src/shared/ui/sheet.tsx
+7	src/shared/ui/skeleton.tsx
+106	src/shared/ui/stat-card.tsx
+26	src/shared/ui/switch.tsx
+49	src/shared/ui/tabs.tsx
+20	src/shared/ui/textarea.tsx
+102	src/shared/ui/toaster.tsx
+26	src/shared/ui/tooltip.tsx
+58	src/shared/ui/truncate.tsx
+30	src/shared/ui/z-index.ts
+16	src/vite-env.d.ts
+44	src/app/console-silencer.ts
+225	src/app/index.css
+30	src/app/main.tsx
+49	src/app/providers/index.tsx

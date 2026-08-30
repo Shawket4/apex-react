@@ -43,7 +43,7 @@ export default function DriversPage() {
       </PageShell>
 
       <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto overscroll-contain">
           <DialogHeader>
             <DialogTitle>{t('drivers.addDriver')}</DialogTitle>
           </DialogHeader>

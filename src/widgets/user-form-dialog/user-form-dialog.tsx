@@ -112,14 +112,18 @@ export function UserFormDialog({
                 <FormItem>
                   <FormLabel>{t('users.fields.name')} *</FormLabel>
                   <FormControl>
-                    <Input {...field} placeholder="John Doe" />
+                    <Input
+                      {...field}
+                      autoComplete="name"
+                      placeholder={t('users.placeholders.name')}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            <div className="grid grid-cols-1 gap-x-4 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <FormField
                 control={form.control}
                 name="email"
@@ -127,7 +131,13 @@ export function UserFormDialog({
                   <FormItem>
                     <FormLabel>{t('users.fields.email')} *</FormLabel>
                     <FormControl>
-                      <Input {...field} type="email" placeholder="john@example.com" />
+                      <Input
+                        {...field}
+                        type="email"
+                        autoComplete="email"
+                        spellCheck={false}
+                        placeholder={t('users.placeholders.email')}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -141,7 +151,12 @@ export function UserFormDialog({
                   <FormItem>
                     <FormLabel>{t('users.fields.phone')}</FormLabel>
                     <FormControl>
-                      <Input {...field} placeholder="+201..." />
+                      <Input
+                        {...field}
+                        type="tel"
+                        autoComplete="tel"
+                        placeholder={t('users.placeholders.phone')}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -197,7 +212,8 @@ export function UserFormDialog({
                         type="button"
                         variant="ghost"
                         size="icon"
-                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                        className="absolute end-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                        aria-label={t(showPassword ? 'auth.hidePassword' : 'auth.showPassword')}
                         onClick={() => setShowPassword(!showPassword)}
                       >
                         {showPassword ? (
@@ -218,7 +234,7 @@ export function UserFormDialog({
                 {t('common.cancel')}
               </Button>
               <Button type="submit" disabled={loading}>
-                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {loading && <Loader2 className="h-4 w-4 animate-spin" />}
                 {isEdit ? t('common.save') : t('common.create')}
               </Button>
             </DialogFooter>

@@ -106,8 +106,8 @@ function QueueRow({ match, onOpen }: { match: TripMatch; onOpen: (m: TripMatch) 
         }
       }}
       className={cn(
-        'group flex cursor-pointer items-center gap-3 px-4 py-3.5 transition-colors hover:bg-muted/40',
-        reviewed && 'opacity-55 hover:opacity-90',
+        'group flex cursor-pointer items-center gap-3 px-3 py-2.5 md:px-4 transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring',
+        reviewed && 'opacity-70',
       )}
     >
       <div className="min-w-0 flex-1 space-y-1">
@@ -116,11 +116,11 @@ function QueueRow({ match, onOpen }: { match: TripMatch; onOpen: (m: TripMatch) 
           <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
             {formatCairoDay(match.day_local, i18n.language)}
           </span>
-          <span className="min-w-0 truncate text-sm font-medium" dir="auto" title={place}>
+          <span className="min-w-0 truncate text-[13px] font-medium leading-snug" dir="auto" title={place}>
             {place}
           </span>
           {match.car_no_plate && (
-            <span className="shrink-0 text-xs text-muted-foreground" dir="ltr">
+            <span className="shrink-0 font-mono text-xs text-foreground" dir="ltr">
               {match.car_no_plate}
             </span>
           )}
@@ -141,11 +141,11 @@ function QueueRow({ match, onOpen }: { match: TripMatch; onOpen: (m: TripMatch) 
           {match.deliveries_expected > 0 && (
             <span
               className={cn(
-                'inline-flex shrink-0 items-center gap-1 tabular-nums',
+                'inline-flex shrink-0 items-center gap-1 font-mono tabular-nums',
                 missedDeliveries && 'font-medium text-warning',
               )}
             >
-              <Package className="h-3 w-3" />
+              <Package className="h-3 w-3" aria-hidden="true" />
               <span dir="ltr">
                 {match.deliveries_visited}/{match.deliveries_expected}
               </span>
@@ -162,7 +162,7 @@ function QueueRow({ match, onOpen }: { match: TripMatch; onOpen: (m: TripMatch) 
             className="hidden items-center gap-1 text-xs text-success sm:flex"
             title={match.review_note ?? undefined}
           >
-            <CheckCircle2 className="h-3.5 w-3.5" />
+            <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
             {t('tripAudit.queue.reviewedOn', {
               when: formatCairoDay(match.reviewed_at as string, i18n.language),
               defaultValue: 'Reviewed {{when}}',
@@ -192,7 +192,7 @@ function QueueRow({ match, onOpen }: { match: TripMatch; onOpen: (m: TripMatch) 
           {reviewed
             ? t('tripAudit.queue.view', 'View')
             : t('tripAudit.queue.review', 'Review')}
-          <ChevronRight className="h-3.5 w-3.5 rtl:rotate-180" />
+          <ChevronRight className="rtl:rotate-180" aria-hidden="true" />
         </Button>
       </div>
     </div>
@@ -221,9 +221,9 @@ export function TripAuditQueue({ matches, loading, onOpen, empty }: TripAuditQue
 
   if (loading && matches.length === 0) {
     return (
-      <div className="space-y-2">
+      <div className="space-y-2 rounded-lg border bg-card p-3">
         {Array.from({ length: 6 }).map((_, i) => (
-          <Skeleton key={i} className="h-[60px] w-full" />
+          <Skeleton key={i} className="h-10 w-full rounded-none" />
         ))}
       </div>
     );
@@ -248,7 +248,7 @@ export function TripAuditQueue({ matches, loading, onOpen, empty }: TripAuditQue
   return (
     <div
       className={cn(
-        'divide-y divide-border/60 overflow-hidden rounded-lg border bg-card',
+        'divide-y overflow-hidden rounded-lg border bg-card',
         loading && 'opacity-60',
       )}
     >

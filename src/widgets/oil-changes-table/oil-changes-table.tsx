@@ -63,7 +63,7 @@ export function OilChangesTable({
         header: t('oilChanges.fields.carPlate'),
         cell: ({ row }) => (
           <div className="flex items-center gap-2 font-medium">
-            <CarIcon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+            <CarIcon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
             {row.original.car_no_plate}
           </div>
         ),
@@ -73,8 +73,8 @@ export function OilChangesTable({
         header: t('oilChanges.fields.date'),
         cell: ({ row }) => (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Calendar className="h-3.5 w-3.5 shrink-0" />
-            {format(row.original.date, 'dd MMM yyyy')}
+            <Calendar className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+            {format(row.original.date, 'd MMM yyyy')}
           </div>
         ),
       },
@@ -82,14 +82,14 @@ export function OilChangesTable({
         accessorKey: 'super_visor',
         header: t('oilChanges.fields.supervisor'),
         cell: ({ row }) => (
-          <span className="text-sm">{row.original.super_visor || '—'}</span>
+          <span className="text-sm">{row.original.super_visor || <span className="opacity-40">—</span>}</span>
         ),
       },
       {
         accessorKey: 'driver_name',
         header: t('oilChanges.fields.driver'),
         cell: ({ row }) => (
-          <span className="text-sm">{row.original.driver_name || '—'}</span>
+          <span className="text-sm">{row.original.driver_name || <span className="opacity-40">—</span>}</span>
         ),
       },
       {
@@ -116,7 +116,7 @@ export function OilChangesTable({
         accessorKey: 'cost',
         header: t('oilChanges.fields.cost'),
         cell: ({ row }) => (
-          <span className="font-semibold tabular-nums">
+          <span className="font-mono text-sm font-semibold tabular-nums text-money">
             {formatCurrency(row.original.cost)}
           </span>
         ),
@@ -128,11 +128,11 @@ export function OilChangesTable({
         cell: ({ row }) =>
           row.original.lastUpdated ? (
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Clock className="h-3 w-3 shrink-0" />
+              <Clock className="h-3 w-3 shrink-0" aria-hidden="true" />
               {formatDateTime(row.original.lastUpdated)}
             </div>
           ) : (
-            <span className="text-xs text-muted-foreground">—</span>
+            <span className="text-xs text-muted-foreground opacity-40">—</span>
           ),
       },
       {
@@ -152,8 +152,11 @@ export function OilChangesTable({
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8"
-                  onClick={() => onViewHistory?.(row.original.car_no_plate)}
+                  className="h-7 w-7"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onViewHistory?.(row.original.car_no_plate);
+                  }}
                   aria-label={t('oilChanges.actions.viewHistory')}
                 >
                   <History className="h-4 w-4" />
@@ -167,8 +170,11 @@ export function OilChangesTable({
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8"
-                  onClick={() => navigate(`/oil-changes/${row.original.ID}/edit`)}
+                  className="h-7 w-7"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/oil-changes/${row.original.ID}/edit`);
+                  }}
                   {...intentProps(() => {
                     warmOilForm(queryClient, 'oil-change-edit');
                     prefetchOilChange(queryClient, row.original.ID);
@@ -186,8 +192,11 @@ export function OilChangesTable({
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className={cn('h-8 w-8 text-destructive hover:text-destructive')}
-                  onClick={() => onDelete?.(row.original)}
+                  className={cn('h-7 w-7 text-destructive hover:text-destructive')}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete?.(row.original);
+                  }}
                   aria-label={t('common.delete')}
                 >
                   <Trash2 className="h-4 w-4" />
@@ -222,7 +231,7 @@ export function OilChangesTable({
             : 0;
         return [
           // car_no_plate
-          <span className="text-xs uppercase tracking-wider text-muted-foreground">
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
             {t('oilChanges.fields.totals')}
           </span>,
           // date
@@ -236,12 +245,12 @@ export function OilChangesTable({
           // kmRemaining (avg)
           <span className="text-xs text-muted-foreground">
             {t('oilChanges.fields.avgRemaining')}:{' '}
-            <span className="font-semibold text-foreground">
+            <span className="font-mono font-semibold tabular-nums text-foreground">
               {formatNumber(avgKmRemaining, 0)} km
             </span>
           </span>,
           // cost (sum)
-          <span className="font-semibold tabular-nums">
+          <span className="font-mono font-semibold tabular-nums text-money">
             {formatCurrency(totalCost)}
           </span>,
           // lastUpdated

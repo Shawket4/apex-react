@@ -16,12 +16,12 @@ import {
   Users,
   Car as CarIcon,
   Link2,
+  AlertTriangle,
 } from 'lucide-react';
 import { PageShell } from '@/shared/ui/page-shell';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { StatCard } from '@/shared/ui/stat-card';
-import { EmptyState } from '@/shared/ui/empty-state';
 import { useQueryClient } from '@tanstack/react-query';
 import { useFuelEvents } from '@/entities/fuel-event/queries';
 import { useDebounce } from '@/shared/hooks/use-debounce';
@@ -36,7 +36,6 @@ import {
 } from '@/shared/lib/format';
 import { analyseEvents } from '@/shared/lib/fuel';
 import { usePermissions } from '@/shared/hooks/use-permissions';
-import { cn } from '@/shared/lib/cn';
 import {
   FuelEventsTable,
   type FuelEventGrouping,
@@ -275,12 +274,12 @@ export default function FuelEventsPage() {
             onClick={handleExport}
             disabled={exporting || sorted.length === 0}
           >
-            <Download className="h-4 w-4" />
+            <Download />
             <span className="hidden sm:inline">{t('common.export')}</span>
           </Button>
           {canEditFuel && (
             <Button onClick={() => navigate('/fuel-events/new')} size="sm" {...intentProps(() => warmFuelForm(queryClient))}>
-              <Plus className="h-4 w-4" />
+              <Plus />
               <span className="hidden sm:inline">{t('fuelEvents.addEvent')}</span>
             </Button>
           )}
@@ -295,13 +294,18 @@ export default function FuelEventsPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={t('fuelEvents.searchPlaceholder')}
-            className="ps-9"
+            type="search"
+            name="q"
+            aria-label={t('fuelEvents.searchPlaceholder')}
+            autoComplete="off"
+            spellCheck={false}
+            className="h-8 ps-9"
           />
         </div>
 
         <div
-          className="inline-flex h-9 items-center gap-0.5 rounded-md border bg-muted/40 p-0.5"
-          role="tablist"
+          className="flex items-center gap-1.5"
+          role="group"
           aria-label={t('fuelEvents.grouping.label')}
         >
           <GroupingButton
@@ -353,7 +357,7 @@ export default function FuelEventsPage() {
 
       {/* Stats */}
       {!isLoading && filtered.length > 0 && (
-<div className="grid grid-cols-2 gap-2.5 md:grid-cols-3 lg:grid-cols-5">
+<div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
   <StatCard
     label={t('fuelEvents.stats.totalFuel')}
     value={{
@@ -362,7 +366,7 @@ export default function FuelEventsPage() {
     }}
     subvalue={t('fuelEvents.stats.events', { count: stats.totalEvents })}
     icon={Droplet}
-    tone="primary"
+    tone="default"
   />
   <StatCard
     label={t('fuelEvents.stats.avgEfficiency')}
@@ -373,26 +377,26 @@ export default function FuelEventsPage() {
         : undefined
     }
     icon={Gauge}
-    tone="success"
+    tone="default"
   />
   <StatCard
     label={t('fuelEvents.stats.totalCost')}
     value={{
-      full: formatCurrency(stats.totalCost),
-      compact: formatCompactCurrency(stats.totalCost),
+      full: <span className="font-mono text-money">{formatCurrency(stats.totalCost)}</span>,
+      compact: <span className="font-mono text-money">{formatCompactCurrency(stats.totalCost)}</span>,
     }}
     icon={DollarSign}
-    tone="primary"
+    tone="default"
   />
   <StatCard
     label={t('fuelEvents.stats.costPerDay')}
     value={{
-      full: formatCurrency(stats.avgCostPerDay),
-      compact: formatCompactCurrency(stats.avgCostPerDay),
+      full: <span className="font-mono text-money">{formatCurrency(stats.avgCostPerDay)}</span>,
+      compact: <span className="font-mono text-money">{formatCompactCurrency(stats.avgCostPerDay)}</span>,
     }}
     subvalue={t('fuelEvents.stats.dayPeriod', { count: stats.days })}
     icon={TrendingUp}
-    tone="warning"
+    tone="default"
   />
   <StatCard
     label={t('fuelEvents.stats.fuelPerDay')}
@@ -414,41 +418,37 @@ export default function FuelEventsPage() {
 
       {/* Paired events explainer */}
       {stats.pairedCount > 0 && (
-        <div className="flex items-start gap-2 rounded-md border border-primary/20 bg-primary/5 p-2.5 text-xs text-muted-foreground">
-          <Link2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
+        <div className="flex items-start gap-2 rounded-lg border border-dashed border-border/60 bg-muted/40 px-3 py-2.5 text-[12.5px] text-muted-foreground">
+          <Link2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
           <span>{t('fuelEvents.efficiency.pairedExplainer')}</span>
         </div>
       )}
 
       {/* Table / empty state */}
       {isError ? (
-        <EmptyState
-          lottieSrc="/animations/warning.lottie"
-          lottieWidth={100}
-          lottieHeight={100}
-          title={t('errors.generic')}
-          action={
-            <Button onClick={() => void refetch()} variant="outline">
-              {t('common.retry')}
-            </Button>
-          }
-        />
+        <div className="flex items-start gap-2 rounded-lg border border-dashed border-warning/40 bg-warning/10 px-3 py-2.5 text-[12.5px]">
+          <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-warning" />
+          <span className="flex-1">{t('errors.generic')}</span>
+          <Button
+            onClick={() => void refetch()}
+            variant="outline"
+            size="sm"
+            className="h-7 gap-1.5 border-warning/40 px-2.5 text-xs text-warning hover:text-warning"
+          >
+            {t('common.retry')}
+          </Button>
+        </div>
       ) : !isLoading && searched.length === 0 ? (
-        <EmptyState
-          lottieSrc="/animations/no_results.json"
-          lottieWidth={100}
-          lottieHeight={100}
-          title={t('fuelEvents.noEvents')}
-          description={t('fuelEvents.noEventsDescription')}
-          action={
-            canEditFuel && (
-              <Button onClick={() => navigate('/fuel-events/new')} {...intentProps(() => warmFuelForm(queryClient))}>
-                <Plus className="h-4 w-4" />
-                {t('fuelEvents.addEvent')}
-              </Button>
-            )
-          }
-        />
+        <div className="rounded-lg border bg-card px-3 py-6 text-center text-xs text-muted-foreground">
+          <p>{t('fuelEvents.noEvents')}</p>
+          <p className="mt-0.5">{t('fuelEvents.noEventsDescription')}</p>
+          {canEditFuel && (
+            <Button size="sm" className="mt-3 h-7 text-xs" onClick={() => navigate('/fuel-events/new')} {...intentProps(() => warmFuelForm(queryClient))}>
+              <Plus />
+              {t('fuelEvents.addEvent')}
+            </Button>
+          )}
+        </div>
       ) : (
         <FuelEventsTable
           events={sorted}
@@ -476,20 +476,16 @@ function GroupingButton({
   label: string;
 }) {
   return (
-    <button
+    <Button
       type="button"
-      role="tab"
-      aria-selected={active}
+      variant={active ? 'default' : 'outline'}
+      size="sm"
+      className="h-7 text-xs"
+      aria-pressed={active}
       onClick={onClick}
-      className={cn(
-        'inline-flex h-7 items-center gap-1.5 rounded px-2.5 text-xs font-medium transition-colors',
-        active
-          ? 'bg-background text-foreground shadow-sm'
-          : 'text-muted-foreground hover:text-foreground',
-      )}
     >
       {icon}
       <span className="hidden sm:inline">{label}</span>
-    </button>
+    </Button>
   );
 }

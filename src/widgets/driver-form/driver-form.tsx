@@ -64,12 +64,12 @@ export function DriverForm({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
         {/* Personal info */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <User className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+              <User className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
               {t('drivers.sections.personalInfo')}
             </CardTitle>
           </CardHeader>
@@ -83,6 +83,7 @@ export function DriverForm({
                   <FormControl>
                     <Input
                       placeholder={t('drivers.fields.namePlaceholder')}
+                      autoComplete="off"
                       {...field}
                     />
                   </FormControl>
@@ -102,6 +103,8 @@ export function DriverForm({
                   <FormControl>
                     <Input
                       type="tel"
+                      inputMode="tel"
+                      autoComplete="off"
                       placeholder={t('drivers.fields.phonePlaceholder')}
                       {...field}
                     />
@@ -116,8 +119,8 @@ export function DriverForm({
         {/* Licenses & certifications */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Calendar className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+              <Calendar className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
               {t('drivers.sections.licenses')}
             </CardTitle>
           </CardHeader>
@@ -208,9 +211,9 @@ export function DriverForm({
             disabled={submitting || (mode === 'edit' && !form.formState.isDirty)}
           >
             {submitting ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Loader2 className="animate-spin" />
             ) : (
-              <Save className="h-4 w-4" />
+              <Save />
             )}
             {mode === 'create' ? t('drivers.addDriver') : t('common.save')}
           </Button>

@@ -1,0 +1,15 @@
+# shard-005  loc=2082  files=13
+# groups: app/router, entities/auth, pages/auth, entities/car, widgets/car-form, pages/cars, widgets/cars-table, widgets/command-palette
+333	src/app/router/index.tsx
+26	src/app/router/protected-route.tsx
+11	src/entities/auth/api.ts
+59	src/entities/auth/queries.ts
+16	src/entities/auth/schemas.ts
+177	src/pages/auth/login.tsx
+49	src/entities/car/api.ts
+55	src/entities/car/queries.ts
+81	src/entities/car/schemas.ts
+329	src/widgets/car-form/car-form.tsx
+117	src/pages/cars/cars.tsx
+265	src/widgets/cars-table/cars-table.tsx
+564	src/widgets/command-palette/command-palette.tsx

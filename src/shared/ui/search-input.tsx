@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { Search, X } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Input } from '@/shared/ui/input';
 import { Button } from '@/shared/ui/button';
 import { cn } from '@/shared/lib/cn';
@@ -78,13 +79,15 @@ interface SearchInputProps {
 export function SearchInput({
   value,
   onChange,
-  placeholder = 'Search...',
+  placeholder,
   showClear = true,
   className,
   id,
   autoFocus = false,
   disabled = false,
 }: SearchInputProps) {
+  const { t } = useTranslation();
+  const resolvedPlaceholder = placeholder ?? t('common.searchPlaceholder');
   const inputRef = React.useRef<HTMLInputElement>(null);
 
   const handleClear = React.useCallback(() => {
@@ -113,11 +116,14 @@ export function SearchInput({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={handleKeyDown}
-        placeholder={placeholder}
+        placeholder={resolvedPlaceholder}
         disabled={disabled}
         autoFocus={autoFocus}
+        autoComplete="off"
+        name={id ?? 'search'}
+        inputMode="search"
         className={cn('ps-9', showClear && value && 'pe-9')}
-        aria-label={placeholder}
+        aria-label={resolvedPlaceholder}
       />
       {showClear && value && !disabled && (
         <Button
@@ -126,7 +132,7 @@ export function SearchInput({
           size="sm"
           onClick={handleClear}
           className="absolute end-1 top-1/2 h-7 w-7 -translate-y-1/2 p-0 text-muted-foreground hover:text-foreground"
-          aria-label="Clear search"
+          aria-label={t('common.clear')}
         >
           <X className="h-4 w-4" />
         </Button>

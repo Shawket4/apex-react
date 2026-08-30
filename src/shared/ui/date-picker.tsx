@@ -136,7 +136,7 @@ export function DatePicker({
           {weekdayNames.map((d) => (
             <div
               key={d}
-              className="py-1 text-center text-[10px] font-semibold text-muted-foreground"
+              className="py-1 text-center text-xs font-semibold text-muted-foreground"
             >
               {d}
             </div>
@@ -160,7 +160,7 @@ export function DatePicker({
                   disabled={disabledCell}
                   onClick={() => !disabledCell && handleSelect(d)}
                   className={cn(
-                    'flex h-8 w-8 items-center justify-center rounded-full text-xs font-medium transition-colors',
+                    'flex h-8 w-8 items-center justify-center rounded-full text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                     disabledCell && 'cursor-not-allowed text-muted-foreground/30',
                     !disabledCell && !isSelected && 'hover:bg-muted',
                     isToday && !isSelected && 'border border-primary text-primary',
@@ -181,11 +181,11 @@ export function DatePicker({
               onChange(toDateString(today));
               setOpen(false);
             }}
-            className="text-xs font-medium text-primary hover:underline"
+            className="rounded-sm text-xs font-medium text-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             {t('datePicker.today')}
           </button>
-          <Button variant="ghost" size="sm" onClick={() => setOpen(false)}>
+          <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setOpen(false)}>
             {t('common.cancel')}
           </Button>
         </div>

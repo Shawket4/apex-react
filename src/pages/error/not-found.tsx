@@ -13,13 +13,13 @@ export default function NotFoundPage() {
       <div className="w-full max-w-md">
         <EmptyState
           lottieSrc="/animations/no_results.json"
-          lottieWidth={180}
-          lottieHeight={180}
+          lottieWidth={120}
+          lottieHeight={120}
           title={t('errors.pageNotFoundTitle')}
           description={t('errors.pageNotFoundDescription')}
           action={
-            <Button onClick={() => navigate('/')} size="lg" className="mt-4">
-              <Home className="h-4 w-4 mr-2" />
+            <Button onClick={() => navigate('/')}>
+              <Home aria-hidden="true" />
               {t('errors.goHome')}
             </Button>
           }

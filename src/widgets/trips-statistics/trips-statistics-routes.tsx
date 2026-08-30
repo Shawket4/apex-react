@@ -6,7 +6,6 @@ import { Button } from '@/shared/ui/button';
 import { DataTable } from '@/shared/ui/data-table';
 import { EmptyState } from '@/shared/ui/empty-state';
 import { formatNumber, formatCurrency } from '@/shared/lib/format';
-import { cn } from '@/shared/lib/cn';
 import type {
   CompanyStat,
   RouteStat,
@@ -70,8 +69,8 @@ export function TripsStatisticsRoutes({
     <div className="space-y-4">
       {/* Company chip selector */}
       <Card>
-        <CardContent className="p-4">
-          <h3 className="mb-3 text-sm font-semibold text-muted-foreground">
+        <CardContent className="p-3">
+          <h3 className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
             {t('trips.statistics.routes.selectCompany')}
           </h3>
           <div className="flex flex-wrap gap-2">
@@ -81,7 +80,8 @@ export function TripsStatisticsRoutes({
                 size="sm"
                 variant={c.company === selectedCompany ? 'default' : 'outline'}
                 onClick={() => setSelectedCompany(c.company)}
-                className={cn('h-9')}
+                aria-pressed={c.company === selectedCompany}
+                className="h-8"
               >
                 {c.company}
               </Button>
@@ -162,7 +162,7 @@ function RoutesTable({
         ),
         cell: ({ row }) => (
           <span className="block text-end tabular-nums">
-            {formatNumber(row.original.total_distance, 2)}
+            {formatNumber(row.original.total_distance, 0)}
           </span>
         ),
         meta: { align: 'end' },
@@ -179,7 +179,7 @@ function RoutesTable({
           <span className="block text-end">{t('trips.statistics.excel.cols.revenue')}</span>
         ),
         cell: ({ row }) => (
-          <span className="block text-end tabular-nums text-success">
+          <span className="block text-end font-mono tabular-nums text-money">
             {formatCurrency(row.original.total_revenue)}
           </span>
         ),
@@ -191,10 +191,12 @@ function RoutesTable({
           <span className="block text-end">{t('trips.statistics.excel.cols.carRent')}</span>
         ),
         cell: ({ row }) => (
-          <span className="block text-end tabular-nums text-muted-foreground">
-            {row.original.car_rental
-              ? formatCurrency(row.original.car_rental)
-              : '—'}
+          <span className="block text-end font-mono tabular-nums text-muted-foreground">
+            {row.original.car_rental ? (
+              formatCurrency(row.original.car_rental)
+            ) : (
+              <span className="opacity-40">—</span>
+            )}
           </span>
         ),
         meta: { align: 'end' },
@@ -205,8 +207,12 @@ function RoutesTable({
           <span className="block text-end">{t('trips.statistics.excel.cols.vat')}</span>
         ),
         cell: ({ row }) => (
-          <span className="block text-end tabular-nums text-muted-foreground">
-            {row.original.vat ? formatCurrency(row.original.vat) : '—'}
+          <span className="block text-end font-mono tabular-nums text-muted-foreground">
+            {row.original.vat ? (
+              formatCurrency(row.original.vat)
+            ) : (
+              <span className="opacity-40">—</span>
+            )}
           </span>
         ),
         meta: { align: 'end' },
@@ -217,7 +223,7 @@ function RoutesTable({
           <span className="block text-end">{t('trips.statistics.excel.cols.totalAmount')}</span>
         ),
         cell: ({ row }) => (
-          <span className="block text-end font-semibold tabular-nums">
+          <span className="block text-end font-mono font-semibold tabular-nums text-money">
             {formatCurrency(
               row.original.total_with_vat || row.original.total_revenue,
             )}
@@ -233,7 +239,7 @@ function RoutesTable({
   const footer = React.useMemo(() => {
     if (!hasFinancialAccess) {
       return (rows: RouteStat[]) => [
-        <span className="font-bold">{t('trips.statistics.carTable.totals')}</span>,
+        <span className="font-semibold">{t('trips.statistics.carTable.totals')}</span>,
         formatNumber(
           rows.reduce((s, r) => s + (r.total_trips || 0), 0),
           0,
@@ -260,14 +266,14 @@ function RoutesTable({
       ),
       formatNumber(
         rows.reduce((s, r) => s + (r.total_distance || 0), 0),
-        2,
+        0,
       ),
-      <span className="text-success">
+      <span className="font-mono tabular-nums text-money">
         {formatCurrency(rows.reduce((s, r) => s + (r.total_revenue || 0), 0))}
       </span>,
       formatCurrency(rows.reduce((s, r) => s + (r.car_rental || 0), 0)),
       formatCurrency(rows.reduce((s, r) => s + (r.vat || 0), 0)),
-      <span className="font-bold">
+      <span className="font-mono font-semibold tabular-nums text-money">
         {formatCurrency(
           rows.reduce(
             (s, r) => s + (r.total_with_vat || r.total_revenue || 0),
@@ -279,18 +285,18 @@ function RoutesTable({
   }, [t, hasFinancialAccess]);
 
   return (
-    <Card>
-      <CardContent className="p-4 md:p-5">
-        <div className="mb-3">
-          <h3 className="text-base font-semibold">
-            {t('trips.statistics.routes.headingFor', {
-              company: company.company,
-            })}
-          </h3>
-          <p className="text-xs text-muted-foreground">
-            {t('trips.statistics.routes.subtitle', { count: routes.length })}
-          </p>
-        </div>
+    <Card className="overflow-hidden">
+      <div className="border-b bg-muted/60 px-3 py-2">
+        <h3 className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+          {t('trips.statistics.routes.headingFor', {
+            company: company.company,
+          })}
+        </h3>
+        <p className="text-xs font-medium normal-case tracking-normal text-muted-foreground">
+          {t('trips.statistics.routes.subtitle', { count: routes.length })}
+        </p>
+      </div>
+      <CardContent className="p-3">
         <DataTable
           columns={columns}
           data={routes}

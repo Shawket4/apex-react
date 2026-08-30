@@ -90,16 +90,16 @@ export default function AddDriverExpensePage() {
     <PageShell
       title={t('driverExpenses.addExpense')}
       description={driver?.name ?? t('common.loading')}
-      icon={<Receipt className="h-5 w-5" />}
+      icon={<Receipt className="h-5 w-5" aria-hidden="true" />}
       actions={
         <Button variant="ghost" size="sm" onClick={goBack}>
-          <ArrowLeft className="h-4 w-4" />
+          <ArrowLeft className="rtl:rotate-180" />
           <span className="hidden sm:inline">{t('common.back')}</span>
         </Button>
       }
     >
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="mx-auto max-w-2xl space-y-6">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="mx-auto max-w-2xl space-y-3">
           <div className="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2">
             {/* Amount */}
             <FormField
@@ -108,8 +108,8 @@ export default function AddDriverExpensePage() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>
-                    <DollarSign className="mr-1 inline h-3.5 w-3.5" />
-                    {t('driverExpenses.fields.amount')} *
+                    <DollarSign className="me-1 inline h-3.5 w-3.5" aria-hidden="true" />
+                    {t('driverExpenses.fields.amount')}{' '}<span className="text-destructive" aria-hidden="true">*</span>
                   </FormLabel>
                   <FormControl>
                     <Input
@@ -117,6 +117,8 @@ export default function AddDriverExpensePage() {
                       step="any"
                       min="0"
                       placeholder="0.00"
+                      inputMode="decimal"
+                      autoComplete="off"
                       {...field}
                       onChange={(e) => field.onChange(e.target.valueAsNumber || '')}
                     />
@@ -133,8 +135,8 @@ export default function AddDriverExpensePage() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>
-                    <Calendar className="mr-1 inline h-3.5 w-3.5" />
-                    {t('driverExpenses.fields.date')} *
+                    <Calendar className="me-1 inline h-3.5 w-3.5" aria-hidden="true" />
+                    {t('driverExpenses.fields.date')}{' '}<span className="text-destructive" aria-hidden="true">*</span>
                   </FormLabel>
                   <FormControl>
                     <DatePicker
@@ -155,7 +157,7 @@ export default function AddDriverExpensePage() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>
-                    <Tag className="mr-1 inline h-3.5 w-3.5" />
+                    <Tag className="me-1 inline h-3.5 w-3.5" aria-hidden="true" />
                     {t('driverExpenses.fields.category')}
                   </FormLabel>
                   <Select value={field.value} onValueChange={field.onChange}>
@@ -167,7 +169,7 @@ export default function AddDriverExpensePage() {
                     <SelectContent>
                       {EXPENSE_CATEGORIES.map((cat) => (
                         <SelectItem key={cat} value={cat}>
-                          {cat}
+                          {t(`driverExpenses.categories.${cat}`, { defaultValue: cat })}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -184,7 +186,7 @@ export default function AddDriverExpensePage() {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>
-                    <CreditCard className="mr-1 inline h-3.5 w-3.5" />
+                    <CreditCard className="me-1 inline h-3.5 w-3.5" aria-hidden="true" />
                     {t('driverExpenses.fields.paymentMethod')}
                   </FormLabel>
                   <Select value={field.value} onValueChange={field.onChange}>
@@ -196,7 +198,7 @@ export default function AddDriverExpensePage() {
                     <SelectContent>
                       {PAYMENT_METHODS.map((m) => (
                         <SelectItem key={m} value={m}>
-                          {m}
+                          {t(`driverExpenses.paymentMethods.${m}`, { defaultValue: m })}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -214,12 +216,13 @@ export default function AddDriverExpensePage() {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>
-                  <FileText className="mr-1 inline h-3.5 w-3.5" />
+                  <FileText className="me-1 inline h-3.5 w-3.5" aria-hidden="true" />
                   {t('driverExpenses.fields.description')}
                 </FormLabel>
                 <FormControl>
                   <Textarea
                     rows={3}
+                    autoComplete="off"
                     placeholder={t('driverExpenses.fields.descriptionPlaceholder')}
                     {...field}
                   />
@@ -236,9 +239,9 @@ export default function AddDriverExpensePage() {
             </Button>
             <Button type="submit" disabled={addMutation.isPending}>
               {addMutation.isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader2 className="animate-spin" />
               ) : (
-                <Save className="h-4 w-4" />
+                <Save />
               )}
               {addMutation.isPending ? t('common.saving') : t('common.save')}
             </Button>

@@ -33,8 +33,12 @@ export function OilChangesFilters({
   return (
     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
       <div className="relative max-w-sm flex-1">
-        <Search className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Search className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
         <Input
+          type="search"
+          name="q"
+          autoComplete="off"
+          aria-label={t('oilChanges.searchPlaceholder')}
           value={search}
           onChange={(e) => onSearchChange(e.target.value)}
           placeholder={t('oilChanges.searchPlaceholder')}
@@ -50,14 +54,14 @@ export function OilChangesFilters({
         <FilterTab
           active={statusFilter === 'all'}
           onClick={() => onStatusFilterChange('all')}
-          icon={<LayoutGrid className="h-3.5 w-3.5" />}
+          icon={<LayoutGrid className="h-3.5 w-3.5" aria-hidden="true" />}
           label={t('oilChanges.filters.all')}
           count={counts.all}
         />
         <FilterTab
           active={statusFilter === 'good'}
           onClick={() => onStatusFilterChange('good')}
-          icon={<CheckCircle2 className="h-3.5 w-3.5 text-success" />}
+          icon={<CheckCircle2 className="h-3.5 w-3.5 text-success" aria-hidden="true" />}
           label={t('oilChanges.status.good')}
           count={counts.good}
           disabled={counts.good === 0}
@@ -65,7 +69,7 @@ export function OilChangesFilters({
         <FilterTab
           active={statusFilter === 'warning'}
           onClick={() => onStatusFilterChange('warning')}
-          icon={<AlertTriangle className="h-3.5 w-3.5 text-warning" />}
+          icon={<AlertTriangle className="h-3.5 w-3.5 text-warning" aria-hidden="true" />}
           label={t('oilChanges.status.warning')}
           count={counts.warning}
           disabled={counts.warning === 0}
@@ -73,7 +77,7 @@ export function OilChangesFilters({
         <FilterTab
           active={statusFilter === 'critical'}
           onClick={() => onStatusFilterChange('critical')}
-          icon={<AlertCircle className="h-3.5 w-3.5 text-destructive" />}
+          icon={<AlertCircle className="h-3.5 w-3.5 text-destructive" aria-hidden="true" />}
           label={t('oilChanges.status.critical')}
           count={counts.critical}
           disabled={counts.critical === 0}
@@ -107,6 +111,7 @@ function FilterTab({
       onClick={onClick}
       className={cn(
         'inline-flex h-7 items-center gap-1.5 rounded px-2.5 text-xs font-medium transition-colors',
+        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
         active
           ? 'bg-background text-foreground shadow-sm'
           : 'text-muted-foreground hover:text-foreground',
@@ -117,7 +122,7 @@ function FilterTab({
       <span className="hidden sm:inline">{label}</span>
       <span
         className={cn(
-          'rounded-full px-1 text-[10px] font-semibold tabular-nums',
+          'rounded-full px-1 font-mono text-[10.5px] font-medium tabular-nums',
           active ? 'bg-muted text-foreground' : 'bg-background text-muted-foreground',
         )}
       >

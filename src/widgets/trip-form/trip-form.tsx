@@ -657,12 +657,12 @@ export function TripForm({ parentId }: TripFormProps) {
   /* ---- Render --------------------------------------------------------- */
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       {/* Receipt-batch banner */}
       {showBatchBanner && batchNavState?.receiptBatchId && (
-        <Card className="border-warning/30 bg-warning/5">
+        <Card className="border-warning/40 bg-warning/10">
           <CardContent className="flex items-start gap-3 p-4">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-warning/20 text-warning">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-warning/10 text-warning">
               <ImageIcon className="h-4 w-4" />
             </div>
             <div className="flex-1 text-sm">
@@ -680,7 +680,7 @@ export function TripForm({ parentId }: TripFormProps) {
               onClick={() => setShowBatchBanner(false)}
               aria-label={t('common.close')}
             >
-              <X className="h-3.5 w-3.5" />
+              <X />
             </Button>
           </CardContent>
         </Card>
@@ -688,8 +688,8 @@ export function TripForm({ parentId }: TripFormProps) {
 
       {/* Trip-level fields */}
       <Card>
-        <CardContent className="space-y-4 p-4 md:p-6">
-          <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+        <CardContent className="space-y-4 p-3">
+          <h3 className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
             {t('trips.form.section.tripDetails')}
           </h3>
 
@@ -701,7 +701,7 @@ export function TripForm({ parentId }: TripFormProps) {
                 <span className="text-destructive">*</span>
               </Label>
               {loadingCars ? (
-                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-9 w-full" />
               ) : (
                 <SearchableSelect
                   id="trip-car"
@@ -729,7 +729,7 @@ export function TripForm({ parentId }: TripFormProps) {
                 <span className="text-destructive">*</span>
               </Label>
               {loadingDrivers ? (
-                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-9 w-full" />
               ) : (
                 <SearchableSelect
                   id="trip-driver"
@@ -773,7 +773,7 @@ export function TripForm({ parentId }: TripFormProps) {
                 <span className="text-destructive">*</span>
               </Label>
               {loadingCompanies ? (
-                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-9 w-full" />
               ) : (
                 <SearchableSelect
                   id="trip-company"
@@ -814,9 +814,9 @@ export function TripForm({ parentId }: TripFormProps) {
 
       {/* Containers */}
       <Card>
-        <CardContent className="space-y-4 p-4 md:p-6">
+        <CardContent className="space-y-4 p-3">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+            <h3 className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
               {t('trips.form.section.containers', {
                 count: containers.length,
                 max: MAX_CONTAINERS,
@@ -831,7 +831,7 @@ export function TripForm({ parentId }: TripFormProps) {
                   onClick={splitEvenly}
                   className="gap-1.5"
                 >
-                  <SplitSquareHorizontal className="h-3.5 w-3.5" />
+                  <SplitSquareHorizontal />
                   <span className="hidden sm:inline">
                     {t('trips.form.splitEvenly')}
                   </span>
@@ -845,7 +845,7 @@ export function TripForm({ parentId }: TripFormProps) {
                   onClick={addContainer}
                   className="gap-1.5"
                 >
-                  <Plus className="h-3.5 w-3.5" />
+                  <Plus />
                   <span className="hidden sm:inline">
                     {t('trips.form.addContainer')}
                   </span>
@@ -898,7 +898,7 @@ export function TripForm({ parentId }: TripFormProps) {
       </Card>
 
       {/* Submit footer */}
-      <div className="sticky bottom-4 flex flex-col-reverse gap-2 rounded-lg border bg-card p-3 shadow-md sm:flex-row sm:items-center sm:justify-end">
+      <div className="sticky bottom-4 flex flex-col-reverse gap-2 rounded-lg border bg-card p-3 sm:flex-row sm:items-center sm:justify-end">
         <Button
           variant="outline"
           onClick={() => navigate('/trips')}
@@ -911,9 +911,9 @@ export function TripForm({ parentId }: TripFormProps) {
           disabled={!isValid || capacityBlocked || receiptPatternBlocked || isPending}
         >
           {isPending ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
+            <Loader2 className="animate-spin motion-reduce:animate-none" />
           ) : (
-            <Save className="h-4 w-4" />
+            <Save />
           )}
           {isEdit ? t('trips.form.save') : t('trips.form.create')}
         </Button>
@@ -997,7 +997,7 @@ function CapacityBanner({
 
   if (total === 0) {
     return (
-      <div className="rounded-md border border-dashed bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+      <div className="rounded-lg border border-dashed border-border/60 bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
         {t('trips.form.capacity.hint', {
           capacity: formatNumber(carCapacity, 0),
         })}
@@ -1008,16 +1008,16 @@ function CapacityBanner({
   return (
     <div
       className={cn(
-        'flex items-start gap-2.5 rounded-md border px-3 py-2 text-xs',
+        'flex items-start gap-2 rounded-lg border border-dashed px-3 py-2.5 text-[12.5px]',
         valid
-          ? 'border-success/30 bg-success/5 text-success'
-          : 'border-warning/30 bg-warning/5 text-warning',
+          ? 'border-success/40 bg-success/10 text-success'
+          : 'border-warning/40 bg-warning/10 text-warning',
       )}
     >
       {valid ? (
-        <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
+        <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0" />
       ) : (
-        <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+        <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
       )}
       <div className="flex-1 space-y-0.5">
         <div className="font-medium">
@@ -1027,13 +1027,13 @@ function CapacityBanner({
               ? t('trips.form.capacity.overrideWarning')
               : t('trips.form.capacity.mismatch')}
         </div>
-        <div className="text-foreground/80">
-          <span className="tabular-nums">
+        <div className="text-muted-foreground">
+          <span className="font-mono tabular-nums">
             {formatNumber(total, 1)} L
           </span>{' '}
           / {formatNumber(carCapacity, 0)} L
           {!valid && (
-            <span className="ms-2 tabular-nums">
+            <span className="ms-2 font-mono tabular-nums">
               ({delta > 0 ? '+' : ''}
               {formatNumber(delta, 1)} L)
             </span>
@@ -1106,7 +1106,7 @@ function ContainerCard({
   return (
     <div
       className={cn(
-        'rounded-lg border bg-muted/20 p-3 md:p-4',
+        'rounded-lg border bg-muted/40 p-3',
         receiptTooShort && 'border-destructive/40',
       )}
     >
@@ -1128,7 +1128,7 @@ function ContainerCard({
             className="h-7 w-7 text-destructive hover:bg-destructive/10 hover:text-destructive"
             aria-label={t('common.remove')}
           >
-            <Trash2 className="h-3.5 w-3.5" />
+            <Trash2 />
           </Button>
         )}
       </div>
@@ -1136,14 +1136,14 @@ function ContainerCard({
       {/* Receipt-serialization warning — amber, submit requires the override
           checkbox to be ticked (sets receipt_override=true in the payload) */}
       {patternMismatch && (
-        <div className="mb-3 space-y-2 rounded-md border border-warning/30 bg-warning/5 px-3 py-2 text-xs">
+        <div className="mb-3 space-y-2 rounded-lg border border-dashed border-warning/40 bg-warning/10 px-3 py-2.5 text-[12.5px]">
           <div className="flex items-start gap-2 text-warning">
             <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
             <div className="flex-1">
               <div className="font-medium">
                 {t('trips.form.receiptPattern.mismatchTitle')}
               </div>
-              <div className="text-foreground/80" dir="auto">
+              <div className="text-muted-foreground" dir="auto">
                 {t('trips.form.receiptPattern.mismatch', {
                   terminal: patternMismatch.terminalName,
                   hint: patternMismatch.hint,
@@ -1164,13 +1164,13 @@ function ContainerCard({
 
       {/* In-form duplicate warning — soft (doesn't block submit) */}
       {duplicateWith && duplicateWith.length > 0 && (
-        <div className="mb-3 flex items-start gap-2 rounded-md border border-warning/30 bg-warning/5 px-3 py-2 text-xs text-warning">
+        <div className="mb-3 flex items-start gap-2 rounded-lg border border-dashed border-warning/40 bg-warning/10 px-3 py-2.5 text-[12.5px] text-warning">
           <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
           <div className="flex-1">
             <div className="font-medium">
               {t('trips.form.validation.duplicateInForm.title')}
             </div>
-            <div className="text-foreground/80">
+            <div className="text-muted-foreground">
               {t('trips.form.validation.duplicateInForm.description', {
                 receipt: container.receipt_no.trim(),
                 others: duplicateWith.map((i) => i + 1).join(', '),
@@ -1254,11 +1254,12 @@ function ContainerCard({
 
         {/* Drop-off picker */}
         <div className="space-y-1 md:col-span-2 lg:col-span-1">
-          <Label className="text-xs">
+          <Label htmlFor={`dropoff-${idx}`} className="text-xs">
             {t('trips.fields.dropOffPoint')}
             <span className="text-destructive">*</span>
           </Label>
           <Button
+            id={`dropoff-${idx}`}
             type="button"
             variant="outline"
             onClick={onPickDropOff}
@@ -1268,7 +1269,7 @@ function ContainerCard({
               !container.drop_off_point && 'text-muted-foreground',
             )}
           >
-            <MapPin className="h-3.5 w-3.5" />
+            <MapPin />
             <span className="truncate">
               {container.drop_off_point ||
                 (terminalChosen
@@ -1286,13 +1287,13 @@ function ContainerCard({
             {t('trips.form.routeMapping')}:
           </span>
           {distance > 0 && (
-            <span className="inline-flex items-center gap-1 tabular-nums">
+            <span className="inline-flex items-center gap-1 font-mono tabular-nums">
               <MapPin className="h-3 w-3 text-muted-foreground" />
               {formatNumber(distance, 1)} km
             </span>
           )}
           {fee > 0 && (
-            <span className="inline-flex items-center gap-1 tabular-nums text-success">
+            <span className="inline-flex items-center gap-1 font-mono tabular-nums text-money">
               {formatCurrency(fee)}
             </span>
           )}
@@ -1308,21 +1309,21 @@ function ContainerCard({
 
 function FormSkeleton() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       <Card>
-        <CardContent className="space-y-4 p-4 md:p-6">
+        <CardContent className="space-y-4 p-3">
           <Skeleton className="h-3 w-32" />
           <div className="grid gap-4 md:grid-cols-3">
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-10 w-full md:col-span-2" />
+            <Skeleton className="h-9 w-full" />
+            <Skeleton className="h-9 w-full" />
+            <Skeleton className="h-9 w-full" />
+            <Skeleton className="h-9 w-full" />
+            <Skeleton className="h-9 w-full md:col-span-2" />
           </div>
         </CardContent>
       </Card>
       <Card>
-        <CardContent className="space-y-3 p-4 md:p-6">
+        <CardContent className="space-y-3 p-3">
           <Skeleton className="h-3 w-32" />
           <Skeleton className="h-32 w-full" />
         </CardContent>

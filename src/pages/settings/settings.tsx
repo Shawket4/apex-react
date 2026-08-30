@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from 'sonner';
-import { Settings as SettingsIcon, Save } from 'lucide-react';
+import { Settings as SettingsIcon, Save, Loader2 } from 'lucide-react';
 import { useMutation } from '@tanstack/react-query';
 
 import { PageShell } from '@/shared/ui/page-shell';
@@ -44,11 +44,11 @@ export default function SettingsPage() {
   const mutation = useMutation({
     mutationFn: (data: TokenFormValues) => apiPost('/api/set-petroapp-token', data),
     onSuccess: () => {
-      toast.success('PetroApp token updated successfully');
+      toast.success(t('settings.petroapp.updated', { defaultValue: 'PetroApp token updated successfully' }));
       form.reset();
     },
     onError: (error: Error) => {
-      toast.error(error.message || 'Failed to update token');
+      toast.error(error.message || t('settings.petroapp.updateFailed', { defaultValue: 'Failed to update token' }));
     },
   });
 
@@ -58,13 +58,13 @@ export default function SettingsPage() {
 
   return (
     <PageShell title={t('nav.settings')} icon={<SettingsIcon className="h-5 w-5" />}>
-      <div className="mx-auto max-w-2xl space-y-6">
+      <div className="mx-auto max-w-2xl space-y-3">
         {isManager && (
           <Card>
             <CardHeader>
-              <CardTitle>PetroApp Configuration</CardTitle>
+              <CardTitle>{t('settings.petroapp.title', { defaultValue: 'PetroApp Configuration' })}</CardTitle>
               <CardDescription>
-                Update the PetroApp integration token and cookie.
+                {t('settings.petroapp.description', { defaultValue: 'Update the PetroApp integration token and cookie.' })}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -75,9 +75,9 @@ export default function SettingsPage() {
                     name="token"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Token</FormLabel>
+                        <FormLabel>{t('settings.petroapp.token', { defaultValue: 'Token' })}</FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter token" {...field} />
+                          <Input placeholder={t('settings.petroapp.tokenPlaceholder', { defaultValue: 'Enter token…' })} autoComplete="off" spellCheck={false} {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -88,9 +88,9 @@ export default function SettingsPage() {
                     name="cookie"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Cookie</FormLabel>
+                        <FormLabel>{t('settings.petroapp.cookie', { defaultValue: 'Cookie' })}</FormLabel>
                         <FormControl>
-                          <Input placeholder="Enter cookie" {...field} />
+                          <Input placeholder={t('settings.petroapp.cookiePlaceholder', { defaultValue: 'Enter cookie…' })} autoComplete="off" spellCheck={false} {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -98,8 +98,12 @@ export default function SettingsPage() {
                   />
                   <div className="flex justify-end pt-2">
                     <Button type="submit" disabled={mutation.isPending}>
-                      <Save className="mr-2 h-4 w-4" />
-                      Save
+                      {mutation.isPending ? (
+                        <Loader2 className="animate-spin motion-reduce:animate-none" aria-hidden="true" />
+                      ) : (
+                        <Save aria-hidden="true" />
+                      )}
+                      {t('common.save')}
                     </Button>
                   </div>
                 </form>
