@@ -29,10 +29,10 @@ export function SidebarFooter({ collapsed, onToggleCollapse }: SidebarFooterProp
       <div
         className={cn(
           'flex items-center',
-          collapsed ? 'flex-col gap-2 pt-1' : 'justify-between px-1',
+          collapsed ? 'flex-col items-center gap-2 pt-1' : 'justify-between px-1',
         )}
       >
-        <div className={cn('flex gap-1', collapsed ? 'flex-col' : 'items-center')}>
+        <div className={cn('flex gap-1', collapsed ? 'flex-col items-center' : 'items-center')}>
           <ThemeToggle />
           <LanguageToggle />
         </div>

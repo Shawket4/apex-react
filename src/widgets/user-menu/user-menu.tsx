@@ -54,7 +54,10 @@ export function UserMenu({ collapsed = false }: UserMenuProps) {
             // Collapsed, the avatar is the only child: an identity block kept
             // at max-w-0 still contributed the flex gap, which pushed the
             // avatar off-centre inside the 36px square.
-            collapsed ? 'mx-auto w-9 justify-center px-0' : 'w-full justify-start gap-2',
+            // Full width with centred content: no margin math, so the avatar
+            // sits dead centre of the collapsed rail. `mx-auto` did nothing
+            // here — the Button is inline-flex, and margin auto needs a block.
+            collapsed ? 'w-full justify-center px-0' : 'w-full justify-start gap-2',
           )}
           aria-label={t('common.profile')}
         >
