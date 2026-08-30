@@ -1427,6 +1427,11 @@
       "password": "Password",
       "createdAt": "Created at"
     },
+    "placeholders": {
+      "name": "Full name",
+      "email": "name@example.com",
+      "phone": "+201…"
+    },
     "permissions": {
       "user": "User",
       "manager": "Manager",

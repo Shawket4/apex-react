@@ -111,7 +111,7 @@ function Line({
       <dd
         className={cn(
           'shrink-0 font-mono tabular-nums',
-          strong ? 'font-semibold text-money' : 'text-foreground/90',
+          strong ? 'font-semibold text-money' : 'text-foreground',
         )}
       >
         {value}
@@ -198,7 +198,7 @@ export function RevenueBreakdown({ containers }: { containers: Trip[] }) {
       </dl>
 
       <dl className="mt-2 space-y-1 border-t pt-2">
-        <dt className="text-[10.5px] font-semibold uppercase tracking-wider text-muted-foreground">
+        <dt className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
           {t('trips.revenue.chargedOn')}
         </dt>
         {lines.map((line) => (

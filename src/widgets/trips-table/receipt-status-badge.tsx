@@ -15,11 +15,11 @@ import { cn } from '@/shared/lib/cn';
 const RECEIPT_STATUS_STYLES = {
   pending: 'bg-muted text-muted-foreground border-border',
   in_garage:
-    'bg-warning/15 text-warning border-warning/30',
+    'border-warning/40 bg-warning/10 text-warning',
   in_office:
-    'bg-warning/15 text-warning border-warning/30',
+    'border-warning/40 bg-warning/10 text-warning',
   complete:
-    'bg-success/15 text-success border-success/30',
+    'border-success/40 bg-success/10 text-success',
 } as const;
 
 const RECEIPT_STATUS_ICONS = {
@@ -39,15 +39,17 @@ export function ReceiptStatusBadge({
   const { t } = useTranslation();
   const status = computeReceiptStatus(trip);
   const Icon = RECEIPT_STATUS_ICONS[status.status];
+  const label = t(`trips.receiptStatus.${camel(status.status)}`);
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium',
+        'inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium',
         RECEIPT_STATUS_STYLES[status.status],
       )}
-      title={t(`trips.receiptStatus.${camel(status.status)}`)}
+      title={label}
+      aria-label={compact ? label : undefined}
     >
-      <Icon className="h-3 w-3" />
+      <Icon className="h-3 w-3" aria-hidden />
       {!compact && t(`trips.receiptStatus.${camel(status.status)}`)}
     </span>
   );
