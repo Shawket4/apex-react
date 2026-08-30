@@ -1,0 +1,107 @@
+
+Running 46 tests using 1 worker
+
+[WebServer] (node:45843) ExperimentalWarning: Type Stripping is an experimental feature and might change at any time
+[WebServer] (Use `node --trace-warnings ...` to show where the warning was created)
+  ✓   1 [chromium] › e2e/visual.spec.ts:82:5 › public routes › login (1.9s)
+  ✓   2 [chromium] › e2e/visual.spec.ts:82:5 › public routes › not-found (2.4s)
+  ✓   3 [chromium] › e2e/visual.spec.ts:82:5 › public routes › not-found-catchall (2.5s)
+  ✓   4 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › dashboard (3.2s)
+  ✓   5 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › fuel-events (3.7s)
+  ✓   6 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › fuel-events-new (3.1s)
+  ✓   7 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › fuel-event-details (2.8s)
+  ✓   8 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › fuel-event-edit (3.5s)
+  ✘   9 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › trips (3.7s)
+  ✓  10 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › trips-new (2.4s)
+  ✓  11 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › trips-multi-container-edit (2.6s)
+  ✓  12 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › trips-parent-route-summary (4.2s)
+  ✓  13 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › oil-changes (3.6s)
+  ✓  14 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › oil-changes-new (2.7s)
+  ✓  15 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › oil-change-edit (2.8s)
+  ✓  16 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › oil-change-history (2.5s)
+  ✓  17 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › service-invoices (3.1s)
+  ✓  18 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › service-invoices-new (2.6s)
+  ✓  19 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › service-invoice-details (2.4s)
+  ✓  20 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › service-invoice-edit (3.0s)
+  ✓  21 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › trucks (2.4s)
+  ✓  22 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › cars (3.8s)
+  ✓  23 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › tires (2.5s)
+  ✓  24 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › tablets (2.2s)
+  ✓  25 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › speed-violations (2.7s)
+  ✓  26 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › drivers (3.1s)
+  ✓  27 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › driver-detail (3.6s)
+  ✓  28 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › driver-expenses (3.1s)
+  ✓  29 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › driver-expenses-new (3.7s)
+  ✓  30 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › driver-loans (6.6s)
+  ✓  31 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › driver-loans-new (4.0s)
+  ✓  32 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › vendors (6.7s)
+  ✓  33 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › fleet-expenses (5.0s)
+  ✓  34 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › fleet-expenses-messages (4.6s)
+  ✓  35 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › fleet-expenses-review-redirect (3.8s)
+  ✓  36 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › fleet-expenses-new (2.4s)
+  ✓  37 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › fleet-expense-edit (2.8s)
+  ✓  38 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › fee-mappings (3.2s)
+  ✓  39 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › etit (4.3s)
+  ✓  40 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › zones (3.3s)
+  ✓  41 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › locations (10.0s)
+  ✓  42 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › trip-audit (7.5s)
+  ✓  43 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › trip-replay (4.5s)
+  ✓  44 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › users (4.0s)
+  ✓  45 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › logs (2.8s)
+  ✓  46 [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › settings (3.9s)
+
+
+  1) [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › trips ──────────────────────────
+
+    Error: expect(page).toHaveScreenshot(expected) failed
+
+      Expected an image 1440px by 1665px, received 1440px by 1793px. 28261 pixels (ratio 0.02 of all image pixels) are different.
+
+      Snapshot: trips.png
+
+    Call log:
+      - Expect "toHaveScreenshot(trips.png)" with timeout 5000ms
+        - verifying given screenshot expectation
+      - taking page screenshot
+        - disabled all CSS animations
+      - waiting for fonts to load...
+      - fonts loaded
+      - Expected an image 1440px by 1665px, received 1440px by 1793px. 28261 pixels (ratio 0.02 of all image pixels) are different.
+      - waiting 100ms before taking screenshot
+      - taking page screenshot
+        - disabled all CSS animations
+      - waiting for fonts to load...
+      - fonts loaded
+      - captured a stable screenshot
+      - Expected an image 1440px by 1665px, received 1440px by 1793px. 28261 pixels (ratio 0.02 of all image pixels) are different.
+
+
+      69 |   }
+      70 |   await expandViewportToContent(page);
+    > 71 |   await expect(page).toHaveScreenshot(`${route.name}.png`, {
+         |                      ^
+      72 |     fullPage: true,
+      73 |     maxDiffPixelRatio: 0.01,
+      74 |   });
+        at screenshotRoute (/Users/shawket/React/apex-react/e2e/visual.spec.ts:71:22)
+        at /Users/shawket/React/apex-react/e2e/visual.spec.ts:104:7
+
+    attachment #1: trips (image/png) ───────────────────────────────────────────────────────────────
+    Expected: e2e/__screenshots__/chromium/trips.png
+    Received: e2e/test-results/visual-authenticated-routes-trips-chromium/trips-actual.png
+    Diff:     e2e/test-results/visual-authenticated-routes-trips-chromium/trips-diff.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: e2e/test-results/visual-authenticated-routes-trips-chromium/error-context.md
+
+    attachment #3: trace (application/zip) ─────────────────────────────────────────────────────────
+    e2e/test-results/visual-authenticated-routes-trips-chromium/trace.zip
+    Usage:
+
+        npx playwright show-trace e2e/test-results/visual-authenticated-routes-trips-chromium/trace.zip
+
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+  1 failed
+    [chromium] › e2e/visual.spec.ts:102:5 › authenticated routes › trips ───────────────────────────
+  45 passed (2.8m)

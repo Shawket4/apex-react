@@ -107,7 +107,8 @@
     "zones": "Dead Zones",
     "locations": "Locations",
     "tripAudit": "Trip Audit",
-    "expensesReview": "Review queue"
+    "expensesReview": "Review queue",
+    "primary": "Main navigation"
   },
   "auth": {
     "loginTitle": "Welcome back",

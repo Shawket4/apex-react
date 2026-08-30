@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Outlet } from 'react-router-dom';
-import { Sidebar } from '@/widgets/sidebar/sidebar';
+import { Sidebar } from '@/widgets/sidebar';
 import { Header } from '@/widgets/header/header';
 import { CommandPalette, useCommandPalette } from '@/widgets/command-palette/command-palette';
 import { Sheet, SheetContent } from '@/shared/ui/sheet';

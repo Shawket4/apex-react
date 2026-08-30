@@ -25,7 +25,7 @@ import {
 } from '@/shared/ui/command';
 import { EmptyState } from '@/shared/ui/empty-state';
 import { Badge } from '@/shared/ui/badge';
-import { NAV_SECTIONS } from '@/widgets/sidebar/sidebar';
+import { NAV_SECTIONS } from '@/widgets/sidebar';
 import { PERMISSION_LEVELS } from '@/shared/config/constants';
 import { useCars } from '@/entities/car/queries';
 import { useDrivers } from '@/entities/driver/queries';

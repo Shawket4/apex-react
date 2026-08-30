@@ -107,7 +107,8 @@
     "zones": "المناطق الميتة",
     "locations": "المواقع",
     "tripAudit": "تدقيق الرحلات",
-    "expensesReview": "قائمة المراجعة"
+    "expensesReview": "قائمة المراجعة",
+    "primary": "التنقل الرئيسي"
   },
   "auth": {
     "loginTitle": "مرحباً بعودتك",
