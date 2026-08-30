@@ -244,7 +244,19 @@
       "daysLeft": "باقي {{count}} يوم",
       "kmLeft": "باقي {{km}} كم",
       "kmOverdue": "تأخر {{km}} كم",
-      "sinceOf": "{{since}} من {{interval}} كم"
+      "sinceOf": "{{since}} من {{interval}} كم",
+      "count": "{{count}}",
+      "filters": {
+        "oilShort": "ز",
+        "fuelShort": "ج",
+        "waterShort": "م",
+        "oilDone": "تم تغيير فلتر الزيت",
+        "oilNotDone": "لم يتم تغيير فلتر الزيت",
+        "fuelDone": "تم تغيير فلتر الجاز",
+        "fuelNotDone": "لم يتم تغيير فلتر الجاز",
+        "waterDone": "تم تغيير فلتر فاصل المياه",
+        "waterNotDone": "لم يتم تغيير فلتر فاصل المياه"
+      }
     }
   },
   "fuelEvents": {

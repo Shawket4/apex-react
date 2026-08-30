@@ -1100,11 +1100,65 @@ function AttentionPanel({
                   : t('dashboard.attention.kmLeft', { km: formatNumber(o.km_left, 0) })
               }
               severity={o.km_left < 0 ? 'critical' : 'warning'}
+              filters={
+                <FilterChips
+                  oil={o.oil_filter}
+                  fuel={o.fuel_filter}
+                  water={o.water_filter}
+                />
+              }
             />
           ))}
         </AttentionColumn>
       </div>
     </section>
+  );
+}
+
+/**
+ * What went in with the last oil change, as three states you can read at a
+ * glance down a column: filled means replaced, hollow means it wasn't. Letters
+ * rather than icons because three filter glyphs would be indistinguishable at
+ * this size, and they come from i18n so Arabic gets its own initials.
+ */
+function FilterChips({ oil, fuel, water }: { oil: boolean; fuel: boolean; water: boolean }) {
+  const { t } = useTranslation();
+  const chips = [
+    { on: oil, key: 'oil' },
+    { on: fuel, key: 'fuel' },
+    { on: water, key: 'water' },
+  ] as const;
+  return (
+    <span className="mt-1 flex items-center gap-1">
+      {chips.map(({ on, key }) => (
+        <span
+          key={key}
+          // `title` rather than a Tooltip: this renders once per row and a
+          // fleet can put twenty rows in the column, which is a lot of
+          // popper instances for a three-letter hint.
+          title={t(
+            on
+              ? `dashboard.attention.filters.${key}Done`
+              : `dashboard.attention.filters.${key}NotDone`,
+          )}
+          className={cn(
+            'inline-flex h-4 min-w-4 items-center justify-center rounded-[3px] px-1 text-[9px] font-semibold leading-none',
+            on
+              ? 'bg-primary/10 text-primary'
+              : 'border border-dashed border-muted-foreground/30 text-muted-foreground/50',
+          )}
+        >
+          <span aria-hidden>{t(`dashboard.attention.filters.${key}Short`)}</span>
+          <span className="sr-only">
+            {t(
+              on
+                ? `dashboard.attention.filters.${key}Done`
+                : `dashboard.attention.filters.${key}NotDone`,
+            )}
+          </span>
+        </span>
+      ))}
+    </span>
   );
 }
 
@@ -1128,9 +1182,11 @@ function AttentionColumn({
     <div>
       <p className="mb-1.5 flex items-baseline justify-between gap-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
         {title}
-        {total > shown && (
-          <span className="font-medium normal-case tracking-normal">
-            {t('dashboard.attention.showingOf', { shown, total })}
+        {total > 0 && (
+          <span className="font-medium normal-case tracking-normal tabular-nums">
+            {total > shown
+              ? t('dashboard.attention.showingOf', { shown, total })
+              : t('dashboard.attention.count', { count: total })}
           </span>
         )}
       </p>
@@ -1138,7 +1194,10 @@ function AttentionColumn({
         <p className="py-6 text-center text-xs text-muted-foreground">{empty}</p>
       ) : (
         <>
-          <div className="grid gap-2">{children}</div>
+          {/* The server sends every match now, so the column scrolls rather
+              than pushing the rest of the dashboard down a screen. The cap is
+              roughly six rows — enough that the list reads as a list. */}
+          <div className="grid max-h-[19.5rem] gap-2 overflow-y-auto pr-1">{children}</div>
           <Link
             to={href}
             className="mt-2 inline-block rounded-sm text-[11px] text-muted-foreground underline underline-offset-2 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -1158,6 +1217,7 @@ function AttentionRow({
   detail,
   status,
   severity,
+  filters,
 }: {
   plateNo: string;
   plateAr: string;
@@ -1165,6 +1225,8 @@ function AttentionRow({
   detail: string;
   status: string;
   severity: 'critical' | 'warning';
+  /** Optional trailing detail under the label; documents have none. */
+  filters?: React.ReactNode;
 }) {
   return (
     <div className="grid grid-cols-[3px_1fr_auto] items-center gap-3 rounded-lg border bg-card px-3 py-2.5">
@@ -1185,6 +1247,7 @@ function AttentionRow({
         <span className="mt-0.5 block text-[11px] text-muted-foreground">
           {label} · {detail}
         </span>
+        {filters}
       </span>
       <span
         className={cn(

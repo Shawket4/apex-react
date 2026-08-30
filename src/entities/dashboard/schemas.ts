@@ -113,13 +113,21 @@ export const oilChangeDueSchema = z.object({
   km_since: z.number(),
   /** Negative once overdue. */
   km_left: z.number(),
+  /**
+   * Which filters went in with the last oil change. Defaulted, so a frontend
+   * deployed ahead of the API that added them renders "unknown" rather than
+   * failing the whole payload.
+   */
+  oil_filter: z.boolean().default(false),
+  fuel_filter: z.boolean().default(false),
+  water_filter: z.boolean().default(false),
 });
 export type OilChangeDue = z.infer<typeof oilChangeDueSchema>;
 
 /**
- * Both lists are truncated by the backend; the totals say how many met the
- * same test, so a fleet with a long tail of lapsed papers still shows that the
- * tail exists instead of silently cutting it.
+ * Both lists arrive complete — the panel decides how much to show at once and
+ * scrolls the rest. The totals are the same counts, kept so the header can
+ * state them without walking the arrays.
  */
 export const attentionSchema = z.object({
   documents: z.array(expiringDocumentSchema).default([]),

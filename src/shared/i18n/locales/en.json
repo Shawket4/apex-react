@@ -244,7 +244,19 @@
       "daysLeft": "{{count}}d left",
       "kmLeft": "{{km}} km left",
       "kmOverdue": "{{km}} km overdue",
-      "sinceOf": "{{since}} of {{interval}} km"
+      "sinceOf": "{{since}} of {{interval}} km",
+      "count": "{{count}}",
+      "filters": {
+        "oilShort": "O",
+        "fuelShort": "F",
+        "waterShort": "W",
+        "oilDone": "Oil filter replaced",
+        "oilNotDone": "Oil filter not replaced",
+        "fuelDone": "Fuel filter replaced",
+        "fuelNotDone": "Fuel filter not replaced",
+        "waterDone": "Water separator replaced",
+        "waterNotDone": "Water separator not replaced"
+      }
     }
   },
   "fuelEvents": {
