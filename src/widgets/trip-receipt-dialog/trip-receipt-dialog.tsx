@@ -150,19 +150,28 @@ export function TripReceiptDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto pr-1 min-h-0 space-y-4 max-h-[55vh] md:max-h-[65vh]">
+        <div className="flex-1 overflow-y-auto overscroll-contain pe-1 min-h-0 space-y-4 max-h-[55vh] md:max-h-[65vh]">
           {/* Trip context */}
           {isLoading ? (
-            <div className="space-y-2 rounded-md border bg-muted/30 p-3">
-              <Skeleton className="h-3 w-32" />
-              <Skeleton className="h-3 w-48" />
-              <Skeleton className="h-3 w-40" />
+            <div className="space-y-2 rounded-lg border bg-muted/40 p-3">
+              <Skeleton className="h-3.5 w-3/4 rounded-sm" />
+              <Skeleton className="h-3.5 w-2/3 rounded-sm" />
+              <Skeleton className="h-3.5 w-4/5 rounded-sm" />
             </div>
           ) : trip ? (
-            <div className="grid grid-cols-2 gap-x-4 gap-y-1 rounded-md border bg-muted/30 p-3 text-xs">
-              <Field label={t('trips.fields.receiptNo')} value={`#${trip.receipt_no || '—'}`} />
-              <Field label={t('trips.fields.date')} value={format(trip.date, 'PPP')} />
-              <Field label={t('trips.fields.vehicle')} value={trip.car_no_plate} />
+            <div className="grid grid-cols-2 gap-x-4 gap-y-1 rounded-lg border bg-muted/40 p-3 text-xs">
+              <Field
+                label={t('trips.fields.receiptNo')}
+                value={trip.receipt_no ? `#${trip.receipt_no}` : '—'}
+                empty={!trip.receipt_no}
+                mono
+              />
+              <Field
+                label={t('trips.fields.date')}
+                value={format(trip.date, 'd MMM yyyy')}
+                mono
+              />
+              <Field label={t('trips.fields.vehicle')} value={trip.car_no_plate} mono />
               <Field label={t('trips.fields.driver')} value={trip.driver_name} />
               <Field
                 label={t('trips.fields.terminal')}
@@ -179,21 +188,21 @@ export function TripReceiptDialog({
 
           {/* Timeline */}
           <section>
-            <h4 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <h4 className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
               {t('trips.expanded.receiptTimeline')}
             </h4>
             {isLoading ? (
               <div className="space-y-2">
-                <Skeleton className="h-16 w-full" />
-                <Skeleton className="h-16 w-full" />
+                <Skeleton className="h-16 w-full rounded-lg" />
+                <Skeleton className="h-16 w-full rounded-lg" />
               </div>
             ) : steps.length === 0 ? (
               <EmptyState
                 lottieSrc="/animations/receipt.lottie"
-                lottieWidth={100}
-                lottieHeight={100}
+                lottieWidth={110}
+                lottieHeight={110}
                 title={t('trips.expanded.noReceiptSteps')}
-                className="py-8 bg-transparent border-dashed"
+                className="border-0 bg-transparent py-6"
               />
             ) : (
               <ol className="space-y-2">
@@ -223,9 +232,9 @@ export function TripReceiptDialog({
 
           {/* Add new step */}
           {availableLocations.length > 0 && trip && (
-            <section className="rounded-md border bg-card p-3">
-              <h4 className="mb-3 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                <Plus className="h-3 w-3" />
+            <section className="rounded-lg border bg-card p-3">
+              <h4 className="mb-3 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                <Plus className="h-3 w-3" aria-hidden="true" />
                 {t('trips.receipt.addStep')}
               </h4>
               <div className="grid gap-3 sm:grid-cols-2">
@@ -247,9 +256,9 @@ export function TripReceiptDialog({
                         <SelectItem key={loc} value={loc}>
                           <span className="inline-flex items-center gap-1.5">
                             {loc === 'Garage' ? (
-                              <Archive className="h-3.5 w-3.5" />
+                              <Archive className="h-3.5 w-3.5" aria-hidden="true" />
                             ) : (
-                              <Building2 className="h-3.5 w-3.5" />
+                              <Building2 className="h-3.5 w-3.5" aria-hidden="true" />
                             )}
                             {t(`trips.receiptLocation.${loc}`)}
                           </span>
@@ -265,6 +274,8 @@ export function TripReceiptDialog({
                   </Label>
                   <Input
                     id="step-received-by"
+                    name="received_by"
+                    autoComplete="off"
                     value={newReceivedBy}
                     onChange={(e) => setNewReceivedBy(e.target.value)}
                     placeholder={t('trips.receipt.receivedByPlaceholder')}
@@ -277,6 +288,7 @@ export function TripReceiptDialog({
                   </Label>
                   <Textarea
                     id="step-notes"
+                    name="notes"
                     value={newNotes}
                     onChange={(e) => setNewNotes(e.target.value)}
                     placeholder={t('trips.receipt.notesPlaceholder')}
@@ -294,7 +306,7 @@ export function TripReceiptDialog({
                     htmlFor="step-stamped"
                     className="flex cursor-pointer items-center gap-1 text-xs"
                   >
-                    <Stamp className="h-3 w-3" />
+                    <Stamp className="h-3 w-3" aria-hidden="true" />
                     {t('trips.receipt.markStamped')}
                   </Label>
                 </div>
@@ -306,7 +318,7 @@ export function TripReceiptDialog({
                   disabled={!newReceivedBy.trim() || createMutation.isPending}
                 >
                   {createMutation.isPending && (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    <Loader2 className="animate-spin motion-reduce:animate-none" />
                   )}
                   {t('trips.receipt.addStep')}
                 </Button>
@@ -316,7 +328,7 @@ export function TripReceiptDialog({
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>
             {t('common.close')}
           </Button>
         </DialogFooter>
@@ -346,16 +358,16 @@ function ReceiptStepRow({
   const Icon = step.location === 'Garage' ? Archive : Building2;
 
   return (
-    <li className="flex items-start gap-3 rounded-md border bg-card p-3">
+    <li className="flex items-start gap-3 rounded-lg border bg-card p-3">
       <div
         className={cn(
           'flex h-8 w-8 shrink-0 items-center justify-center rounded-full',
           step.stamped
-            ? 'bg-success/15 text-success'
-            : 'bg-primary/15 text-primary',
+            ? 'bg-success/10 text-success'
+            : 'bg-primary/10 text-primary',
         )}
       >
-        <Icon className="h-4 w-4" />
+        <Icon className="h-4 w-4" aria-hidden="true" />
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
@@ -363,8 +375,8 @@ function ReceiptStepRow({
             {t(`trips.receiptLocation.${step.location}`)}
           </span>
           {step.stamped && (
-            <span className="inline-flex items-center gap-0.5 rounded bg-success/15 px-1.5 py-0.5 text-[10px] font-medium text-success">
-              <Stamp className="h-2.5 w-2.5" />
+            <span className="inline-flex items-center gap-1.5 rounded-full border border-success/40 bg-success/10 px-2.5 py-1 text-[11px] font-medium text-success">
+              <Stamp className="h-3 w-3" aria-hidden="true" />
               {t('trips.receipt.stamped')}
             </span>
           )}
@@ -374,7 +386,7 @@ function ReceiptStepRow({
           {formatDateTime(step.received_at)}
         </p>
         {step.notes && (
-          <p className="mt-1 rounded bg-muted/40 px-2 py-1 text-xs italic text-muted-foreground">
+          <p className="mt-1 rounded bg-muted/40 px-2 py-1 text-[11px] italic text-muted-foreground">
             {step.notes}
           </p>
         )}
@@ -391,6 +403,7 @@ function ReceiptStepRow({
           )}
           onClick={onToggleStamp}
           disabled={busy}
+          aria-pressed={step.stamped}
           aria-label={
             step.stamped ? t('trips.receipt.unstamp') : t('trips.receipt.stamp')
           }
@@ -399,11 +412,11 @@ function ReceiptStepRow({
           }
         >
           {busy ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            <Loader2 className="animate-spin motion-reduce:animate-none" />
           ) : step.stamped ? (
-            <CheckCircle2 className="h-3.5 w-3.5" />
+            <CheckCircle2 />
           ) : (
-            <Stamp className="h-3.5 w-3.5" />
+            <Stamp />
           )}
         </Button>
         <Button
@@ -414,7 +427,7 @@ function ReceiptStepRow({
           disabled={busy}
           aria-label={t('common.delete')}
         >
-          <Trash2 className="h-3.5 w-3.5" />
+          <Trash2 />
         </Button>
       </div>
     </li>
@@ -425,17 +438,30 @@ function Field({
   label,
   value,
   className,
+  mono,
+  empty,
 }: {
   label: string;
   value: string;
   className?: string;
+  mono?: boolean;
+  empty?: boolean;
 }) {
   return (
     <div className={cn('flex flex-col gap-0.5', className)}>
-      <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+      <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
         {label}
       </span>
-      <span className="truncate font-medium">{value}</span>
+      <span
+        dir="auto"
+        className={cn(
+          'truncate font-medium',
+          mono && 'font-mono tabular-nums',
+          empty && 'opacity-40',
+        )}
+      >
+        {value}
+      </span>
     </div>
   );
 }
