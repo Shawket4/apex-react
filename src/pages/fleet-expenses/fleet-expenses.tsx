@@ -200,8 +200,8 @@ export default function FleetExpensesPage() {
 
   /** Tile placeholder while /statistics is in flight. */
   const statSkeleton = {
-    full: <Skeleton className="h-5 w-24" />,
-    compact: <Skeleton className="h-5 w-16" />,
+    full: <Skeleton className="h-5 w-24 rounded-sm" />,
+    compact: <Skeleton className="h-5 w-16 rounded-sm" />,
   };
 
 
@@ -281,8 +281,9 @@ export default function FleetExpensesPage() {
               void statsQuery.refetch();
             }}
             disabled={isLoading}
+            aria-label={t('common.refresh')}
           >
-            <RefreshCw className={cn('h-4 w-4', isLoading && 'animate-spin')} />
+            <RefreshCw className={cn(isLoading && 'animate-spin motion-reduce:animate-none')} />
             <span className="hidden sm:inline">{t('common.refresh')}</span>
           </Button>
           {/* Server-rendered XLSX over the CURRENT filters — whole set, uncapped. */}
@@ -291,8 +292,11 @@ export default function FleetExpensesPage() {
             size="sm"
             onClick={() => exportMutation.mutate(filters)}
             disabled={exportMutation.isPending}
+            aria-label={t('common.export')}
           >
-            <Download className={cn('h-4 w-4', exportMutation.isPending && 'animate-pulse')} />
+            <Download
+              className={cn(exportMutation.isPending && 'animate-pulse motion-reduce:animate-none')}
+            />
             <span className="hidden sm:inline">{t('common.export')}</span>
           </Button>
           {canManageExpenses && (
@@ -300,8 +304,9 @@ export default function FleetExpensesPage() {
               size="sm"
               onClick={() => navigate('/fleet-expenses/new', { state: { from: 'ledger' } })}
               {...intentProps(() => warmLedgerForm(queryClient))}
+              aria-label={t('fleetExpenses.addExpense')}
             >
-              <Plus className="h-4 w-4" />
+              <Plus />
               <span className="hidden sm:inline">{t('fleetExpenses.addExpense')}</span>
             </Button>
           )}
@@ -309,7 +314,7 @@ export default function FleetExpensesPage() {
       }
     >
       {/* ── Summary strip — cash-out only; inflows never make a tile ─────── */}
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
         <StatCard
           label={t('fleetExpenses.stats.spent')}
           value={
@@ -350,8 +355,8 @@ export default function FleetExpensesPage() {
             setCategory('');
           }}
           className={cn(
-            'col-span-2 rounded-xl text-start outline-none transition-shadow focus-visible:ring-2 focus-visible:ring-ring lg:col-span-1',
-            uncatOnly && 'ring-2 ring-warning',
+            'col-span-2 rounded-lg text-start outline-none transition-shadow focus-visible:ring-2 focus-visible:ring-ring lg:col-span-1',
+            uncatOnly && '[&>*]:border-primary [&>*]:bg-primary/10',
           )}
           aria-pressed={uncatOnly}
         >
@@ -377,16 +382,19 @@ export default function FleetExpensesPage() {
           type="button"
           onClick={() => setCashInOpen((v) => !v)}
           aria-expanded={cashInOpen}
-          className="flex min-h-11 w-full items-center gap-3 rounded-xl border border-warning/40 bg-warning/10 px-3.5 py-2.5 text-start outline-none transition-colors hover:bg-warning/15 focus-visible:ring-2 focus-visible:ring-ring"
+          className="flex min-h-11 w-full items-center gap-3 rounded-lg border border-warning/40 bg-warning/10 px-3.5 py-2.5 text-start outline-none transition-colors hover:bg-warning/15 focus-visible:ring-2 focus-visible:ring-ring"
         >
-          <ArrowDownLeft className="h-4 w-4 shrink-0 text-warning" />
+          <ArrowDownLeft className="h-4 w-4 shrink-0 text-warning" aria-hidden="true" />
           <span className="min-w-0 flex-1 text-sm font-medium">
             {t('fleetExpenses.cashIn.strip', { count: pendingIn.count })}
-            <span className="ms-2 tabular-nums text-muted-foreground" dir="ltr">
+            <span className="ms-2 font-mono tabular-nums text-money" dir="ltr">
               + {formatMoney(pendingIn.total)} EGP
             </span>
           </span>
-          <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground rtl:rotate-180" />
+          <ChevronRight
+            className="h-4 w-4 shrink-0 text-muted-foreground rtl:rotate-180"
+            aria-hidden="true"
+          />
         </button>
       )}
       <CashInReview
@@ -398,13 +406,13 @@ export default function FleetExpensesPage() {
 
       {/* ── Charts (D10: daily spend + category donut survive) ───────────── */}
       {isLoading && (
-        <div className="grid gap-4 lg:grid-cols-3">
-          <Skeleton className="h-60 w-full rounded-xl lg:col-span-2" />
-          <Skeleton className="h-60 w-full rounded-xl" />
+        <div className="grid gap-3 lg:grid-cols-3">
+          <Skeleton className="h-60 w-full rounded-lg lg:col-span-2" />
+          <Skeleton className="h-60 w-full rounded-lg" />
         </div>
       )}
       {!isLoading && stats && stats.count > 0 && (
-        <div className="grid gap-4 lg:grid-cols-3">
+        <div className="grid gap-3 lg:grid-cols-3">
           <ChartCard
             title={t('fleetExpenses.charts.daily')}
             description={t('fleetExpenses.charts.dailyHint')}
@@ -466,7 +474,7 @@ export default function FleetExpensesPage() {
 
           <ChartCard title={t('fleetExpenses.charts.byCategory')} height="auto">
             {donut.length === 0 ? (
-              <p className="py-6 text-center text-sm text-muted-foreground">
+              <p className="py-6 text-center text-xs text-muted-foreground">
                 {t('fleetExpenses.charts.nothingCategorized')}
               </p>
             ) : (
@@ -493,12 +501,13 @@ export default function FleetExpensesPage() {
                         <i
                           className="h-2 w-2 shrink-0 rounded-sm"
                           style={{ background: slice.color }}
+                          aria-hidden="true"
                         />
                         <span className="truncate" dir="auto">
                           {slice.name}
                         </span>
                       </span>
-                      <span className="tabular-nums font-medium">{formatMoney(slice.amount)}</span>
+                      <span className="font-mono tabular-nums text-money">{formatMoney(slice.amount)}</span>
                     </li>
                   ))}
                 </ul>
@@ -515,7 +524,7 @@ export default function FleetExpensesPage() {
 
       {/* ── Breakdowns: by-category list + advances-by-person rollup ─────── */}
       {!isLoading && stats && stats.count > 0 && (
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-3 sm:grid-cols-2">
           {byCategoryList.length > 0 && (
             <ChartCard title={t('fleetExpenses.charts.byCategoryList')} height="auto">
               <ul className="divide-y text-sm">
@@ -534,7 +543,7 @@ export default function FleetExpensesPage() {
                     </span>
                     <span className="flex shrink-0 items-center gap-3">
                       <span className="text-xs text-muted-foreground">×{b.count}</span>
-                      <span className="tabular-nums font-medium">{formatMoney(b.out)}</span>
+                      <span className="font-mono tabular-nums text-money">{formatMoney(b.out)}</span>
                     </span>
                   </li>
                 ))}
@@ -555,14 +564,14 @@ export default function FleetExpensesPage() {
                         {p.name}
                       </span>
                       {p.kind && (
-                        <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
+                        <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[10.5px] font-medium text-muted-foreground">
                           {t(`fleetExpenses.loanKind.${p.kind}`, p.kind)}
                         </span>
                       )}
                     </span>
                     <span className="flex shrink-0 items-center gap-3">
                       <span className="text-xs text-muted-foreground">×{p.count}</span>
-                      <span className="tabular-nums font-medium">{formatMoney(p.total)}</span>
+                      <span className="font-mono tabular-nums text-money">{formatMoney(p.total)}</span>
                     </span>
                   </li>
                 ))}
@@ -576,11 +585,16 @@ export default function FleetExpensesPage() {
       <div className="space-y-3">
         <div className="flex flex-col gap-2 lg:flex-row lg:items-center">
           <div className="relative min-w-0 flex-1 lg:max-w-md">
-            <Search className="pointer-events-none absolute start-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Search
+              className="pointer-events-none absolute start-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+              aria-hidden="true"
+            />
             <Input
+              type="search"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder={t('fleetExpenses.searchPlaceholder')}
+              aria-label={t('fleetExpenses.searchPlaceholder')}
               className="ps-9"
               dir="auto"
             />
@@ -644,16 +658,16 @@ export default function FleetExpensesPage() {
         </div>
 
         {/* Source toggles: they change WHICH LEDGERS are summed (D4). */}
-        <div className="flex flex-wrap items-center gap-4 rounded-lg border bg-muted/30 px-3 py-2">
+        <div className="flex flex-wrap items-center gap-4 rounded-lg border bg-muted/40 px-3 py-2">
           <div className="flex items-center gap-2">
-            <Fuel className="h-4 w-4 text-amber-500" />
+            <Fuel className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
             <Label htmlFor="include-fuel" className="cursor-pointer text-sm">
               {t('fleetExpenses.includeFuel')}
             </Label>
             <Switch id="include-fuel" checked={includeFuel} onCheckedChange={setIncludeFuel} />
           </div>
           <div className="flex items-center gap-2">
-            <HandCoins className="h-4 w-4 text-sky-500" />
+            <HandCoins className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
             <Label htmlFor="include-loans" className="cursor-pointer text-sm">
               {t('fleetExpenses.includeLoans')}
             </Label>
@@ -666,7 +680,7 @@ export default function FleetExpensesPage() {
       {isLoading ? (
         <div className="space-y-2">
           {Array.from({ length: 6 }).map((_, i) => (
-            <Skeleton key={i} className="h-14 w-full" />
+            <Skeleton key={i} className="h-14 w-full rounded-none" />
           ))}
         </div>
       ) : !hasRows ? (
@@ -686,7 +700,7 @@ export default function FleetExpensesPage() {
                 onClick={() => navigate('/fleet-expenses/new', { state: { from: 'ledger' } })}
               {...intentProps(() => warmLedgerForm(queryClient))}
               >
-                <Plus className="h-4 w-4" />
+                <Plus />
                 {t('fleetExpenses.addExpense')}
               </Button>
             ) : undefined
@@ -763,9 +777,9 @@ function FilterChip({
       className={cn(
         // 44px minimum tap height on touch widths; compact again with a
         // pointer at lg and up.
-        'min-h-11 shrink-0 whitespace-nowrap rounded-full border px-3.5 py-1 text-xs font-semibold transition-colors lg:min-h-8 lg:px-3',
+        'min-h-11 shrink-0 whitespace-nowrap rounded-full border px-3.5 py-1 text-xs font-medium transition-colors lg:min-h-8 lg:px-3',
         active
-          ? 'border-foreground bg-foreground text-background'
+          ? 'border-primary bg-primary text-primary-foreground'
           : 'bg-card text-muted-foreground hover:bg-accent',
       )}
     >

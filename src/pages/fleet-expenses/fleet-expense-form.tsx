@@ -3,7 +3,7 @@ import { useLocation, useNavigate, useParams, useSearchParams } from 'react-rout
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, CheckCircle2, Copy, Lock, Receipt, Save, Split, Trash2 } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Copy, Loader2, Lock, Receipt, Save, Split, Trash2 } from 'lucide-react';
 
 import { PageShell } from '@/shared/ui/page-shell';
 import { Button } from '@/shared/ui/button';
@@ -26,6 +26,7 @@ import {
 import { SmartPartyField, type PartyValue } from '@/widgets/fleet-expenses-table/party-picker';
 import { SplitEditor } from '@/widgets/fleet-expenses-table/split-editor';
 import { useDebounce } from '@/shared/hooks/use-debounce';
+import { useIsDesktop } from '@/shared/hooks/use-media-query';
 import { useVehicles } from '@/entities/transaction/vehicles';
 import {
   categoryLabel,
@@ -71,6 +72,7 @@ export default function FleetExpenseFormPage({ mode }: { mode: 'create' | 'edit'
   const location = useLocation();
   const params = useParams<{ id: string }>();
   const [searchParams] = useSearchParams();
+  const isDesktop = useIsDesktop();
 
   const id = params.id ? Number(params.id) : undefined;
   const rawMessageIdParam = searchParams.get('raw_message_id');
@@ -284,24 +286,28 @@ export default function FleetExpenseFormPage({ mode }: { mode: 'create' | 'edit'
       icon={<Receipt className="h-5 w-5" />}
       actions={
         <Button variant="outline" size="sm" onClick={finish}>
-          <ArrowLeft className="h-4 w-4 rtl:rotate-180" />
+          <ArrowLeft className="rtl:rotate-180" />
           {t('common.back')}
         </Button>
       }
     >
-      <div className="grid items-start gap-6 lg:grid-cols-3">
+      <div className="grid items-start gap-3 lg:grid-cols-3">
         {/* ── Side panel: the verbatim source message + row facts.
               First in the DOM so it pins ABOVE the form on phones. ── */}
-        <div className="space-y-4 lg:order-2">
+        <div className="space-y-3 lg:order-2">
           {showSource && (
-            <div className="rounded-xl border border-s-4 border-s-primary bg-muted/40 p-3.5">
-              <div className="mb-1.5 flex items-center justify-between gap-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+            <div className="rounded-lg border border-s-4 border-s-primary bg-muted/40 p-3">
+              <div className="mb-1.5 flex items-center justify-between gap-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                 <span>
                   {t('fleetExpenses.sourceMessage')}
                   {mode === 'edit' && row?.raw_message_id ? ` · #${row.raw_message_id}` : ''}
                   {mode === 'create' && rawMessageId ? ` · #${rawMessageId}` : ''}
                 </span>
-                {sourceStamp && <span>{formatCairoDateTime(sourceStamp, i18n.language)}</span>}
+                {sourceStamp && (
+                  <span className="font-medium normal-case tracking-normal">
+                    {formatCairoDateTime(sourceStamp, i18n.language)}
+                  </span>
+                )}
               </div>
               {message.isLoading && mode === 'create' ? (
                 <Skeleton className="h-16 w-full" />
@@ -333,7 +339,7 @@ export default function FleetExpenseFormPage({ mode }: { mode: 'create' | 'edit'
           )}
 
           {mode === 'edit' && row?.edited_by && (
-            <div className="rounded-lg bg-amber-500/10 px-3 py-2 text-xs font-medium text-amber-700 dark:text-amber-400">
+            <div className="rounded-lg border border-warning/40 bg-warning/10 px-3 py-2 text-xs font-medium text-warning">
               {t('fleetExpenses.editedBy', {
                 name: row.edited_by,
                 date: row.edited_at ? formatCairoDate(row.edited_at, i18n.language) : '',
@@ -352,17 +358,17 @@ export default function FleetExpenseFormPage({ mode }: { mode: 'create' | 'edit'
         </div>
 
         {/* ── The form ── */}
-        <form onSubmit={onSubmit} className="space-y-4 lg:order-1 lg:col-span-2">
+        <form onSubmit={onSubmit} className="space-y-3 lg:order-1 lg:col-span-2">
           <Card>
             <CardContent className="grid gap-4 px-4 py-5 sm:grid-cols-2 sm:px-6 sm:py-6">
               {/* A split child's money fields belong to the set as a whole. */}
               {splitChild && (
-                <div className="flex flex-wrap items-center gap-2.5 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2.5 text-sm sm:col-span-2">
+                <div className="flex flex-wrap items-center gap-2.5 rounded-lg border border-primary/40 bg-primary/10 px-3 py-2.5 text-sm sm:col-span-2">
                   <Split className="h-4 w-4 shrink-0 text-primary" />
                   <div className="min-w-0 flex-1">
                     <p>{t('fleetExpenses.split.childHint')}</p>
                     {row?.parent_amount != null && (
-                      <p className="text-xs text-muted-foreground" dir="auto">
+                      <p className="font-mono text-xs tabular-nums text-muted-foreground" dir="auto">
                         {t('fleetExpenses.split.chipPartOf', {
                           amount: formatMoney(row.parent_amount),
                         })}
@@ -383,41 +389,57 @@ export default function FleetExpenseFormPage({ mode }: { mode: 'create' | 'edit'
 
               <div className="grid grid-cols-[1fr_5rem] gap-2">
                 <Field
+                  id="fe-amount"
                   label={t('fleetExpenses.fields.amount')}
                   error={form.formState.errors.amount}
                 >
                   <Input
+                    id="fe-amount"
                     inputMode="decimal"
                     dir="ltr"
                     placeholder="0.00"
-                    autoFocus={mode === 'create'}
+                    autoComplete="off"
+                    autoFocus={mode === 'create' && isDesktop}
                     disabled={moneyLocked}
                     {...form.register('amount')}
                   />
                 </Field>
                 <Field
+                  id="fe-currency"
                   label={t('fleetExpenses.fields.currency')}
                   error={form.formState.errors.currency}
                 >
-                  <Input dir="ltr" maxLength={3} disabled={readOnly} {...form.register('currency')} />
+                  <Input
+                    id="fe-currency"
+                    dir="ltr"
+                    maxLength={3}
+                    autoComplete="off"
+                    disabled={readOnly}
+                    {...form.register('currency')}
+                  />
                 </Field>
               </div>
 
               {/* Direction stays editable — flipping to "out" here is the same
                   reclassification the cash-in pocket offers. Creation defaults
                   to 'out'; promotions force it. */}
-              <Field label={t('fleetExpenses.fields.direction')}>
-                <div className="flex h-11 overflow-hidden rounded-md border sm:h-9">
+              <Field labelId="fe-direction-label" label={t('fleetExpenses.fields.direction')}>
+                <div
+                  role="group"
+                  aria-labelledby="fe-direction-label"
+                  className="flex h-11 overflow-hidden rounded-md border sm:h-9"
+                >
                   {(['out', 'in'] as const).map((d) => (
                     <button
                       key={d}
                       type="button"
                       disabled={moneyLocked}
+                      aria-pressed={form.watch('direction') === d}
                       onClick={() => form.setValue('direction', d, { shouldDirty: true })}
                       className={cn(
-                        'flex-1 text-sm font-semibold transition-colors',
+                        'flex-1 text-sm font-medium transition-colors',
                         form.watch('direction') === d
-                          ? 'bg-foreground text-background'
+                          ? 'bg-primary text-primary-foreground'
                           : 'bg-card text-muted-foreground hover:bg-accent',
                       )}
                     >
@@ -428,16 +450,18 @@ export default function FleetExpenseFormPage({ mode }: { mode: 'create' | 'edit'
               </Field>
 
               <Field
+                id="fe-date"
                 label={t('fleetExpenses.fields.date')}
                 error={form.formState.errors.occurred_date}
               >
-                <Input type="date" disabled={moneyLocked} {...form.register('occurred_date')} />
+                <Input id="fe-date" type="date" disabled={moneyLocked} {...form.register('occurred_date')} />
               </Field>
-              <Field label={t('fleetExpenses.fields.time')}>
-                <Input type="time" disabled={moneyLocked} {...form.register('occurred_time')} />
+              <Field id="fe-time" label={t('fleetExpenses.fields.time')}>
+                <Input id="fe-time" type="time" disabled={moneyLocked} {...form.register('occurred_time')} />
               </Field>
 
               <Field
+                id="fe-category"
                 label={t('fleetExpenses.fields.expenseType')}
                 error={form.formState.errors.category}
               >
@@ -445,6 +469,7 @@ export default function FleetExpenseFormPage({ mode }: { mode: 'create' | 'edit'
                   <Skeleton className="h-9 w-full" />
                 ) : (
                   <NativeSelect
+                    id="fe-category"
                     value={form.watch('category') ?? ''}
                     disabled={readOnly}
                     onChange={(e) =>
@@ -488,8 +513,8 @@ export default function FleetExpenseFormPage({ mode }: { mode: 'create' | 'edit'
               {/* The registration chip says what happened, in words. One-way:
                   it links nowhere the user can break. */}
               {mode === 'edit' && row?.loan && (
-                <div className="flex items-start gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/5 px-3 py-2.5 text-sm sm:col-span-2">
-                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" />
+                <div className="flex items-start gap-2 rounded-lg border border-success/40 bg-success/10 px-3 py-2.5 text-sm sm:col-span-2">
+                  <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-success" />
                   <div>
                     <span dir="auto">
                       {t('fleetExpenses.loanChip', {
@@ -510,28 +535,50 @@ export default function FleetExpenseFormPage({ mode }: { mode: 'create' | 'edit'
               )}
 
               <Field
+                id="fe-counterparty"
                 label={t('fleetExpenses.fields.counterparty')}
                 error={form.formState.errors.counterparty}
               >
-                <Input dir="auto" disabled={readOnly} {...form.register('counterparty')} />
+                <Input
+                  id="fe-counterparty"
+                  dir="auto"
+                  autoComplete="off"
+                  disabled={readOnly}
+                  {...form.register('counterparty')}
+                />
               </Field>
 
               <Field
+                id="fe-reference"
                 label={t('fleetExpenses.fields.reference')}
                 error={form.formState.errors.reference}
               >
-                <Input dir="ltr" disabled={readOnly} {...form.register('reference')} />
+                <Input
+                  id="fe-reference"
+                  dir="ltr"
+                  autoComplete="off"
+                  disabled={readOnly}
+                  {...form.register('reference')}
+                />
               </Field>
 
               <Field
+                id="fe-account"
                 label={t('fleetExpenses.fields.account')}
                 error={form.formState.errors.account}
               >
-                <Input dir="ltr" disabled={readOnly} {...form.register('account')} />
+                <Input
+                  id="fe-account"
+                  dir="ltr"
+                  autoComplete="off"
+                  disabled={readOnly}
+                  {...form.register('account')}
+                />
               </Field>
 
-              <Field label={t('fleetExpenses.fields.paymentMethod')}>
+              <Field id="fe-payment-method" label={t('fleetExpenses.fields.paymentMethod')}>
                 <NativeSelect
+                  id="fe-payment-method"
                   value={form.watch('payment_method') ?? ''}
                   disabled={readOnly}
                   onChange={(e) =>
@@ -547,8 +594,9 @@ export default function FleetExpenseFormPage({ mode }: { mode: 'create' | 'edit'
                 </NativeSelect>
               </Field>
 
-              <Field label={t('fleetExpenses.fields.company')}>
+              <Field id="fe-company" label={t('fleetExpenses.fields.company')}>
                 <NativeSelect
+                  id="fe-company"
                   value={form.watch('company') ?? ''}
                   disabled={readOnly}
                   onChange={(e) => form.setValue('company', e.target.value, { shouldDirty: true })}
@@ -562,11 +610,12 @@ export default function FleetExpenseFormPage({ mode }: { mode: 'create' | 'edit'
                 </NativeSelect>
               </Field>
 
-              <Field label={t('fleetExpenses.fields.car')}>
+              <Field id="fe-car" label={t('fleetExpenses.fields.car')}>
                 {vehicles.isLoading ? (
                   <Skeleton className="h-9 w-full" />
                 ) : (
                   <NativeSelect
+                    id="fe-car"
                     value={carId == null ? '' : String(carId)}
                     disabled={readOnly}
                     onChange={(e) => setCarId(e.target.value === '' ? null : Number(e.target.value))}
@@ -581,13 +630,19 @@ export default function FleetExpenseFormPage({ mode }: { mode: 'create' | 'edit'
                 )}
               </Field>
 
-              <Field label={t('fleetExpenses.fields.paidBy')} error={form.formState.errors.paid_by}>
+              <Field
+                id="fe-paid-by"
+                label={t('fleetExpenses.fields.paidBy')}
+                error={form.formState.errors.paid_by}
+              >
                 {/* Free text with name suggestions. Picking a driver or an
                     employee here appends their NAME only — deliberately not an
                     id link. Salary settlements are labels, not registrations,
                     and an unregistered name needs no creating to be typed. */}
                 <Input
+                  id="fe-paid-by"
                   dir="auto"
+                  autoComplete="off"
                   disabled={readOnly}
                   list="party-name-suggestions"
                   {...form.register('paid_by')}
@@ -601,10 +656,18 @@ export default function FleetExpenseFormPage({ mode }: { mode: 'create' | 'edit'
 
               <div className="sm:col-span-2">
                 <Field
+                  id="fe-description"
                   label={t('fleetExpenses.fields.description')}
                   error={form.formState.errors.description}
                 >
-                  <Textarea rows={3} dir="auto" disabled={readOnly} {...form.register('description')} />
+                  <Textarea
+                    id="fe-description"
+                    rows={3}
+                    dir="auto"
+                    autoComplete="off"
+                    disabled={readOnly}
+                    {...form.register('description')}
+                  />
                 </Field>
               </div>
             </CardContent>
@@ -628,7 +691,11 @@ export default function FleetExpenseFormPage({ mode }: { mode: 'create' | 'edit'
                 disabled={saving}
                 className="order-2 min-h-11 flex-1 sm:order-3 sm:min-h-9 sm:flex-none"
               >
-                <Save className="h-4 w-4" />
+                {saving ? (
+                  <Loader2 className="animate-spin motion-reduce:animate-none" />
+                ) : (
+                  <Save />
+                )}
                 {saving ? t('common.saving') : t('common.save')}
               </Button>
               {mode === 'edit' && row && !splitChild && (
@@ -642,7 +709,7 @@ export default function FleetExpenseFormPage({ mode }: { mode: 'create' | 'edit'
                   onClick={() => setConfirmDelete(true)}
                   disabled={saving || deleteMutation.isPending}
                 >
-                  <Trash2 className="h-4 w-4" />
+                  <Trash2 />
                   {t('common.delete')}
                 </Button>
               )}
@@ -656,7 +723,7 @@ export default function FleetExpenseFormPage({ mode }: { mode: 'create' | 'edit'
                   onClick={() => setSplitOpen(true)}
                   disabled={saving || deleteMutation.isPending}
                 >
-                  <Split className="h-4 w-4" />
+                  <Split />
                   {t('fleetExpenses.split.action')}
                 </Button>
               )}
@@ -708,17 +775,23 @@ export default function FleetExpenseFormPage({ mode }: { mode: 'create' | 'edit'
 /* -------------------------------------------------------------------------- */
 
 function Field({
+  id,
+  labelId,
   label,
   error,
   children,
 }: {
+  id?: string;
+  labelId?: string;
   label: string;
   error?: { message?: string };
   children: React.ReactNode;
 }) {
   return (
     <div className="space-y-1.5">
-      <Label>{label}</Label>
+      <Label htmlFor={id} id={labelId}>
+        {label}
+      </Label>
       {children}
       {error?.message && <p className="text-xs text-destructive">{error.message}</p>}
     </div>
