@@ -22,6 +22,7 @@ cd "$ROOT"
 ORIG_ARGS=("$@")   # kept for the caffeinate re-exec below (the option loop consumes $@)
 PHASE="both"; SHARDS=""; FROM=""; DRY_RUN=0; COMMIT=1
 MODEL="${AUDIT_MODEL:-}"                      # empty = the CLI's default model
+FALLBACK_MODEL="${AUDIT_FALLBACK_MODEL:-}"    # switched to after 2 limited attempts (e.g. sonnet)
 AUDIT_BUDGET="${AUDIT_BUDGET_USD:-12}"        # per audit call
 FIX_BUDGET="${FIX_BUDGET_USD:-20}"            # per fix call
 TIMEOUT_S="${AUDIT_TIMEOUT_S:-2400}"          # wall clock per claude call (40 min)
@@ -94,7 +95,10 @@ PY
 
 RETRY_SLEEP_S="${AUDIT_RETRY_SLEEP_S:-900}"   # wait between retries on limit / rate / connection errors (15 min)
 MAX_RETRIES="${AUDIT_MAX_RETRIES:-48}"        # 48 × 15 min = 12 h of waiting at most
-TRANSIENT_RE='hit your session limit|usage limit|rate limit|rate_limit|overloaded|529|500 Internal|Connection lost|ECONNRESET|ETIMEDOUT|fetch failed|API Error|resets [0-9]'
+# Anything that means "try again later" rather than "this shard is broken".
+# The overnight run of 2026-08-30 lost 11 shards because "You've reached your Fable 5
+# limit." matched none of these — match any "reached/hit your … limit" phrasing now.
+TRANSIENT_RE='(reached|hit) your [^.]*limit|usage limit|rate limit|rate_limit|quota|overloaded|529|500 Internal|502 Bad|503 Service|Connection lost|ECONNRESET|ETIMEDOUT|fetch failed|API Error|resets [0-9]'
 
 run_claude() {  # run_claude <prompt-file> <log> <budget> <allowed-tools>   — retries transient failures
   local prompt="$1" logf="$2" budget="$3" allowed="$4" attempt=0 rc
@@ -112,6 +116,10 @@ run_claude() {  # run_claude <prompt-file> <log> <budget> <allowed-tools>   — 
     [ $rc -eq 0 ] && return 0
     if tail -c +"$((before+1))" "$logf" | grep -qiE "$TRANSIENT_RE"; then
       if [ "$attempt" -ge "$MAX_RETRIES" ]; then log "  transient failure persisted for $attempt attempts — giving up"; return $rc; fi
+      if [ -n "$FALLBACK_MODEL" ] && [ "$attempt" -eq 2 ]; then
+        log "  switching to fallback model '$FALLBACK_MODEL' after 2 limited attempts"
+        args=("${args[@]/--model}"); args=("${args[@]/$MODEL}"); args+=(--model "$FALLBACK_MODEL"); MODEL="$FALLBACK_MODEL"
+      fi
       log "  transient failure (rc=$rc, attempt $attempt/$MAX_RETRIES): $(tail -c +"$((before+1))" "$logf" | grep -iE "$TRANSIENT_RE" | tail -1 | cut -c1-110) — sleeping ${RETRY_SLEEP_S}s"
       sleep "$RETRY_SLEEP_S"; continue
     fi
