@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { Locate } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { Button } from '@/shared/ui/button';
 import { cn } from '@/shared/lib/cn';
 import { DEFAULT_MAP_CENTER } from '@/shared/lib/coords';
@@ -25,58 +26,61 @@ function injectLeafletStyles() {
   style.textContent = `
     .custom-marker { background: transparent; border: none; }
     .custom-marker:hover {
-      transform: scale(1.08);
-      transition: transform 0.18s ease;
       z-index: 1000;
     }
     .leaflet-popup-content-wrapper {
       border-radius: 12px;
-      box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
-      border: 1px solid rgba(0,0,0,0.05);
+      box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+      border: 1px solid hsl(var(--border));
+      background: hsl(var(--popover)); color: hsl(var(--popover-foreground));
       font-family: inherit;
     }
-    .leaflet-popup-tip { box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .leaflet-popup-tip {
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      background: hsl(var(--popover)); color: hsl(var(--popover-foreground));
+    }
     .leaflet-control-zoom {
       border: none; border-radius: 8px; overflow: hidden;
-      background: rgba(255,255,255,0.9); backdrop-filter: blur(10px);
-      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+      background: hsl(var(--card) / 0.9); backdrop-filter: blur(10px);
+      box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
     }
     .leaflet-control-zoom a {
       background: transparent; border: none;
-      border-bottom: 1px solid rgba(0,0,0,0.1);
-      color: #374151; font-weight: 600;
-      transition: all 0.2s ease;
+      border-bottom: 1px solid hsl(var(--border));
+      color: hsl(var(--foreground)); font-weight: 600;
+      transition: background-color 0.15s ease, color 0.15s ease;
       width: 40px; height: 40px; line-height: 40px; font-size: 18px;
     }
     .leaflet-control-zoom a:last-child { border-bottom: none; }
-    .leaflet-control-zoom a:hover { background: rgba(59, 130, 246, 0.1); color: #2563EB; }
+    .leaflet-control-zoom a:hover { background: hsl(var(--accent)); color: hsl(var(--accent-foreground)); }
     .leaflet-control-attribution {
-      background: rgba(255,255,255,0.8); backdrop-filter: blur(10px);
+      background: hsl(var(--card) / 0.8); backdrop-filter: blur(10px);
+      color: hsl(var(--muted-foreground));
       border-radius: 6px; font-size: 10px; padding: 2px 6px;
     }
-    .leaflet-container { background: #f8fafc; font-family: inherit; border-radius: 12px; }
+    .leaflet-container { background: hsl(var(--muted)); font-family: inherit; border-radius: 12px; }
     .leaflet-popup-close-button {
-      color: #6b7280; font-size: 18px; padding: 4px 8px;
-      border-radius: 4px; transition: all 0.2s ease;
+      color: inherit; opacity: 0.7; font-size: 18px; padding: 4px 8px;
+      border-radius: 8px; transition: background-color 0.15s ease, color 0.15s ease;
     }
-    .leaflet-popup-close-button:hover { background: rgba(239,68,68,0.1); color: #dc2626; }
+    .leaflet-popup-close-button:hover { opacity: 1; background: hsl(var(--accent)); color: hsl(var(--accent-foreground)); }
 
-    .dark .leaflet-container { background: #0f172a; }
+    .dark .leaflet-container { background: hsl(var(--muted)); }
     .dark .leaflet-control-zoom {
-      background: rgba(30,37,53,0.9);
-      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.4);
+      background: hsl(var(--card) / 0.9);
+      box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
     }
     .dark .leaflet-control-zoom a {
-      color: #cbd5e1; border-bottom-color: rgba(255,255,255,0.08);
+      color: hsl(var(--foreground)); border-bottom-color: hsl(var(--border));
     }
-    .dark .leaflet-control-zoom a:hover { background: rgba(59,130,246,0.15); color: #60a5fa; }
+    .dark .leaflet-control-zoom a:hover { background: hsl(var(--accent)); color: hsl(var(--accent-foreground)); }
     .dark .leaflet-popup-content-wrapper, .dark .leaflet-popup-tip {
-      background: #1e2535; color: #e2e8f0; border-color: rgba(255,255,255,0.07);
+      background: hsl(var(--popover)); color: hsl(var(--popover-foreground)); border-color: hsl(var(--border));
     }
     .dark .leaflet-control-attribution {
-      background: rgba(30,37,53,0.85); color: #94a3b8;
+      background: hsl(var(--card) / 0.85); color: hsl(var(--muted-foreground));
     }
-    .dark .leaflet-control-attribution a { color: #93c5fd; }
+    .dark .leaflet-control-attribution a { color: hsl(var(--primary)); }
 
     @media (max-width: 640px) {
       .leaflet-popup-content-wrapper { font-size: 12px; border-radius: 12px; }
@@ -169,6 +173,7 @@ export function LeafletMapView({
   bottomOffset = 0,
   liveUpdates = false,
 }: MapViewProps) {
+  const { t } = useTranslation();
   const containerRef = React.useRef<HTMLDivElement>(null);
   const LRef = React.useRef<LeafletNamespace | null>(null);
   const mapRef = React.useRef<LeafletMap | null>(null);
@@ -398,7 +403,10 @@ export function LeafletMapView({
         L.DomEvent.stopPropagation(e);
         onMarkerDoubleClickRef.current?.(info.id);
         map.closePopup();
-        map.flyTo([info.lat, info.lng], 18, { duration: 0.75 });
+        map.flyTo([info.lat, info.lng], 18, {
+          duration: 0.75,
+          animate: !globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches,
+        });
       });
 
       if (info.draggable) {
@@ -510,17 +518,18 @@ export function LeafletMapView({
 
       {mapReady && (
         <div 
-          className="absolute end-3 z-[1000] flex flex-col gap-1.5"
+          className="absolute end-3 z-[1000] flex flex-col gap-2"
           style={{ bottom: 128 + bottomOffset }}
         >
           <Button
             size="icon"
-            variant="secondary"
-            className="h-8 w-8 rounded-md shadow-md"
+            variant="outline"
+            className="h-8 w-8 rounded-md backdrop-blur-md"
             onClick={fitBounds}
-            title="Fit to content"
+            title={t('maps.centerOnMarkers', { defaultValue: 'Center map on markers' })}
+            aria-label={t('maps.centerOnMarkers', { defaultValue: 'Center map on markers' })}
           >
-            <Locate className="h-4 w-4" />
+            <Locate />
           </Button>
         </div>
       )}

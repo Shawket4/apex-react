@@ -2257,5 +2257,9 @@
     "beyondRangeHint": "This leg extends past the loaded range — its missing days were fetched for the locked view.",
     "legsShort": "legs",
     "lockTrip": "Lock playback to this trip"
+  },
+  "maps": {
+    "centerOnMarkers": "Center map on markers",
+    "toggleSatellite": "Toggle satellite view"
   }
 }
