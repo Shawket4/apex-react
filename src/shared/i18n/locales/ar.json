@@ -2060,6 +2060,14 @@
       "warning": "تحذير",
       "critical": "حرج"
     },
+    "units": {
+      "km": "كم",
+      "kmh": "{{v}} كم/س",
+      "m": "م",
+      "h": "س",
+      "min": "د",
+      "s": "ث"
+    },
     "flagDetails": {
       "stoppedFor": "توقف لمدة",
       "actual": "الفعلي",

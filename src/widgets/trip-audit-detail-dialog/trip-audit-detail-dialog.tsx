@@ -23,6 +23,7 @@ import { Badge } from '@/shared/ui/badge';
 import { Button } from '@/shared/ui/button';
 import { Label } from '@/shared/ui/label';
 import { Textarea } from '@/shared/ui/textarea';
+import { Skeleton } from '@/shared/ui/skeleton';
 import { MapView } from '@/shared/ui/map-view';
 import type { MapCircle, MapMarker, MapPolyline } from '@/shared/lib/maps/types';
 import { decodePolyline5 } from '@/shared/lib/polyline';
@@ -63,11 +64,30 @@ import {
   TERMINAL_DEFAULT_RADIUS_M,
 } from '@/entities/location/schemas';
 import {
-  formatDurationSecs,
   formatKm,
   RatioBadge,
   useUnmatchedReasonLabel,
 } from '@/widgets/trip-audit-matches-table';
+
+/** Translated variant of `formatDurationSecs` — unit suffixes go through `t()`. */
+function useFormatDurationSecs() {
+  const { t } = useTranslation();
+  return React.useCallback(
+    (secs: number | null | undefined): string => {
+      if (secs == null || !Number.isFinite(secs) || secs < 0) return '—';
+      const total = Math.round(secs);
+      const h = Math.floor(total / 3600);
+      const m = Math.floor((total % 3600) / 60);
+      const uh = t('tripAudit.units.h', 'h');
+      const um = t('tripAudit.units.min', 'm');
+      const us = t('tripAudit.units.s', 's');
+      if (h > 0) return `${h}${uh} ${m}${um}`;
+      if (m > 0) return `${m}${um}`;
+      return `${total}${us}`;
+    },
+    [t],
+  );
+}
 
 /* -------------------------------------------------------------------------- */
 /* Colors + constants                                                          */
@@ -124,9 +144,9 @@ function extractUnplannedStops(flags: TripFlag[]): UnplannedStop[] {
 }
 
 const SEVERITY_ICON: Record<FlagSeverity, React.ReactNode> = {
-  info: <Info className="h-4 w-4 shrink-0 text-primary" />,
-  warning: <AlertTriangle className="h-4 w-4 shrink-0 text-warning" />,
-  critical: <CircleAlert className="h-4 w-4 shrink-0 text-destructive" />,
+  info: <Info className="h-4 w-4 shrink-0 text-primary" aria-hidden="true" />,
+  warning: <AlertTriangle className="h-4 w-4 shrink-0 text-warning" aria-hidden="true" />,
+  critical: <CircleAlert className="h-4 w-4 shrink-0 text-destructive" aria-hidden="true" />,
 };
 
 const SEVERITY_VARIANT: Record<FlagSeverity, 'secondary' | 'warning' | 'destructive'> = {
@@ -366,10 +386,10 @@ function LayerChip({
       onClick={onClick}
       aria-pressed={active}
       className={cn(
-        'flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
+        'flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
         active
-          ? 'border-primary/50 bg-primary/5 text-foreground'
-          : 'border-border bg-card text-muted-foreground opacity-60 hover:opacity-100',
+          ? 'border-primary bg-primary/10 text-primary'
+          : 'border-border bg-card text-muted-foreground hover:bg-accent hover:text-accent-foreground',
       )}
     >
       {swatch}
@@ -391,6 +411,7 @@ interface PlaybackMapProps {
 
 function PlaybackMap({ detail, history, previewLeg }: PlaybackMapProps) {
   const { t } = useTranslation();
+  const formatDurationSecs = useFormatDurationSecs();
 
   /* ---- Layer toggles (component state only) ---- */
   const [showActual, setShowActual] = React.useState(true);
@@ -556,6 +577,7 @@ function PlaybackMap({ detail, history, previewLeg }: PlaybackMapProps) {
     detail.flags,
     geofences,
     t,
+    formatDurationSecs,
   ]);
 
   /* Playback markers — the truck (and, in a race, the optimal ghost).
@@ -574,7 +596,7 @@ function PlaybackMap({ detail, history, previewLeg }: PlaybackMapProps) {
         kind: 'vehicle',
         heading: tick.sample.heading,
         affectsBounds: false,
-        title: `${Math.round(tick.sample.speed)} km/h`,
+        title: t('tripAudit.units.kmh', '{{v}} km/h', { v: Math.round(tick.sample.speed) }),
       },
     ];
     if (tick.ghost) {
@@ -644,7 +666,7 @@ function PlaybackMap({ detail, history, previewLeg }: PlaybackMapProps) {
         )}
         {history.loading && (
           <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <Loader2 className="h-3 w-3 animate-spin" />
+            <Loader2 className="h-3 w-3 animate-spin motion-reduce:animate-none" aria-hidden="true" />
             {t('tripAudit.detail.loadingTrace', 'Loading GPS trace…')}
           </span>
         )}
@@ -700,6 +722,7 @@ function LegSentence({
   onPreview: (leg: TripLeg) => void;
 }) {
   const { t, i18n } = useTranslation();
+  const formatDurationSecs = useFormatDurationSecs();
 
   const depart = leg.depart_ts ? formatCairoTime(leg.depart_ts, i18n.language) : '—';
   const arrive = leg.arrive_ts ? formatCairoTime(leg.arrive_ts, i18n.language) : '—';
@@ -709,8 +732,8 @@ function LegSentence({
   return (
     <li
       className={cn(
-        'flex items-start gap-2.5 rounded-lg border p-3 transition-colors',
-        previewed && 'border-emerald-600/50 bg-emerald-600/5',
+        'flex items-start gap-2.5 rounded-lg border bg-card px-3 py-2.5 transition-colors',
+        previewed && 'border-primary bg-primary/10',
       )}
     >
       <Badge variant="secondary" className="mt-0.5 shrink-0 tabular-nums">
@@ -740,13 +763,13 @@ function LegSentence({
             {t(`tripAudit.legType.${leg.leg_type}`, leg.leg_type || '—')}
           </Badge>
           <RatioBadge ratio={leg.distance_ratio} />
-          <span className="tabular-nums" dir="ltr">
+          <span className="font-mono tabular-nums" dir="ltr">
             {formatDurationSecs(leg.actual_secs)} / {formatDurationSecs(leg.osrm_secs)}
           </span>
           {leg.max_deviation_m != null && (
-            <span className="tabular-nums" dir="ltr">
+            <span className="font-mono tabular-nums" dir="ltr">
               {t('tripAudit.legs.maxDeviation', 'Max dev.')}{' '}
-              {formatNumber(leg.max_deviation_m)} m
+              {formatNumber(leg.max_deviation_m)} {t('tripAudit.units.m', 'm')}
             </span>
           )}
         </div>
@@ -757,9 +780,10 @@ function LegSentence({
           variant={previewed ? 'default' : 'outline'}
           size="sm"
           className="h-7 shrink-0 gap-1.5 text-xs"
+          aria-pressed={previewed}
           onClick={() => onPreview(leg)}
         >
-          <Route className="h-3.5 w-3.5" />
+          <Route aria-hidden="true" />
           {previewed
             ? t('tripAudit.legs.previewing', 'Previewing')
             : t('tripAudit.legs.preview', 'Preview')}
@@ -783,7 +807,7 @@ function LegsList({
 
   if (sorted.length === 0) {
     return (
-      <p className="text-sm text-muted-foreground">
+      <p className="py-6 text-center text-xs text-muted-foreground">
         {t('tripAudit.detail.noLegs', 'No legs recorded for this trip.')}
       </p>
     );
@@ -809,6 +833,7 @@ function LegsList({
 
 function FlagDetails({ flag }: { flag: TripFlag }) {
   const { t } = useTranslation();
+  const formatDurationSecs = useFormatDurationSecs();
   const details = parseFlagDetails(flag);
 
   switch (flag.flag_type) {
@@ -830,8 +855,8 @@ function FlagDetails({ flag }: { flag: TripFlag }) {
               </>
             )}
             {lat != null && lng != null && (
-              <span className="ms-2 tabular-nums" dir="ltr">
-                ({lat.toFixed(5)}, {lng.toFixed(5)})
+              <span className="ms-2 font-mono tabular-nums" dir="ltr">
+                ({formatNumber(lat, 5)}, {formatNumber(lng, 5)})
               </span>
             )}
           </p>
@@ -844,9 +869,9 @@ function FlagDetails({ flag }: { flag: TripFlag }) {
       const ratio = asNumber(details.ratio);
       return (
         <p className="text-sm text-muted-foreground" dir="ltr">
-          {t('tripAudit.flagDetails.actual', 'Actual')} {formatKm(actualKm)} km ·{' '}
-          {t('tripAudit.flagDetails.optimal', 'Optimal')} {formatKm(osrmKm)} km
-          {ratio != null && <> · {ratio.toFixed(2)}×</>}
+          {t('tripAudit.flagDetails.actual', 'Actual')} {formatKm(actualKm)} {t('tripAudit.units.km', 'km')} ·{' '}
+          {t('tripAudit.flagDetails.optimal', 'Optimal')} {formatKm(osrmKm)} {t('tripAudit.units.km', 'km')}
+          {ratio != null && <> · {formatNumber(ratio, 2)}×</>}
         </p>
       );
     }
@@ -867,8 +892,8 @@ function FlagDetails({ flag }: { flag: TripFlag }) {
                 dir="auto"
                 className={
                   tone === 'good'
-                    ? 'rounded bg-emerald-500/10 px-1.5 py-0.5 text-emerald-700 dark:text-emerald-400'
-                    : 'rounded bg-muted px-1.5 py-0.5'
+                    ? 'rounded-full bg-success/10 px-2 py-0.5 text-success'
+                    : 'rounded-full bg-muted px-2 py-0.5'
                 }
               >
                 {n}
@@ -878,11 +903,11 @@ function FlagDetails({ flag }: { flag: TripFlag }) {
         </span>
       );
       return (
-        <div className="space-y-1.5 rounded-md border border-amber-500/40 bg-amber-500/5 p-2 text-sm">
-          <p className="font-medium text-amber-700 dark:text-amber-400">
+        <div className="space-y-1.5 rounded-lg border border-warning/40 bg-warning/10 p-2 text-sm">
+          <p className="font-medium text-warning">
             {t('tripAudit.flagDetails.orderTitle', 'A shorter delivery order existed')}
             {savings != null && (
-              <span dir="ltr"> (−{formatKm(savings)} km)</span>
+              <span dir="ltr"> (−{formatKm(savings)} {t('tripAudit.units.km', 'km')})</span>
             )}
           </p>
           <p className="text-muted-foreground">
@@ -904,17 +929,17 @@ function FlagDetails({ flag }: { flag: TripFlag }) {
       const split = asNumber(details.split_km);
       const savingsPct = asNumber(details.savings_pct);
       return (
-        <div className="space-y-1 rounded-md border border-sky-500/40 bg-sky-500/5 p-2 text-sm">
-          <p className="font-medium text-sky-700 dark:text-sky-400">
+        <div className="space-y-1 rounded-lg border border-primary/40 bg-primary/10 p-2 text-sm">
+          <p className="font-medium text-primary">
             {t('tripAudit.flagDetails.bundlingTitle', 'These drop-offs point in different directions')}
           </p>
           <p className="text-muted-foreground" dir="auto">
             {drops.join(' · ')}
           </p>
           <p className="text-muted-foreground" dir="ltr">
-            {t('tripAudit.flagDetails.bundlingBody', 'Bundled')}: {formatKm(bundled)} km ·{' '}
-            {t('tripAudit.flagDetails.bundlingSplit', 'As separate trips')}: {formatKm(split)} km
-            {savingsPct != null && <> · {t('tripAudit.flagDetails.bundlingSaves', 'bundling saves only')} {savingsPct.toFixed(1)}%</>}
+            {t('tripAudit.flagDetails.bundlingBody', 'Bundled')}: {formatKm(bundled)} {t('tripAudit.units.km', 'km')} ·{' '}
+            {t('tripAudit.flagDetails.bundlingSplit', 'As separate trips')}: {formatKm(split)} {t('tripAudit.units.km', 'km')}
+            {savingsPct != null && <> · {t('tripAudit.flagDetails.bundlingSaves', 'bundling saves only')} {formatNumber(savingsPct, 1)}%</>}
           </p>
         </div>
       );
@@ -966,8 +991,8 @@ function FlagsList({
   // found the driven order already optimal, say so — otherwise "no order
   // flag" is indistinguishable from "not checked".
   const verifiedLine = orderVerified ? (
-    <p className="flex items-center gap-1.5 text-sm text-emerald-700 dark:text-emerald-400">
-      <CheckCircle2 className="h-4 w-4 shrink-0" />
+    <p className="flex items-center gap-1.5 text-sm text-success">
+      <CheckCircle2 className="h-4 w-4 shrink-0" aria-hidden="true" />
       {t('tripAudit.detail.orderVerified', 'Delivery order verified — driven order was already the shortest.')}
     </p>
   ) : null;
@@ -976,7 +1001,7 @@ function FlagsList({
     return (
       <div className="space-y-2">
         {verifiedLine}
-        <p className="text-sm text-muted-foreground">
+        <p className="py-6 text-center text-xs text-muted-foreground">
           {t('tripAudit.detail.noFlags', 'No flags raised for this trip.')}
         </p>
       </div>
@@ -995,11 +1020,11 @@ function FlagsList({
           : flag.flag_type;
         const seq = flag.leg_id != null ? legSeq.get(flag.leg_id) : undefined;
         return (
-          <li key={flag.id} className="flex items-start gap-3 rounded-lg border p-3">
+          <li key={flag.id} className="flex items-start gap-3 rounded-lg border bg-card px-3 py-2.5">
             <span className="mt-0.5">{SEVERITY_ICON[flag.severity]}</span>
             <div className="min-w-0 flex-1 space-y-1">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="text-sm font-medium">{typeLabel}</span>
+                <span className="text-[13px] font-medium leading-snug">{typeLabel}</span>
                 <Badge variant={SEVERITY_VARIANT[flag.severity]}>
                   {t(`tripAudit.severity.${flag.severity}`, flag.severity)}
                 </Badge>
@@ -1045,10 +1070,10 @@ function ReviewSection({ detail }: { detail: TripMatchDetail }) {
   };
 
   return (
-    <div className="space-y-3 rounded-lg border p-4">
+    <div className="space-y-3 rounded-lg border bg-card p-3">
       {detail.reviewed_at ? (
         <div className="flex items-start gap-2">
-          <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-success" />
+          <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-success" aria-hidden="true" />
           <div className="min-w-0 space-y-1 text-sm">
             <p className="font-medium">
               {t('tripAudit.detail.reviewedAt', 'Reviewed {{when}}', {
@@ -1075,6 +1100,8 @@ function ReviewSection({ detail }: { detail: TripMatchDetail }) {
         <Textarea
           id="trip-audit-review-note"
           value={note}
+          name="review_note"
+          autoComplete="off"
           onChange={(e) => setNote(e.target.value)}
           placeholder={t('tripAudit.detail.notePlaceholder', 'Optional note…')}
           rows={2}
@@ -1087,9 +1114,9 @@ function ReviewSection({ detail }: { detail: TripMatchDetail }) {
         className="gap-2"
       >
         {reviewMatch.isPending ? (
-          <Loader2 className="h-4 w-4 animate-spin" />
+          <Loader2 className="animate-spin motion-reduce:animate-none" aria-hidden="true" />
         ) : (
-          <CheckCircle2 className="h-4 w-4" />
+          <CheckCircle2 aria-hidden="true" />
         )}
         {detail.reviewed_at
           ? t('tripAudit.detail.updateReview', 'Update review')
@@ -1124,6 +1151,7 @@ export function TripAuditDetailDialog({ matchId, onOpenChange }: TripAuditDetail
   const { data: detail, isLoading, isError } = useTripMatch(matchId);
   const history = useTripPlaybackHistory(detail ?? null, open);
   const reasonLabel = useUnmatchedReasonLabel();
+  const formatDurationSecs = useFormatDurationSecs();
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -1155,7 +1183,7 @@ export function TripAuditDetailDialog({ matchId, onOpenChange }: TripAuditDetail
                 {detail.status !== 'unmatched' && (
                   <Button asChild variant="outline" size="sm" className="h-7 gap-1.5">
                     <Link to={`/trip-audit/${detail.id}/replay`}>
-                      <Play className="h-3.5 w-3.5" />
+                      <Play aria-hidden="true" />
                       {t('tripReplay.openReplay', 'Open replay')}
                     </Link>
                   </Button>
@@ -1171,15 +1199,20 @@ export function TripAuditDetailDialog({ matchId, onOpenChange }: TripAuditDetail
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex-1 space-y-6 overflow-y-auto px-6 py-4">
+        <div className="flex-1 space-y-3 overscroll-contain overflow-y-auto px-6 py-4">
           {isLoading && (
-            <div className="flex h-64 items-center justify-center text-muted-foreground">
-              <Loader2 className="h-6 w-6 animate-spin" />
+            <div className="space-y-3">
+              <Skeleton className="h-[380px] w-full rounded-lg" />
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Skeleton key={i} className="h-[60px] w-full rounded-lg" />
+                ))}
+              </div>
             </div>
           )}
 
           {isError && !isLoading && (
-            <p className="text-sm text-destructive">
+            <p className="py-6 text-center text-xs text-muted-foreground">
               {t('tripAudit.detail.loadError', 'Failed to load trip details.')}
             </p>
           )}
@@ -1227,7 +1260,7 @@ export function TripAuditDetailDialog({ matchId, onOpenChange }: TripAuditDetail
               </div>
 
               <section className="space-y-2">
-                <h3 className="text-sm font-semibold">
+                <h3 className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                   {t('tripAudit.detail.legs', 'Legs')}
                 </h3>
                 <LegsList
@@ -1240,7 +1273,7 @@ export function TripAuditDetailDialog({ matchId, onOpenChange }: TripAuditDetail
               </section>
 
               <section className="space-y-2">
-                <h3 className="text-sm font-semibold">
+                <h3 className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                   {t('tripAudit.detail.flags', 'Flags')}
                 </h3>
                 <FlagsList
@@ -1267,9 +1300,9 @@ export function TripAuditDetailDialog({ matchId, onOpenChange }: TripAuditDetail
 
 function SummaryItem({ label, value }: { label: React.ReactNode; value: React.ReactNode }) {
   return (
-    <div className="rounded-lg border p-3">
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <div className="mt-1 text-sm font-medium">{value}</div>
+    <div className="rounded-lg border bg-card p-3">
+      <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{label}</p>
+      <div className="font-mono text-[15px] font-semibold leading-none tabular-nums">{value}</div>
     </div>
   );
 }

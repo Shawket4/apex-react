@@ -2052,6 +2052,14 @@
       "warning": "Warning",
       "critical": "Critical"
     },
+    "units": {
+      "km": "km",
+      "kmh": "{{v}} km/h",
+      "m": "m",
+      "h": "h",
+      "min": "m",
+      "s": "s"
+    },
     "flagDetails": {
       "stoppedFor": "Stopped for",
       "actual": "Actual",
