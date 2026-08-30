@@ -24,7 +24,7 @@ import {
   useOilChanges,
   useDeleteOilChange,
 } from '@/entities/oil-change/queries';
-import { selectLatestPerCar } from '@/entities/oil-change/api';
+import { selectFilterCyclesByPlate, selectLatestPerCar } from '@/entities/oil-change/api';
 import type { OilChangeView } from '@/entities/oil-change/schemas';
 import { useDebounce } from '@/shared/hooks/use-debounce';
 import { matches } from '@/shared/lib/normalize';
@@ -82,6 +82,13 @@ export default function OilChangesPage() {
 
   const latestPerCar = React.useMemo(
     () => selectLatestPerCar(records),
+    [records],
+  );
+
+  // A cycle count is a fact about the vehicle's history, not about the row, so
+  // it cannot be read off the latest record alone.
+  const cyclesByPlate = React.useMemo(
+    () => selectFilterCyclesByPlate(records),
     [records],
   );
 
@@ -312,6 +319,7 @@ export default function OilChangesPage() {
           {/* Table */}
           <OilChangesTable
             rows={filtered}
+            cyclesByPlate={cyclesByPlate}
             loading={isLoading}
             onViewHistory={handleViewHistory}
             onDelete={(row) => setPendingDelete(row)}

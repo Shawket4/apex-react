@@ -1,5 +1,10 @@
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/shared/lib/cn';
+import {
+  oilFilterState,
+  type OilFilterCycles,
+  type OilFilterState,
+} from './schemas';
 
 /**
  * The three filters recorded alongside an oil change. Ordered as the workshop
@@ -31,19 +36,36 @@ export interface OilChangeFilterFlags {
  */
 export function OilChangeFilterChips({
   flags,
+  cycles,
   className,
 }: {
   flags: OilChangeFilterFlags;
+  /**
+   * Oil changes the fitted oil/fuel filter has served. Omit where the history
+   * was never loaded; the chips then read as skipped and never claim due.
+   * The water separator takes no cycles — it is on its own schedule.
+   */
+  cycles?: OilFilterCycles;
   className?: string;
 }) {
   const { t } = useTranslation();
   const on = flags;
+  const state: Record<OilFilterKey, OilFilterState> = {
+    oil: oilFilterState(flags.oil, cycles?.oil ?? null),
+    fuel: oilFilterState(flags.fuel, cycles?.fuel ?? null),
+    // The separator takes no cycle count, so it only ever reports what this
+    // change did to it.
+    water: flags.water ? 'replaced' : 'fitted',
+  };
   return (
     <span className={cn('flex items-center gap-1', className)}>
       {OIL_FILTER_KEYS.map((key) => {
-        const label = t(
-          on[key] ? `oilChanges.filters.${key}Done` : `oilChanges.filters.${key}NotDone`,
-        );
+        const label =
+          state[key] === 'due'
+            ? t(`oilChanges.filters.${key}Due`, {
+                count: cycles?.[key as 'oil' | 'fuel'] ?? 0,
+              })
+            : t(on[key] ? `oilChanges.filters.${key}Done` : `oilChanges.filters.${key}NotDone`);
         return (
           <span
             key={key}

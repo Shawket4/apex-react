@@ -21,6 +21,78 @@ export const OIL_CHANGE_THRESHOLDS = {
   WARNING: 3000,
 } as const;
 
+/**
+ * How many oil changes one filter element serves before it must be replaced.
+ *
+ * The chip is a prompt for the NEXT service, not a report on the last one: an
+ * element that has served its full life is flagged while there is still time to
+ * put one on the van, rather than after a change has already gone by without
+ * it. So a filter fitted at change #1 rides #2 on the same element, and #2 is
+ * where the chip turns — because #3 is the change that requires it.
+ *
+ * Oil and fuel filters only. The water separator runs on its own schedule and
+ * never accrues a cycle count.
+ *
+ * This is the whole rule. The backends count cycles; none of them decides what
+ * the count means, so there is one number to change and one place to change it.
+ */
+export const FILTER_SERVICE_LIFE_CYCLES = 2;
+
+/**
+ * `replaced` — went in with this change.
+ * `fitted`   — still within its service life, nothing to do.
+ * `due`      — has served its life; the next oil change must replace it.
+ */
+export type OilFilterState = 'replaced' | 'fitted' | 'due';
+
+/**
+ * How many oil changes the currently fitted filter has been through, this one
+ * included. `null` where the history to work it out was never loaded — the
+ * chip then reads as fitted rather than inventing a verdict.
+ */
+export interface OilFilterCycles {
+  oil: number | null;
+  fuel: number | null;
+}
+
+export function oilFilterState(replaced: boolean, cycles: number | null): OilFilterState {
+  if (replaced) return 'replaced';
+  if (cycles !== null && cycles >= FILTER_SERVICE_LIFE_CYCLES) return 'due';
+  return 'fitted';
+}
+
+/**
+ * Cycles served by the filter fitted at each record, for one vehicle's history
+ * ordered newest first — `out[i]` answers "at record i, how many oil changes
+ * had this element already been through, that one included".
+ *
+ * Walked from the oldest record forward: a replacement resets to 1, anything
+ * else inherits its predecessor's count plus one. A filter never replaced
+ * anywhere in the records we hold reports the number we can see, which is a
+ * floor rather than a measurement — it only ever understates, which is the
+ * right direction for a maintenance prompt.
+ */
+export function filterCyclesSeries(
+  newestFirst: Array<{ oil_filter_changed: boolean; fuel_filter_changed: boolean }>,
+): OilFilterCycles[] {
+  const out: OilFilterCycles[] = new Array(newestFirst.length);
+  let oil = 0;
+  let fuel = 0;
+  for (let i = newestFirst.length - 1; i >= 0; i--) {
+    oil = newestFirst[i].oil_filter_changed ? 1 : oil + 1;
+    fuel = newestFirst[i].fuel_filter_changed ? 1 : fuel + 1;
+    out[i] = { oil, fuel };
+  }
+  return out;
+}
+
+/** Cycles for the newest record alone. */
+export function filterCycles(
+  newestFirst: Array<{ oil_filter_changed: boolean; fuel_filter_changed: boolean }>,
+): OilFilterCycles {
+  return filterCyclesSeries(newestFirst)[0] ?? { oil: null, fuel: null };
+}
+
 export type OilChangeStatus = 'good' | 'warning' | 'critical';
 
 /**

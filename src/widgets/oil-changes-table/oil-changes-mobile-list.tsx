@@ -7,7 +7,7 @@ import { Skeleton } from '@/shared/ui/skeleton';
 import { cn } from '@/shared/lib/cn';
 import { format, formatCurrency } from '@/shared/lib/format';
 import { formatNumber } from '@/shared/lib/format-number';
-import type { OilChangeView } from '@/entities/oil-change/schemas';
+import type { OilChangeView, OilFilterCycles } from '@/entities/oil-change/schemas';
 import { OilChangeFilterChips } from '@/entities/oil-change/filter-chips';
 import { OilChangeStatusBadge } from './oil-change-status-badge';
 
@@ -26,6 +26,10 @@ import { OilChangeStatusBadge } from './oil-change-status-badge';
 export interface OilChangesMobileListProps {
   rows: OilChangeView[];
   loading?: boolean;
+  /** Filter cycles per plate; see OilChangesTableProps. */
+  cyclesByPlate?: Map<string, OilFilterCycles>;
+  /** Per-row cycles, aligned with `rows`, for a single vehicle's history. */
+  cyclesByRow?: OilFilterCycles[];
   /**
    * `fleet` leads each card with the vehicle; `history` is already scoped to
    * one truck, so it leads with the date instead of repeating the plate on
@@ -42,6 +46,8 @@ export interface OilChangesMobileListProps {
 export function OilChangesMobileList({
   rows,
   loading,
+  cyclesByPlate,
+  cyclesByRow,
   variant = 'fleet',
   onViewHistory,
   onEdit,
@@ -65,7 +71,7 @@ export function OilChangesMobileList({
 
   return (
     <div className="grid gap-2">
-      {rows.map((row) => (
+      {rows.map((row, i) => (
         <article
           key={row.ID}
           className={cn(
@@ -137,6 +143,7 @@ export function OilChangesMobileList({
                 fuel: row.fuel_filter_changed,
                 water: row.water_filter_changed,
               }}
+              cycles={cyclesByRow?.[i] ?? cyclesByPlate?.get(row.car_no_plate)}
             />
             {/* Stop bubbling so the card's own onSelect doesn't fire when you
                 hit one of these. */}

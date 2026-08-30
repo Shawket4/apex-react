@@ -1137,7 +1137,10 @@
       "waterShort": "W",
       "waterLabel": "Water separator",
       "waterDone": "Water separator replaced",
-      "waterNotDone": "Water separator not replaced"
+      "waterNotDone": "Water separator not replaced",
+      "oilDue": "Oil filter due at the next oil change — {{count}} changes on this element",
+      "fuelDue": "Fuel filter due at the next oil change — {{count}} changes on this element",
+      "waterDue": "Water separator not replaced"
     },
     "status": {
       "good": "Good",

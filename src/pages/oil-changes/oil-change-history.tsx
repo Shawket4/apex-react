@@ -27,6 +27,8 @@ import { ConfirmDialog } from '@/shared/ui/confirm-dialog';
 import { DataTable } from '@/shared/ui/data-table';
 import { useIsMobile } from '@/shared/hooks/use-media-query';
 import { OilChangesMobileList } from '@/widgets/oil-changes-table/oil-changes-mobile-list';
+import { OilChangeFilterChips } from '@/entities/oil-change/filter-chips';
+import { filterCyclesSeries } from '@/entities/oil-change/schemas';
 import { Skeleton } from '@/shared/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip';
 import {
@@ -57,6 +59,11 @@ export default function OilChangeHistoryPage() {
     () => selectHistoryForCarPlate(records, carNoPlate),
     [records, carNoPlate],
   );
+
+  // One count per row, not one per vehicle: on a history the question is what
+  // the filter had already served AT that change, not what it has served now.
+  // `history` is newest-first, which is the order the counter expects.
+  const cyclesByRow = React.useMemo(() => filterCyclesSeries(history), [history]);
 
   /* ------------------------------------------------------------------------ */
   /* KPI stats                                                                 */
@@ -156,6 +163,21 @@ export default function OilChangeHistoryPage() {
         ),
       },
       {
+        id: 'filters',
+        header: t('oilChanges.fields.filters'),
+        enableSorting: false,
+        cell: ({ row }) => (
+          <OilChangeFilterChips
+            flags={{
+              oil: row.original.oil_filter_changed,
+              fuel: row.original.fuel_filter_changed,
+              water: row.original.water_filter_changed,
+            }}
+            cycles={cyclesByRow[row.index]}
+          />
+        ),
+      },
+      {
         accessorKey: 'cost',
         header: t('oilChanges.fields.cost'),
         cell: ({ row }) => (
@@ -228,7 +250,7 @@ export default function OilChangeHistoryPage() {
         meta: { align: 'end' },
       },
     ],
-    [t, navigate],
+    [t, navigate, cyclesByRow],
   );
 
   /* ------------------------------------------------------------------------ */
@@ -432,6 +454,7 @@ export default function OilChangeHistoryPage() {
           {isMobile ? (
             <OilChangesMobileList
               rows={history}
+              cyclesByRow={cyclesByRow}
               variant="history"
               onEdit={(row) => navigate(`/oil-changes/${row.ID}/edit`)}
               onDelete={(row) => setPendingDelete(row)}

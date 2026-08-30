@@ -5,6 +5,8 @@ import {
   toOilChangeView,
   type OilChange,
   type OilChangeView,
+  filterCycles,
+  type OilFilterCycles,
   type AddOilChangePayload,
   type EditOilChangePayload,
 } from './schemas';
@@ -117,4 +119,30 @@ export async function exportOilChangesExcel(
   }
 
   return { blob, filename };
+}
+
+/**
+ * Filter cycles for each vehicle's current record, keyed by plate.
+ *
+ * The fleet table shows one row per vehicle but the cycle count is a fact about
+ * that vehicle's history, so it cannot be read off the row — it has to be
+ * counted from every record we hold for that plate.
+ */
+export function selectFilterCyclesByPlate(
+  records: OilChange[],
+): Map<string, OilFilterCycles> {
+  const byPlate = new Map<string, OilChange[]>();
+  for (const r of records) {
+    const list = byPlate.get(r.car_no_plate);
+    if (list) list.push(r);
+    else byPlate.set(r.car_no_plate, [r]);
+  }
+  const out = new Map<string, OilFilterCycles>();
+  for (const [plate, list] of byPlate) {
+    // Newest first, by ID — the same rule selectLatestPerCar uses, because
+    // dates repeat and IDs are monotonic per insert.
+    const newestFirst = [...list].sort((a, b) => b.ID - a.ID);
+    out.set(plate, filterCycles(newestFirst));
+  }
+  return out;
 }

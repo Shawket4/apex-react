@@ -1105,6 +1105,7 @@ function AttentionPanel({
                 <OilChangeFilterChips
                   className="mt-1"
                   flags={{ oil: o.oil_filter, fuel: o.fuel_filter, water: o.water_filter }}
+                  cycles={{ oil: o.oil_filter_cycles, fuel: o.fuel_filter_cycles }}
                 />
               }
             />

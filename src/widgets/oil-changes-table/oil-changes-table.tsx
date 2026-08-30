@@ -19,7 +19,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip';
 import { cn } from '@/shared/lib/cn';
 import { format, formatDateTime, formatCurrency } from '@/shared/lib/format';
 import { formatNumber } from '@/shared/lib/format-number';
-import type { OilChangeView } from '@/entities/oil-change/schemas';
+import type { OilChangeView, OilFilterCycles } from '@/entities/oil-change/schemas';
 import { useIsMobile } from '@/shared/hooks/use-media-query';
 import { OilChangeFilterChips } from '@/entities/oil-change/filter-chips';
 import { OilChangesMobileList } from './oil-changes-mobile-list';
@@ -27,6 +27,11 @@ import { OilChangeStatusBadge } from './oil-change-status-badge';
 
 interface OilChangesTableProps {
   rows: OilChangeView[];
+  /**
+   * Filter cycles per plate. Omitted where the caller has no history to count
+   * from; the chips then report only what each change did, never a due.
+   */
+  cyclesByPlate?: Map<string, OilFilterCycles>;
   loading?: boolean;
   /** Called when the user clicks the "View history" action on a row */
   onViewHistory?: (carNoPlate: string) => void;
@@ -50,6 +55,7 @@ interface OilChangesTableProps {
  */
 export function OilChangesTable({
   rows,
+  cyclesByPlate,
   loading,
   onViewHistory,
   onDelete,
@@ -127,6 +133,7 @@ export function OilChangesTable({
               fuel: row.original.fuel_filter_changed,
               water: row.original.water_filter_changed,
             }}
+            cycles={cyclesByPlate?.get(row.original.car_no_plate)}
           />
         ),
       },
@@ -227,7 +234,7 @@ export function OilChangesTable({
         meta: { align: 'end' },
       },
     ],
-    [t, navigate, onDelete, onViewHistory, queryClient],
+    [t, navigate, onDelete, onViewHistory, queryClient, cyclesByPlate],
   );
 
   // A nine-column table does not survive a phone, so the same rows render as
@@ -236,6 +243,7 @@ export function OilChangesTable({
     return (
       <OilChangesMobileList
         rows={rows}
+        cyclesByPlate={cyclesByPlate}
         loading={loading}
         variant="fleet"
         emptyState={emptyState}

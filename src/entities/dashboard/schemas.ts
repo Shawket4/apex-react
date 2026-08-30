@@ -121,6 +121,15 @@ export const oilChangeDueSchema = z.object({
   oil_filter: z.boolean().default(false),
   fuel_filter: z.boolean().default(false),
   water_filter: z.boolean().default(false),
+  /**
+   * Oil changes the fitted element has served, this one included. The dashboard
+   * is the only oil surface without the history to count this itself, so the
+   * API sends the number and the frontend still owns what it means.
+   * Defaulted to 1 — "just fitted" — so a frontend ahead of the API shows no
+   * due rather than a false one.
+   */
+  oil_filter_cycles: z.number().default(1),
+  fuel_filter_cycles: z.number().default(1),
 });
 export type OilChangeDue = z.infer<typeof oilChangeDueSchema>;
 
