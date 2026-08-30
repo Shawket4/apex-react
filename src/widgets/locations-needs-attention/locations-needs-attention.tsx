@@ -14,7 +14,6 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { Button } from '@/shared/ui/button';
-import { Badge } from '@/shared/ui/badge';
 import { Skeleton } from '@/shared/ui/skeleton';
 import { EmptyState } from '@/shared/ui/empty-state';
 import { NativeSelect } from '@/shared/ui/native-select';
@@ -278,10 +277,10 @@ export function LocationsNeedsAttention({ onBrowseDropoffs }: { onBrowseDropoffs
   /* ---- Loading / empty ---- */
   if (inboxQuery.isLoading) {
     return (
-      <div className="space-y-2">
-        <Skeleton className="h-12 w-full" />
-        <Skeleton className="h-12 w-full" />
-        <Skeleton className="h-12 w-full" />
+      <div className="space-y-2 rounded-lg border bg-card p-3">
+        <Skeleton className="h-10 w-full rounded-none" />
+        <Skeleton className="h-10 w-full rounded-none" />
+        <Skeleton className="h-10 w-full rounded-none" />
       </div>
     );
   }
@@ -318,14 +317,16 @@ export function LocationsNeedsAttention({ onBrowseDropoffs }: { onBrowseDropoffs
   ];
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       {suggestionsUnavailable && (
-        <div className="flex items-start gap-2 rounded-md border border-warning/40 bg-warning/5 p-3 text-sm text-muted-foreground">
-          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
-          {t(
-            'locations.inbox.suggestionsUnavailable',
-            'GPS suggestions are unavailable right now — showing database items only.',
-          )}
+        <div className="flex items-start gap-2 rounded-lg border border-dashed border-warning/40 bg-warning/10 px-3 py-2.5 text-[12.5px]">
+          <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-warning" />
+          <span className="min-w-0">
+            {t(
+              'locations.inbox.suggestionsUnavailable',
+              'GPS suggestions are unavailable right now — showing database items only.',
+            )}
+          </span>
         </div>
       )}
 
@@ -335,21 +336,18 @@ export function LocationsNeedsAttention({ onBrowseDropoffs }: { onBrowseDropoffs
           {issuePills
             .filter((p) => p.id === 'all' || p.count > 0)
             .map((p) => (
-              <button
+              <Button
                 key={p.id}
                 type="button"
+                size="sm"
+                variant={issue === p.id ? 'default' : 'outline'}
                 onClick={() => setIssue(p.id)}
                 aria-pressed={issue === p.id}
-                className={cn(
-                  'inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-xs font-medium transition-colors',
-                  issue === p.id
-                    ? 'border-primary bg-primary text-primary-foreground'
-                    : 'bg-card text-muted-foreground hover:bg-muted/60',
-                )}
+                className="h-7 text-xs"
               >
                 {p.label}
-                <span className="tabular-nums opacity-80">{p.count}</span>
-              </button>
+                <span className="tabular-nums opacity-70">{p.count}</span>
+              </Button>
             ))}
         </div>
         <NativeSelect
@@ -395,7 +393,7 @@ export function LocationsNeedsAttention({ onBrowseDropoffs }: { onBrowseDropoffs
           />
         ))}
         {filtered.length === 0 && (
-          <p className="p-6 text-center text-sm text-muted-foreground">
+          <p className="px-3 py-6 text-center text-xs text-muted-foreground">
             {t('locations.inbox.noneForFilter', 'Nothing matches this filter.')}
           </p>
         )}
@@ -521,14 +519,14 @@ function QueueRow({
       return (
         <Button
           size="sm"
-          className="gap-1.5"
+          className=""
           disabled={busy || (item.kind === 'terminal' && terminalMissing)}
           onClick={(e) => {
             e.stopPropagation();
             onApply(item.s, 'gps_suggested');
           }}
         >
-          {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <MapPin className="h-3.5 w-3.5" />}
+          {busy ? <Loader2 className="animate-spin motion-reduce:animate-none" /> : <MapPin />}
           {t('locations.inbox.movePin', 'Move pin')}
         </Button>
       );
@@ -537,14 +535,14 @@ function QueueRow({
       return (
         <Button
           size="sm"
-          className="gap-1.5"
+          className=""
           disabled={busy}
           onClick={(e) => {
             e.stopPropagation();
             onApply(item.s, 'manual');
           }}
         >
-          {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
+          {busy ? <Loader2 className="animate-spin motion-reduce:animate-none" /> : <CheckCircle2 />}
           {t('locations.inbox.confirmPin', 'Confirm')}
         </Button>
       );
@@ -553,14 +551,14 @@ function QueueRow({
       return (
         <Button
           size="sm"
-          className="gap-1.5"
+          className=""
           disabled={busy || (item.kind === 'terminal' && terminalMissing)}
           onClick={(e) => {
             e.stopPropagation();
             onApply(s, 'gps_suggested');
           }}
         >
-          {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+          {busy ? <Loader2 className="animate-spin motion-reduce:animate-none" /> : <Sparkles />}
           {t('locations.inbox.applyPin', 'Apply pin')}
         </Button>
       );
@@ -581,11 +579,12 @@ function QueueRow({
   })();
 
   return (
-    <div className={cn('transition-colors', expanded && 'bg-muted/30')}>
+    <div className={cn('transition-colors', expanded && 'bg-muted/40')}>
       {/* Row line */}
       <div
         role="button"
         tabIndex={0}
+        aria-expanded={expanded}
         onClick={onToggle}
         onKeyDown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
@@ -593,21 +592,21 @@ function QueueRow({
             onToggle();
           }
         }}
-        className="flex cursor-pointer items-center gap-3 px-3 py-2.5 hover:bg-muted/40"
+        className="flex cursor-pointer items-center gap-3 px-3 py-2.5 hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
       >
         <span className="shrink-0">{icon}</span>
         <div className="min-w-0 flex-1">
           <div className="flex min-w-0 items-baseline gap-2">
-            <span className="min-w-0 truncate text-sm font-medium" dir="auto">
+            <span className="min-w-0 truncate text-[13px] font-medium leading-snug" dir="auto">
               {item.name}
             </span>
-            <Badge variant="outline" className="shrink-0 text-[10px]">
+            <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[10.5px] font-medium text-muted-foreground">
               {item.kind === 'terminal'
                 ? t('locations.kind.terminal', 'Terminal')
                 : t('locations.kind.dropoff', 'Drop-off')}
-            </Badge>
+            </span>
           </div>
-          <p className="truncate text-xs text-muted-foreground" dir="auto">
+          <p className="truncate text-[11px] text-muted-foreground" dir="auto">
             {why}
           </p>
         </div>
@@ -615,8 +614,9 @@ function QueueRow({
           {primary}
           {hasEvidence && (
             <ChevronDown
+              aria-hidden="true"
               className={cn(
-                'h-4 w-4 text-muted-foreground transition-transform',
+                'h-3 w-3 text-muted-foreground transition-transform duration-200',
                 expanded && 'rotate-180',
               )}
             />
@@ -649,13 +649,13 @@ function QueueRow({
             className="h-[240px]"
           />
           {item.type === 'mismatch' && (
-            <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+            <div className="flex flex-wrap items-center gap-3 text-[11px] text-muted-foreground">
               <span className="flex items-center gap-1.5">
-                <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: STORED_PIN_COLOR }} />
+                <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: STORED_PIN_COLOR }} />
                 {t('locations.inbox.currentPin', 'Stored pin')}
               </span>
               <span className="flex items-center gap-1.5">
-                <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: SUGGESTED_PIN_COLOR }} />
+                <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: SUGGESTED_PIN_COLOR }} />
                 {t('locations.inbox.suggestedPin', 'GPS suggestion')}
               </span>
             </div>
@@ -674,11 +674,11 @@ function QueueRow({
               <Button
                 size="sm"
                 variant="outline"
-                className="gap-1.5"
+                className=""
                 disabled={busy}
                 onClick={() => onAdjust(s)}
               >
-                <Pencil className="h-3.5 w-3.5" />
+                <Pencil />
                 {t('locations.inbox.adjustPin', 'Adjust')}
               </Button>
             )}

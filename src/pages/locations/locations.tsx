@@ -183,23 +183,20 @@ export default function LocationsPage() {
           { id: 'missing', label: t('locations.filter.missingPins', 'Missing pins') },
         ] as Array<{ id: PinFilter; label: string }>
       ).map((p) => (
-        <button
+        <Button
           key={p.id}
           type="button"
+          size="sm"
+          variant={value === p.id ? 'default' : 'outline'}
           onClick={() => onChange(p.id)}
           aria-pressed={value === p.id}
-          className={cn(
-            'inline-flex h-8 items-center gap-1.5 rounded-full border px-3 text-xs font-medium transition-colors',
-            value === p.id
-              ? 'border-primary bg-primary text-primary-foreground'
-              : 'bg-card text-muted-foreground hover:bg-muted/60',
-          )}
+          className="h-7 text-xs"
         >
           {p.label}
           {p.id === 'missing' && (missingCount ?? 0) > 0 && (
-            <span className="tabular-nums opacity-80">{missingCount}</span>
+            <span className="tabular-nums opacity-70">{missingCount}</span>
           )}
-        </button>
+        </Button>
       ))}
     </div>
   );
@@ -213,19 +210,19 @@ export default function LocationsPage() {
       )}
     >
       {/* ---- Coverage header: the page's one job, made visible ---- */}
-      <div className="mb-4 grid gap-3 sm:grid-cols-3">
+      <div className="mb-3 grid gap-3 sm:grid-cols-3">
         <div
           className={cn(
-            'rounded-lg border p-4 sm:col-span-1',
-            attentionCount > 0 ? 'border-warning/50 bg-warning/5' : 'border-success/40 bg-success/5',
+            'rounded-lg border p-3 sm:col-span-1',
+            attentionCount > 0 ? 'border-warning/40 bg-warning/10' : 'border-success/40 bg-success/10',
           )}
         >
           {attentionCount > 0 ? (
             <>
-              <div className="text-3xl font-semibold tabular-nums text-warning">
+              <div className="font-mono text-[22px] font-semibold leading-none tabular-nums text-warning">
                 {attentionCount}
               </div>
-              <div className="mt-0.5 text-sm text-muted-foreground">
+              <div className="mt-1.5 text-[11.5px] text-muted-foreground">
                 {t('locations.header.needAttention', 'locations need attention')}
               </div>
               <Button size="sm" className="mt-3" onClick={() => handleTabChange('inbox')}>
@@ -247,28 +244,28 @@ export default function LocationsPage() {
           )}
         </div>
 
-        <div className="rounded-lg border bg-card p-4">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <div className="rounded-lg border bg-card p-3">
+          <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
             <MapPin className="h-4 w-4" />
             {t('locations.header.dropoffs', 'Drop-off points')}
           </div>
-          <div className="mt-1 text-2xl font-semibold tabular-nums" dir="ltr">
+          <div className="mt-1.5 font-mono text-[22px] font-semibold leading-none tabular-nums" dir="ltr">
             {dropoffsPinned}/{dropoffsTotalAll}
           </div>
-          <div className="text-xs text-muted-foreground">
+          <div className="mt-1.5 text-[11.5px] text-muted-foreground">
             {t('locations.header.pinned', 'pinned')}
           </div>
         </div>
 
-        <div className="rounded-lg border bg-card p-4">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <div className="rounded-lg border bg-card p-3">
+          <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
             <Warehouse className="h-4 w-4" />
             {t('locations.header.terminals', 'Terminals')}
           </div>
-          <div className="mt-1 text-2xl font-semibold tabular-nums" dir="ltr">
+          <div className="mt-1.5 font-mono text-[22px] font-semibold leading-none tabular-nums" dir="ltr">
             {terminalsPinned}/{terminals.length}
           </div>
-          <div className="text-xs text-muted-foreground">
+          <div className="mt-1.5 text-[11.5px] text-muted-foreground">
             {t('locations.header.pinned', 'pinned')}
           </div>
         </div>
@@ -288,7 +285,7 @@ export default function LocationsPage() {
             <Inbox className="h-3.5 w-3.5" />
             {t('locations.tabs.inbox', 'Needs Attention')}
             {attentionCount > 0 && (
-              <Badge variant="warning" className="px-1.5">
+              <Badge variant="warning">
                 {attentionCount}
               </Badge>
             )}

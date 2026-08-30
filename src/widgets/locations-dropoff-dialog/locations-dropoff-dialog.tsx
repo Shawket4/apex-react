@@ -137,7 +137,7 @@ export function LocationsDropoffDialog({
 
         <div className="flex flex-1 flex-col gap-4 overflow-y-auto px-6 py-4">
           {note && (
-            <div className="flex items-start gap-2 rounded-md border border-primary/30 bg-primary/5 p-2.5 text-sm">
+            <div className="flex items-start gap-2 rounded-lg border border-primary/40 bg-primary/10 px-3 py-2.5 text-[12.5px]">
               <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
               <div className="min-w-0">{note}</div>
             </div>
@@ -150,11 +150,14 @@ export function LocationsDropoffDialog({
               </Label>
               <Input
                 id="dropoff-lat"
+                name="lat"
+                autoComplete="off"
+                inputMode="decimal"
                 type="number"
                 step="0.000001"
                 value={lat}
                 onChange={(e) => setLat(e.target.value)}
-                placeholder="30.044420"
+                placeholder="30.044420…"
                 className="font-mono"
               />
             </div>
@@ -164,11 +167,14 @@ export function LocationsDropoffDialog({
               </Label>
               <Input
                 id="dropoff-lng"
+                name="lng"
+                autoComplete="off"
+                inputMode="decimal"
                 type="number"
                 step="0.000001"
                 value={lng}
                 onChange={(e) => setLng(e.target.value)}
-                placeholder="31.235712"
+                placeholder="31.235712…"
                 className="font-mono"
               />
             </div>
@@ -178,6 +184,9 @@ export function LocationsDropoffDialog({
               </Label>
               <Input
                 id="dropoff-radius"
+                name="radius_m"
+                autoComplete="off"
+                inputMode="numeric"
                 type="number"
                 step="1"
                 min="1"
@@ -215,10 +224,10 @@ export function LocationsDropoffDialog({
             {dropoff && onDelete && (
               <Button
                 variant="ghost"
-                className="gap-1.5 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                className="text-destructive hover:bg-destructive/10 hover:text-destructive"
                 onClick={() => onDelete(dropoff)}
               >
-                <Trash2 className="h-4 w-4" />
+                <Trash2 />
                 {t('common.delete', 'Delete')}
               </Button>
             )}
@@ -229,9 +238,9 @@ export function LocationsDropoffDialog({
             </Button>
             <Button onClick={() => void handleSave()} disabled={!canSave || saving}>
               {saving ? (
-                <Loader2 className="me-1.5 h-4 w-4 animate-spin" />
+                <Loader2 className="animate-spin motion-reduce:animate-none" />
               ) : (
-                <Save className="me-1.5 h-4 w-4" />
+                <Save />
               )}
               {t('common.save', 'Save')}
             </Button>
