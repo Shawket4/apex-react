@@ -1,5 +1,7 @@
+import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Crosshair, History, X } from 'lucide-react';
+import { Button } from '@/shared/ui/button';
 import { STATUS_COLOR, type LiveStatus, type Vehicle } from '../schemas';
 import { groupOf } from './status-chips';
 
@@ -8,14 +10,15 @@ import { groupOf } from './status-chips';
 /* and the two actions that matter — focus and replay.                        */
 /* -------------------------------------------------------------------------- */
 
-const tsFmt = new Intl.DateTimeFormat('en-GB', {
-  timeZone: 'Africa/Cairo',
-  hour12: false,
-  day: 'numeric',
-  month: 'short',
-  hour: '2-digit',
-  minute: '2-digit',
-});
+const makeTsFmt = (locale: string) =>
+  new Intl.DateTimeFormat(locale, {
+    timeZone: 'Africa/Cairo',
+    hour12: false,
+    day: 'numeric',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 
 export function VehicleCard({
   vehicle,
@@ -30,20 +33,23 @@ export function VehicleCard({
   onReplay: () => void;
   onClose: () => void;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const locale = i18n.language.startsWith('ar') ? 'ar-EG' : 'en-GB';
+  const tsFmt = React.useMemo(() => makeTsFmt(locale), [locale]);
   const group = groupOf(vehicle, live);
   const ts = live?.timestamp ?? vehicle.lastLocationAt;
 
   return (
-    <div className="pointer-events-auto w-[260px] rounded-xl border bg-card/95 p-3 shadow-xl backdrop-blur">
+    <div className="pointer-events-auto w-[260px] rounded-lg border bg-card/95 p-3 shadow-md backdrop-blur">
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             <span
-              className="h-2.5 w-2.5 rounded-full"
+              aria-hidden="true"
+              className="h-1.5 w-1.5 rounded-full"
               style={{ background: STATUS_COLOR[group] }}
             />
-            <span className="font-mono text-lg font-bold tabular-nums">
+            <span className="font-mono text-[17px] font-semibold leading-tight tabular-nums">
               {vehicle.plate.replace(/\D/g, '') || vehicle.plate}
             </span>
             <span className="truncate text-xs text-muted-foreground">
@@ -57,7 +63,7 @@ export function VehicleCard({
             )}
           </p>
           {ts && (
-            <p className="font-mono text-[10px] text-muted-foreground/80 tabular-nums">
+            <p className="font-mono text-[10.5px] text-muted-foreground tabular-nums">
               {tsFmt.format(ts)}
             </p>
           )}
@@ -66,29 +72,32 @@ export function VehicleCard({
           type="button"
           onClick={onClose}
           aria-label={t('common.close', 'Close')}
-          className="grid h-6 w-6 shrink-0 place-items-center rounded-md text-muted-foreground hover:bg-muted"
+          className="grid h-6 w-6 shrink-0 place-items-center rounded-md text-muted-foreground hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ring-offset-1"
         >
           <X className="h-3.5 w-3.5" />
         </button>
       </div>
 
       <div className="mt-2.5 flex gap-1.5">
-        <button
+        <Button
           type="button"
+          variant="outline"
+          size="sm"
           onClick={onFocus}
-          className="flex h-8 flex-1 items-center justify-center gap-1.5 rounded-lg border bg-background text-xs font-medium hover:bg-muted"
+          className="flex-1 gap-1.5"
         >
-          <Crosshair className="h-3.5 w-3.5" />
+          <Crosshair aria-hidden="true" />
           {t('tracking.focus', 'Focus')}
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
+          size="sm"
           onClick={onReplay}
-          className="flex h-8 flex-1 items-center justify-center gap-1.5 rounded-lg bg-primary text-xs font-semibold text-primary-foreground shadow hover:bg-primary/90"
+          className="flex-1 gap-1.5"
         >
-          <History className="h-3.5 w-3.5" />
+          <History aria-hidden="true" />
           {t('tracking.replay', 'Replay')}
-        </button>
+        </Button>
       </div>
     </div>
   );

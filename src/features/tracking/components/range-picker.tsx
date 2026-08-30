@@ -63,6 +63,7 @@ export function TrackingRangePicker({
   const [toTime, setToTime] = React.useState(seedTo?.time ?? '23:59');
   const [month, setMonth] = React.useState((seedFrom?.day ?? today).m);
   const [year, setYear] = React.useState((seedFrom?.day ?? today).y);
+  const [activePreset, setActivePreset] = React.useState<number | 'today' | 'yesterday' | '7d' | null>(null);
 
   const fmtDay = React.useCallback(
     (p: DayParts) =>
@@ -75,6 +76,7 @@ export function TrackingRangePicker({
   );
 
   const handleSelect = (p: DayParts) => {
+    setActivePreset(null);
     if (!selected.from || (selected.from && selected.to)) {
       setSelected({ from: p, to: undefined });
     } else {
@@ -98,6 +100,7 @@ export function TrackingRangePicker({
   /** Preset = a range producer, exactly the old picker's idea. */
   const applyPreset = (hours: number | 'today' | 'yesterday' | '7d') => {
     const now = new Date();
+    setActivePreset(hours);
     if (hours === 'today') {
       setSelected({ from: today, to: today });
       setFromTime('00:00');
@@ -133,11 +136,14 @@ export function TrackingRangePicker({
      control on every platform, styled like the rest of the picker. */
   const timeSelect = (value: string, onChange: (v: string) => void, label: string) => {
     const [hh, mm] = value.split(':');
-    const set = (h: string, m: string) => onChange(`${h}:${m}`);
+    const set = (h: string, m: string) => {
+      setActivePreset(null);
+      onChange(`${h}:${m}`);
+    };
     const cls =
       'h-7 appearance-none rounded-md border bg-background px-1.5 text-center font-mono ' +
       'text-[11px] font-semibold tabular-nums outline-none transition-colors hover:bg-muted ' +
-      'focus-visible:ring-2 focus-visible:ring-ring';
+      'text-foreground shadow-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1';
     return (
       <div className="flex items-center gap-0.5" dir="ltr">
         <select
@@ -170,7 +176,7 @@ export function TrackingRangePicker({
   };
 
   return (
-    <div className="pointer-events-auto w-full rounded-t-2xl border border-b-0 bg-card/95 p-3 shadow-2xl backdrop-blur md:mx-auto md:max-w-md">
+    <div className="pointer-events-auto w-full rounded-t-lg border border-b-0 bg-card/95 p-3 shadow-lg backdrop-blur md:mx-auto md:max-w-md">
       {/* Quick presets — the old picker's set */}
       <div className="mb-3 flex flex-wrap items-center gap-1.5">
         {(
@@ -184,7 +190,8 @@ export function TrackingRangePicker({
         ).map(([label, preset]) => (
           <Button
             key={label}
-            variant="outline"
+            variant={activePreset === preset ? 'default' : 'outline'}
+            aria-pressed={activePreset === preset}
             size="sm"
             className="h-7 text-xs"
             onClick={() => applyPreset(preset)}
@@ -196,7 +203,7 @@ export function TrackingRangePicker({
           type="button"
           onClick={onCancel}
           aria-label={t('common.close', 'Close')}
-          className="ms-auto grid h-7 w-7 place-items-center rounded-md text-muted-foreground hover:bg-muted"
+          className="ms-auto grid h-7 w-7 place-items-center rounded-md text-muted-foreground hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <X className="h-3.5 w-3.5" />
         </button>
@@ -245,6 +252,7 @@ export function TrackingRangePicker({
           onClick={() => range && onLoad(range[0], range[1])}
           onPointerEnter={() => range && onIntendLoad?.(range[0], range[1])}
           onFocus={() => range && onIntendLoad?.(range[0], range[1])}
+          onTouchStart={() => range && onIntendLoad?.(range[0], range[1])}
         >
           {t('tracking.load', 'Load history')}
         </Button>

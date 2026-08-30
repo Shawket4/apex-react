@@ -54,19 +54,28 @@ export function StatusChips({
             aria-pressed={active}
             onClick={() => onToggleGroup(active ? null : g)}
             className={cn(
-              'flex shrink-0 items-center gap-1.5 rounded-full border px-2 py-1 font-mono text-[11px] font-semibold shadow-sm backdrop-blur transition-colors sm:px-2.5',
+              'flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium shadow-sm backdrop-blur transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ring-offset-1',
               active
-                ? 'border-transparent text-white'
+                ? ''
                 : 'border-border bg-card/90 text-foreground hover:bg-card',
             )}
-            style={active ? { background: STATUS_COLOR[g] } : undefined}
+            style={
+              active
+                ? {
+                    borderColor: `${STATUS_COLOR[g]}66`,
+                    background: `${STATUS_COLOR[g]}1a`,
+                    color: STATUS_COLOR[g],
+                  }
+                : undefined
+            }
           >
             <span
-              className="h-2 w-2 rounded-full"
-              style={{ background: active ? '#fff' : STATUS_COLOR[g] }}
+              aria-hidden="true"
+              className="h-1.5 w-1.5 rounded-full"
+              style={{ background: STATUS_COLOR[g] }}
             />
             <span className="hidden sm:inline">{t(`tracking.group.${g}`, g)}</span>
-            <span className={cn('tabular-nums', active ? 'opacity-90' : 'text-muted-foreground')}>
+            <span className={cn('tabular-nums', active ? 'opacity-70' : 'text-muted-foreground')}>
               {count}
             </span>
           </button>

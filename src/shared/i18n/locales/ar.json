@@ -2195,9 +2195,16 @@
   },
   "tracking": {
     "fleet": "الأسطول",
-    "searchPlaceholder": "ابحث باللوحة أو الاسم",
+    "searchPlaceholder": "ابحث باللوحة أو الاسم…",
     "kmh": "كم/س",
     "km": "كم",
+    "unit": {
+      "h": "س",
+      "m": "د"
+    },
+    "routeStart": "بداية المسار",
+    "routeEnd": "نهاية المسار",
+    "beyondRangeLine": "يمتد خارج النطاق المحمّل",
     "focus": "تركيز",
     "replay": "إعادة التشغيل",
     "hide": "إخفاء",

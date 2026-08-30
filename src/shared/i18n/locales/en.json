@@ -2187,9 +2187,16 @@
   },
   "tracking": {
     "fleet": "Fleet",
-    "searchPlaceholder": "Search plate or codename",
+    "searchPlaceholder": "Search plate or codename…",
     "kmh": "km/h",
     "km": "km",
+    "unit": {
+      "h": "h",
+      "m": "m"
+    },
+    "routeStart": "Route start",
+    "routeEnd": "Route end",
+    "beyondRangeLine": "continues beyond the loaded range",
     "focus": "Focus",
     "replay": "Replay",
     "hide": "Hide",

@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { setOptions, importLibrary } from '@googlemaps/js-api-loader';
 import { GoogleMapsOverlay } from '@deck.gl/google-maps';
+import i18n from '@/shared/i18n';
 import { STATUS_COLOR, statusGroup, type LiveStatus, type Vehicle } from '../schemas';
 import { buildStaticLayers, buildTailLayer, type HistoryLayerInput } from './layers';
 import { buildMarkerSvg, markerSize } from '@/shared/lib/maps/marker-svg';
@@ -80,7 +81,7 @@ function chipElement(datum: LiveMarkerDatum): HTMLElement {
   label.textContent = digits(datum.vehicle.plate);
   label.style.cssText =
     'margin-top:1px;padding:0 5px;border-radius:6px;background:rgba(17,19,24,.85);color:#fff;' +
-    'font:600 10px ui-monospace,monospace;letter-spacing:.03em;line-height:15px;' +
+    "font:600 10px 'IBM Plex Mono',ui-monospace,monospace;letter-spacing:.03em;line-height:15px;" +
     (datum.selected ? `box-shadow:0 0 0 1.5px ${color}` : '');
   el.append(img, label);
   return el;
@@ -99,14 +100,25 @@ function replayElement(): HTMLElement {
   return el;
 }
 
-const infoTimeFmt = new Intl.DateTimeFormat('en-GB', {
-  timeZone: 'Africa/Cairo',
-  hour12: false,
-  day: 'numeric',
-  month: 'short',
-  hour: '2-digit',
-  minute: '2-digit',
-});
+const infoTimeFmts = new Map<string, Intl.DateTimeFormat>();
+const infoTimeFmt = {
+  format(d: Date): string {
+    const locale = (i18n.language ?? '').startsWith('ar') ? 'ar-EG' : 'en-GB';
+    let f = infoTimeFmts.get(locale);
+    if (!f) {
+      f = new Intl.DateTimeFormat(locale, {
+        timeZone: 'Africa/Cairo',
+        hour12: false,
+        day: 'numeric',
+        month: 'short',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+      infoTimeFmts.set(locale, f);
+    }
+    return f.format(d);
+  },
+};
 
 const esc = (s: string) =>
   s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -120,13 +132,13 @@ function tipShell(title: string, rows: string[], lat: number, lng: number): stri
   const mapsUrl = `https://www.google.com/maps?q=${lat.toFixed(6)},${lng.toFixed(6)}`;
   const body = rows.filter(Boolean).join('');
   return (
-    `<div dir="auto" style="font:12px system-ui;display:grid;gap:3px;min-width:150px;max-width:250px;` +
+    `<div dir="auto" style="font:12px 'IBM Plex Sans Arabic','IBM Plex Sans',system-ui,sans-serif;display:grid;gap:3px;min-width:150px;max-width:250px;` +
     `user-select:none;text-align:start;padding:2px 2px 0">` +
     `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px">` +
-    `<div style="font-weight:700;min-width:0">${title}</div>` +
-    `<a href="${mapsUrl}" target="_blank" rel="noopener" title="Google Maps" ` +
+    `<div style="font-weight:600;min-width:0">${title}</div>` +
+    `<a href="${mapsUrl}" target="_blank" rel="noopener" title="Google Maps" aria-label="Google Maps" translate="no" ` +
     `style="flex:none;display:grid;place-items:center;width:24px;height:24px;border-radius:6px;` +
-    `border:1px solid #d6d9e0;color:#1f3a5f;text-decoration:none;background:#fff">` +
+    `border:1px solid hsl(var(--border));color:hsl(var(--primary));text-decoration:none;background:hsl(var(--card))">` +
     `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" ` +
     `stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">` +
     `<path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>` +
@@ -139,15 +151,15 @@ function tipShell(title: string, rows: string[], lat: number, lng: number): stri
 }
 
 const row = (html: string) => `<div style="line-height:1.45">${html}</div>`;
-const dimRow = (html: string) => `<div style="color:#6b7280;line-height:1.45">${html}</div>`;
+const dimRow = (html: string) => `<div style="color:hsl(var(--muted-foreground));line-height:1.45">${html}</div>`;
 
 function vehicleInfoHtml(datum: LiveMarkerDatum, lat: number, lng: number): string {
   const live = datum.live;
   return tipShell(
-    `<span style="font:700 14px ui-monospace,monospace">${esc(datum.vehicle.plate)}</span>`,
+    `<span style="font:600 14px 'IBM Plex Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums">${esc(datum.vehicle.plate)}</span>`,
     [
       row(esc(live?.statusLabel ?? datum.vehicle.statusLabel)),
-      live && live.speed > 0 ? row(`${Math.round(live.speed)} km/h`) : '',
+      live && live.speed > 0 ? row(`${Math.round(live.speed)} ${esc(i18n.t('tracking.kmh', 'km/h'))}`) : '',
       live?.timestamp || datum.vehicle.lastLocationAt
         ? dimRow(infoTimeFmt.format((live?.timestamp ?? datum.vehicle.lastLocationAt)!))
         : '',
@@ -172,7 +184,9 @@ function stopInfoHtml(stop: Stop): string {
 function fmtDwell(secs: number): string {
   const h = Math.floor(secs / 3600);
   const mm = Math.floor((secs % 3600) / 60);
-  return h > 0 ? `${h}h ${mm}m` : `${mm}m`;
+  const uh = esc(i18n.t('tracking.unit.h', 'h'));
+  const um = esc(i18n.t('tracking.unit.m', 'm'));
+  return h > 0 ? `${h}${uh} ${mm}${um}` : `${mm}${um}`;
 }
 
 /** One marker can stand for several back-to-back visits — list them all. */
@@ -204,10 +218,10 @@ function legInfoHtml(seg: LegSegment, lat: number, lng: number): string {
     [
       dimRow(`${esc(l.legType)} · #${l.parentTripId}·${l.seq}`),
       row(`<span dir="ltr">${infoTimeFmt.format(l.depart)} → ${infoTimeFmt.format(l.arrive)}</span>`),
-      l.actualKm != null ? row(`<b>${l.actualKm.toFixed(1)} km</b>`) : '',
+      l.actualKm != null ? row(`<b>${l.actualKm.toFixed(1)} ${esc(i18n.t('tracking.km', 'km'))}</b>`) : '',
       l.actualSecs != null ? row(fmtDwell(l.actualSecs)) : '',
       seg.cutStart || seg.cutEnd
-        ? `<div style="color:#b45309;line-height:1.45">⟷ continues beyond the loaded range</div>`
+        ? `<div style="color:hsl(var(--warning));line-height:1.45">⟷ ${esc(i18n.t('tracking.beyondRangeLine', 'continues beyond the loaded range'))}</div>`
         : '',
     ],
     lat,
@@ -220,7 +234,10 @@ function sensorInfoHtml(ev: SensorEvent): string {
 }
 
 function endpointInfoHtml(kind: 'route-start' | 'route-end', lat: number, lng: number): string {
-  const label = kind === 'route-start' ? 'Route start' : 'Route end';
+  const label =
+    kind === 'route-start'
+      ? i18n.t('tracking.routeStart', 'Route start')
+      : i18n.t('tracking.routeEnd', 'Route end');
   return tipShell(esc(label), [], lat, lng);
 }
 
