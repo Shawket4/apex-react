@@ -199,11 +199,11 @@ export function TripLocationDialog({
           {isLoading ? (
             <StatsSkeleton />
           ) : trip ? (
-            <div className="grid grid-cols-2 gap-3 rounded-lg border bg-muted/30 p-3 sm:grid-cols-4">
+            <div className="grid grid-cols-2 gap-3 rounded-lg border bg-muted/40 p-3 sm:grid-cols-4">
               <StatField
                 icon={<Calendar className="h-3.5 w-3.5" />}
                 label={t('trips.fields.date')}
-                value={format(trip.date, 'PPP')}
+                value={format(trip.date, 'd MMM yyyy')}
               />
               <StatField
                 icon={<Car className="h-3.5 w-3.5" />}
@@ -226,13 +226,13 @@ export function TripLocationDialog({
           {/* Partial-coord warning — only shown when exactly one endpoint
               is valid. Suppresses the route polyline below. */}
           {showMap && oneValid && (
-            <div className="flex items-start gap-2 rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2 text-xs text-destructive">
-              <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+            <div className="flex items-start gap-2 rounded-lg border border-dashed border-warning/40 bg-warning/10 px-3 py-2.5 text-[12.5px] text-warning">
+              <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
               <div className="flex-1 space-y-0.5">
                 <div className="font-semibold">
                   {t('trips.location.partialRoute.title')}
                 </div>
-                <div className="text-foreground/80">
+                <div className="text-muted-foreground">
                   {terminalCoord
                     ? t('trips.location.partialRoute.missingDropoff')
                     : t('trips.location.partialRoute.missingTerminal')}
@@ -242,7 +242,7 @@ export function TripLocationDialog({
           )}
 
           {/* Map */}
-          <div className="relative h-[380px] shrink-0 overflow-hidden rounded-lg border bg-muted/30">
+          <div className="relative h-[380px] shrink-0 overflow-hidden rounded-lg border bg-muted/40">
             {isLoading && <MapLoadingState />}
 
             {isError && (
@@ -276,7 +276,7 @@ export function TripLocationDialog({
 
             {/* Legend */}
             {showMap && markers.length > 0 && (
-              <div className="absolute bottom-3 left-3 z-[1000] flex items-center gap-3 rounded-md border bg-background/90 px-2.5 py-1.5 shadow-sm backdrop-blur-sm">
+              <div className="absolute bottom-3 start-3 z-[1000] flex items-center gap-3 rounded-md border bg-background/90 px-2.5 py-1.5 shadow-sm backdrop-blur-sm">
                 {terminalCoord && (
                   <LegendDot color="#16A34A" label={t('trips.location.terminal')} />
                 )}
@@ -284,7 +284,7 @@ export function TripLocationDialog({
                   <LegendDot color="#DC2626" label={t('trips.location.dropOff')} />
                 )}
                 {route.length > 0 && bothValid && (
-                  <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <span className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
                     <span className="h-0.5 w-4 rounded-full bg-blue-500" />
                     {t('trips.location.route')}
                   </span>
@@ -301,7 +301,7 @@ export function TripLocationDialog({
               {terminalUrl && (
                 <Button asChild variant="outline" size="sm" className="h-8 gap-1.5 text-xs">
                   <a href={terminalUrl} target="_blank" rel="noopener noreferrer">
-                    <ExternalLink className="h-3 w-3" />
+                    <ExternalLink />
                     {t('trips.location.openTerminal')}
                   </a>
                 </Button>
@@ -309,7 +309,7 @@ export function TripLocationDialog({
               {dropoffUrl && (
                 <Button asChild variant="outline" size="sm" className="h-8 gap-1.5 text-xs">
                   <a href={dropoffUrl} target="_blank" rel="noopener noreferrer">
-                    <ExternalLink className="h-3 w-3" />
+                    <ExternalLink />
                     {t('trips.location.openDropoff')}
                   </a>
                 </Button>
@@ -319,7 +319,7 @@ export function TripLocationDialog({
                   <Separator orientation="vertical" className="h-6 self-center" />
                   <Button asChild variant="default" size="sm" className="h-8 gap-1.5 text-xs">
                     <a href={directionsUrl} target="_blank" rel="noopener noreferrer">
-                      <Navigation className="h-3 w-3" />
+                      <Navigation />
                       {t('trips.location.openRoute')}
                     </a>
                   </Button>
@@ -360,7 +360,7 @@ function StatField({ icon, label, value, className }: StatFieldProps) {
         {icon}
       </span>
       <div className="min-w-0">
-        <p className="truncate text-[10px] font-medium uppercase tracking-widest text-muted-foreground">
+        <p className="truncate text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
           {label}
         </p>
         <p className="truncate text-sm font-semibold leading-tight">{value}</p>
@@ -371,13 +371,13 @@ function StatField({ icon, label, value, className }: StatFieldProps) {
 
 function StatsSkeleton() {
   return (
-    <div className="flex gap-4 rounded-lg border bg-muted/30 p-3">
+    <div className="flex gap-4 rounded-lg border bg-muted/40 p-3">
       {Array.from({ length: 4 }).map((_, i) => (
         <div key={i} className="flex flex-1 items-center gap-2.5">
           <Skeleton className="h-7 w-7 rounded-md" />
           <div className="flex-1 space-y-1.5">
-            <Skeleton className="h-2.5 w-12" />
-            <Skeleton className="h-3.5 w-20" />
+            <Skeleton className="h-2.5 w-12 rounded-sm" />
+            <Skeleton className="h-3.5 w-20 rounded-sm" />
           </div>
         </div>
       ))}
@@ -387,9 +387,9 @@ function StatsSkeleton() {
 
 function LegendDot({ color, label }: { color: string; label: string }) {
   return (
-    <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+    <span className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
       <span
-        className="h-2.5 w-2.5 rounded-full ring-2 ring-background"
+        className="h-1.5 w-1.5 rounded-full ring-2 ring-background"
         style={{ backgroundColor: color }}
       />
       {label}
@@ -404,16 +404,22 @@ function MapErrorState({
   message: string;
   onRetry?: () => void;
 }) {
+  const { t } = useTranslation();
   return (
     <div className="flex h-full flex-col items-center justify-center gap-3 text-muted-foreground">
-      <div className="rounded-full bg-destructive/10 p-3">
-        <AlertCircle className="h-6 w-6 text-destructive" />
+      <div className="rounded-full bg-warning/10 p-3">
+        <AlertCircle className="h-6 w-6 text-warning" />
       </div>
-      <p className="text-sm">{message}</p>
+      <p className="text-xs">{message}</p>
       {onRetry && (
-        <Button variant="outline" size="sm" onClick={onRetry} className="gap-1.5">
-          <RefreshCw className="h-3.5 w-3.5" />
-          Retry
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onRetry}
+          className="h-7 gap-1.5 px-2.5 text-xs"
+        >
+          <RefreshCw />
+          {t('common.retry')}
         </Button>
       )}
     </div>
@@ -421,11 +427,12 @@ function MapErrorState({
 }
 
 function MapLoadingState() {
+  const { t } = useTranslation();
   return (
     <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/70 backdrop-blur-sm">
       <div className="flex flex-col items-center gap-2 text-muted-foreground">
-        <Loader2 className="h-7 w-7 animate-spin text-primary" />
-        <span className="text-xs">Loading map…</span>
+        <Loader2 className="h-7 w-7 animate-spin text-primary motion-reduce:animate-none" />
+        <span className="text-xs">{t('common.loadingMap')}</span>
       </div>
     </div>
   );
@@ -451,7 +458,7 @@ function buildPopupHtml({ color, bg, label, value }: PopupHtmlOptions): string {
           <circle cx="12" cy="9" r="2.5"/>
         </svg>
       </div>
-      <p style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#71717a;margin:0 0 3px;font-weight:500">${escapeHtml(label)}</p>
+      <p style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:hsl(var(--muted-foreground));margin:0 0 3px;font-weight:500">${escapeHtml(label)}</p>
       <p style="font-size:13px;font-weight:600;margin:0;line-height:1.3">${escapeHtml(value)}</p>
     </div>`;
 }

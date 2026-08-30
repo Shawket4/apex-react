@@ -4,7 +4,6 @@ import {
   Check,
   ChevronLeft,
   ChevronRight,
-  Loader2,
   MapPin,
   Search,
   UserMinus,
@@ -20,6 +19,7 @@ import {
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { ScrollArea } from '@/shared/ui/scroll-area';
+import { Skeleton } from '@/shared/ui/skeleton';
 import { EmptyState } from '@/shared/ui/empty-state';
 import { useDropOffs } from '@/entities/mapping/queries';
 import type { MappingDetail } from '@/entities/mapping/schemas';
@@ -132,13 +132,13 @@ export function DropOffPickerModal({
             type="button"
             onClick={() => handlePick(UNREGISTERED_VALUE)}
             className={cn(
-              'flex w-full items-center gap-2.5 rounded-md border border-dashed bg-muted/30 px-3 py-2.5 text-start transition-colors hover:bg-muted/60',
-              value === UNREGISTERED_VALUE && 'border-solid border-primary bg-primary/5',
+              'flex w-full items-center gap-2.5 rounded-md border border-dashed bg-muted/30 px-3 py-2.5 text-start transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+              value === UNREGISTERED_VALUE && 'border-solid border-primary bg-primary/10 text-primary',
             )}
           >
             <UserMinus className="h-4 w-4 text-muted-foreground" />
             <div className="flex-1">
-              <div className="text-sm font-medium">
+              <div className="text-[13px] font-medium leading-snug" dir="auto">
                 {t('trips.form.dropOffPicker.unregistered')}
               </div>
               <div className="text-xs text-muted-foreground">
@@ -153,8 +153,10 @@ export function DropOffPickerModal({
           {/* Results */}
           <ScrollArea className="h-[340px] rounded-md border">
             {isLoading ? (
-              <div className="flex h-full items-center justify-center py-12">
-                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              <div className="space-y-2 p-3">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <Skeleton key={i} className="h-10 w-full rounded-none" />
+                ))}
               </div>
             ) : pageItems.length === 0 ? (
               <div className="flex h-full items-center justify-center">
@@ -182,9 +184,9 @@ export function DropOffPickerModal({
                         type="button"
                         onClick={() => handlePick(dropOff, mapping)}
                         className={cn(
-                          'flex w-full items-center gap-3 px-3 py-2.5 text-start transition-colors',
-                          'hover:bg-muted/60',
-                          isSelected && 'bg-primary/5',
+                          'flex w-full items-center gap-3 px-3 py-2.5 text-start transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring',
+                          'hover:bg-muted/50',
+                          isSelected && 'bg-primary/10 text-primary',
                         )}
                       >
                         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
@@ -192,7 +194,7 @@ export function DropOffPickerModal({
                         </div>
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center gap-2">
-                            <span className="truncate text-sm font-medium">
+                            <span className="truncate text-[13px] font-medium leading-snug" dir="auto">
                               {dropOff}
                             </span>
                           </div>
@@ -204,7 +206,7 @@ export function DropOffPickerModal({
                                 </span>
                               )}
                               {fee > 0 && (
-                                <span className="tabular-nums text-success">
+                                <span className="font-mono tabular-nums text-money">
                                   {formatCurrency(fee)}
                                 </span>
                               )}
@@ -242,9 +244,10 @@ export function DropOffPickerModal({
                   variant="ghost"
                   className="h-7 w-7"
                   disabled={currentPage === 1}
+                  aria-label={t('common.previous')}
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                 >
-                  <ChevronLeft className="h-3.5 w-3.5 rtl:rotate-180" />
+                  <ChevronLeft className="rtl:rotate-180" />
                 </Button>
                 <span className="px-2 tabular-nums">
                   {currentPage} / {totalPages}
@@ -254,9 +257,10 @@ export function DropOffPickerModal({
                   variant="ghost"
                   className="h-7 w-7"
                   disabled={currentPage === totalPages}
+                  aria-label={t('common.next')}
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 >
-                  <ChevronRight className="h-3.5 w-3.5 rtl:rotate-180" />
+                  <ChevronRight className="rtl:rotate-180" />
                 </Button>
               </div>
             </div>
@@ -264,7 +268,7 @@ export function DropOffPickerModal({
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>
             {t('common.cancel')}
           </Button>
         </DialogFooter>
