@@ -127,7 +127,7 @@ export function MultiSelect<T extends string = string>({
     );
   }, [count, options, selected, placeholder, t]);
 
-  const triggerHClass = triggerHeight === 'sm' ? 'h-9' : 'h-10';
+  const triggerHClass = triggerHeight === 'sm' ? 'h-8' : 'h-9';
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -167,7 +167,7 @@ export function MultiSelect<T extends string = string>({
                     clear();
                   }
                 }}
-                className="inline-flex h-4 w-4 items-center justify-center rounded-sm text-muted-foreground hover:bg-muted hover:text-foreground"
+                className="inline-flex h-4 w-4 items-center justify-center rounded-sm text-muted-foreground hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 <X className="h-3 w-3" />
               </span>
@@ -182,7 +182,7 @@ export function MultiSelect<T extends string = string>({
       >
         {(heading || count > 0) && (
           <div className="flex items-center justify-between px-2 py-1.5">
-            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
               {heading ?? t('common.options')}
             </p>
             {count > 0 && (
@@ -201,10 +201,10 @@ export function MultiSelect<T extends string = string>({
           <div className="p-0">
             <EmptyState
               lottieSrc="/animations/no_results.json"
-              lottieWidth={70}
-              lottieHeight={70}
+              lottieWidth={110}
+              lottieHeight={110}
               title={emptyState ?? t('common.noOptions')}
-              className="border-0 bg-transparent py-4 shadow-none"
+              className="border-0 bg-transparent py-6 shadow-none"
             />
           </div>
         ) : (
@@ -218,15 +218,18 @@ export function MultiSelect<T extends string = string>({
                     onClick={() => !opt.disabled && toggle(opt.value)}
                     disabled={opt.disabled}
                     className={cn(
-                      'flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm transition-colors',
+                      'flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                       isSelected
-                        ? 'bg-accent text-accent-foreground'
-                        : 'hover:bg-accent/60',
-                      opt.disabled && 'cursor-not-allowed opacity-40 hover:bg-transparent',
+                        ? 'bg-primary/10 text-primary'
+                        : 'hover:bg-accent hover:text-accent-foreground',
+                      opt.disabled && 'cursor-not-allowed opacity-50 hover:bg-transparent',
                     )}
                   >
                     {opt.dot ? (
-                      <span className={cn('h-2 w-2 shrink-0 rounded-full', opt.dot)} />
+                      <span
+                        aria-hidden="true"
+                        className={cn('h-1.5 w-1.5 shrink-0 rounded-full', opt.dot)}
+                      />
                     ) : (
                       // Checkbox affordance for options without a dot
                       <span

@@ -56,14 +56,14 @@ export function RankedList({
 
   if (items.length === 0) {
     return (
-      <div className={cn('py-8 text-center text-sm text-muted-foreground', className)}>
-        {emptyState ?? '—'}
+      <div className={cn('py-6 text-center text-xs text-muted-foreground', className)}>
+        {emptyState ?? <span className="opacity-40">—</span>}
       </div>
     );
   }
 
   return (
-    <ul className={cn('space-y-3', className)}>
+    <ul className={cn('space-y-2', className)}>
       {items.map((item) => {
         const widthPct = max > 0 ? (item.value / max) * 100 : 0;
         const Wrapper = item.onClick ? 'button' : 'div';
@@ -75,24 +75,27 @@ export function RankedList({
               onClick={item.onClick}
               className={cn(
                 'block w-full text-start',
-                item.onClick && 'cursor-pointer rounded-md transition-colors hover:bg-muted/40 -mx-1 px-1',
+                item.onClick &&
+                  'cursor-pointer rounded-md transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring -mx-1 px-1',
               )}
             >
               <div className="flex items-baseline justify-between gap-3">
-                <span className="truncate text-sm font-medium">{item.label}</span>
-                <span className="shrink-0 text-sm font-semibold tabular-nums">
+                <span className="min-w-0 truncate text-sm font-medium" dir="auto">
+                  {item.label}
+                </span>
+                <span className="shrink-0 font-mono text-sm font-semibold tabular-nums">
                   {item.valueLabel}
                 </span>
               </div>
               <div className="mt-1 flex items-center justify-between gap-3">
-                <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                <div className="h-[15px] w-full overflow-hidden rounded bg-muted">
                   <div
-                    className={cn('h-full rounded-full bg-primary', barClassName)}
-                    style={{ width: `${widthPct}%` }}
+                    className={cn('block h-full rounded bg-money', barClassName)}
+                    style={{ width: `${Math.max(widthPct, 2)}%` }}
                   />
                 </div>
                 {(item.countLabel || item.sublabel) && (
-                  <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
+                  <span className="shrink-0 font-mono text-[11px] text-muted-foreground tabular-nums">
                     {item.countLabel ?? item.sublabel}
                   </span>
                 )}

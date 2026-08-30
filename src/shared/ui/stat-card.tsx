@@ -51,7 +51,7 @@ export function StatCard({
       className={cn('overflow-hidden', className)}
       style={{ containerType: 'inline-size' }}
     >
-      <CardContent className="flex items-center gap-3 p-3 sm:gap-3 sm:p-3.5">
+      <CardContent className="flex items-center gap-3 p-3">
         {Icon && (
           <div
             className={cn(
@@ -62,15 +62,15 @@ export function StatCard({
             <Icon className="h-4 w-4" />
           </div>
         )}
-        <div className="min-w-0 flex-1 space-y-0.5">
-          <p className="truncate text-[10px] font-medium uppercase tracking-wider text-muted-foreground sm:text-[11px]">
+        <div className="min-w-0 flex-1 space-y-1.5">
+          <p className="truncate text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
             {label}
           </p>
           {responsive ? (
             <>
               <p
                 className={cn(
-                  'stat-card-compact truncate text-sm font-semibold leading-tight tracking-tight tabular-nums sm:text-base md:text-lg',
+                  'stat-card-compact truncate font-mono text-[22px] font-semibold leading-none tabular-nums',
                   valueClassName,
                 )}
               >
@@ -78,7 +78,7 @@ export function StatCard({
               </p>
               <p
                 className={cn(
-                  'stat-card-full truncate text-sm font-semibold leading-tight tracking-tight tabular-nums sm:text-base md:text-lg',
+                  'stat-card-full truncate font-mono text-[22px] font-semibold leading-none tabular-nums',
                   valueClassName,
                 )}
               >
@@ -88,7 +88,7 @@ export function StatCard({
           ) : (
             <p
               className={cn(
-                'truncate text-sm font-semibold leading-tight tracking-tight tabular-nums sm:text-base md:text-lg',
+                'truncate font-mono text-[22px] font-semibold leading-none tabular-nums',
                 valueClassName,
               )}
             >
@@ -96,7 +96,7 @@ export function StatCard({
             </p>
           )}
           {subvalue && (
-            <p className="truncate text-[10px] tabular-nums text-muted-foreground sm:text-[11px]">
+            <p className="truncate text-[11.5px] tabular-nums text-muted-foreground">
               {subvalue}
             </p>
           )}

@@ -21,7 +21,7 @@ export const NativeSelect = React.forwardRef<HTMLSelectElement, NativeSelectProp
       <select
         ref={ref}
         className={cn(
-          'h-9 w-full appearance-none rounded-md border border-input bg-background px-3 pe-8 text-sm shadow-sm transition-colors',
+          'h-9 w-full appearance-none rounded-md border border-input bg-background text-foreground px-3 pe-8 text-sm shadow-sm transition-colors',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1',
           'disabled:cursor-not-allowed disabled:opacity-50',
         )}

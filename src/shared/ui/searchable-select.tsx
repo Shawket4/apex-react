@@ -140,7 +140,7 @@ export function SearchableSelect<T extends string | number>({
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        className="p-0"
+        className={cn('p-0', matchTriggerWidth && 'w-[--radix-popover-trigger-width]')}
         style={triggerWidth ? { width: triggerWidth } : undefined}
         align="start"
       >
@@ -154,10 +154,10 @@ export function SearchableSelect<T extends string | number>({
             <CommandEmpty className="p-0">
               <EmptyState
                 lottieSrc="/animations/no_results.json"
-                lottieWidth={70}
-                lottieHeight={70}
+                lottieWidth={110}
+                lottieHeight={110}
                 title={emptyText ?? t('common.noResults')}
-                className="border-0 bg-transparent py-4 shadow-none"
+                className="border-0 bg-transparent py-6 shadow-none"
               />
             </CommandEmpty>
             <CommandGroup>
@@ -172,7 +172,7 @@ export function SearchableSelect<T extends string | number>({
                 >
                   <Plus className="me-2 h-4 w-4" />
                   <span>
-                    {t('common.use')} "{search}"
+                    {t('common.use')} “{search}”
                   </span>
                 </CommandItem>
               )}
@@ -189,7 +189,7 @@ export function SearchableSelect<T extends string | number>({
                   <span dir="auto">
                     {createLabel
                       ? createLabel(search.trim())
-                      : `${t('common.add')} "${search.trim()}"`}
+                      : `${t('common.add')} “${search.trim()}”`}
                   </span>
                 </CommandItem>
               )}

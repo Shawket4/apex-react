@@ -1,5 +1,7 @@
 import * as React from 'react';
+import { useTranslation } from 'react-i18next';
 import { cn } from '@/shared/lib/cn';
+import { Skeleton } from './skeleton';
 import { isGoogleMapsConfigured } from '@/shared/lib/maps/google-provider';
 import type { MapProvider, MapViewProps } from '@/shared/lib/maps/types';
 
@@ -158,12 +160,13 @@ export function MapView({
 /* -------------------------------------------------------------------------- */
 
 function MapLoadingState() {
+  const { t } = useTranslation();
   return (
-    <div className="flex h-full w-full items-center justify-center rounded-lg bg-muted/30">
-      <div className="flex flex-col items-center gap-2 text-muted-foreground">
-        <div className="h-6 w-6 animate-spin rounded-full border-2 border-current border-t-transparent" />
-        <span className="text-xs">Loading map…</span>
-      </div>
+    <div className="flex h-full w-full items-center justify-center rounded-lg bg-muted/40">
+      <Skeleton className="h-full w-full rounded-lg" />
+      <span className="sr-only">
+        {t('common.loadingMap', { defaultValue: 'Loading map…' })}
+      </span>
     </div>
   );
 }
