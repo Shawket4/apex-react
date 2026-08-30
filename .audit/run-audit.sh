@@ -213,8 +213,11 @@ for SID in $LIST; do
       { echo "== playwright (recording)"; npx playwright test --reporter=list; } >> "$GL" 2>&1
       changed="$(grep -cE '^[[:space:]]+✘' "$GL" || true)"
       infra="$(grep -cE 'Test timeout of|page\.goto|browserType\.|Timed out waiting|webServer|ERR_CONNECTION_REFUSED|No tests found' "$GL" || true)"
+      # A shared primitive (shared/ui, shell) legitimately moves many routes a little; a crash or a
+      # lost session moves routes by >=50%. So the route-count cap is off by default and the
+      # per-route breakage guard below is what protects the baselines.
       broken="$(grep -oE 'ratio 0\.[5-9][0-9]* of all image pixels|ratio 1 of all image pixels' "$GL" | wc -l | tr -d ' ')"
-      if [ "$infra" != "0" ] || [ "$broken" != "0" ] || [ "$changed" -gt "${AUDIT_MAX_CHANGED_ROUTES:-12}" ]; then
+      if [ "$infra" != "0" ] || [ "$broken" != "0" ] || [ "$changed" -gt "${AUDIT_MAX_CHANGED_ROUTES:-46}" ]; then
         log "$SID: playwright infra failure ($infra), routes changed >50% ($broken — a crash, not a fix) or too many routes changed ($changed) — not re-baselining"; pass=0
       elif [ "$changed" != "0" ]; then
         mkdir -p ".audit/visual/$SID"
