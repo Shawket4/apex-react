@@ -1,11 +1,13 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import {
+  AlertTriangle,
   CheckCircle2,
   ClipboardCheck,
   Filter,
   Loader2,
   Radar,
+  RefreshCw,
   SearchCheck,
 } from 'lucide-react';
 import { PageShell } from '@/shared/ui/page-shell';
@@ -13,6 +15,7 @@ import { Button } from '@/shared/ui/button';
 import { NativeSelect } from '@/shared/ui/native-select';
 import { SearchInput } from '@/shared/ui/search-input';
 import { EmptyState } from '@/shared/ui/empty-state';
+import { Skeleton } from '@/shared/ui/skeleton';
 import { Popover, PopoverContent, PopoverTrigger } from '@/shared/ui/popover';
 import { Tabs, TabsList, TabsTrigger } from '@/shared/ui/tabs';
 import { useDebounce } from '@/shared/hooks/use-debounce';
@@ -207,9 +210,9 @@ export default function TripAuditPage() {
             className="gap-2"
           >
             {runScan.isPending ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Loader2 className="animate-spin motion-reduce:animate-none" />
             ) : (
-              <Radar className="h-4 w-4" />
+              <Radar />
             )}
             {t('tripAudit.scan.run', 'Run scan')}
           </Button>
@@ -218,7 +221,7 @@ export default function TripAuditPage() {
               <>
                 {t('tripAudit.scan.last', 'Last scan')}:{' '}
                 <span className={cn(lastRun.error && 'text-destructive')}>
-                  {lastRun.status || '—'}
+                  {lastRun.status || <span className="opacity-40">—</span>}
                 </span>
                 {lastRun.started_at && (
                   <> · {formatCairoDateTime(lastRun.started_at, i18n.language)}</>
@@ -231,7 +234,7 @@ export default function TripAuditPage() {
         </div>
       }
     >
-      <div className="space-y-5">
+      <div className="space-y-3">
         {/* 1. KPI strip — flagged_unreviewed is THE number */}
         <KpiStrip
           summary={summary}
@@ -251,10 +254,10 @@ export default function TripAuditPage() {
                     {v === 'needs_review' && needsReviewCount != null && (
                       <span
                         className={cn(
-                          'inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[11px] font-semibold tabular-nums',
+                          'inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-semibold tabular-nums',
                           needsReviewCount > 0
                             ? 'bg-primary text-primary-foreground'
-                            : 'bg-success/15 text-success',
+                            : 'bg-success/10 text-success',
                         )}
                       >
                         {formatNumber(needsReviewCount)}
@@ -280,9 +283,8 @@ export default function TripAuditPage() {
                   <Button
                     variant={activeFilterCount > 0 ? 'default' : 'outline'}
                     size="sm"
-                    className="h-9 gap-1.5"
                   >
-                    <Filter className="h-3.5 w-3.5" />
+                    <Filter />
                     <span className="hidden sm:inline">
                       {t('tripAudit.filters.more', 'Filters')}
                     </span>
@@ -296,10 +298,14 @@ export default function TripAuditPage() {
                 <PopoverContent align="end" className="w-[340px] space-y-4 p-4">
                   {view === 'all' && (
                     <div className="space-y-2">
-                      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      <label
+                        htmlFor="trip-audit-status"
+                        className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground"
+                      >
                         {t('tripAudit.filters.status', 'Status')}
-                      </p>
+                      </label>
                       <NativeSelect
+                        id="trip-audit-status"
                         value={status}
                         onChange={(e) => setStatus(e.target.value as TripMatchStatus | '')}
                         aria-label={t('tripAudit.filters.status', 'Status')}
@@ -316,10 +322,14 @@ export default function TripAuditPage() {
                     </div>
                   )}
                   <div className="space-y-2">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    <label
+                      htmlFor="trip-audit-sort"
+                      className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground"
+                    >
                       {t('tripAudit.filters.sort', 'Sort')}
-                    </p>
+                    </label>
                     <NativeSelect
+                      id="trip-audit-sort"
                       value={effectiveSort}
                       onChange={(e) => setSortOverride(e.target.value as TripMatchSort)}
                       aria-label={t('tripAudit.filters.sort', 'Sort')}
@@ -336,7 +346,7 @@ export default function TripAuditPage() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="w-full"
+                      className="h-7 w-full text-xs"
                       onClick={resetSecondaryFilters}
                     >
                       {t('common.clearFilters', 'Clear filters')}
@@ -350,14 +360,22 @@ export default function TripAuditPage() {
 
         {/* 3. The queue */}
         {matchesQuery.isError ? (
-          <EmptyState
-            title={t('errors.generic', 'Something went wrong')}
-            action={
-              <Button variant="outline" onClick={() => void matchesQuery.refetch()}>
-                {t('common.retry', 'Retry')}
-              </Button>
-            }
-          />
+          <div
+            role="status"
+            className="flex items-start gap-2 rounded-lg border border-dashed border-warning/40 bg-warning/10 px-3 py-2.5 text-[12.5px]"
+          >
+            <AlertTriangle className="mt-0.5 h-3.5 w-3.5 text-warning" aria-hidden />
+            <span className="min-w-0 flex-1">{t('errors.generic', 'Something went wrong')}</span>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 gap-1.5 border-warning/40 px-2.5 text-xs text-warning hover:text-warning"
+              onClick={() => void matchesQuery.refetch()}
+            >
+              <RefreshCw />
+              {t('common.retry', 'Retry')}
+            </Button>
+          </div>
         ) : (
           <TripAuditQueue
             matches={matches}
@@ -373,7 +391,7 @@ export default function TripAuditPage() {
                     'No flagged trips are awaiting review in this range.',
                   )}
                   action={
-                    <Button variant="outline" onClick={() => setView('all')}>
+                    <Button variant="outline" size="sm" onClick={() => setView('all')}>
                       {t('tripAudit.queue.browseAll', 'Browse all trips')}
                     </Button>
                   }
@@ -432,37 +450,43 @@ function KpiStrip({
   const allClear = pending != null && pending === 0;
 
   return (
-    <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)]">
+    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)]">
       {/* Hero — THE number */}
       <div
         className={cn(
-          'flex items-center justify-between gap-3 rounded-lg border p-4 sm:col-span-2 lg:col-span-1',
+          'flex items-center justify-between gap-3 rounded-lg border p-3 sm:col-span-2 lg:col-span-1',
           allClear
-            ? 'border-success/30 bg-success/5'
-            : 'border-primary/30 bg-primary/5',
+            ? 'border-success/40 bg-success/10'
+            : 'border-primary/40 bg-primary/10',
         )}
       >
         <div className="min-w-0">
-          <p className="text-xs font-medium text-muted-foreground">
+          <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
             {t('tripAudit.kpi.needsReview', 'Awaiting review')}
           </p>
           <p
             className={cn(
-              'mt-0.5 text-3xl font-bold tabular-nums leading-tight',
-              allClear ? 'text-success' : 'text-primary',
+              'font-mono text-[22px] font-semibold leading-none tabular-nums',
+              allClear ? 'text-success' : '',
             )}
           >
-            {pending != null ? formatNumber(pending) : loading ? '…' : '—'}
+            {pending != null ? (
+              formatNumber(pending)
+            ) : loading ? (
+              <Skeleton className="h-[22px] w-16 rounded-sm" />
+            ) : (
+              <span className="opacity-40">—</span>
+            )}
           </p>
-          <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
+          <p className="mt-1.5 min-h-[17px] truncate text-[11.5px] text-muted-foreground">
             {allClear
               ? t('tripAudit.kpi.allClearSub', 'nothing needs your attention')
               : t('tripAudit.kpi.needsReviewSub', 'flagged trips need a decision')}
           </p>
         </div>
         {!allClear && pending != null && (
-          <Button size="sm" className="shrink-0 gap-1.5" onClick={onStartReview}>
-            <ClipboardCheck className="h-4 w-4" />
+          <Button size="sm" className="shrink-0" onClick={onStartReview}>
+            <ClipboardCheck />
             {reviewing
               ? t('tripAudit.kpi.reviewing', 'Reviewing')
               : t('tripAudit.kpi.startReview', 'Start review')}
@@ -472,7 +496,15 @@ function KpiStrip({
 
       <KpiTile
         label={t('tripAudit.kpi.flagged', 'Flagged trips')}
-        value={summary ? formatNumber(summary.flagged) : loading ? '…' : '—'}
+        value={
+          summary ? (
+            formatNumber(summary.flagged)
+          ) : loading ? (
+            <Skeleton className="h-[22px] w-16 rounded-sm" />
+          ) : (
+            <span className="opacity-40">—</span>
+          )
+        }
         sub={
           summary
             ? t('tripAudit.kpi.flaggedSub', {
@@ -486,25 +518,29 @@ function KpiStrip({
       <KpiTile
         label={t('tripAudit.kpi.efficiency', 'Route efficiency')}
         value={
-          summary?.efficiency_pct != null
-            ? `${formatNumber(summary.efficiency_pct, 1)}%`
-            : loading
-              ? '…'
-              : '—'
+          summary?.efficiency_pct != null ? (
+            `${formatNumber(summary.efficiency_pct, 1)}%`
+          ) : loading ? (
+            <Skeleton className="h-[22px] w-16 rounded-sm" />
+          ) : (
+            <span className="opacity-40">—</span>
+          )
         }
         sub={t('tripAudit.kpi.efficiencySub', 'optimal km ÷ driven km')}
       />
       <KpiTile
         label={t('tripAudit.kpi.excessKm', 'Excess distance')}
         value={
-          summary
-            ? t('tripAudit.kpi.excessKmValue', {
-                km: formatNumber(summary.excess_km),
-                defaultValue: '+{{km}} km',
-              })
-            : loading
-              ? '…'
-              : '—'
+          summary ? (
+            t('tripAudit.kpi.excessKmValue', {
+              km: formatNumber(summary.excess_km),
+              defaultValue: '+{{km}} km',
+            })
+          ) : loading ? (
+            <Skeleton className="h-[22px] w-16 rounded-sm" />
+          ) : (
+            <span className="opacity-40">—</span>
+          )
         }
         sub={t('tripAudit.kpi.excessKmSub', 'driven over optimal in this window')}
       />
@@ -523,10 +559,10 @@ function KpiTile({
   sub?: React.ReactNode;
 }) {
   return (
-    <div className="rounded-lg border bg-card p-4">
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <div className="mt-0.5 truncate text-xl font-semibold tabular-nums">{value}</div>
-      {sub && <p className="mt-0.5 truncate text-[11px] text-muted-foreground">{sub}</p>}
+    <div className="rounded-lg border bg-card p-3">
+      <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{label}</p>
+      <div className="truncate font-mono text-[22px] font-semibold leading-none tabular-nums">{value}</div>
+      {sub && <p className="mt-1.5 min-h-[17px] truncate text-[11.5px] text-muted-foreground">{sub}</p>}
     </div>
   );
 }
