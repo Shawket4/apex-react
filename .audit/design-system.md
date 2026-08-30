@@ -600,6 +600,47 @@ Each item keeps the options that were found, followed by **→ Ruling** and whet
 
 ---
   **→ Ruling:** the palette widget's declared values win (`px-4 py-2.5` rows, `h-14 text-base` input, 16px item icons); the CommandDialog descendant overrides that out-ranked them were removed. Applied.
+## 14b. Rulings on the trips deviations (2026-08-30)
+
+Applied after the shard remediation, when the owner reported that the audited pages had been
+squeezed. The pattern in each is the same: §13 listed a **role difference** as a deviation, and
+"the dashboard wins" was applied to a **shared primitive**, turning a difference of purpose into
+a uniformity error. §11 already said the dashboard contains no page header, no form and no
+icon stat card — so for those, §12's trips values govern, not the dashboard's.
+
+- **R-11 (D-S1, D-T1, D-T2) Page frame is per page kind.** The dashboard's
+  `max-w-6xl gap-3 p-3 sm:p-4` and 18/20px title belong to *an overview of small panels*. A page
+  whose content is a wide table, a form or a detail column uses `PageShell`'s own frame —
+  `gap-6 p-4 md:p-6 lg:p-8`, no width cap (a nine-column table needs the width), `text-2xl
+  md:text-3xl` title, `text-sm` description. **`page-shell.tsx` reverted; the three bespoke
+  service-invoice frames restored to `gap-6 p-4 md:p-6 lg:p-8` at their original `max-w-5xl/6xl`.**
+- **R-12 (D-T7, D-L1) StatCard keeps its own scale.** The dashboard's KPI card is a *vertical*
+  card whose whole job is one 22px figure. `StatCard` is a *horizontal* icon tile three lines
+  deep; a 22px mono value and `space-y-1.5` overflow it and defeat its container-query
+  compact/full swap. Restored to `p-3 sm:p-3.5`, `space-y-0.5`, `text-sm sm:text-base md:text-lg`,
+  `text-[10px] sm:text-[11px]` label and subvalue. **Kept from the audit:** `font-mono` on the
+  value — §2's figure rule, and it is what makes a column of tiles align.
+- **R-14 (owner, 2026-08-30) One page frame for every screen, the dashboard included.**
+  After R-11 restored `PageShell`, the owner asked for the dashboard to use it too — so the frame
+  is no longer "dashboard vs pages" but one shared component. `pages/dashboard/dashboard.tsx` now
+  renders `<PageShell icon title description actions>`: the date is the title, the range · company ·
+  updated line is the description, the `ConnectionBadge` is the actions slot. Consequences that
+  supersede §1/§2/§10 where they describe the dashboard's old frame: page padding is
+  `p-4 md:p-6 lg:p-8` (not `p-3 sm:p-4`), section rhythm is `gap-6` (not `gap-3`), the page title is
+  `text-2xl md:text-3xl` (not `text-lg sm:text-xl`), the description is `text-sm` (not
+  `text-[11.5px]`), and there is no `max-w-6xl` cap. Everything *inside* a panel — the 12px card
+  padding, the 10px eyebrow, the 22px mono KPI figure, the row paddings — is unchanged.
+  **The dashboard is therefore no longer frozen as an exact pixel reference; the shared primitives
+  (`PageShell`, `StatCard`, `Card`, `Button`, …) are now what "the reference" means.**
+- **R-13 A clipped figure explains itself.** `StatCard` values now measure themselves and, only
+  while actually clipped (or while showing a compact form), become a tooltip carrying the whole
+  number — Radix on hover and focus, `onPointerDown` for touch, `aria-label` for assistive tech.
+  Same principle as `Truncate` (§12.4): a tooltip that is always there stops meaning
+  "there is more here".
+
+The rulings that unblocked the deferred findings (R-1..R-10) are recorded in
+`.audit/deferred-rulings.md`.
+
 ## 15. Foundation defects (status after the 2026-08-29 fixes)
 1. **[fixed]** Print palette (`index.css` print block) was the stock shadcn palette, not the Apex tokens; it covered only `bg-muted/50` and hid every `<header>`. Now: every print override reads the `:root` tokens (`hsl(var(--x) / a)`), `/40` and `/60` are covered, and only `footer, nav` are hidden (the app header/sidebar already carry `print:hidden`, so the dashboard's own header prints).
 2. **[fixed]** `theme-color` meta was `#1e40af` (Tailwind blue-800) — now `#1b396a` (= `--primary` 217 60% 26%). The Excel brand colour `FF1E40AF` (`excel.ts`) is now `FF1B396A`.

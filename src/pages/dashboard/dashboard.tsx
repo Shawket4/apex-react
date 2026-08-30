@@ -5,6 +5,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import {
   AlertTriangle,
   ChevronDown,
+  LayoutDashboard,
   RefreshCw,
   TrendingDown,
   TrendingUp,
@@ -41,6 +42,7 @@ import { prefetchTrips } from '@/entities/trip/queries';
 import { defaultTripListParams } from '@/entities/trip/defaults';
 import { prefetchLedgerMount } from '@/entities/transaction/queries';
 import { Button } from '@/shared/ui/button';
+import { PageShell } from '@/shared/ui/page-shell';
 import { Skeleton } from '@/shared/ui/skeleton';
 import { format, formatNumber } from '@/shared/lib/format';
 import { cn } from '@/shared/lib/cn';
@@ -96,24 +98,23 @@ export default function DashboardPage() {
   const asOf = dashboard.data?.as_of;
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 p-3 sm:p-4">
-      {/* ---- header: the date, and the connection telling the truth ---- */}
-      <header className="flex items-center justify-between gap-3">
-        <div>
-          <h1 className="text-lg font-semibold leading-tight sm:text-xl">
-            {format(today, 'EEEE d MMMM')}
-          </h1>
-          <p className="mt-0.5 text-[11.5px] text-muted-foreground">
-            {range.from === range.to
-              ? format(range.from, 'd MMMM yyyy')
-              : `${format(range.from, 'd MMM')} – ${format(range.to, 'd MMM yyyy')}`}
-            {company && ` · ${company}`}
-            {asOf && ` · ${t('dashboard.updatedAt', { time: format(asOf, 'HH:mm') })}`}
-          </p>
-        </div>
-        <ConnectionBadge live={live} />
-      </header>
-
+    // The same PageShell every other screen uses — one page frame, one title
+    // and description slot, one actions slot. The connection badge is this
+    // page's action; the date is its title.
+    <PageShell
+      icon={<LayoutDashboard className="h-5 w-5" />}
+      title={format(today, 'EEEE d MMMM')}
+      description={
+        <>
+          {range.from === range.to
+            ? format(range.from, 'd MMMM yyyy')
+            : `${format(range.from, 'd MMM')} – ${format(range.to, 'd MMM yyyy')}`}
+          {company && ` · ${company}`}
+          {asOf && ` · ${t('dashboard.updatedAt', { time: format(asOf, 'HH:mm') })}`}
+        </>
+      }
+      actions={<ConnectionBadge live={live} />}
+    >
       {/* ---- apex zone: figures, or an honest strip ---- */}
       {dashboard.isError ? (
         <DegradedStrip
@@ -207,7 +208,7 @@ export default function DashboardPage() {
           </div>
         </section>
       )}
-    </div>
+    </PageShell>
   );
 }
 

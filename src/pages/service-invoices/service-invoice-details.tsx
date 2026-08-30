@@ -15,7 +15,7 @@ export default function ServiceInvoiceDetailsPage() {
 
   if (isLoading) {
     return (
-      <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 p-3 sm:p-4">
+      <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 p-4 md:p-6 lg:p-8">
         <Skeleton className="h-5 w-1/3 rounded-sm" />
         <Skeleton className="h-96 w-full rounded-lg" />
       </div>
@@ -25,7 +25,7 @@ export default function ServiceInvoiceDetailsPage() {
   if (!invoice) return <p className="py-6 text-center text-xs text-muted-foreground">{t('common.noResults')}</p>;
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col gap-3 p-3 sm:p-4">
+    <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 p-4 md:p-6 lg:p-8">
       <ServiceInvoiceDetails
         invoice={invoice}
         onBack={() => navigate('/service-invoices')}

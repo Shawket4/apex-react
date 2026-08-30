@@ -1,0 +1,166 @@
+03:02:56  === run start · phase=both · model=default · dry-run=0 · shards: shard-001 shard-002 shard-003 shard-004 shard-005 shard-006 shard-007 shard-008 shard-009 shard-010 shard-011 shard-012 shard-013 shard-014 shard-015 shard-016 shard-017 shard-018 shard-019 shard-020 shard-021 shard-022 shard-023 shard-024 shard-025 shard-026 shard-027 shard-028 shard-029 
+03:02:56  shard-001: done marker present — skipping
+03:02:56  --- shard-002 (2499 LOC) ---
+03:02:56  shard-002: findings exist — skipping audit
+03:02:56  shard-002: pre-fix baseline failed (infra 1) — screenshots unavailable, skipping shard (see .audit/logs/shard-002.gates.log)
+03:02:56  --- shard-003 (2385 LOC) ---
+03:02:56  shard-003: findings exist — skipping audit
+03:02:57  shard-003: pre-fix baseline failed (infra 1) — screenshots unavailable, skipping shard (see .audit/logs/shard-003.gates.log)
+03:02:57  --- shard-004 (2267 LOC) ---
+03:02:57  shard-004: findings exist — skipping audit
+03:02:57  shard-004: pre-fix baseline failed (infra 1) — screenshots unavailable, skipping shard (see .audit/logs/shard-004.gates.log)
+03:02:57  --- shard-005 (2082 LOC) ---
+03:06:43  shard-005: audit ok — FINDINGS: 33 (blocker 11 / should 18 / nit 4)
+03:12:02  shard-005: fix run rc=0 — APPLIED: 28 SKIPPED: 5
+03:18:47  shard-005: gates ok — 2 route screenshot(s) changed (diffs in .audit/visual/shard-005)
+03:18:47  shard-005: committed 51f5ef0
+03:18:47  --- shard-006 (2368 LOC) ---
+03:21:09  shard-006: audit ok — FINDINGS: 12 (blocker 3 / should 6 / nit 3)
+03:24:45  shard-006: fix run rc=0 — APPLIED: 12 SKIPPED: 0
+03:31:09  shard-006: gates ok — 1 route screenshot(s) changed (diffs in .audit/visual/shard-006)
+03:31:09  shard-006: committed e1d370d
+03:31:09  --- shard-007 (2092 LOC) ---
+03:36:30  shard-007: audit ok — FINDINGS: 53 (blocker 19 / should 31 / nit 3)
+03:46:11  shard-007: fix run rc=0 — APPLIED: 45 SKIPPED: 8
+03:51:17  shard-007: gates ok — 1 route screenshot(s) changed (diffs in .audit/visual/shard-007)
+03:51:17  shard-007: committed 02840da
+03:51:17  --- shard-008 (1632 LOC) ---
+03:55:21  shard-008: audit ok — FINDINGS: 43 (blocker 13 / should 23 / nit 7)
+04:02:13  shard-008: fix run rc=0 — APPLIED: 38 SKIPPED: 5
+04:07:17  shard-008: gates ok — 3 route screenshot(s) changed (diffs in .audit/visual/shard-008)
+04:07:17  shard-008: committed ca16e95
+04:07:17  --- shard-009 (1469 LOC) ---
+04:11:50  shard-009: audit ok — FINDINGS: 51 (blocker 10 / should 29 / nit 12)
+04:22:42  shard-009: fix run rc=0 — APPLIED: 46 SKIPPED: 5
+04:27:46  shard-009: gates ok — 1 route screenshot(s) changed (diffs in .audit/visual/shard-009)
+04:27:46  shard-009: committed 121c78a
+04:27:46  --- shard-010 (1786 LOC) ---
+04:31:17  shard-010: audit ok — FINDINGS: 40 (blocker 13 / should 21 / nit 6)
+04:39:31  shard-010: fix run rc=0 — APPLIED: 35 SKIPPED: 5
+04:44:56  shard-010: gates ok — 4 route screenshot(s) changed (diffs in .audit/visual/shard-010)
+04:44:56  shard-010: committed d0277e7
+04:44:56  --- shard-011 (2480 LOC) ---
+04:48:23  shard-011: audit ok — FINDINGS: 37 (blocker 13 / should 19 / nit 5)
+04:55:19  shard-011: fix run rc=0 — APPLIED: 32 SKIPPED: 5
+05:01:21  shard-011: gates ok — 3 route screenshot(s) changed (diffs in .audit/visual/shard-011)
+05:01:21  shard-011: committed deca2be
+05:01:21  --- shard-012 (2461 LOC) ---
+05:08:12  shard-012: audit ok — FINDINGS: 58 (blocker 16 / should 35 / nit 7)
+05:16:06  shard-012: fix run rc=0 — APPLIED: 54 SKIPPED: 4
+05:21:06  shard-012: gates ok — 1 route screenshot(s) changed (diffs in .audit/visual/shard-012)
+05:21:06  shard-012: committed 90cde32
+05:21:06  --- shard-013 (2346 LOC) ---
+05:24:59  shard-013: audit ok — FINDINGS: 32 (blocker 3 / should 26 / nit 3)
+05:31:43  shard-013: fix run rc=0 — APPLIED: 28 SKIPPED: 4
+05:36:41  shard-013: gates ok — 1 route screenshot(s) changed (diffs in .audit/visual/shard-013)
+05:36:41  shard-013: committed 179caea
+05:36:41  --- shard-014 (1937 LOC) ---
+05:40:09  shard-014: audit ok — FINDINGS: 33 (blocker 2 / should 25 / nit 6)
+05:46:12  shard-014: fix run rc=0 — APPLIED: 29 SKIPPED: 4
+05:51:20  shard-014: gates ok — 2 route screenshot(s) changed (diffs in .audit/visual/shard-014)
+05:51:20  shard-014: committed 10483f4
+05:51:20  --- shard-015 (2419 LOC) ---
+05:53:21  shard-015: audit ok — FINDINGS: 26 (blocker 5 / should 15 / nit 6)
+05:58:31  shard-015: fix run rc=0 — APPLIED: 24 SKIPPED: 2
+06:03:31  shard-015: gates ok — 3 route screenshot(s) changed (diffs in .audit/visual/shard-015)
+06:03:31  shard-015: committed f17dbf5
+06:03:31  --- shard-016 (2330 LOC) ---
+06:09:04  shard-016: audit ok — FINDINGS: 59 (blocker 20 / should 33 / nit 6)
+06:17:51  shard-016: fix run rc=0 — APPLIED: 54 SKIPPED: 5
+06:31:03  shard-016: gates ok — 4 route screenshot(s) changed (diffs in .audit/visual/shard-016)
+06:31:03  shard-016: committed 9abc513
+06:31:03  --- shard-017 (1819 LOC) ---
+06:33:07  shard-017: audit ok — FINDINGS: 14 (blocker 3 / should 7 / nit 4)
+06:36:28  shard-017: fix run rc=0 — APPLIED: 11 SKIPPED: 3
+06:39:05  shard-017: gates ok — 0 route screenshot(s) changed (diffs in .audit/visual/shard-017)
+06:39:05  shard-017: committed 712e6df
+06:39:05  --- shard-018 (2457 LOC) ---
+06:45:27  shard-018: audit ok — FINDINGS: 63 (blocker 23 / should 31 / nit 9)
+06:53:35  shard-018: fix run rc=0 — APPLIED: 63 SKIPPED: 0
+06:56:13  shard-018: gates ok — 0 route screenshot(s) changed (diffs in .audit/visual/shard-018)
+06:56:13  shard-018: committed 0c10eba
+06:56:13  --- shard-019 (2007 LOC) ---
+06:56:53  shard-019: audit ok — FINDINGS: 0 (blocker 0 / should 0 / nit 0)
+06:56:53  shard-019: 0 findings — marking done
+06:56:53  --- shard-020 (1265 LOC) ---
+07:00:01  shard-020: audit ok — FINDINGS: 23 (blocker 0 / should 19 / nit 4)
+07:04:13  shard-020: fix run rc=0 — APPLIED: 20 SKIPPED: 3
+07:06:47  shard-020: gates ok — 0 route screenshot(s) changed (diffs in .audit/visual/shard-020)
+07:06:47  shard-020: committed bd8cb40
+07:06:47  --- shard-021 (1599 LOC) ---
+07:10:47  shard-021: audit ok — FINDINGS: 31 (blocker 11 / should 17 / nit 3)
+07:16:54  shard-021: fix run rc=0 — APPLIED: 29 SKIPPED: 2
+07:19:37  shard-021: gates ok — 0 route screenshot(s) changed (diffs in .audit/visual/shard-021)
+07:19:37  shard-021: committed 74dc850
+07:19:37  --- shard-022 (2349 LOC) ---
+07:23:56  shard-022: AUDIT FAILED (rc=1, findings file present) — see .audit/logs/shard-022.audit.log
+07:23:56  --- shard-023 (631 LOC) ---
+07:23:56  shard-023: findings exist — skipping audit
+07:26:23  shard-023: fix run rc=1 — 
+07:26:23  shard-023: FIX FAILED (rc=1, fix log missing/incomplete) — reverting
+07:26:23  --- shard-024 (2383 LOC) ---
+07:26:26  shard-024: AUDIT FAILED (rc=1, findings file missing) — see .audit/logs/shard-024.audit.log
+07:26:26  --- shard-025 (1948 LOC) ---
+07:26:29  shard-025: AUDIT FAILED (rc=1, findings file missing) — see .audit/logs/shard-025.audit.log
+07:26:29  --- shard-026 (2171 LOC) ---
+07:26:31  shard-026: AUDIT FAILED (rc=1, findings file missing) — see .audit/logs/shard-026.audit.log
+07:26:31  --- shard-027 (1836 LOC) ---
+07:26:35  shard-027: AUDIT FAILED (rc=1, findings file missing) — see .audit/logs/shard-027.audit.log
+07:26:35  --- shard-028 (2483 LOC) ---
+07:26:39  shard-028: AUDIT FAILED (rc=1, findings file missing) — see .audit/logs/shard-028.audit.log
+07:26:39  --- shard-029 (1439 LOC) ---
+07:26:42  shard-029: AUDIT FAILED (rc=1, findings file missing) — see .audit/logs/shard-029.audit.log
+07:26:42  === run end · shards=29 ok=17 failed=11 skipped=1
+07:27:07  PUSH FAILED (see run.log)
+07:29:02  === run start · phase=both · model=default · dry-run=0 · shards: shard-001 shard-002 shard-003 shard-004 shard-005 shard-006 shard-007 shard-008 shard-009 shard-010 shard-011 shard-012 shard-013 shard-014 shard-015 shard-016 shard-017 shard-018 shard-019 shard-020 shard-021 shard-022 shard-023 shard-024 shard-025 shard-026 shard-027 shard-028 shard-029 
+07:29:02  shard-001: done marker present — skipping
+07:29:02  --- shard-002 (2499 LOC) ---
+07:29:02  shard-002: findings exist — skipping audit
+07:31:26  shard-002: fix run rc=1 — APPLIED: 19 SKIPPED: 2
+07:31:26  shard-002: FIX FAILED (rc=1, fix log present) — reverting
+07:31:26  --- shard-003 (2385 LOC) ---
+07:31:26  shard-003: findings exist — skipping audit
+07:33:47  shard-003: fix run rc=1 — APPLIED: 40 SKIPPED: 2
+07:33:47  shard-003: FIX FAILED (rc=1, fix log present) — reverting
+07:33:47  --- shard-004 (2267 LOC) ---
+07:33:47  shard-004: findings exist — skipping audit
+07:37:17  shard-004: fix run rc=1 — 
+07:37:17  shard-004: FIX FAILED (rc=1, fix log missing/incomplete) — reverting
+07:37:17  shard-005: done marker present — skipping
+07:37:17  shard-006: done marker present — skipping
+07:37:17  shard-007: done marker present — skipping
+07:37:17  shard-008: done marker present — skipping
+07:37:17  shard-009: done marker present — skipping
+07:37:17  shard-010: done marker present — skipping
+07:37:17  shard-011: done marker present — skipping
+07:37:17  shard-012: done marker present — skipping
+07:37:17  shard-013: done marker present — skipping
+07:37:17  shard-014: done marker present — skipping
+07:37:17  shard-015: done marker present — skipping
+07:37:17  shard-016: done marker present — skipping
+07:37:17  shard-017: done marker present — skipping
+07:37:17  shard-018: done marker present — skipping
+07:37:17  shard-019: done marker present — skipping
+07:37:17  shard-020: done marker present — skipping
+07:37:17  shard-021: done marker present — skipping
+07:37:17  --- shard-022 (2349 LOC) ---
+07:37:17  shard-022: findings exist — skipping audit
+07:39:42  shard-022: fix run rc=1 — 
+07:39:42  shard-022: FIX FAILED (rc=1, fix log missing/incomplete) — reverting
+07:39:42  --- shard-023 (631 LOC) ---
+07:39:42  shard-023: findings exist — skipping audit
+07:42:06  shard-023: fix run rc=1 — 
+07:42:06  shard-023: FIX FAILED (rc=1, fix log missing/incomplete) — reverting
+07:42:06  --- shard-024 (2383 LOC) ---
+07:42:09  shard-024: AUDIT FAILED (rc=1, findings file missing) — see .audit/logs/shard-024.audit.log
+07:42:09  --- shard-025 (1948 LOC) ---
+07:42:12  shard-025: AUDIT FAILED (rc=1, findings file missing) — see .audit/logs/shard-025.audit.log
+07:42:12  --- shard-026 (2171 LOC) ---
+07:42:15  shard-026: AUDIT FAILED (rc=1, findings file missing) — see .audit/logs/shard-026.audit.log
+07:42:15  --- shard-027 (1836 LOC) ---
+07:42:18  shard-027: AUDIT FAILED (rc=1, findings file missing) — see .audit/logs/shard-027.audit.log
+07:42:18  --- shard-028 (2483 LOC) ---
+07:42:21  shard-028: AUDIT FAILED (rc=1, findings file missing) — see .audit/logs/shard-028.audit.log
+07:42:21  --- shard-029 (1439 LOC) ---
+07:42:23  shard-029: AUDIT FAILED (rc=1, findings file missing) — see .audit/logs/shard-029.audit.log
+07:42:23  === run end · shards=29 ok=0 failed=11 skipped=18

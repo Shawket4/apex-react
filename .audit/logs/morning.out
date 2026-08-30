@@ -1,0 +1,36 @@
+08:29:24  === run start · phase=both · model=default · dry-run=0 · shards: shard-001 shard-002 shard-003 shard-004 shard-005 shard-006 shard-007 shard-008 shard-009 shard-010 shard-011 shard-012 shard-013 shard-014 shard-015 shard-016 shard-017 shard-018 shard-019 shard-020 shard-021 shard-022 shard-023 shard-024 shard-025 shard-026 shard-027 shard-028 shard-029 
+08:29:24  shard-001: done marker present — skipping
+08:29:24  --- shard-002 (2499 LOC) ---
+08:29:24  shard-002: findings exist — skipping audit
+08:36:13  shard-002: fix run rc=0 — APPLIED: 19 SKIPPED: 2
+08:39:29  shard-002: gates ok — 0 route screenshot(s) changed (diffs in .audit/visual/shard-002)
+08:39:29  shard-002: committed ba9b51e
+08:39:29  --- shard-003 (2385 LOC) ---
+08:39:29  shard-003: findings exist — skipping audit
+08:46:00  shard-003: fix run rc=0 — APPLIED: 41 SKIPPED: 1
+08:54:07  shard-003: gates ok — 16 route screenshot(s) changed (diffs in .audit/visual/shard-003)
+08:54:07  shard-003: committed 3ca8d04
+08:54:07  --- shard-004 (2267 LOC) ---
+08:54:07  shard-004: findings exist — skipping audit
+09:04:07  shard-004: fix run rc=0 — APPLIED: 49 SKIPPED: 5
+09:11:02  shard-004: gates ok — 29 route screenshot(s) changed (diffs in .audit/visual/shard-004)
+09:11:02  shard-004: committed 2f23174
+09:11:02  shard-005: done marker present — skipping
+09:11:02  shard-006: done marker present — skipping
+09:11:02  shard-007: done marker present — skipping
+09:11:02  shard-008: done marker present — skipping
+09:11:02  shard-009: done marker present — skipping
+09:11:02  shard-010: done marker present — skipping
+09:11:02  shard-011: done marker present — skipping
+09:11:02  shard-012: done marker present — skipping
+09:11:02  shard-013: done marker present — skipping
+09:11:02  shard-014: done marker present — skipping
+09:11:02  shard-015: done marker present — skipping
+09:11:02  shard-016: done marker present — skipping
+09:11:02  shard-017: done marker present — skipping
+09:11:02  shard-018: done marker present — skipping
+09:11:02  shard-019: done marker present — skipping
+09:11:02  shard-020: done marker present — skipping
+09:11:02  shard-021: done marker present — skipping
+09:11:02  --- shard-022 (2349 LOC) ---
+09:11:02  shard-022: findings exist — skipping audit
