@@ -366,7 +366,14 @@ export default function FuelEventsPage() {
 
       {/* Stats */}
       {!isLoading && filtered.length > 0 && (
-<div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
+<div
+  // Six stat cards in a two-column grid was three tall rows of chrome before
+  // a single fuel event appeared -- roughly a phone screen of numbers you
+  // scroll past to reach the thing you came for. One snapping row instead,
+  // cards sized so the next one peeks and it reads as scrollable. The grid
+  // comes back at md, where there is width for it.
+  className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-1 md:mx-0 md:grid md:grid-cols-3 md:overflow-visible md:px-0 md:pb-0 lg:grid-cols-5 [&>*]:w-[44%] [&>*]:shrink-0 [&>*]:snap-start md:[&>*]:w-auto"
+>
   <StatCard
     label={t('fuelEvents.stats.totalFuel')}
     value={{

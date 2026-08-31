@@ -5,6 +5,16 @@ const config: Config = {
   darkMode: ['class'],
   content: ['./index.html', './src/**/*.{ts,tsx}'],
 
+  future: {
+    // Wrap every `hover:` utility in `@media (hover: hover)`.
+    //
+    // Without this, hover styles apply on touch devices too, and a tap leaves
+    // them stuck: tap a card to expand it, tap again to collapse, and it stays
+    // shaded until you tap something else. That is the "selected grey area"
+    // on the KPI cards. Tailwind v4 does this by default; on v3 it is opt-in.
+    hoverOnlyWhenSupported: true,
+  },
+
   theme: {
     container: {
       center: true,
