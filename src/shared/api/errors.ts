@@ -1,5 +1,6 @@
 import type { AxiosError } from 'axios';
 import i18n from '@/shared/i18n';
+import * as Sentry from '@sentry/react';
 
 export class ApiError extends Error {
   status?: number;
@@ -78,7 +79,32 @@ export function extractErrorMessage(
   error: unknown,
   fallback = i18n.t('errors.generic', { defaultValue: 'Something went wrong' }),
 ): string {
+  // Report server faults on the way past.
+  //
+  // This is the funnel every "catch it and show a toast" path in the app goes
+  // through — 51 call sites. Those catches are why a 500 could look like a
+  // handled situation to the SDK: the exception never reached a global
+  // handler, so Sentry heard nothing while the user saw a red toast.
+  //
+  // 4xx stays silent. That is the server telling a user something, not a bug,
+  // and reporting it would bury the faults that are.
+  reportIfServerFault(error);
+
   if (error instanceof ApiError) return error.message;
   if (error instanceof Error) return error.message;
   return fallback;
+}
+
+function reportIfServerFault(error: unknown): void {
+  const status =
+    error instanceof ApiError
+      ? error.status
+      : (error as { response?: { status?: number } } | null)?.response?.status;
+
+  // No status at all means the request never got an answer — a network or CORS
+  // failure, which is worth knowing about.
+  if (typeof status === 'number' && status < 500) return;
+  if (!(error instanceof Error)) return;
+
+  Sentry.captureException(error, { tags: { source: 'handled-api-error' } });
 }

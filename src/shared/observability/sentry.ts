@@ -82,6 +82,11 @@ export function scrubEvent(
   return event;
 }
 
+function tracesSampleRate(): number {
+  const raw = Number(import.meta.env.VITE_SENTRY_TRACES_SAMPLE_RATE);
+  return Number.isFinite(raw) && raw >= 0 && raw <= 1 ? raw : 0.5;
+}
+
 /** Install Sentry, or don't. */
 export function initSentry(): void {
   const dsn = import.meta.env.VITE_SENTRY_DSN?.trim();
@@ -94,13 +99,42 @@ export function initSentry(): void {
     // Compliance: never send the SDK's idea of "default" personal data. This
     // also keeps IP addresses off the event.
     sendDefaultPii: false,
-    // A tenth of traffic. This Sentry runs on modest hardware; raising it is a
-    // deliberate decision rather than a default.
-    tracesSampleRate: 0.1,
-    // Session Replay records the DOM, which on this app is a screen full of
-    // driver names and plates. Off, and it should stay off.
+    // Without browserTracingIntegration a sample rate does nothing at all —
+    // no transactions are created, so no request data ever appears. That is
+    // why the rate alone was not enough.
+    integrations: [
+      Sentry.browserTracingIntegration(),
+      // Session Replay, masked to the bone.
+      //
+      // A replay is a recording of the screen, and this app's screen is driver
+      // names, phone numbers, plates and coordinates. Recording it verbatim
+      // would drive straight through the PII controls in `beforeSend`, which
+      // scrub structured event fields and can do nothing about a video.
+      //
+      // So every one of these is load-bearing, not a default worth tidying:
+      // all text masked, all inputs masked, all media blocked. What survives is
+      // the shape of the session — what was clicked, in what order, what the
+      // layout looked like when it broke — which is the part that helps.
+      //
+      // Network bodies are NOT captured: networkDetailAllowUrls is left unset
+      // on purpose. Turning it on would record request and response payloads,
+      // which is the single richest source of personal data in the app.
+      Sentry.replayIntegration({
+        maskAllText: true,
+        maskAllInputs: true,
+        blockAllMedia: true,
+      }),
+    ],
+    // Env-tunable so the rate can be changed at build time without a code
+    // change; this Sentry runs on modest hardware and tracing is what loads it.
+    tracesSampleRate: tracesSampleRate(),
+    // Never record sessions that are going fine: that is continuous DOM
+    // capture of every user all day, for no diagnostic gain, on a Sentry box
+    // with modest hardware.
     replaysSessionSampleRate: 0,
-    replaysOnErrorSampleRate: 0,
+    // Every error gets its replay. The buffer is only kept in the browser and
+    // is uploaded when something actually breaks.
+    replaysOnErrorSampleRate: 1.0,
     beforeSend: scrubEvent,
   });
 }

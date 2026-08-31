@@ -1,3 +1,5 @@
+import * as React from 'react';
+import * as Sentry from '@sentry/react';
 import { useRouteError, isRouteErrorResponse, useNavigate } from 'react-router-dom';
 import { AlertTriangle, RefreshCw, Home, ChevronLeft } from 'lucide-react';
 import { Button } from '@/shared/ui/button';
@@ -10,6 +12,18 @@ export default function RouteErrorPage() {
   const { t } = useTranslation();
 
   console.error('Route error caught by ErrorBoundary:', error);
+
+  // Report it. React Router catches render and loader failures and shows this
+  // page, which means the SDK's global handlers never see them — a component
+  // blowing up looked identical to a clean 404 from Sentry's side.
+  //
+  // Effect, not render body: this runs once per error rather than on every
+  // re-render, and never during React's render phase.
+  React.useEffect(() => {
+    // A 404 is navigation, not a fault, and would drown the real ones.
+    if (isRouteErrorResponse(error) && error.status < 500) return;
+    Sentry.captureException(error, { tags: { source: 'route-error-boundary' } });
+  }, [error]);
 
   let title = t('errors.unexpected.title');
   let message = t('errors.unexpected.message');
