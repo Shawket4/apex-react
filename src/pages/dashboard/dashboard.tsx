@@ -541,9 +541,19 @@ function FuelPanel({ scope }: { scope: DashboardScope }) {
   const totals = useDrawer('fuel', scope, true);
   const events = useInfiniteFuelEvents(scope, true);
 
+  // Fetched and shown are deliberately different numbers. Hovering the button
+  // warms the next page, but a page arriving is not a reason to move the
+  // ground under the pointer — rows appear only when the button is pressed.
+  const [shownPages, setShownPages] = React.useState(1);
+  // A new window is a new list. Without this the counter carries over and the
+  // next month opens already expanded to wherever the last one was left.
+  React.useEffect(() => {
+    setShownPages(1);
+  }, [scope.from, scope.to, scope.company]);
+  const pages = React.useMemo(() => events.data?.pages ?? [], [events.data]);
   const loaded = React.useMemo(
-    () => (events.data?.pages ?? []).flatMap((p) => p.items),
-    [events.data],
+    () => pages.slice(0, shownPages).flatMap((p) => p.items),
+    [pages, shownPages],
   );
   // Same pairing analysis the fuel-events page runs, over what is loaded so
   // far — statuses refine as more pages arrive.
@@ -555,6 +565,19 @@ function FuelPanel({ scope }: { scope: DashboardScope }) {
   // bottom of the dashboard kept pulling fuel events, so the page grew away
   // underneath anyone on their way to the panel below it.
   const { hasNextPage, isFetchingNextPage, fetchNextPage } = events;
+
+  // There is more to show if a warmed page is being held back, or if the
+  // server still has one.
+  const hasMore = shownPages < pages.length || hasNextPage;
+  // Revealing a page that hover has not already fetched: ask for it and count
+  // it as shown. The slice renders it the moment it lands, so there is no
+  // second click and no state to reconcile when it does.
+  const revealMore = React.useCallback(() => {
+    setShownPages((n) => n + 1);
+    if (hasNextPage && !isFetchingNextPage) void fetchNextPage();
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
+  // A page asked for but not yet here.
+  const awaitingReveal = shownPages > pages.length;
 
   const drawer = totals.data && 'window_spend' in totals.data ? totals.data : null;
 
@@ -639,20 +662,20 @@ function FuelPanel({ scope }: { scope: DashboardScope }) {
               </li>
             );
           })}
-          {isFetchingNextPage && (
+          {awaitingReveal && (
             <li className="p-3">
               <Skeleton className="h-10 w-full rounded-none" />
             </li>
           )}
-          {hasNextPage && (
+          {hasMore && (
             <li className="p-2">
               <Button
                 type="button"
                 variant="ghost"
                 size="sm"
                 className="w-full gap-1.5 text-[11px] text-muted-foreground hover:text-foreground"
-                disabled={isFetchingNextPage}
-                onClick={() => void fetchNextPage()}
+                disabled={awaitingReveal}
+                onClick={revealMore}
                 // Hovering the button IS the intent to read on, so the fetch
                 // starts before the click lands. fetchNextPage dedupes, so the
                 // click then just renders what is already on its way.
@@ -671,7 +694,7 @@ function FuelPanel({ scope }: { scope: DashboardScope }) {
               </Button>
             </li>
           )}
-          {!hasNextPage && loaded.length > 0 && (
+          {!hasMore && loaded.length > 0 && (
             <li className="p-3 text-center text-[10.5px] text-muted-foreground">
               {t('dashboard.fuelPanel.end', { count: total })}
             </li>
