@@ -27,12 +27,18 @@ export function Layout() {
       {/* Mobile sidebar — slide-out Sheet */}
       {!isDesktop && (
         <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-          <SheetContent side="left" className="w-72 max-w-[85vw] p-0" hideCloseButton>
+          {/* w-64 to match the rail exactly. At w-72 the sheet was 32px wider
+              than the sidebar inside it, and that strip of sheet background
+              showed as grey dead space down the side of the drawer. */}
+          <SheetContent side="left" className="w-64 max-w-[85vw] p-0" hideCloseButton>
             <Sidebar
               collapsed={false}
               onToggleCollapse={() => setMobileOpen(false)}
               onNavigate={() => setMobileOpen(false)}
-              className="h-dvh border-e-0"
+              // w-full so the rail fills the drawer whatever its width, rather
+              // than relying on the two numbers being kept in step by hand.
+              // No width transition here: nothing collapses inside a drawer.
+              className="h-dvh w-full border-e-0 transition-none"
             />
           </SheetContent>
         </Sheet>

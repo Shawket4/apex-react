@@ -17,7 +17,11 @@ const SheetOverlay = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DialogPrimitive.Overlay
     className={cn(
-      `fixed inset-0 ${CONTAINER_Z} bg-black/50 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0`,
+      // No backdrop-blur. A blur over the whole viewport is recomputed every
+      // frame while the panel slides, and on a phone that is the single most
+      // expensive thing here — it was the stutter. A 50% black scrim separates
+      // the layers just as well and costs nothing to animate.
+      `fixed inset-0 ${CONTAINER_Z} bg-black/50 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0`,
       className,
     )}
     {...props}
@@ -27,7 +31,17 @@ const SheetOverlay = React.forwardRef<
 SheetOverlay.displayName = DialogPrimitive.Overlay.displayName;
 
 const sheetVariants = cva(
-  `fixed ${CONTAINER_Z} gap-4 bg-background shadow-lg transition ease-in-out data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:duration-300 data-[state=open]:duration-500`,
+  // `transition` alone is transition-property: all, which makes the
+  // browser watch every property on a panel that is already being moved by
+  // a keyframe animation. The keyframes do the work; the transition only
+  // added overhead.
+  //
+  // will-change-transform promotes the panel to its own layer up front, so
+  // the first frame of the slide is not also a layer-creation frame.
+  //
+  // 500ms open read as lag rather than as motion. 200/150 is quick enough
+  // to feel like a response and slow enough to show direction.
+  `fixed ${CONTAINER_Z} gap-4 bg-background shadow-lg will-change-transform data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:duration-150 data-[state=open]:duration-200`,
   {
     variants: {
       side: {
