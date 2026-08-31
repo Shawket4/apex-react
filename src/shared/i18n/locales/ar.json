@@ -247,6 +247,19 @@
       "kmOverdue": "تأخر {{km}} كم",
       "sinceOf": "{{since}} من {{interval}} كم",
       "count": "{{count}}"
+    },
+    "oilDetail": {
+      "reading": "القراءة",
+      "lastChange": "آخر تغيير",
+      "lastReplaced": "آخر تغيير {{date}}",
+      "neverReplaced": "لا يوجد سجل تغيير",
+      "cycles": "{{count}} تغييرات",
+      "filterRule": "يصبح العنصر مستحقاً بعد {{count}} تغييرات زيت.",
+      "state": {
+        "replaced": "تم التغيير",
+        "fitted": "مركب",
+        "due": "مستحق"
+      }
     }
   },
   "fuelEvents": {

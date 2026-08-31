@@ -130,6 +130,25 @@ export const oilChangeDueSchema = z.object({
    */
   oil_filter_cycles: z.number().default(1),
   fuel_filter_cycles: z.number().default(1),
+  /**
+   * Detail the row's sheet opens on. All defaulted, so a frontend deployed
+   * ahead of the API shows an emptier sheet rather than failing the payload.
+   */
+  odometer_at_change: z.number().default(0),
+  current_odometer: z.number().default(0),
+  /** When each element was last replaced; null means never, in what we hold. */
+  oil_filter_date: z.string().nullable().default(null),
+  fuel_filter_date: z.string().nullable().default(null),
+  water_filter_date: z.string().nullable().default(null),
+  driver_name: z.string().default(''),
+  super_visor: z.string().default(''),
+  cost: z.number().default(0),
+  /**
+   * The plate as stored. `plate_no`/`plate_ar` are a display split that cannot
+   * be reassembled — some plates are recorded digits-first — so links to the
+   * vehicle use this.
+   */
+  plate_raw: z.string().default(''),
 });
 export type OilChangeDue = z.infer<typeof oilChangeDueSchema>;
 

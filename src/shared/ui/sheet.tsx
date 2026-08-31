@@ -109,4 +109,47 @@ const SheetContent = React.forwardRef<
 });
 SheetContent.displayName = DialogPrimitive.Content.displayName;
 
-export { Sheet, SheetTrigger, SheetClose, SheetContent, SheetPortal, SheetOverlay };
+/**
+ * Radix requires a Title inside Content for the dialog to be announced; without
+ * one it warns and screen readers get an unnamed dialog. Callers that show no
+ * visible heading should still render one and hide it with `sr-only`.
+ */
+const SheetTitle = React.forwardRef<
+  React.ElementRef<typeof DialogPrimitive.Title>,
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Title>
+>(({ className, ...props }, ref) => (
+  <DialogPrimitive.Title
+    ref={ref}
+    className={cn('text-lg font-semibold tracking-tight text-foreground', className)}
+    {...props}
+  />
+));
+SheetTitle.displayName = DialogPrimitive.Title.displayName;
+
+const SheetDescription = React.forwardRef<
+  React.ElementRef<typeof DialogPrimitive.Description>,
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Description>
+>(({ className, ...props }, ref) => (
+  <DialogPrimitive.Description
+    ref={ref}
+    className={cn('text-sm text-muted-foreground', className)}
+    {...props}
+  />
+));
+SheetDescription.displayName = DialogPrimitive.Description.displayName;
+
+function SheetHeader({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+  return <div className={cn('flex flex-col gap-1', className)} {...props} />;
+}
+
+export {
+  Sheet,
+  SheetTrigger,
+  SheetClose,
+  SheetContent,
+  SheetPortal,
+  SheetOverlay,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+};

@@ -35,6 +35,8 @@ import { prefetchFuelEvent } from '@/entities/fuel-event/queries';
 import { analyseEvents } from '@/shared/lib/fuel';
 import { type DashboardScope } from '@/entities/dashboard/api';
 import { OilChangeFilterChips } from '@/entities/oil-change/filter-chips';
+import { OilChangeDetailSheet } from '@/widgets/oil-change-detail/oil-change-detail-sheet';
+import type { OilChangeDue } from '@/entities/dashboard/schemas';
 import { keepScopeSearch, useScope, useScopeCompany } from '@/shared/scope';
 import { cairoToday } from '@/shared/lib/cairo';
 import { useEtitLive } from '@/shared/hooks/use-etit-live';
@@ -1037,6 +1039,9 @@ function AttentionPanel({
   const { t } = useTranslation();
   const docs = attention?.documents ?? [];
   const oil = attention?.oil_changes ?? [];
+  // Which oil row's sheet is open. Everything the sheet shows is already on
+  // this payload, so holding the row itself is the whole state.
+  const [openRow, setOpenRow] = React.useState<OilChangeDue | null>(null);
 
   if (pending) {
     return (
@@ -1115,6 +1120,7 @@ function AttentionPanel({
                   : t('dashboard.attention.kmLeft', { km: formatNumber(o.km_left, 0) })
               }
               severity={o.km_left < 0 ? 'critical' : 'warning'}
+              onSelect={() => setOpenRow(o)}
               filters={
                 <OilChangeFilterChips
                   className="mt-1"
@@ -1126,6 +1132,8 @@ function AttentionPanel({
           ))}
         </AttentionColumn>
       </div>
+
+      <OilChangeDetailSheet row={openRow} onOpenChange={(o) => !o && setOpenRow(null)} />
     </section>
   );
 }
@@ -1186,6 +1194,7 @@ function AttentionRow({
   status,
   severity,
   filters,
+  onSelect,
 }: {
   plateNo: string;
   plateAr: string;
@@ -1195,9 +1204,11 @@ function AttentionRow({
   severity: 'critical' | 'warning';
   /** Optional trailing detail under the label; documents have none. */
   filters?: React.ReactNode;
+  /** When given the row becomes a button that opens its detail sheet. */
+  onSelect?: () => void;
 }) {
   return (
-    <div className="grid grid-cols-[3px_1fr_auto] items-center gap-3 rounded-lg border bg-card px-3 py-2.5">
+    <Row onSelect={onSelect}>
       <span
         className={cn(
           'h-full min-h-[26px] w-[3px] self-stretch rounded-full',
@@ -1225,7 +1236,30 @@ function AttentionRow({
       >
         {status}
       </span>
-    </div>
+    </Row>
+  );
+}
+
+/**
+ * The row's own container. A real <button> when it opens something, so it is
+ * reachable by keyboard and announced as pressable; a plain div otherwise,
+ * because a button that does nothing is worse than no button.
+ */
+function Row({ onSelect, children }: { onSelect?: () => void; children: React.ReactNode }) {
+  const className =
+    'grid w-full grid-cols-[3px_1fr_auto] items-center gap-3 rounded-lg border bg-card px-3 py-2.5 text-start';
+  if (!onSelect) return <div className={className}>{children}</div>;
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      className={cn(
+        className,
+        'transition-colors hover:bg-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+      )}
+    >
+      {children}
+    </button>
   );
 }
 

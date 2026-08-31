@@ -247,6 +247,19 @@
       "kmOverdue": "{{km}} km overdue",
       "sinceOf": "{{since}} of {{interval}} km",
       "count": "{{count}}"
+    },
+    "oilDetail": {
+      "reading": "The reading",
+      "lastChange": "Last change",
+      "lastReplaced": "last replaced {{date}}",
+      "neverReplaced": "never replaced on record",
+      "cycles": "{{count}} changes",
+      "filterRule": "An element is due once it has served {{count}} oil changes.",
+      "state": {
+        "replaced": "Replaced",
+        "fitted": "Fitted",
+        "due": "Due"
+      }
     }
   },
   "fuelEvents": {
