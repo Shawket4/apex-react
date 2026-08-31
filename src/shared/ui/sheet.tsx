@@ -21,7 +21,12 @@ const SheetOverlay = React.forwardRef<
       // frame while the panel slides, and on a phone that is the single most
       // expensive thing here — it was the stutter. A 50% black scrim separates
       // the layers just as well and costs nothing to animate.
-      `fixed inset-0 ${CONTAINER_Z} bg-black/50 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0`,
+      // Arbitrary properties, not duration-*/ease-* utilities. Both Tailwind core
+      // and tailwindcss-animate define `duration`, and the variant form
+      // (data-[state=open]:duration-350) emits no rule at all — the durations
+      // that used to be written that way were dead, which is why every drawer
+      // ran at the plugin's 150ms default.
+      `fixed inset-0 ${CONTAINER_Z} bg-black/50 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 ![animation-duration:350ms] [animation-timing-function:cubic-bezier(0.32,0.72,0,1)] data-[state=closed]:![animation-duration:250ms] data-[state=closed]:[animation-timing-function:cubic-bezier(0.4,0,1,1)]`,
       className,
     )}
     {...props}
@@ -39,9 +44,20 @@ const sheetVariants = cva(
   // will-change-transform promotes the panel to its own layer up front, so
   // the first frame of the slide is not also a layer-creation frame.
   //
-  // 500ms open read as lag rather than as motion. 200/150 is quick enough
-  // to feel like a response and slow enough to show direction.
-  `fixed ${CONTAINER_Z} gap-4 bg-background shadow-lg will-change-transform data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:duration-150 data-[state=open]:duration-200`,
+  // Motion, not a jump cut. 350ms in / 250ms out is long enough for the eye to
+  // follow the panel and short enough to still feel like a response.
+  //
+  // The curves matter more than the numbers. Entry decelerates — it arrives
+  // quickly and settles, which is what gives a panel weight instead of making
+  // it appear. Exit accelerates away, because a panel leaving does not need to
+  // be watched. Symmetric easing is the usual reason a drawer feels mushy.
+  //
+  // Written as arbitrary properties because the `duration-*`/`ease-*` variant
+  // form generates no CSS here: Tailwind core and tailwindcss-animate both
+  // define those utility names, and `data-[state=open]:duration-500` emitted
+  // nothing at all. Every drawer in this app has been running at the plugin's
+  // 150ms default with plain `ease`, whatever the class list claimed.
+  `fixed ${CONTAINER_Z} gap-4 bg-background shadow-lg will-change-transform data-[state=open]:animate-in data-[state=closed]:animate-out ![animation-duration:350ms] [animation-timing-function:cubic-bezier(0.32,0.72,0,1)] data-[state=closed]:![animation-duration:250ms] data-[state=closed]:[animation-timing-function:cubic-bezier(0.4,0,1,1)]`,
   {
     variants: {
       side: {
