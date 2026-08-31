@@ -74,9 +74,13 @@ export function OilChangeFilterChips({
               // relative: .sr-only is position:absolute, and without a
               // positioned ancestor it escapes to the initial containing block.
               'relative inline-flex h-4 min-w-4 items-center justify-center rounded-[3px] px-1 text-[9px] font-semibold leading-none',
-              on[key]
-                ? 'bg-primary/10 text-primary'
-                : 'border border-dashed border-muted-foreground/30 text-muted-foreground/50',
+              state[key] === 'replaced' && 'bg-primary/10 text-primary',
+              // Solid, not a 10% tint: this is the one state that asks someone
+              // to do something, and a tinted 9px glyph is not a signal anybody
+              // spots in a column of twenty.
+              state[key] === 'due' && 'bg-destructive text-destructive-foreground',
+              state[key] === 'fitted' &&
+                'border border-dashed border-muted-foreground/30 text-muted-foreground/50',
             )}
           >
             <span aria-hidden>{t(`oilChanges.filters.${key}Short`)}</span>
