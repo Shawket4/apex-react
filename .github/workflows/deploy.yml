@@ -24,6 +24,26 @@ jobs:
 
       - name: Type check & build
         run: npm run build
+        env:
+          # Sentry is off unless a DSN reaches the build. Vite inlines VITE_*
+          # at build time, so this has to be here — setting it on the server
+          # does nothing for a static bundle.
+          #
+          # A repo VARIABLE, not a secret: a browser DSN is public by design,
+          # it ends up readable in the shipped JS either way, and pretending
+          # otherwise just makes it harder to see what is configured.
+          VITE_SENTRY_DSN: ${{ vars.VITE_SENTRY_DSN }}
+          VITE_SENTRY_ENVIRONMENT: ${{ vars.VITE_SENTRY_ENVIRONMENT }}
+          # One release per commit, so an error can be traced to a deploy.
+          VITE_SENTRY_RELEASE: apex-react@${{ github.sha }}
+          # Source maps upload only when all three are present; the plugin then
+          # deletes the .map files so users never receive them. Absent secrets
+          # simply mean no upload and an unchanged build.
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
+          SENTRY_URL: ${{ vars.SENTRY_URL }}
+          SENTRY_RELEASE: apex-react@${{ github.sha }}
         # Vite outputs to dist/ by default
         # build script runs: tsc --noEmit && vite build
         # If tsc finds type errors, the build will fail here — fix them or
