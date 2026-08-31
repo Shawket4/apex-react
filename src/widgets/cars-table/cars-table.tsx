@@ -34,6 +34,12 @@ import {
 } from '@/entities/car/expiry';
 import { CarDocumentCell } from './car-document-cell';
 import { CarsMobileList } from './cars-mobile-list';
+import { DOCUMENT_EXPIRY_WARNING_DAYS } from '@/entities/car/expiry';
+import { exportCarsExcel } from '@/entities/car/api';
+import { extractErrorMessage } from '@/shared/api/errors';
+import { toast } from '@/shared/ui/toast';
+import { Download } from 'lucide-react';
+import { saveAs } from 'file-saver';
 
 /** Which API field each dated paper lives in. */
 const FIELD = {
@@ -56,6 +62,51 @@ export function CarsTable({ onAddCar, onEditCar }: CarsTableProps) {
   const canManage = atLeast(PERMISSION_LEVELS.MANAGER);
 
   const [search, setSearch] = React.useState('');
+  const [exporting, setExporting] = React.useState(false);
+
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      const { blob, filename } = await exportCarsExcel(
+        {
+          title: t('cars.title'),
+          subtitle: t('cars.subtitle'),
+          sheet: t('cars.title'),
+          plate: t('cars.fields.plateNumber'),
+          car_type: t('cars.fields.carType'),
+          driver: t('cars.fields.driver'),
+          transporter: t('cars.fields.transporter'),
+          capacity: t('cars.fields.capacity'),
+          license: t('cars.documents.license'),
+          calibration: t('cars.documents.calibration'),
+          tank_license: t('cars.documents.tank_license'),
+          days_left: t('cars.documents.daysLeftHeader'),
+          status: t('common.status'),
+          status_valid: t('cars.status.valid'),
+          status_expiring: t('cars.status.expiring'),
+          status_expired: t('cars.status.expired'),
+          status_missing: t('cars.status.missing'),
+          total_cars: t('cars.stats.total'),
+          total_assigned: t('cars.stats.assigned'),
+          totals: t('cars.export.totals'),
+          no_driver: t('cars.noDriver'),
+        },
+        // The window the screen is using, so the sheet flags exactly the
+        // vehicles the user is looking at.
+        DOCUMENT_EXPIRY_WARNING_DAYS,
+      );
+      saveAs(blob, filename);
+    } catch (err) {
+      const status = (err as { response?: { status?: number } })?.response?.status;
+      toast.error(
+        status === 404
+          ? t('cars.export.empty')
+          : extractErrorMessage(err, t('cars.export.failed')),
+      );
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const getDriverName = React.useCallback((car: Car) => {
     if (car.driver?.name) return car.driver.name;
@@ -244,6 +295,14 @@ export function CarsTable({ onAddCar, onEditCar }: CarsTableProps) {
           placeholder={t('cars.searchPlaceholder')}
           className="max-w-sm"
         />
+        <Button
+          variant="outline"
+          onClick={() => void handleExport()}
+          disabled={exporting || cars.length === 0}
+        >
+          <Download />
+          {exporting ? t('common.loading') : t('common.export')}
+        </Button>
         {canManage && onAddCar && (
           <Button onClick={onAddCar}>
             <Plus />

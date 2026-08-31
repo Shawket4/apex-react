@@ -1573,7 +1573,9 @@
       "selectDriver": "اختر سائقاً...",
       "licenseExpiry": "انتهاء رخصة السيارة",
       "calibrationExpiry": "انتهاء المعايرة",
-      "tankLicenseExpiry": "انتهاء رخصة التنك"
+      "tankLicenseExpiry": "انتهاء رخصة التنك",
+      "carType": "النوع",
+      "transporter": "الناقل"
     },
     "sections": {
       "vehicleInfo": "معلومات المركبة",
@@ -1595,7 +1597,8 @@
     "status": {
       "expired": "مستندات منتهية",
       "expiring": "تنتهي قريباً",
-      "valid": "ساري"
+      "valid": "ساري",
+      "missing": "غير مسجلة"
     },
     "stats": {
       "total": "إجمالي السيارات",
@@ -1609,7 +1612,13 @@
       "license": "الرخصة",
       "calibration": "المعايرة",
       "tank_license": "رخصة التانك",
-      "none": "لا توجد مستندات مسجلة"
+      "none": "لا توجد مستندات مسجلة",
+      "daysLeftHeader": "الأيام المتبقية"
+    },
+    "export": {
+      "totals": "الإجمالي",
+      "empty": "لا توجد مركبات للتصدير.",
+      "failed": "تعذر إنشاء ملف الإكسل."
     }
   },
   "zones": {

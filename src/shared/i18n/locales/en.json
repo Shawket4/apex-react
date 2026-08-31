@@ -1569,7 +1569,9 @@
       "selectDriver": "Select a driver...",
       "licenseExpiry": "Car License Expiry",
       "calibrationExpiry": "Calibration Expiry",
-      "tankLicenseExpiry": "Tank License Expiry"
+      "tankLicenseExpiry": "Tank License Expiry",
+      "carType": "Type",
+      "transporter": "Transporter"
     },
     "sections": {
       "vehicleInfo": "Vehicle Information",
@@ -1591,7 +1593,8 @@
     "status": {
       "expired": "Expired Docs",
       "expiring": "Expiring Soon",
-      "valid": "Valid"
+      "valid": "Valid",
+      "missing": "Not recorded"
     },
     "stats": {
       "total": "Total Cars",
@@ -1605,7 +1608,13 @@
       "license": "Licence",
       "calibration": "Calibration",
       "tank_license": "Tank licence",
-      "none": "No documents recorded"
+      "none": "No documents recorded",
+      "daysLeftHeader": "Days left"
+    },
+    "export": {
+      "totals": "TOTALS",
+      "empty": "There are no vehicles to export.",
+      "failed": "Could not build the spreadsheet."
     }
   },
   "zones": {
