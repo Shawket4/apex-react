@@ -1,15 +1,54 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react-swc';
+import { sentryVitePlugin } from '@sentry/vite-plugin';
 import compression from 'vite-plugin-compression';
 import path from 'node:path';
 import { constants as zlibConstants } from 'node:zlib';
 
 const host = process.env.TAURI_DEV_HOST;
 
+/**
+ * Source maps are uploaded to Sentry only when CI supplies credentials.
+ *
+ * All three must be present, and they only exist as CI secrets — so a local
+ * `npm run build` never uploads anything, and never needs a token to succeed.
+ */
+const sentryAuthToken = process.env.SENTRY_AUTH_TOKEN;
+const sentryOrg = process.env.SENTRY_ORG;
+const sentryProject = process.env.SENTRY_PROJECT;
+const uploadSourceMaps = Boolean(sentryAuthToken && sentryOrg && sentryProject);
+
 export default defineConfig({
   assetsInclude: ['**/*.lottie'],
   plugins: [
     react(),
+
+    /**
+     * Readable stack traces in Sentry, without shipping the maps to users.
+     *
+     * The plugin uploads the .map files and then deletes them from dist, so
+     * what reaches the CDN is the minified bundle alone — `sourcemap` below is
+     * switched on for the same window and for the same reason. Gated on CI
+     * secrets: with none present this is `false` and the build is unchanged.
+     */
+    ...(uploadSourceMaps
+      ? [
+          sentryVitePlugin({
+            authToken: sentryAuthToken,
+            org: sentryOrg,
+            project: sentryProject,
+            url: process.env.SENTRY_URL,
+            release: process.env.SENTRY_RELEASE
+              ? { name: process.env.SENTRY_RELEASE }
+              : undefined,
+            sourcemaps: {
+              // Delete the maps from the build output once they are uploaded.
+              filesToDeleteAfterUpload: ['./dist/**/*.map'],
+            },
+            telemetry: false,
+          }),
+        ]
+      : []),
 
     /**
      * Pre-compress every chunk to .br at build time using brotli's MAXIMUM
@@ -100,6 +139,10 @@ export default defineConfig({
   },
 
   build: {
+    // Only while uploading: the maps are deleted from dist immediately after,
+    // so users never receive them. Off otherwise, as before.
+    sourcemap: uploadSourceMaps,
+
     /**
      * exceljs is ~940 kB on its own and that's after minification — it's
      * already a lazy chunk, so this limit just silences the warning.
