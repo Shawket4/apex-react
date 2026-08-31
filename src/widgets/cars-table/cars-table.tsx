@@ -24,6 +24,23 @@ import { matches } from '@/shared/lib/normalize';
 import { usePermissions } from '@/shared/hooks/use-permissions';
 import { PERMISSION_LEVELS } from '@/shared/config/constants';
 import { useDrivers } from '@/entities/driver/queries';
+import { useIsMobile } from '@/shared/hooks/use-media-query';
+import {
+  CAR_DOCUMENT_KINDS,
+  carDocumentState,
+  documentApplies,
+  documentState,
+  daysUntil,
+} from '@/entities/car/expiry';
+import { CarDocumentCell } from './car-document-cell';
+import { CarsMobileList } from './cars-mobile-list';
+
+/** Which API field each dated paper lives in. */
+const FIELD = {
+  license: 'license_expiration_date',
+  calibration: 'calibration_expiration_date',
+  tank_license: 'tank_license_expiration_date',
+} as const;
 
 interface CarsTableProps {
   onAddCar?: () => void;
@@ -35,6 +52,7 @@ export function CarsTable({ onAddCar, onEditCar }: CarsTableProps) {
   const { data: cars = [], isLoading } = useCars();
   const { data: drivers = [] } = useDrivers();
   const { atLeast } = usePermissions();
+  const isMobile = useIsMobile();
   const canManage = atLeast(PERMISSION_LEVELS.MANAGER);
 
   const [search, setSearch] = React.useState('');
@@ -46,44 +64,18 @@ export function CarsTable({ onAddCar, onEditCar }: CarsTableProps) {
     return driver?.name || t('common.unknown');
   }, [drivers, t]);
 
-  const isExpired = (dateString: string | null | undefined) => {
-    if (!dateString) return false;
-    try {
-      return new Date(dateString) < new Date();
-    } catch {
-      return false;
-    }
-  };
+  // The expiry rules live in entities/car/expiry.ts now: this screen used a
+  // 30-day window while the dashboard used 60, so a licence with six weeks left
+  // was flagged on one and silent on the other.
+  const hasExpiredDocs = React.useCallback(
+    (car: Car) => carDocumentState(car) === 'expired',
+    [],
+  );
 
-  const isExpiringSoon = (dateString: string | null | undefined) => {
-    if (!dateString) return false;
-    try {
-      const date = new Date(dateString);
-      const now = new Date();
-      const diff = date.getTime() - now.getTime();
-      const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
-      return days > 0 && days <= 30;
-    } catch {
-      return false;
-    }
-  };
-
-  const hasExpiredDocs = React.useCallback((car: Car) => {
-    return (
-      isExpired(car.license_expiration_date) ||
-      isExpired(car.calibration_expiration_date) ||
-      ((car.car_type === 'Trailer' || car.car_type === 'Truck') && isExpired(car.tank_license_expiration_date))
-    );
-  }, []);
-
-  const hasExpiringSoonDocs = React.useCallback((car: Car) => {
-    if (hasExpiredDocs(car)) return false;
-    return (
-      isExpiringSoon(car.license_expiration_date) ||
-      isExpiringSoon(car.calibration_expiration_date) ||
-      ((car.car_type === 'Trailer' || car.car_type === 'Truck') && isExpiringSoon(car.tank_license_expiration_date))
-    );
-  }, [hasExpiredDocs]);
+  const hasExpiringSoonDocs = React.useCallback(
+    (car: Car) => carDocumentState(car) === 'expiring',
+    [],
+  );
 
   const filtered = React.useMemo(() => {
     if (!search.trim()) return cars;
@@ -143,31 +135,51 @@ export function CarsTable({ onAddCar, onEditCar }: CarsTableProps) {
           </div>
         ),
       },
+      // One column per dated paper. They were folded into a single status badge
+      // that said something had lapsed without saying which, so renewing
+      // anything meant opening the vehicle to find out.
+      ...CAR_DOCUMENT_KINDS.map<ColumnDef<Car, unknown>>((kind) => ({
+        id: kind,
+        header: t(`cars.documents.${kind}`),
+        // Sort by time remaining, not by the date string: the question is
+        // always what lapses next, and a missing date sorts last rather than
+        // pretending to be the year 1970.
+        accessorFn: (car: Car) =>
+          documentApplies(car, kind) ? (daysUntil(car[FIELD[kind]]) ?? Infinity) : Infinity,
+        cell: ({ row }) => {
+          const car = row.original;
+          if (!documentApplies(car, kind)) {
+            return <span className="text-xs text-muted-foreground opacity-40">—</span>;
+          }
+          const value = car[FIELD[kind]];
+          return (
+            <CarDocumentCell
+              doc={{ kind, value, state: documentState(value), days: daysUntil(value) }}
+            />
+          );
+        },
+      })),
       {
         id: 'status',
         header: t('common.status'),
         cell: ({ row }) => {
-          const car = row.original;
-          if (hasExpiredDocs(car)) {
-            return (
-              <Badge variant="destructive">
-                <ShieldAlert className="h-3 w-3" />
-                {t('cars.status.expired')}
-              </Badge>
-            );
-          }
-          if (hasExpiringSoonDocs(car)) {
-            return (
-              <Badge variant="warning">
-                <Clock className="h-3 w-3" />
-                {t('cars.status.expiring')}
-              </Badge>
-            );
-          }
+          const state = carDocumentState(row.original);
+          const Icon =
+            state === 'expired' ? ShieldAlert : state === 'expiring' ? Clock : ShieldCheck;
           return (
-            <Badge variant="success">
-              <ShieldCheck className="h-3 w-3" />
-              {t('cars.status.valid')}
+            <Badge
+              variant={
+                state === 'expired'
+                  ? 'destructive'
+                  : state === 'expiring'
+                    ? 'warning'
+                    : state === 'missing'
+                      ? 'secondary'
+                      : 'success'
+              }
+            >
+              <Icon className="h-3 w-3" />
+              {t(`cars.status.${state}`)}
             </Badge>
           );
         },
@@ -192,7 +204,7 @@ export function CarsTable({ onAddCar, onEditCar }: CarsTableProps) {
         ),
       },
     ],
-    [t, getDriverName, onEditCar, hasExpiredDocs, hasExpiringSoonDocs]
+    [t, getDriverName, onEditCar]
   );
 
   return (
@@ -240,11 +252,16 @@ export function CarsTable({ onAddCar, onEditCar }: CarsTableProps) {
         )}
       </div>
 
-      <DataTable
-        columns={columns}
-        data={filtered}
-        loading={isLoading}
-        emptyState={
+      {/* A seven-column table with three date pairs does not survive a phone,
+          so the same rows render as cards there -- the split trips and oil
+          changes already use. */}
+      {isMobile ? (
+        <CarsMobileList
+          cars={filtered}
+          loading={isLoading}
+          driverName={getDriverName}
+          onEditCar={canManage ? onEditCar : undefined}
+          emptyState={
           <EmptyState
             lottieSrc="/animations/no_results.json"
             lottieWidth={100}
@@ -259,9 +276,32 @@ export function CarsTable({ onAddCar, onEditCar }: CarsTableProps) {
                 </Button>
               ) : undefined
             }
-          />
-        }
-      />
+          />}
+        />
+      ) : (
+      <DataTable
+          columns={columns}
+          data={filtered}
+          loading={isLoading}
+          emptyState={
+            <EmptyState
+              lottieSrc="/animations/no_results.json"
+              lottieWidth={100}
+              lottieHeight={100}
+              title={t('cars.noCars')}
+              description={t('cars.noCarsDescription')}
+              action={
+                canManage && onAddCar ? (
+                  <Button onClick={onAddCar}>
+                    <Plus />
+                    {t('cars.addCar')}
+                  </Button>
+                ) : undefined
+              }
+            />
+          }
+        />
+      )}
     </div>
   );
 }

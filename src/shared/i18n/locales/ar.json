@@ -1602,6 +1602,14 @@
       "assigned": "تم التعيين",
       "expiring": "تنتهي قريباً",
       "expired": "منتهي"
+    },
+    "documents": {
+      "expiredAgo": "منتهية منذ {{count}} يوم",
+      "daysLeft": "{{count}} يوم متبقي",
+      "license": "الرخصة",
+      "calibration": "المعايرة",
+      "tank_license": "رخصة التانك",
+      "none": "لا توجد مستندات مسجلة"
     }
   },
   "zones": {

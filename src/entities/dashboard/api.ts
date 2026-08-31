@@ -35,12 +35,17 @@ export interface DashboardScope {
   /** Trips-side company scope; cash-out and owed money ignore it. */
   company?: string | null;
 }
+import { DOCUMENT_EXPIRY_WARNING_DAYS } from '@/entities/car/expiry';
 
 async function getPacked(url: string, scope?: DashboardScope): Promise<unknown> {
   const response = await apiClientRust.get(url, {
     params: {
       ...(scope?.from && scope?.to ? { from: scope.from, to: scope.to } : {}),
       ...(scope?.company ? { company: scope.company } : {}),
+      // The expiry window travels with the request so the rule has exactly one
+      // definition, in entities/car/expiry.ts, rather than a constant here and
+      // another in the Rust handler quietly drifting apart.
+      doc_horizon_days: DOCUMENT_EXPIRY_WARNING_DAYS,
       format: 'msgpack',
     },
     responseType: 'arraybuffer',

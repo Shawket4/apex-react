@@ -1598,6 +1598,14 @@
       "assigned": "Assigned",
       "expiring": "Expiring Soon",
       "expired": "Expired"
+    },
+    "documents": {
+      "expiredAgo": "lapsed {{count}}d ago",
+      "daysLeft": "{{count}}d left",
+      "license": "Licence",
+      "calibration": "Calibration",
+      "tank_license": "Tank licence",
+      "none": "No documents recorded"
     }
   },
   "zones": {
