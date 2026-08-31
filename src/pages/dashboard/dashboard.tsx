@@ -632,28 +632,38 @@ function FuelPanel({ scope }: { scope: DashboardScope }) {
                   onTouchStart={() => prefetchFuelEvent(qc, e.ID)}
                   className="grid w-full grid-cols-[1fr_auto] gap-x-3 gap-y-1 px-3 py-2.5 text-start transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring md:px-4"
                 >
+                  {/* Date and plate only. Everything on this line was shrink-0
+                      except the driver, so the driver absorbed the whole
+                      squeeze — on a phone it got 30px against the 65-166px an
+                      Arabic name needs, which is two characters and an
+                      ellipsis. */}
                   <div className="flex min-w-0 items-center gap-1.5 text-xs text-muted-foreground">
                     <span className="shrink-0">{format(e.date, 'd MMM yyyy')}</span>
                     <span>·</span>
                     <span className="shrink-0 font-mono tabular-nums text-foreground">
                       {e.car_no_plate}
                     </span>
-                    {e.driver_name && (
-                      <>
-                        <span>·</span>
-                        <span className="truncate">{e.driver_name}</span>
-                      </>
-                    )}
-                    <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[10.5px] font-medium">
-                      {e.method}
-                    </span>
                   </div>
                   <span className="font-mono text-sm font-semibold tabular-nums text-money">
                     {formatNumber(e.price, 0)}
                   </span>
-                  <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                  {e.driver_name && (
+                    <span
+                      className="col-span-2 min-w-0 truncate text-xs text-foreground"
+                      dir="auto"
+                      title={e.driver_name}
+                    >
+                      {e.driver_name}
+                    </span>
+                  )}
+                  {/* The source rides with the figures: it is metadata about
+                      the row, not part of identifying it. */}
+                  <div className="flex min-w-0 items-center gap-3 text-xs text-muted-foreground">
                     <span className="tabular-nums">{formatNumber(e.liters, 2)} L</span>
                     <span className="tabular-nums">{formatNumber(distance, 0)} km</span>
+                    <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[10.5px] font-medium">
+                      {e.method}
+                    </span>
                   </div>
                   <span className={cn('text-xs font-medium', a?.className)}>
                     {formatNumber(displayRate, 1)} {t('fuelEvents.efficiency.unit')}
