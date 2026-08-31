@@ -176,6 +176,7 @@ export default function OilChangesPage() {
         status: t('common.status'),
         cost: t('oilChanges.fields.cost'),
         filters: t('oilChanges.fields.filters'),
+        due: t('oilChanges.export.due'),
         oil_filter: t('oilChanges.filters.oilLabel'),
         fuel_filter: t('oilChanges.filters.fuelLabel'),
         water_filter: t('oilChanges.filters.waterLabel'),

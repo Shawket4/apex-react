@@ -6,6 +6,7 @@ import {
   AlertTriangle,
   ChevronDown,
   LayoutDashboard,
+  Plus,
   RefreshCw,
   TrendingDown,
   TrendingUp,
@@ -39,7 +40,7 @@ import { cairoToday } from '@/shared/lib/cairo';
 import { useEtitLive } from '@/shared/hooks/use-etit-live';
 import { usePermissions } from '@/shared/hooks/use-permissions';
 import { PERMISSION_LEVELS } from '@/shared/config/constants';
-import { preloadChunkForPath } from '@/shared/lib/prefetch';
+import { intentProps, preloadChunkForPath } from '@/shared/lib/prefetch';
 import { prefetchTrips } from '@/entities/trip/queries';
 import { defaultTripListParams } from '@/entities/trip/defaults';
 import { prefetchLedgerMount } from '@/entities/transaction/queries';
@@ -547,24 +548,11 @@ function FuelPanel({ scope }: { scope: DashboardScope }) {
   const analysis = React.useMemo(() => analyseEvents(loaded), [loaded]);
   const total = events.data?.pages[0]?.total ?? 0;
 
-  // The infinite part: a sentinel row asks for the next page when it scrolls
-  // into view.
-  const sentinelRef = React.useRef<HTMLLIElement | null>(null);
+  // Pages load on request, not on sight. Scrolling to the foot of a panel is
+  // not the same as asking for more of it — with a sentinel, reaching the
+  // bottom of the dashboard kept pulling fuel events, so the page grew away
+  // underneath anyone on their way to the panel below it.
   const { hasNextPage, isFetchingNextPage, fetchNextPage } = events;
-  React.useEffect(() => {
-    const el = sentinelRef.current;
-    if (!el) return;
-    const io = new IntersectionObserver(
-      (entries) => {
-        if (entries.some((e) => e.isIntersecting) && hasNextPage && !isFetchingNextPage) {
-          void fetchNextPage();
-        }
-      },
-      { rootMargin: '200px' },
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage, loaded.length]);
 
   const drawer = totals.data && 'window_spend' in totals.data ? totals.data : null;
 
@@ -649,10 +637,36 @@ function FuelPanel({ scope }: { scope: DashboardScope }) {
               </li>
             );
           })}
-          <li ref={sentinelRef} aria-hidden className="h-px" />
           {isFetchingNextPage && (
             <li className="p-3">
               <Skeleton className="h-10 w-full rounded-none" />
+            </li>
+          )}
+          {hasNextPage && (
+            <li className="p-2">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="w-full gap-1.5 text-[11px] text-muted-foreground hover:text-foreground"
+                disabled={isFetchingNextPage}
+                onClick={() => void fetchNextPage()}
+                // Hovering the button IS the intent to read on, so the fetch
+                // starts before the click lands. fetchNextPage dedupes, so the
+                // click then just renders what is already on its way.
+                {...intentProps(() => {
+                  if (hasNextPage && !isFetchingNextPage) {
+                    void fetchNextPage({ cancelRefetch: false });
+                  }
+                })}
+                aria-label={t('dashboard.fuelPanel.loadMore', {
+                  loaded: loaded.length,
+                  total,
+                })}
+              >
+                <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+                {t('dashboard.fuelPanel.loadMore', { loaded: loaded.length, total })}
+              </Button>
             </li>
           )}
           {!hasNextPage && loaded.length > 0 && (

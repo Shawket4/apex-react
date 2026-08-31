@@ -225,7 +225,8 @@
       "title": "Fuel events",
       "count": "{{count}} events",
       "empty": "No fuel events in this period",
-      "end": "All {{count}} events loaded"
+      "end": "All {{count}} events loaded",
+      "loadMore": "Load more — {{loaded}} of {{total}}"
     },
     "attention": {
       "title": "Needs attention",
@@ -1233,7 +1234,8 @@
     "export": {
       "masterSheet": "Fleet",
       "empty": "There are no oil-change records to export yet.",
-      "failed": "Could not build the spreadsheet."
+      "failed": "Could not build the spreadsheet.",
+      "due": "Due"
     }
   },
   "commandPalette": {
