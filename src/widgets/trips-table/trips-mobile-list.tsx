@@ -282,6 +282,30 @@ function MobileRow({
                         </span>
                       )}
                     </div>
+                    {/* A group's map is per drop-off, as on desktop: the card
+                        itself offers only the receipt batch, so without these
+                        a multi-drop trip had no way to reach a map at all.
+                        Each container carries its own receipts and map, the
+                        same pair the desktop expanded row has. */}
+                    <div className="mt-1.5 flex flex-wrap gap-2 ps-7">
+                      <Action
+                        icon={<ImageIcon className="h-3.5 w-3.5" />}
+                        onClick={() => onOpenReceipt(c.ID)}
+                      >
+                        {t('trips.actions.manageReceipts')}
+                      </Action>
+                      <span
+                        {...intentProps(() => prefetchTripDetails(queryClient, c.ID))}
+                        className="contents"
+                      >
+                        <Action
+                          icon={<Map className="h-3.5 w-3.5" />}
+                          onClick={() => onOpenMap(c.ID)}
+                        >
+                          {t('trips.actions.viewOnMap')}
+                        </Action>
+                      </span>
+                    </div>
                   </li>
                 ))}
               </ul>
