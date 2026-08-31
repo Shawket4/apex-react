@@ -150,7 +150,17 @@
   display: block;
 }
 
-@container (min-width: 11rem) {
+/* 15rem, not 11.
+ *
+ * The query measures the CARD, but the value only gets what is left after the
+ * icon tile and the padding — about 72px less. At 11rem a 212px card passed
+ * this test and then handed a 16-character money string a 140px box, so
+ * "1,104,323.13 EGP" rendered as "1,104,323.13…". The full form needs roughly
+ * 166px of text, so the card needs ~238px before it is safe to show it.
+ *
+ * Below that the compact form ("1.10M EGP") is shown, which fits, and the
+ * value keeps its tooltip carrying the exact figure either way. */
+@container (min-width: 15rem) {
   .stat-card-full {
     display: block;
   }

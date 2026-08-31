@@ -428,12 +428,6 @@ function GroupCard({
                             <span className="shrink-0 font-mono tabular-nums text-foreground">{e.car_no_plate}</span>
                           </>
                         )}
-                        {grouping === 'vehicle' && e.driver_name && (
-                          <>
-                            <span>·</span>
-                            <span className="truncate" dir="auto">{e.driver_name}</span>
-                          </>
-                        )}
                         {a?.status === 'paired' && (
                           <Tooltip>
                             <TooltipTrigger asChild>
@@ -448,6 +442,22 @@ function GroupCard({
                       <span className="font-mono text-sm font-semibold tabular-nums text-money">
                         {formatCurrency(e.price)}
                       </span>
+
+                      {/* The driver gets a line of its own.
+                          It used to sit after the date on a shared line, with
+                          the price column taking the other half — so in a
+                          three-up grid it had about 90px and every Arabic name
+                          ended in an ellipsis. A name you cannot read is not
+                          worth the row it saves. */}
+                      {grouping === 'vehicle' && e.driver_name && (
+                        <span
+                          className="col-span-2 min-w-0 truncate text-xs text-foreground"
+                          dir="auto"
+                          title={e.driver_name}
+                        >
+                          {e.driver_name}
+                        </span>
+                      )}
 
                       <div className="flex items-center gap-3 text-xs">
                         <span className="flex items-center gap-1 tabular-nums text-muted-foreground">
