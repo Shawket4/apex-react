@@ -42,6 +42,11 @@ export function scrubEvent(
 ): Sentry.ErrorEvent | null {
   if (isExpectedClientError(event, hint)) return null;
 
+  // Which service this came from. Every service shares one Sentry project, so
+  // without this you are left inferring the source from the release string or
+  // the SDK name.
+  event.tags = { ...event.tags, service: 'apex-react' };
+
   // Whatever the SDK inferred about who is using the app, drop it.
   // `sendDefaultPii: false` already suppresses most of this; clearing it
   // outright means a future SDK release cannot quietly widen what "default"
