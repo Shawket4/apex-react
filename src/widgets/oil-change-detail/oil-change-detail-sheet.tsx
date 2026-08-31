@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Droplets, Wrench } from 'lucide-react';
 
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/shared/ui/sheet';
@@ -43,6 +43,7 @@ export function OilChangeDetailSheet({
 
 function DetailBody({ row, t }: { row: OilChangeDue; t: T }) {
   const overdue = row.km_left < 0;
+  const navigate = useNavigate();
 
   return (
     <div className="space-y-6">
@@ -145,11 +146,27 @@ function DetailBody({ row, t }: { row: OilChangeDue; t: T }) {
             {t('oilChanges.actions.viewHistory')}
           </Link>
         </Button>
-        <Button asChild className="flex-1">
-          <Link to="/oil-changes/new">
-            <Droplets className="h-4 w-4" />
-            {t('oilChanges.new.title')}
-          </Link>
+        {/* Preselect the truck and carry over who last worked on it, so the
+            form opens on the fields that actually need typing: the new
+            odometer, the interval and the cost. `car_id` rather than a plate,
+            because the plate on this row is a display split. */}
+        <Button
+          className="flex-1"
+          onClick={() =>
+            navigate('/oil-changes/new', {
+              state: {
+                initialValues: {
+                  car_id: row.car_id || undefined,
+                  driver_name: row.driver_name || undefined,
+                  supervisor: row.super_visor || undefined,
+                  mileage: row.interval_km || undefined,
+                },
+              },
+            })
+          }
+        >
+          <Droplets className="h-4 w-4" />
+          {t('oilChanges.new.title')}
         </Button>
       </div>
     </div>

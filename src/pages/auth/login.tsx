@@ -29,6 +29,24 @@ export default function LoginPage() {
   const login = useLogin();
   const isDesktop = useIsDesktop();
 
+  // Release any modal lock left behind on the way here.
+  //
+  // Radix sets `pointer-events: none` on <body> while a modal dialog or menu
+  // is open and restores it on close. Signing out navigates away and unmounts
+  // the layout — and on mobile the open sidebar drawer with it — so if that
+  // cleanup does not get to run, this page renders perfectly and ignores every
+  // click until a reload. Reported from a real device; not reproducible in
+  // automation, which is exactly the shape of a teardown race.
+  //
+  // Closing the drawer before logging out (see UserMenu) addresses the known
+  // path. This is the backstop for the ones that are not known: on the login
+  // screen there is nothing modal open, so clearing the lock is always right.
+  React.useEffect(() => {
+    if (document.body.style.pointerEvents === 'none') {
+      document.body.style.pointerEvents = '';
+    }
+  }, []);
+
   const form = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
     defaultValues: { email: '', password: '' },

@@ -9,6 +9,8 @@ import { UserMenu } from '@/widgets/user-menu/user-menu';
 interface SidebarFooterProps {
   collapsed: boolean;
   onToggleCollapse: () => void;
+  /** Closes the mobile drawer; signing out needs it as much as a nav click. */
+  onNavigate?: () => void;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -19,12 +21,12 @@ interface SidebarFooterProps {
 /* closes it, and the drawer is rendered without its own close button.         */
 /* -------------------------------------------------------------------------- */
 
-export function SidebarFooter({ collapsed, onToggleCollapse }: SidebarFooterProps) {
+export function SidebarFooter({ collapsed, onToggleCollapse, onNavigate }: SidebarFooterProps) {
   const { t } = useTranslation();
 
   return (
     <div className="shrink-0 space-y-2 border-t p-2">
-      <UserMenu collapsed={collapsed} />
+      <UserMenu collapsed={collapsed} onNavigate={onNavigate} />
 
       <div
         className={cn(

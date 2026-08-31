@@ -50,7 +50,11 @@ export function Sidebar({
     >
       <SidebarBrand collapsed={collapsed} />
       <SidebarNav collapsed={collapsed} search={search} onNavigate={onNavigate} />
-      <SidebarFooter collapsed={collapsed} onToggleCollapse={onToggleCollapse} />
+      <SidebarFooter
+        collapsed={collapsed}
+        onToggleCollapse={onToggleCollapse}
+        onNavigate={onNavigate}
+      />
     </aside>
   );
 }

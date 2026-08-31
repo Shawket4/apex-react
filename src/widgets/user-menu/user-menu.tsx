@@ -35,9 +35,17 @@ function roleLabel(level: number): string {
 
 interface UserMenuProps {
   collapsed?: boolean;
+  /**
+   * Dismiss whatever is holding this menu — on mobile, the sidebar drawer.
+   * Signing out navigates away and unmounts the layout, so without this the
+   * drawer is torn down while still open rather than closed: a modal Radix
+   * dialog losing its unmount cleanup is how a page ends up unclickable with
+   * a stale pointer-events lock on <body>.
+   */
+  onNavigate?: () => void;
 }
 
-export function UserMenu({ collapsed = false }: UserMenuProps) {
+export function UserMenu({ collapsed = false, onNavigate }: UserMenuProps) {
   const user = useAuthStore((s) => s.user);
   const logout = useLogout();
   const { t } = useTranslation();
@@ -92,7 +100,15 @@ export function UserMenu({ collapsed = false }: UserMenuProps) {
           {t('common.profile')}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={logout} className="text-destructive focus:text-destructive">
+        <DropdownMenuItem
+          onClick={() => {
+            // Close first, log out second. useLogout already defers a tick,
+            // which is the gap the drawer's exit needs.
+            onNavigate?.();
+            logout();
+          }}
+          className="text-destructive focus:text-destructive"
+        >
           <LogOut className="h-4 w-4" />
           {t('common.signOut')}
         </DropdownMenuItem>

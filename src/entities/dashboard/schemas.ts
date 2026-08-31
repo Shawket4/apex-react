@@ -106,6 +106,8 @@ export const expiringDocumentSchema = z.object({
 export type ExpiringDocument = z.infer<typeof expiringDocumentSchema>;
 
 export const oilChangeDueSchema = z.object({
+  /** The vehicle itself, so the create form can preselect it. */
+  car_id: z.number().default(0),
   plate_no: z.string(),
   plate_ar: z.string().default(''),
   last_change_date: z.string().nullable().default(null),
