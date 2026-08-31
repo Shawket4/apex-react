@@ -288,9 +288,12 @@ export default function FuelEventsPage() {
         </>
       }
     >
-      {/* Toolbar row 2 — search + grouping */}
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div className="relative max-w-sm flex-1">
+      {/* Toolbar row 2 — search + grouping.
+          One row at every width. Stacking these put two of five toolbar rows
+          on a phone before any data, and the grouping icons are 100px next to
+          a field that is happy to shrink. */}
+      <div className="flex flex-row items-center gap-2 sm:justify-between">
+        <div className="relative min-w-0 flex-1 sm:max-w-sm">
           <Search className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             value={search}
@@ -331,8 +334,12 @@ export default function FuelEventsPage() {
         </div>
       </div>
 
-      {/* Toolbar row 3 — method tabs + status filter + sort */}
-      <div className="flex flex-wrap items-center gap-2">
+      {/* Toolbar row 3 — method tabs + status filter + sort.
+          Scrolls sideways on a phone rather than wrapping: wrapping cost
+          another full row of chrome, and these controls read as one group. The
+          negative margin lets it bleed to the page edge so it is obvious there
+          is more, rather than stopping short at the padding. */}
+      <div className="-mx-4 flex items-center gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0 [&>*]:shrink-0">
         <FuelEventsMethodControl
           value={methodFilter}
           onChange={setMethodFilter}

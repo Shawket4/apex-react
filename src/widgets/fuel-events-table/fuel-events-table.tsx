@@ -364,8 +364,13 @@ function GroupCard({
           )}
         </div>
 
-        {/* Row 2: inline stats */}
-        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+        {/* Row 2: the numbers.
+            A fixed two-column grid on a phone, not a wrap. Wrapping put the
+            event count on its own line or not depending on how many digits the
+            cost happened to have, so no two cards in the list had the same
+            shape and nothing lined up down the column. Above sm there is room
+            for one inline row. */}
+        <div className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs sm:flex sm:flex-wrap sm:items-center sm:gap-y-1">
           <Stat
             icon={<Droplet className="h-3 w-3" />}
             label={`${formatNumber(summary.totalLiters, 1)} L`}
@@ -380,7 +385,7 @@ function GroupCard({
             label={formatCurrency(summary.totalCost)}
             className="font-mono text-money"
           />
-          <span className="text-muted-foreground">
+          <span className="text-end text-muted-foreground sm:text-start">
             {t('fuelEvents.stats.events', { count: summary.eventCount })}
             {filterHidAll ? '' : originalCount !== summary.eventCount && ` / ${originalCount}`}
           </span>
