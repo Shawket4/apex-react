@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import { CheckCircle2, Inbox, MapPin, Warehouse } from 'lucide-react';
 import { PageShell } from '@/shared/ui/page-shell';
-import { Badge } from '@/shared/ui/badge';
 import { Loader2, RefreshCw } from 'lucide-react';
 import { toast } from '@/shared/ui/toast';
 import { extractErrorMessage } from '@/shared/api/errors';
@@ -15,6 +14,7 @@ import { Progress } from '@/shared/ui/progress';
 import { SearchInput } from '@/shared/ui/search-input';
 import { ConfirmDialog } from '@/shared/ui/confirm-dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/tabs';
+import { Chip, ChipGroup, ChipRadioGroup } from '@/shared/ui/chip-group';
 import { cn } from '@/shared/lib/cn';
 import { isValidCoordinate } from '@/shared/lib/coords';
 import { useDebounce } from '@/shared/hooks/use-debounce';
@@ -200,34 +200,28 @@ export default function LocationsPage() {
     }
   };
 
-  const pinPills = (
+  /** The pin filter, in both list tabs. One choice of two, so a radio group. */
+  const pinFilter_ = (
     value: PinFilter,
     onChange: (v: PinFilter) => void,
     missingCount?: number,
   ) => (
-    <div className="flex gap-1.5">
-      {(
-        [
-          { id: 'all', label: t('locations.filter.all', 'All') },
-          { id: 'missing', label: t('locations.filter.missingPins', 'Missing pins') },
-        ] as Array<{ id: PinFilter; label: string }>
-      ).map((p) => (
-        <Button
-          key={p.id}
-          type="button"
-          size="sm"
-          variant={value === p.id ? 'default' : 'outline'}
-          onClick={() => onChange(p.id)}
-          aria-pressed={value === p.id}
-          className="h-7 text-xs"
-        >
-          {p.label}
-          {p.id === 'missing' && (missingCount ?? 0) > 0 && (
-            <span className="tabular-nums opacity-70">{missingCount}</span>
-          )}
-        </Button>
-      ))}
-    </div>
+    <ChipRadioGroup<PinFilter>
+      label={t('locations.filter.label', 'Pin filter')}
+      value={value}
+      onChange={onChange}
+      // Inside the tab panel, which PageShell has already padded — bleeding to
+      // the edge a second time would pull it out past the search field.
+      edgeBleed={false}
+      options={[
+        { value: 'all', label: t('locations.filter.all', 'All') },
+        {
+          value: 'missing',
+          label: t('locations.filter.missingPins', 'Missing pins'),
+          count: missingCount || undefined,
+        },
+      ]}
+    />
   );
 
   return (
@@ -330,33 +324,48 @@ export default function LocationsPage() {
       </div>
 
       <Tabs value={tab} onValueChange={handleTabChange}>
-        {/* Three tabs, one of which reads "Needs Attention" with a count, do
-            not fit 360px: they either squeezed to unreadable or overflowed the
-            page. Each trigger takes a third of the row and its label shortens
-            on a phone, so the tabs stay tappable and the count stays visible —
-            it is the only reason to come to this screen. */}
-        <TabsList className="grid w-full grid-cols-3 sm:inline-flex sm:w-auto">
-          <TabsTrigger value="inbox" className="gap-1.5 px-2 sm:px-3">
-            {/* Icon is desktop-only: at 360px it, the label and the count
-                together left the label as "In…". The count is the point. */}
-            <Inbox className="hidden h-3.5 w-3.5 shrink-0 sm:inline" aria-hidden="true" />
-            <span className="sm:hidden">{t('locations.tabs.inboxShort', 'Inbox')}</span>
-            <span className="hidden truncate sm:inline">
-              {t('locations.tabs.inbox', 'Needs Attention')}
-            </span>
-            {attentionCount > 0 && <Badge variant="warning">{attentionCount}</Badge>}
-          </TabsTrigger>
-          <TabsTrigger value="dropoffs" className="px-2 sm:px-3">
-            <span className="truncate sm:hidden">
-              {t('locations.tabs.dropoffsShort', 'Drop-offs')}
-            </span>
-            <span className="hidden truncate sm:inline">
-              {t('locations.tabs.dropoffs', 'Drop-off Points')}
-            </span>
-          </TabsTrigger>
-          <TabsTrigger value="terminals" className="px-2 sm:px-3">
-            <span className="truncate">{t('locations.tabs.terminals', 'Terminals')}</span>
-          </TabsTrigger>
+        {/* The three sections, as chips on a row that scrolls rather than
+            squeezes. The previous version gave each trigger a third of the
+            width with `grid-cols-3` and swapped in a shorter label below `sm`,
+            which is two problems: at 360px "Needs Attention" still truncated
+            while "Terminals" sat in whitespace, and the count — the only
+            reason to open this screen — was the first thing squeezed out.
+            Chips size to their own content and the row scrolls, so every
+            label is whole at every width and the count always shows.
+
+            Radix still owns the semantics: TabsTrigger through `asChild`
+            keeps the tablist roles, arrow-key movement and panel wiring, and
+            only the appearance is ours. */}
+        <TabsList asChild unstyled>
+          <ChipGroup className="justify-start">
+            <TabsTrigger value="inbox" asChild unstyled>
+              <Chip
+                icon={<Inbox className="h-3.5 w-3.5" />}
+                count={attentionCount || undefined}
+                active={tab === 'inbox'}
+              >
+                {t('locations.tabs.inbox', 'Needs Attention')}
+              </Chip>
+            </TabsTrigger>
+            <TabsTrigger value="dropoffs" asChild unstyled>
+              <Chip
+                icon={<MapPin className="h-3.5 w-3.5" />}
+                count={dropoffsTotalAll || undefined}
+                active={tab === 'dropoffs'}
+              >
+                {t('locations.tabs.dropoffs', 'Drop-off Points')}
+              </Chip>
+            </TabsTrigger>
+            <TabsTrigger value="terminals" asChild unstyled>
+              <Chip
+                icon={<Warehouse className="h-3.5 w-3.5" />}
+                count={terminals.length || undefined}
+                active={tab === 'terminals'}
+              >
+                {t('locations.tabs.terminals', 'Terminals')}
+              </Chip>
+            </TabsTrigger>
+          </ChipGroup>
         </TabsList>
 
         <TabsContent value="inbox" className="mt-3">
@@ -371,7 +380,7 @@ export default function LocationsPage() {
               placeholder={t('locations.dropoffs.searchPlaceholder', 'Search drop-off points…')}
               className="sm:max-w-sm"
             />
-            {pinPills(pinFilter, setPinFilter, unpinnedDropoffs)}
+            {pinFilter_(pinFilter, setPinFilter, unpinnedDropoffs)}
           </div>
           <LocationsDropoffsTable
             dropoffs={dropoffs}
@@ -398,7 +407,7 @@ export default function LocationsPage() {
               placeholder={t('locations.terminals.searchPlaceholder', 'Search terminals…')}
               className="sm:max-w-sm"
             />
-            {pinPills(
+            {pinFilter_(
               terminalPinFilter,
               setTerminalPinFilter,
               terminals.length - terminalsPinned,
