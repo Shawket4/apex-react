@@ -232,8 +232,8 @@ export const router = createBrowserRouter([
             ),
           },
           {
-            // Manager, matching the backend: the plan names every drop-off
-            // point and receipt number in the range.
+            // Manager, matching the backend route: the plan names every
+            // drop-off point and receipt number in the range.
             path: 'receipt-piles',
             element: (
               <ProtectedRoute minPermissionLevel={PERMISSION_LEVELS.MANAGER}>

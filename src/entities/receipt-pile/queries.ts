@@ -1,14 +1,14 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery } from '@tanstack/react-query';
 import type { QueryClient } from '@tanstack/react-query';
 import { receiptPileApi } from './api';
 import type { PilePlanParams } from './schemas';
 
 /* -------------------------------------------------------------------------- */
-/* Query keys                                                                  */
+/* Query keys — single source of truth for invalidation                        */
 /*                                                                            */
-/* The whole parameter set is in the key: the plan is a pure function of       */
-/* range + mode + pile count, so two different plans must never share a cache  */
-/* entry, and flipping back to a mode already seen should be instant.          */
+/* The whole parameter set is in the key. The plan is a pure function of range */
+/* + mode + box count, so two plans must never share an entry, and stepping    */
+/* the count up and back should be free rather than a second request.          */
 /* -------------------------------------------------------------------------- */
 
 export const receiptPileKeys = {
@@ -17,14 +17,19 @@ export const receiptPileKeys = {
     [...receiptPileKeys.all, p.startDate, p.endDate, p.mode, p.piles ?? 'auto'] as const,
 };
 
-export function useReceiptPilePlan(params: PilePlanParams, enabled = true) {
+/** The paper for a closed month does not change; hold it for the visit. */
+const PLAN_STALE_MS = 5 * 60_000;
+
+export function useReceiptPilePlan(params: PilePlanParams) {
   return useQuery({
     queryKey: receiptPileKeys.plan(params),
     queryFn: () => receiptPileApi.plan(params),
-    // The paper for a closed month does not change. Keep it long enough that
-    // stepping the pile count up and back is free.
-    staleTime: 5 * 60_000,
-    enabled: enabled && !!params.startDate && !!params.endDate,
+    staleTime: PLAN_STALE_MS,
+    enabled: !!params.startDate && !!params.endDate,
+    // Changing the mode or the box count re-splits the SAME receipts. Without
+    // this the page falls back to skeletons on every click, throwing away a
+    // plan the user is reading to redraw one that differs by a few boundaries.
+    placeholderData: keepPreviousData,
   });
 }
 
@@ -34,12 +39,18 @@ export function useExportReceiptPiles() {
   });
 }
 
-/** Warmed on hover of the pile-count stepper and the mode switch. */
+/* -------------------------------------------------------------------------- */
+/* Intent prefetch                                                             */
+/* Warmed on hover/focus/touch of the mode switch and the box stepper.         */
+/* MUST mirror the hook above key-for-key — a near-miss key is a wasted        */
+/* request the page refetches anyway.                                          */
+/* -------------------------------------------------------------------------- */
+
 export function prefetchReceiptPilePlan(qc: QueryClient, params: PilePlanParams): void {
   if (!params.startDate || !params.endDate) return;
   void qc.prefetchQuery({
     queryKey: receiptPileKeys.plan(params),
     queryFn: () => receiptPileApi.plan(params),
-    staleTime: 5 * 60_000,
+    staleTime: PLAN_STALE_MS,
   });
 }

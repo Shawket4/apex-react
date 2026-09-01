@@ -1,17 +1,19 @@
 import { apiClient } from '@/shared/api/client';
 import { pilePlanSchema, type PilePlan, type PilePlanParams } from './schemas';
 
-/** Query string shared by the JSON and export endpoints, so the workbook a
- *  user downloads is always the plan they were just looking at. */
+/**
+ * One query string for both endpoints, so the workbook a user downloads is
+ * always the plan they were just looking at.
+ */
 function toQuery(params: PilePlanParams): Record<string, string> {
-  const q: Record<string, string> = {
+  const query: Record<string, string> = {
     start_date: params.startDate,
     end_date: params.endDate,
     mode: params.mode,
   };
-  // Absent means "derive it from this range" — sending 0 would be rejected.
-  if (params.piles) q.piles = String(params.piles);
-  return q;
+  // Absent means "derive it from this range"; the server rejects a 0.
+  if (params.piles) query.piles = String(params.piles);
+  return query;
 }
 
 export const receiptPileApi = {
@@ -24,10 +26,9 @@ export const receiptPileApi = {
   /**
    * `GET /api/receipt-piles/export` — the same plan as a workbook.
    *
-   * The file is built in Go with excelize; the browser only saves it. Building
-   * it here would mean a second implementation of the layout to drift from,
-   * and the checklist sheet's live COUNTIFS formulas would have to be
-   * reproduced by hand.
+   * Built in Go with excelize; the browser only saves it. Building it here
+   * would mean a second copy of the layout to drift from, and the checklist
+   * sheet's live COUNTIFS formulas would have to be reproduced by hand.
    */
   async export(params: PilePlanParams): Promise<{ blob: Blob; filename: string }> {
     const res = await apiClient.get('/api/receipt-piles/export', {

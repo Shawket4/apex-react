@@ -1,22 +1,29 @@
 import { z } from 'zod';
 
 /* -------------------------------------------------------------------------- */
-/* Receipt piles — the filing plan for a range of Watanya receipts             */
+/* Receipt piles — the filing plan for a range of returned Watanya paper       */
 /*                                                                            */
-/* Watanya-only by design: the backend hard-codes the company, and the        */
-/* grouping key is the first Arabic letter of the drop-off name with the      */
-/* definite article stripped (العياط files under ع). Nothing here is          */
-/* parameterised by company, and it should not be — no other customer's       */
-/* paper comes back as one heap to be filed this way.                         */
+/* Watanya-only by construction: the backend hard-codes the company and the    */
+/* grouping key is the first Arabic letter of the drop-off name with the       */
+/* definite article stripped (العياط files under ع, not ا). Nothing here is    */
+/* parameterised by company and nothing should be — the letter rules are       */
+/* Arabic-specific, and no other customer's receipts come back as one heap.    */
 /*                                                                            */
-/* The server owns the whole plan. This layer parses it and nothing more:     */
-/* a second implementation of the balancing in TypeScript is a second answer  */
-/* to drift from, and the export must match the screen exactly.               */
+/* The server owns the whole plan; this layer parses it and stops there. A     */
+/* second implementation of the balancing in TypeScript would be a second      */
+/* answer to drift from, and the workbook has to be the plan on screen.        */
 /* -------------------------------------------------------------------------- */
 
-/** How the letters are cut into piles. */
+/** How the letter sequence is cut into boxes. */
 export const PILE_MODES = ['balanced', 'letter'] as const;
 export type PileMode = (typeof PILE_MODES)[number];
+
+/** Matches services.MaxPiles in FalconGo — past this, boxes come back empty. */
+export const MAX_PILES = 31;
+
+/** Arrays are `null` rather than `[]` on an empty Go slice — normalise on read. */
+const list = <T extends z.ZodTypeAny>(schema: T) =>
+  z.array(schema).nullish().transform((v) => v ?? []);
 
 const receiptSchema = z.object({
   receipt_no: z.string(),
@@ -25,7 +32,7 @@ const receiptSchema = z.object({
   date: z.string(),
   car_no_plate: z.string(),
   driver_name: z.string(),
-  /** Position within this drop-off, 1-based: "3 of 11". */
+  /** Position within this drop-off, 1-based: the "3 / 11" on the checklist. */
   seq: z.number(),
   out_of: z.number(),
   pile: z.number(),
@@ -35,20 +42,20 @@ const dropOffSchema = z.object({
   name: z.string(),
   letter: z.string(),
   receipt_count: z.number(),
-  terminals: z.array(z.string()).nullish().transform((v) => v ?? []),
-  receipts: z.array(receiptSchema).nullish().transform((v) => v ?? []),
+  terminals: list(z.string()),
+  receipts: list(receiptSchema),
 });
 
 const letterSchema = z.object({
   letter: z.string(),
   receipt_count: z.number(),
-  drop_offs: z.array(dropOffSchema).nullish().transform((v) => v ?? []),
+  drop_offs: list(dropOffSchema),
 });
 
 const pileSchema = z.object({
   index: z.number(),
   label: z.string(),
-  letters: z.array(letterSchema).nullish().transform((v) => v ?? []),
+  letters: list(letterSchema),
   drop_off_count: z.number(),
   receipt_count: z.number(),
 });
@@ -57,33 +64,49 @@ export const pilePlanSchema = z.object({
   mode: z.enum(PILE_MODES),
   start_date: z.string(),
   end_date: z.string(),
-  piles: z.array(pileSchema).nullish().transform((v) => v ?? []),
+  piles: list(pileSchema),
   total_receipts: z.number(),
   total_drop_offs: z.number(),
   total_letters: z.number(),
   heaviest_pile: z.number(),
   lightest_pile: z.number(),
   /**
-   * The heaviest single letter. No pile can be lighter than this, because a
-   * letter is never split across boxes — so it is the floor under
-   * `heaviest_pile`, and the honest answer when the boxes look uneven.
+   * The heaviest single letter, and which one. A letter is never split across
+   * boxes, so no box can be lighter than this — it is the floor under
+   * `heaviest_pile` and the honest answer when the boxes look uneven.
    */
   floor_letter: z.string(),
   floor_weight: z.number(),
-  /** True when the server derived the pile count instead of being told one. */
+  /** True when the server chose the box count instead of being told one. */
   auto_pile_count: z.boolean(),
-  /** Trips in range with no receipt number — reported, not silently dropped. */
+  /** Trips in range with no receipt number: reported, never silently dropped. */
   skipped_receipts: z.number(),
 });
 
 export type PilePlan = z.infer<typeof pilePlanSchema>;
 export type Pile = PilePlan['piles'][number];
-export type PileDropOff = Pile['letters'][number]['drop_offs'][number];
+export type PileLetter = Pile['letters'][number];
+export type PileDropOff = PileLetter['drop_offs'][number];
 
+/**
+ * What both endpoints take. `startDate`/`endDate` are Cairo calendar days
+ * (YYYY-MM-DD) — the shape `useScope().range` already hands out, which is why
+ * this page has no date picker of its own.
+ */
 export interface PilePlanParams {
   startDate: string;
   endDate: string;
   mode: PileMode;
-  /** Omit to let the server choose a count from the range. */
+  /** Omit to let the server derive a count from the range. */
   piles?: number;
+}
+
+/**
+ * One box's drop-offs, flattened for rendering: the letter is carried on the
+ * row and marked as repeated so the list can show it once per run.
+ */
+export function flattenPile(pile: Pile): Array<PileDropOff & { firstOfLetter: boolean }> {
+  return pile.letters.flatMap((letter) =>
+    letter.drop_offs.map((drop, i) => ({ ...drop, firstOfLetter: i === 0 })),
+  );
 }
