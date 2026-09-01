@@ -111,6 +111,35 @@ export function flattenPile(pile: Pile): Array<PileDropOff & { firstOfLetter: bo
   );
 }
 
+/** A drop-off that still knows which box it is in. */
+export interface PlanRow extends PileDropOff {
+  pileIndex: number;
+  pileLabel: string;
+  firstOfLetter: boolean;
+}
+
+/**
+ * Every drop-off in the plan as one flat list, in the server's order.
+ *
+ * This is what the phone searches: the box number has to survive the flatten,
+ * because on a phone the question is "which box does this name go in", and the
+ * answer is `pileIndex`. No sorting and no re-derivation of letters or
+ * balancing — that is the server's, and a second implementation here would be
+ * a second answer to drift from.
+ */
+export function flattenPlan(plan: PilePlan): PlanRow[] {
+  return plan.piles.flatMap((pile) =>
+    pile.letters.flatMap((letter) =>
+      letter.drop_offs.map((drop, i) => ({
+        ...drop,
+        pileIndex: pile.index,
+        pileLabel: pile.label,
+        firstOfLetter: i === 0,
+      })),
+    ),
+  );
+}
+
 /* -------------------------------------------------------------------------- */
 /* One drop-off, as the Watanya fee report lays it out                         */
 /*                                                                            */

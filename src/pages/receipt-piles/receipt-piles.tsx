@@ -12,6 +12,7 @@ import { Skeleton } from '@/shared/ui/skeleton';
 import { toast } from '@/shared/ui/toast';
 import { extractErrorMessage } from '@/shared/api/errors';
 import { useScope } from '@/shared/scope';
+import { useIsMobile } from '@/shared/hooks/use-media-query';
 import { intentProps } from '@/shared/lib/prefetch';
 import { format } from '@/shared/lib/format';
 import { cn } from '@/shared/lib/cn';
@@ -31,6 +32,7 @@ import { ReceiptPilesBalance } from '@/widgets/receipt-piles/receipt-piles-balan
 import { ReceiptPilesBoxes } from '@/widgets/receipt-piles/receipt-piles-boxes';
 import { ReceiptPilesControls } from '@/widgets/receipt-piles/receipt-piles-controls';
 import { ReceiptPilesDropOffSheet } from '@/widgets/receipt-piles/receipt-piles-dropoff-sheet';
+import { ReceiptPilesMobilePlan } from '@/widgets/receipt-piles/receipt-piles-mobile-plan';
 
 /* -------------------------------------------------------------------------- */
 /* Receipt piles                                                               */
@@ -57,6 +59,9 @@ export default function ReceiptPilesPage() {
   const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
+  // 768px, meeting the boxes grid's `md:` exactly, so the two trees never
+  // both render and never leave a gap.
+  const isMobile = useIsMobile();
 
   // Dates come from the global header scope (URL), like every other module.
   const { range } = useScope();
@@ -131,7 +136,12 @@ export default function ReceiptPilesPage() {
 
   /* ---- Render ---- */
 
-  const actions = (
+  const rangeLabel =
+    range.from === range.to
+      ? format(range.from, 'd MMMM yyyy')
+      : `${format(range.from, 'd MMM')} – ${format(range.to, 'd MMM yyyy')}`;
+
+  const controls = (
     <>
       <ReceiptPilesControls
         params={params}
@@ -140,19 +150,37 @@ export default function ReceiptPilesPage() {
         onModeChange={setMode}
         onBoxCountChange={setBoxes}
       />
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={() => void handleExport()}
-        disabled={exportPlan.isPending || !plan || plan.piles.length === 0}
-      >
-        {exportPlan.isPending ? (
-          <Loader2 className="animate-spin motion-reduce:animate-none" />
-        ) : (
-          <FileSpreadsheet />
-        )}
-        <span className="hidden sm:inline">{t('receiptPiles.export.action')}</span>
-      </Button>
+    </>
+  );
+
+  const exportButton = (
+    <Button
+      variant="outline"
+      size="sm"
+      // The label was `hidden sm:inline`, which takes it out of the
+      // accessibility tree too: below 640px this was a 32px unnamed button
+      // that downloads a file, sitting a few pixels from the minus key.
+      // Desktop keeps h-8 and is unchanged.
+      className="h-11 sm:h-8"
+      onClick={() => void handleExport()}
+      disabled={exportPlan.isPending || !plan || plan.piles.length === 0}
+    >
+      {exportPlan.isPending ? (
+        <Loader2 className="animate-spin motion-reduce:animate-none" />
+      ) : (
+        <FileSpreadsheet />
+      )}
+      {t('receiptPiles.export.action')}
+    </Button>
+  );
+
+  // On a phone the mode switch and the box stepper move down into the plan
+  // surface: they are set once a month, while export is the only control here
+  // with a side effect and the only output, so it keeps the header.
+  const actions = isMobile ? exportButton : (
+    <>
+      {controls}
+      {exportButton}
     </>
   );
 
@@ -164,11 +192,7 @@ export default function ReceiptPilesPage() {
         // dir="ltr": the range is a Latin-numeral date pair, and left to the
         // page direction the bidi algorithm reorders it to "Jul – 31 Jul 2026 1"
         // in Arabic.
-        <span dir="ltr">
-          {range.from === range.to
-            ? format(range.from, 'd MMMM yyyy')
-            : `${format(range.from, 'd MMM')} – ${format(range.to, 'd MMM yyyy')}`}
-        </span>
+        <span dir="ltr">{rangeLabel}</span>
       }
       actions={actions}
     >
@@ -212,12 +236,24 @@ export default function ReceiptPilesPage() {
             isFetching && 'opacity-60 transition-opacity',
           )}
         >
-          <ReceiptPilesBalance plan={plan} />
-          <ReceiptPilesBoxes
-            piles={plan.piles}
-            onSelectDropOff={setOpenDropOff}
-            intentFor={dropOffIntent}
-          />
+          {isMobile ? (
+            <ReceiptPilesMobilePlan
+              plan={plan}
+              rangeLabel={rangeLabel}
+              onSelectDropOff={setOpenDropOff}
+              intentFor={dropOffIntent}
+              controls={controls}
+            />
+          ) : (
+            <>
+              <ReceiptPilesBalance plan={plan} />
+              <ReceiptPilesBoxes
+                piles={plan.piles}
+                onSelectDropOff={setOpenDropOff}
+                intentFor={dropOffIntent}
+              />
+            </>
+          )}
         </div>
       )}
 

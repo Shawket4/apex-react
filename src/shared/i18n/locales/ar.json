@@ -1450,6 +1450,21 @@
       "receiptsAcross_few": "{{receipts}} إيصالاً من {{count}} مستودعات",
       "receiptsAcross_many": "{{receipts}} إيصالاً من {{count}} مستودعاً",
       "receiptsAcross_other": "{{receipts}} إيصالاً من {{count}} مستودع"
+    },
+    "index": {
+      "title": "الحرف ← الصندوق",
+      "articleRule": "«ال» لا تُحتسب — العياط في حرف ع."
+    },
+    "find": {
+      "placeholder": "ابحث عن نقطة تسليم",
+      "emptyTitle": "لا نتائج لـ «{{query}}»",
+      "emptyDescription": "لا توجد نقطة تسليم بهذا الاسم في {{range}}. وسّع التواريخ من الشريط العلوي، أو راجع الإملاء.",
+      "results_zero": "لا نتائج",
+      "results_one": "نتيجة واحدة",
+      "results_two": "نتيجتان",
+      "results_few": "{{count}} نتائج",
+      "results_many": "{{count}} نتيجة",
+      "results_other": "{{count}} نتيجة"
     }
   },
   "etit": {

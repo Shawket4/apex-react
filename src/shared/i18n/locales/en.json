@@ -1427,6 +1427,17 @@
       "total": "Total",
       "receiptsAcross_one": "{{receipts}} receipts from 1 terminal",
       "receiptsAcross_other": "{{receipts}} receipts across {{count}} terminals"
+    },
+    "index": {
+      "title": "Letter → box",
+      "articleRule": "ال isn't counted — العياط files under ع."
+    },
+    "find": {
+      "placeholder": "Find a drop-off",
+      "emptyTitle": "Nothing matching “{{query}}”",
+      "emptyDescription": "No drop-off by that name in {{range}}. Widen the dates in the header, or check the spelling.",
+      "results_one": "{{count}} match",
+      "results_other": "{{count}} matches"
     }
   },
   "etit": {

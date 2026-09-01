@@ -24,7 +24,10 @@ export function ReceiptPilesBalance({ plan }: Props) {
     { key: 'boxes', value: plan.piles.length },
     { key: 'receipts', value: plan.total_receipts },
     { key: 'dropOffs', value: plan.total_drop_offs },
-    { key: 'spread', value: `${plan.heaviest_pile} / ${plan.lightest_pile}` },
+    // ltr: "79 / 37" is a Latin-numeral pair, and in an Arabic paragraph the
+    // bidi algorithm reorders it to "37 / 79" — under a label reading
+    // "الأثقل / الأخف" the screen was stating the exact opposite of the truth.
+    { key: 'spread', value: `${plan.heaviest_pile} / ${plan.lightest_pile}`, ltr: true },
   ];
 
   return (
@@ -38,9 +41,9 @@ export function ReceiptPilesBalance({ plan }: Props) {
 
       <div className="grid gap-3 p-3">
         <dl className="flex flex-wrap gap-x-6 gap-y-1">
-          {stats.map(({ key, value }) => (
+          {stats.map(({ key, value, ltr }) => (
             <div key={key} className="flex items-baseline gap-1.5">
-              <dd className="text-sm font-semibold tabular-nums">
+              <dd className="text-sm font-semibold tabular-nums" dir={ltr ? 'ltr' : undefined}>
                 {typeof value === 'number' ? formatNumber(value, 0) : value}
               </dd>
               <dt className="text-xs text-muted-foreground">

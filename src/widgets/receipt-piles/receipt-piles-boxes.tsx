@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { ChevronLeft } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import { cn } from '@/shared/lib/cn';
 import { flattenPile, type Pile } from '@/entities/receipt-pile/schemas';
 import type { IntentHandlers } from '@/shared/lib/prefetch';
@@ -55,11 +55,16 @@ function PileBox({
         <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
           {t('receiptPiles.box', { n: pile.index })}
         </span>
+        {/* dir="auto": the label is a run of Arabic letters, and left to the
+            LTR shell the bidi algorithm reverses it — "ج ح خ" rendered as
+            "خ ح ج", i.e. the box's own alphabetical range backwards.
+            No letter-spacing either: it is a shaping control for Latin, and on
+            Arabic it pulls glyphs away from their joins. */}
         <span
-          className="min-w-0 flex-1 truncate text-base font-semibold tracking-[0.2em] text-foreground"
+          className="min-w-0 flex-1 truncate text-base font-semibold text-foreground"
           title={pile.label}
         >
-          {pile.label}
+          <bdi>{pile.label}</bdi>
         </span>
         <span className="shrink-0 text-end text-[10px] leading-tight text-muted-foreground tabular-nums">
           {t('receiptPiles.receiptCount', { count: pile.receipt_count })}
@@ -79,24 +84,30 @@ function PileBox({
               // rows sit directly on top of one another.
               className="flex min-h-11 w-full items-center gap-2 px-3 py-1.5 text-start transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
             >
+              {/* The non-alphabetic buckets ("أرقام", "لاتيني", "غير مسجل")
+                  are words, not glyphs, and wrapped out of a fixed 16px box
+                  onto the drop-off name. */}
               <span
                 aria-hidden={!row.firstOfLetter}
                 className={cn(
-                  'w-4 shrink-0 text-xs font-semibold text-muted-foreground',
+                  'min-w-4 max-w-16 shrink-0 truncate text-xs font-semibold text-muted-foreground',
                   !row.firstOfLetter && 'invisible',
                 )}
               >
                 {row.letter}
               </span>
+              {/* dir="auto" so an Arabic name truncates at its tail rather
+                  than its head — the head is the part being matched against
+                  the paper in hand. */}
               <span className="min-w-0 flex-1 truncate text-[13px]" title={row.name}>
-                {row.name}
+                <bdi>{row.name}</bdi>
               </span>
               <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
                 {row.receipt_count}
               </span>
               {/* rtl:rotate-180 so the chevron points out of the row, not into
                   it, when the page flips to Arabic. */}
-              <ChevronLeft
+              <ChevronRight
                 className="h-3.5 w-3.5 shrink-0 text-muted-foreground/60 rtl:rotate-180"
                 aria-hidden
               />

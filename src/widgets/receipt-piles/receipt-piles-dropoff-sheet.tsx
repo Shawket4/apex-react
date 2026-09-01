@@ -7,6 +7,7 @@ import { Skeleton } from '@/shared/ui/skeleton';
 import { cn } from '@/shared/lib/cn';
 import { formatNumber } from '@/shared/lib/format';
 import { extractErrorMessage } from '@/shared/api/errors';
+import { useIsMobile } from '@/shared/hooks/use-media-query';
 import { useDropOffDetail } from '@/entities/receipt-pile/queries';
 import type { DropOffTerminal } from '@/entities/receipt-pile/schemas';
 
@@ -40,6 +41,7 @@ export function ReceiptPilesDropOffSheet({
   onOpenChange,
 }: Props) {
   const { t } = useTranslation();
+  const isMobile = useIsMobile();
   const detail = useDropOffDetail(
     dropOffPoint ? { startDate, endDate, dropOffPoint } : null,
   );
@@ -47,10 +49,21 @@ export function ReceiptPilesDropOffSheet({
   return (
     <Sheet open={dropOffPoint !== null} onOpenChange={onOpenChange}>
       <SheetContent
-        side="right"
-        // Wide: these are nine-column tables, and on a laptop the panel should
-        // hold one without a horizontal scroll of its own.
-        className="w-full overflow-y-auto p-0 sm:max-w-2xl"
+        // Bottom on a phone: every successful lookup lands here, and a
+        // side panel dismissed by a 16px X in the far top corner is the wrong
+        // shape for someone holding paper in the other hand.
+        side={isMobile ? 'bottom' : 'right'}
+        className={cn(
+          'overflow-y-auto overscroll-contain p-0',
+          // The bottom variant carries no height of its own. The padding is
+          // the house pattern: viewport-fit=cover means bottom-0 is the
+          // physical edge, so without it the totals row renders under the
+          // home indicator, where a drag is taken by the iOS home gesture
+          // rather than the sheet.
+          isMobile
+            ? 'max-h-[85dvh] rounded-t-2xl pb-[max(1rem,env(safe-area-inset-bottom))]'
+            : 'w-full sm:max-w-2xl',
+        )}
       >
         {/* pe-10 clears the close button in the corner; without it an Arabic
             drop-off name runs straight underneath it. */}
@@ -142,9 +155,12 @@ function TerminalTable({ terminal }: { terminal: DropOffTerminal }) {
             {t('receiptPiles.detail.unmapped')}
           </span>
         ) : (
-          <span className="text-[11px] text-muted-foreground" dir="ltr">
+          // Only the Latin fragments are isolated. dir="ltr" on the whole line
+          // scrambled it for Arabic, where the band label reads "الفئة 2".
+          <span className="text-[11px] text-muted-foreground">
             {t('receiptPiles.detail.band', { n: terminal.fee_index })} ·{' '}
-            {formatNumber(terminal.actual_fee, 1)} · {formatNumber(terminal.distance, 0)} km
+            <span dir="ltr">{formatNumber(terminal.actual_fee, 1)}</span> ·{' '}
+            <span dir="ltr">{formatNumber(terminal.distance, 0)} km</span>
           </span>
         )}
         <span className="ms-auto text-[11px] text-muted-foreground tabular-nums">
@@ -152,8 +168,12 @@ function TerminalTable({ terminal }: { terminal: DropOffTerminal }) {
         </span>
       </header>
 
-      {/* The table scrolls inside its own box; the sheet never scrolls sideways. */}
-      <div className="overflow-x-auto">
+      {/* From md up, the report's table verbatim. It scrolls inside its own
+          box so the sheet never scrolls sideways. Below md it is replaced
+          rather than squeezed: a 544px table inside a 390px bottom sheet is
+          three nested scroll contexts, which is the defect this whole pass
+          removes from the rest of the screen. */}
+      <div className="hidden overflow-x-auto overscroll-x-contain md:block">
         <table className="w-full min-w-[34rem] text-xs">
           <thead>
             <tr className="border-b text-[10px] uppercase tracking-wider text-muted-foreground">
@@ -224,6 +244,52 @@ function TerminalTable({ terminal }: { terminal: DropOffTerminal }) {
           </tfoot>
         </table>
       </div>
+
+      {/* Same array, same order, unsorted and unsortable — the Excel-parity
+          guarantee is about sequence, not column geometry. */}
+      <ul className="divide-y md:hidden">
+        {terminal.receipts.map((receipt) => (
+          <li key={receipt.receipt_no} className="px-3 py-2">
+            <div className="flex items-baseline gap-2">
+              <span className="w-6 shrink-0 text-xs tabular-nums text-muted-foreground">
+                {receipt.seq}
+              </span>
+              {/* dir on the inner text, not on the flex-1 box: setting it on
+                  the growing box pushed the receipt number to the far edge in
+                  Arabic and left the sequence number floating alone. */}
+              <span className="flex-1 font-mono text-sm font-medium tabular-nums">
+                <bdi>{receipt.receipt_no}</bdi>
+              </span>
+              <span dir="ltr" className="text-xs tabular-nums text-muted-foreground">
+                {receipt.date}
+              </span>
+            </div>
+            <div className="mt-0.5 flex flex-wrap items-baseline gap-x-2 gap-y-0.5 ps-8 text-[11px] text-muted-foreground">
+              <span dir="auto" className="min-w-0 truncate">
+                {receipt.driver_name || '—'}
+              </span>
+              <span dir="auto">{receipt.car_no_plate || '—'}</span>
+              <span className="ms-auto tabular-nums">
+                {formatNumber(receipt.tank_capacity, 0)} L
+              </span>
+              {!terminal.unmapped && (
+                <span className="tabular-nums text-foreground">
+                  {formatNumber(receipt.cost, 2)}
+                </span>
+              )}
+            </div>
+          </li>
+        ))}
+        <li className="flex flex-wrap items-baseline gap-x-3 border-t-2 bg-muted/40 px-3 py-2 text-xs font-semibold">
+          <span>{t('receiptPiles.detail.total')}</span>
+          <span className="ms-auto tabular-nums">
+            {formatNumber(terminal.total_capacity, 0)} L
+          </span>
+          {!terminal.unmapped && (
+            <span className="tabular-nums">{formatNumber(terminal.total_cost, 2)}</span>
+          )}
+        </li>
+      </ul>
     </section>
   );
 }
