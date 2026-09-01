@@ -135,3 +135,31 @@ export function calculateAccuracy(
     percentage: Number(pct.toFixed(1)),
   };
 }
+
+/**
+ * `GET /api/mappings/{id}/route`.
+ *
+ * Deliberately the same shape as the trip-details location block, so both
+ * screens can feed the one map dialog. Every part is optional: an unpinned
+ * terminal or drop-off simply omits its half, and the dialog renders the
+ * single marker it does have rather than drawing a line to (0, 0).
+ */
+export const latLngSchema = z.object({
+  lat: z.number().nullish(),
+  lng: z.number().nullish(),
+});
+
+export const feeMappingRouteSchema = z.object({
+  data: feeMappingRawSchema.optional(),
+  terminal_location: latLngSchema.nullish(),
+  drop_off_point_location: latLngSchema.nullish(),
+  route_data: z
+    .object({
+      geometry: z.string().nullish(),
+      distance: z.number().nullish(),
+      duration: z.number().nullish(),
+    })
+    .nullish(),
+});
+
+export type FeeMappingRoute = z.infer<typeof feeMappingRouteSchema>;

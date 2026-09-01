@@ -4,7 +4,7 @@ import {
   useQueryClient,
   type UseMutationOptions,
 } from '@tanstack/react-query';
-import { feeMappingApi } from './api';
+import { feeMappingApi, getFeeMappingRoute } from './api';
 import type {
   EnrichmentResult,
   FeeMapping,
@@ -157,3 +157,18 @@ export function prefetchFeeMappings(qc: QueryClient): void {
   void qc.prefetchQuery({ queryKey: feeMappingKeys.list(), queryFn: () => feeMappingApi.list() });
 }
 
+
+/**
+ * The road route for one mapping, for the map dialog.
+ *
+ * Only fetched while the dialog is open — routing costs an upstream call, and
+ * the table renders hundreds of rows that must not each trigger one.
+ */
+export function useFeeMappingRoute(id: number | null) {
+  return useQuery({
+    queryKey: ['fee-mapping-route', id],
+    queryFn: () => getFeeMappingRoute(id as number),
+    enabled: id != null,
+    staleTime: 5 * 60_000,
+  });
+}

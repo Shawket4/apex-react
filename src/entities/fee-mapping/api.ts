@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { apiClient } from '@/shared/api/client';
 import {
   enrichmentResultSchema,
+  feeMappingRouteSchema,
   feeMappingSchema,
   setLocationResponseSchema,
   type EnrichmentResult,
@@ -81,3 +82,15 @@ export const feeMappingApi = {
     return bulkEnrichResponseSchema.parse(res.data).results;
   },
 };
+
+/**
+ * `GET /api/mappings/{id}/route` — the road route for one mapping.
+ *
+ * Returns the same shape as the trip-details location block
+ * (terminal_location / drop_off_point_location / route_data) so the map dialog
+ * is shared with the trips screen rather than duplicated.
+ */
+export async function getFeeMappingRoute(id: number) {
+  const res = await apiClient.get(`/api/mappings/${id}/route`);
+  return feeMappingRouteSchema.parse(res.data);
+}

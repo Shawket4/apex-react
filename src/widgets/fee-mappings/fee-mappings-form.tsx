@@ -1,7 +1,8 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from '@/shared/ui/toast';
-import { Loader2, Pencil, Plus, Sparkles, X } from 'lucide-react';
+import { ChevronDown, Loader2, Pencil, Plus, Sparkles, X } from 'lucide-react';
+import { cn } from '@/shared/lib/cn';
 import { Card, CardContent } from '@/shared/ui/card';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
@@ -168,20 +169,41 @@ export function FeeMappingsForm({
     }
   };
 
+  // Collapsed by default on a phone. Five fields plus a button is roughly a
+  // whole screen, and it sat above the table — so the page opened on a form
+  // nobody asked for and the mappings began below the fold. Editing forces it
+  // open, because the user just asked for it.
+  const [expanded, setExpanded] = React.useState(false);
+  const open = expanded || isEdit;
+
   return (
     <Card className="shadow-none">
       <CardContent className="p-3">
         <form onSubmit={(e) => void handleSubmit(e)}>
-          <div className="mb-3 flex items-center gap-2">
-            <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-primary">
+          <button
+            type="button"
+            onClick={() => setExpanded((v) => !v)}
+            aria-expanded={open}
+            className="mb-3 flex w-full items-center gap-2 text-start sm:cursor-default"
+            // Above sm the form is always open, so the header is not a control.
+            disabled={isEdit}
+          >
+            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
               {isEdit ? <Pencil className="h-3 w-3" aria-hidden="true" /> : <Plus className="h-3 w-3" aria-hidden="true" />}
             </span>
-            <h3 className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+            <h3 className="flex-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
               {isEdit ? t('feeMappings.form.editTitle') : t('feeMappings.form.createTitle')}
             </h3>
-          </div>
+            <ChevronDown
+              aria-hidden="true"
+              className={cn(
+                'h-4 w-4 shrink-0 text-muted-foreground transition-transform sm:hidden',
+                open && 'rotate-180',
+              )}
+            />
+          </button>
 
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+          <div className={cn('grid gap-3 sm:grid-cols-2 lg:grid-cols-5', !open && 'hidden sm:grid')}>
             <div className="space-y-1">
               <Label htmlFor="fm-company" className="text-xs">
                 {t('feeMappings.fields.company')}
@@ -271,7 +293,7 @@ export function FeeMappingsForm({
             />
           </div>
 
-          <div className="mt-3 flex justify-end gap-2">
+          <div className={cn('mt-3 flex justify-end gap-2', !open && 'hidden sm:flex')}>
             {isEdit && (
               <Button type="button" variant="outline" size="sm" onClick={onCancelEdit}>
                 <X aria-hidden="true" />

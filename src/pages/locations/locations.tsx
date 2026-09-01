@@ -1,8 +1,15 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
+import { useSearchParams } from 'react-router-dom';
 import { CheckCircle2, Inbox, MapPin, Warehouse } from 'lucide-react';
 import { PageShell } from '@/shared/ui/page-shell';
 import { Badge } from '@/shared/ui/badge';
+import { Loader2, RefreshCw } from 'lucide-react';
+import { toast } from '@/shared/ui/toast';
+import { extractErrorMessage } from '@/shared/api/errors';
+import { useBulkEnrichFeeMappings } from '@/entities/fee-mapping/queries';
+import { BulkEnrichDialog } from '@/widgets/fee-mappings/fee-mappings-bulk-enrich-dialog';
+import type { EnrichmentResult } from '@/entities/fee-mapping/schemas';
 import { Button } from '@/shared/ui/button';
 import { Progress } from '@/shared/ui/progress';
 import { SearchInput } from '@/shared/ui/search-input';
@@ -50,7 +57,26 @@ function storedLimit(): number {
 export default function LocationsPage() {
   const { t } = useTranslation();
 
-  const [tab, setTab] = React.useState<LocationsTab>('inbox');
+  // Tab and drop-off search come from the URL when present, so other screens
+  // can deep-link straight at a place: the fee-mappings table sends an
+  // unpinned drop-off here rather than offering to pin it in place.
+  const [params] = useSearchParams();
+
+  // Recomputing every route from the current pins. Lives on this screen
+  // because a pin change is what invalidates the distances.
+  const bulkEnrich = useBulkEnrichFeeMappings();
+  const [enrichResults, setEnrichResults] = React.useState<EnrichmentResult[] | null>(null);
+  const handleBulkEnrich = async () => {
+    try {
+      setEnrichResults(await bulkEnrich.mutateAsync());
+    } catch (err) {
+      toast.error(extractErrorMessage(err, t('feeMappings.bulkEnrich.failed')));
+    }
+  };
+  const urlTab = params.get('tab') as LocationsTab | null;
+  const [tab, setTab] = React.useState<LocationsTab>(
+    urlTab === 'dropoffs' || urlTab === 'terminals' || urlTab === 'inbox' ? urlTab : 'inbox',
+  );
   const tabDecided = React.useRef(false);
 
   /* ---- Shared data for the header + inbox badge ---- */
@@ -128,7 +154,7 @@ export default function LocationsPage() {
   }, [terminals, terminalSearch, terminalPinFilter]);
 
   /* ---- Drop-offs view (server-side search + filter + pagination) ---- */
-  const [search, setSearch] = React.useState('');
+  const [search, setSearch] = React.useState(params.get('q') ?? '');
   const debouncedSearch = useDebounce(search, 300);
   const [pinFilter, setPinFilter] = React.useState<PinFilter>('all');
   const [page, setPage] = React.useState(1);
@@ -211,12 +237,33 @@ export default function LocationsPage() {
         'locations.description',
         'Manage canonical terminals and drop-off points — pins, radii, company allowlists, and receipt serialization — in one place.',
       )}
+      actions={
+        /* Routing lives here because it is derived from pins: change a pin and
+           every distance measured from it is stale. It used to sit on the
+           fee-mappings screen, which owns prices, not geography. */
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => void handleBulkEnrich()}
+          disabled={bulkEnrich.isPending}
+        >
+          {bulkEnrich.isPending ? (
+            <Loader2 className="animate-spin motion-reduce:animate-none" aria-hidden="true" />
+          ) : (
+            <RefreshCw aria-hidden="true" />
+          )}
+          {t('locations.actions.recomputeDistances', 'Recompute distances')}
+        </Button>
+      }
     >
-      {/* ---- Coverage header: the page's one job, made visible ---- */}
-      <div className="mb-3 grid gap-3 sm:grid-cols-3">
+      {/* ---- Coverage header: the page's one job, made visible ----
+           On a phone the two counters share a row rather than stacking: three
+           full-width cards pushed the tabs and the actual list below the fold,
+           and the counters are glanceable, not read. */}
+      <div className="mb-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
         <div
           className={cn(
-            'rounded-lg border p-3 sm:col-span-1',
+            'col-span-2 rounded-lg border p-3 sm:col-span-1',
             attentionCount > 0 ? 'border-warning/40 bg-warning/10' : 'border-success/40 bg-success/10',
           )}
         >
@@ -273,7 +320,7 @@ export default function LocationsPage() {
           </div>
         </div>
 
-        <div className="sm:col-span-3">
+        <div className="col-span-2 sm:col-span-3">
           <div className="flex items-center justify-between text-xs text-muted-foreground">
             <span>{t('locations.header.coverage', 'Pin coverage')}</span>
             <span className="tabular-nums">{coveragePct}%</span>
@@ -283,20 +330,33 @@ export default function LocationsPage() {
       </div>
 
       <Tabs value={tab} onValueChange={handleTabChange}>
-        <TabsList>
-          <TabsTrigger value="inbox" className="gap-1.5">
-            <Inbox className="h-3.5 w-3.5" />
-            {t('locations.tabs.inbox', 'Needs Attention')}
-            {attentionCount > 0 && (
-              <Badge variant="warning">
-                {attentionCount}
-              </Badge>
-            )}
+        {/* Three tabs, one of which reads "Needs Attention" with a count, do
+            not fit 360px: they either squeezed to unreadable or overflowed the
+            page. Each trigger takes a third of the row and its label shortens
+            on a phone, so the tabs stay tappable and the count stays visible —
+            it is the only reason to come to this screen. */}
+        <TabsList className="grid w-full grid-cols-3 sm:inline-flex sm:w-auto">
+          <TabsTrigger value="inbox" className="gap-1.5 px-2 sm:px-3">
+            {/* Icon is desktop-only: at 360px it, the label and the count
+                together left the label as "In…". The count is the point. */}
+            <Inbox className="hidden h-3.5 w-3.5 shrink-0 sm:inline" aria-hidden="true" />
+            <span className="sm:hidden">{t('locations.tabs.inboxShort', 'Inbox')}</span>
+            <span className="hidden truncate sm:inline">
+              {t('locations.tabs.inbox', 'Needs Attention')}
+            </span>
+            {attentionCount > 0 && <Badge variant="warning">{attentionCount}</Badge>}
           </TabsTrigger>
-          <TabsTrigger value="dropoffs">
-            {t('locations.tabs.dropoffs', 'Drop-off Points')}
+          <TabsTrigger value="dropoffs" className="px-2 sm:px-3">
+            <span className="truncate sm:hidden">
+              {t('locations.tabs.dropoffsShort', 'Drop-offs')}
+            </span>
+            <span className="hidden truncate sm:inline">
+              {t('locations.tabs.dropoffs', 'Drop-off Points')}
+            </span>
           </TabsTrigger>
-          <TabsTrigger value="terminals">{t('locations.tabs.terminals', 'Terminals')}</TabsTrigger>
+          <TabsTrigger value="terminals" className="px-2 sm:px-3">
+            <span className="truncate">{t('locations.tabs.terminals', 'Terminals')}</span>
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="inbox" className="mt-3">
@@ -383,6 +443,10 @@ export default function LocationsPage() {
         description={pendingDelete?.name}
         loading={deleteDropoff.isPending}
         onConfirm={handleDeleteConfirm}
+      />
+      <BulkEnrichDialog
+        results={enrichResults}
+        onOpenChange={(open) => !open && setEnrichResults(null)}
       />
     </PageShell>
   );

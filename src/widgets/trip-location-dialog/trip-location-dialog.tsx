@@ -1,44 +1,13 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
+import { Calendar, Car, Clock, Ruler } from 'lucide-react';
+
 import { toast } from '@/shared/ui/toast';
-import {
-  AlertCircle,
-  AlertTriangle,
-  Calendar,
-  Car,
-  Clock,
-  ExternalLink,
-  Loader2,
-  MapPin,
-  Navigation,
-  RefreshCw,
-  Ruler,
-} from 'lucide-react';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/shared/ui/dialog';
-import { Button } from '@/shared/ui/button';
-import { Skeleton } from '@/shared/ui/skeleton';
-import { Separator } from '@/shared/ui/separator';
-import { EmptyState } from '@/shared/ui/empty-state';
+import { RouteMapDialog, type RouteFact } from '@/widgets/route-map-dialog/route-map-dialog';
 import { useTripDetails } from '@/entities/trip/queries';
 import { decodePolyline } from '@/entities/trip-summary/api';
 import { format, formatNumber } from '@/shared/lib/format';
-import { cn } from '@/shared/lib/cn';
-import {
-  asValidCoord,
-  googleMapsDirectionsUrl,
-  googleMapsSearchUrl,
-} from '@/shared/lib/coords';
-import { MapView } from '@/shared/ui/map-view';
-import type { MapMarker } from '@/shared/lib/maps/types';
-
-/* -------------------------------------------------------------------------- */
+import { asValidCoord } from '@/shared/lib/coords';
 
 interface TripLocationDialogProps {
   tripId: number | null;
@@ -47,60 +16,40 @@ interface TripLocationDialogProps {
 }
 
 /**
- * Trip location dialog.
+ * A trip's route on the map.
  *
- * Coord state matrix:
+ * A thin wrapper over RouteMapDialog, which the fee-mappings screen also uses.
+ * Everything about how a route is drawn — the coordinate state matrix, the
+ * suppressed line when only one end is pinned, the legend, the external links —
+ * lives there, so the two screens cannot drift into showing it differently.
  *
- *   Both valid    → render terminal + drop-off + route polyline; both
- *                   external links + a directions link in the footer
- *   One valid     → render only the valid marker; SUPPRESS route polyline
- *                   (drawing a line to (0,0) would mislead). Show an amber
- *                   warning banner explaining the trip lacks a complete
- *                   pair of coordinates
- *   Both invalid  → toast an error and auto-close the dialog. The dialog
- *                   briefly mounts (one render cycle) because we can only
- *                   know the coords after the trip-details query resolves
- *
- * Geometry is sourced from the backend's encoded polyline (or coordinates
- * array fallback). We never compute it from Google's DirectionsService.
+ * What stays here is what is specific to a trip: its facts row, its marker
+ * popups, and the toast-and-close when a trip has no usable coordinates at all.
  */
-export function TripLocationDialog({
-  tripId,
-  open,
-  onOpenChange,
-}: TripLocationDialogProps) {
+export function TripLocationDialog({ tripId, open, onOpenChange }: TripLocationDialogProps) {
   const { t } = useTranslation();
-
-  const { data, isLoading, isError, refetch } = useTripDetails(
-    open ? tripId : null,
-  );
+  const { data, isLoading, isError, refetch } = useTripDetails(open ? tripId : null);
 
   const trip = data?.data;
   const rawTerminal = data?.terminal_location;
   const rawDropoff = data?.drop_off_point_location;
   const routeData = data?.route_data;
 
-  /* -------- Coordinate validation ------------------------------------- */
-
   const terminalCoord = asValidCoord(rawTerminal?.lat, rawTerminal?.lng);
   const dropoffCoord = asValidCoord(rawDropoff?.lat, rawDropoff?.lng);
-  const bothValid = terminalCoord !== null && dropoffCoord !== null;
-  const oneValid = (terminalCoord === null) !== (dropoffCoord === null);
+
+  // A trip with neither end pinned is a data problem, not something to draw.
+  // Done in an effect rather than during render so the toast does not fire
+  // mid-commit; the dialog flashes for a frame, which beats pre-fetching
+  // details for every row in the list.
   const noneValid =
     !isLoading && !isError && data != null && !terminalCoord && !dropoffCoord;
-
-  // If both endpoints are invalid, toast + close. We do this in an effect
-  // so we don't fire toasts during render. The dialog will flash for one
-  // frame before closing — acceptable, since the alternative requires
-  // pre-fetching trip details on every list render.
   React.useEffect(() => {
     if (open && noneValid) {
       toast.error(t('trips.location.bothInvalidCoords'));
       onOpenChange(false);
     }
   }, [open, noneValid, t, onOpenChange]);
-
-  /* -------- Decode route geometry ------------------------------------- */
 
   const route = React.useMemo<Array<[number, number]>>(() => {
     if (routeData?.geometry) {
@@ -110,337 +59,71 @@ export function TripLocationDialog({
         return [];
       }
     }
-    if (routeData?.coordinates?.length) {
-      // OSRM convention: [lng, lat]; Leaflet/Google use [lat, lng]
-      return routeData.coordinates.map(
-        ([lng, lat]: [number, number]) => [lat, lng] as [number, number],
-      );
-    }
-    return [];
+    return (routeData?.coordinates as Array<[number, number]>) ?? [];
   }, [routeData]);
 
-  /* -------- Build markers --------------------------------------------- */
-
-  const markers = React.useMemo<MapMarker[]>(() => {
-    const arr: MapMarker[] = [];
-    if (terminalCoord) {
-      arr.push({
-        id: 'terminal',
-        lat: terminalCoord[0],
-        lng: terminalCoord[1],
-        color: '#16A34A',
-        title: t('trips.fields.terminal'),
-        popupHtml: buildPopupHtml({
-          color: '#16A34A',
-          bg: '#dcfce7',
-          label: t('trips.fields.terminal'),
-          value: trip?.terminal ?? '—',
-        }),
-      });
-    }
-    if (dropoffCoord) {
-      arr.push({
-        id: 'dropoff',
-        lat: dropoffCoord[0],
-        lng: dropoffCoord[1],
-        color: '#DC2626',
-        title: t('trips.fields.dropOffPoint'),
-        popupHtml: buildPopupHtml({
-          color: '#DC2626',
-          bg: '#fee2e2',
-          label: t('trips.fields.dropOffPoint'),
-          value: trip?.drop_off_point ?? '—',
-        }),
-      });
-    }
-    return arr;
-  }, [terminalCoord, dropoffCoord, trip, t]);
-
-  /* -------- External links -------------------------------------------- */
-
-  const terminalUrl = terminalCoord
-    ? googleMapsSearchUrl(terminalCoord[0], terminalCoord[1])
-    : null;
-  const dropoffUrl = dropoffCoord
-    ? googleMapsSearchUrl(dropoffCoord[0], dropoffCoord[1])
-    : null;
-  const directionsUrl = googleMapsDirectionsUrl(terminalCoord, dropoffCoord);
-
-  /* -------- Derived stats --------------------------------------------- */
-
   const distance = trip ? trip.mileage || trip.distance || 0 : 0;
-  const durationMin = routeData?.duration
-    ? Math.round(routeData.duration / 60)
-    : 0;
+  const durationMin = routeData?.duration ? Math.round(routeData.duration / 60) : 0;
 
-  /* -------- Render ---------------------------------------------------- */
-
-  const subtitle = trip
-    ? `${trip.terminal} → ${trip.drop_off_point}`
-    : t('trips.location.dialogDescription');
-
-  // Don't render the map at all if we know we're about to close due to
-  // both-invalid; saves a frame of GoogleMaps init that we'd just throw away
-  const showMap = !isLoading && !isError && !noneValid;
+  const facts: RouteFact[] = trip
+    ? [
+        {
+          icon: <Calendar className="h-3 w-3" />,
+          label: t('trips.fields.date'),
+          value: format(trip.date, 'd MMM yyyy'),
+        },
+        {
+          icon: <Car className="h-3 w-3" />,
+          label: t('trips.fields.vehicle'),
+          value: trip.car_no_plate,
+        },
+        {
+          icon: <Ruler className="h-3 w-3" />,
+          label: t('trips.fields.distance'),
+          value: `${formatNumber(distance, 1)} km`,
+        },
+        {
+          icon: <Clock className="h-3 w-3" />,
+          label: t('trips.fields.duration'),
+          value: durationMin > 0 ? `${durationMin} min` : '—',
+        },
+      ]
+    : [];
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex max-h-[90vh] max-w-4xl flex-col gap-0 overflow-hidden p-0">
-        <DialogHeader className="shrink-0 border-b px-6 py-4">
-          <DialogTitle className="flex items-center gap-2">
-            <MapPin className="h-4 w-4 text-primary" />
-            {t('trips.location.dialogTitle')}
-          </DialogTitle>
-          <DialogDescription className="truncate">{subtitle}</DialogDescription>
-        </DialogHeader>
-
-        <div className="flex flex-1 flex-col gap-4 overflow-y-auto px-6 py-4">
-          {/* Stats row */}
-          {isLoading ? (
-            <StatsSkeleton />
-          ) : trip ? (
-            <div className="grid grid-cols-2 gap-3 rounded-lg border bg-muted/40 p-3 sm:grid-cols-4">
-              <StatField
-                icon={<Calendar className="h-3.5 w-3.5" />}
-                label={t('trips.fields.date')}
-                value={format(trip.date, 'd MMM yyyy')}
-              />
-              <StatField
-                icon={<Car className="h-3.5 w-3.5" />}
-                label={t('trips.fields.vehicle')}
-                value={trip.car_no_plate}
-              />
-              <StatField
-                icon={<Ruler className="h-3.5 w-3.5" />}
-                label={t('trips.fields.distance')}
-                value={`${formatNumber(distance, 1)} km`}
-              />
-              <StatField
-                icon={<Clock className="h-3.5 w-3.5" />}
-                label={t('trips.fields.duration')}
-                value={durationMin > 0 ? `${durationMin} min` : '—'}
-              />
-            </div>
-          ) : null}
-
-          {/* Partial-coord warning — only shown when exactly one endpoint
-              is valid. Suppresses the route polyline below. */}
-          {showMap && oneValid && (
-            <div className="flex items-start gap-2 rounded-lg border border-dashed border-warning/40 bg-warning/10 px-3 py-2.5 text-[12.5px] text-warning">
-              <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-              <div className="flex-1 space-y-0.5">
-                <div className="font-semibold">
-                  {t('trips.location.partialRoute.title')}
-                </div>
-                <div className="text-muted-foreground">
-                  {terminalCoord
-                    ? t('trips.location.partialRoute.missingDropoff')
-                    : t('trips.location.partialRoute.missingTerminal')}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Map */}
-          <div className="relative h-[380px] shrink-0 overflow-hidden rounded-lg border bg-muted/40">
-            {isLoading && <MapLoadingState />}
-
-            {isError && (
-              <MapErrorState
-                message={t('trips.location.loadFailed')}
-                onRetry={() => void refetch()}
-              />
-            )}
-
-            {showMap ? (
-              <MapView
-                markers={markers}
-                route={route}
-                suppressRoute={oneValid}
-                className="h-full w-full"
-                centerFallback={terminalCoord || dropoffCoord || undefined}
-              />
-            ) : (
-              !isLoading && !isError && (
-                <div className="flex h-full items-center justify-center">
-                  <EmptyState
-                    lottieSrc="/animations/location_radar.lottie"
-                    lottieWidth={100}
-                    lottieHeight={100}
-                    title={t('trips.dialog.map.noCoordinates')}
-                    className="border-0 bg-transparent py-4 shadow-none"
-                  />
-                </div>
-              )
-            )}
-
-            {/* Legend */}
-            {showMap && markers.length > 0 && (
-              <div className="absolute bottom-3 start-3 z-[1000] flex items-center gap-3 rounded-md border bg-background/90 px-2.5 py-1.5 shadow-sm backdrop-blur-sm">
-                {terminalCoord && (
-                  <LegendDot color="#16A34A" label={t('trips.location.terminal')} />
-                )}
-                {dropoffCoord && (
-                  <LegendDot color="#DC2626" label={t('trips.location.dropOff')} />
-                )}
-                {route.length > 0 && bothValid && (
-                  <span className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                    <span className="h-0.5 w-4 rounded-full bg-blue-500" />
-                    {t('trips.location.route')}
-                  </span>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Footer — per-marker external links + directions */}
-        <div className="shrink-0 border-t">
-          <DialogFooter className="flex-col gap-2 px-6 py-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex flex-wrap gap-2">
-              {terminalUrl && (
-                <Button asChild variant="outline" size="sm" className="h-8 gap-1.5 text-xs">
-                  <a href={terminalUrl} target="_blank" rel="noopener noreferrer">
-                    <ExternalLink />
-                    {t('trips.location.openTerminal')}
-                  </a>
-                </Button>
-              )}
-              {dropoffUrl && (
-                <Button asChild variant="outline" size="sm" className="h-8 gap-1.5 text-xs">
-                  <a href={dropoffUrl} target="_blank" rel="noopener noreferrer">
-                    <ExternalLink />
-                    {t('trips.location.openDropoff')}
-                  </a>
-                </Button>
-              )}
-              {directionsUrl && (
-                <>
-                  <Separator orientation="vertical" className="h-6 self-center" />
-                  <Button asChild variant="default" size="sm" className="h-8 gap-1.5 text-xs">
-                    <a href={directionsUrl} target="_blank" rel="noopener noreferrer">
-                      <Navigation />
-                      {t('trips.location.openRoute')}
-                    </a>
-                  </Button>
-                </>
-              )}
-            </div>
-
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 text-xs"
-              onClick={() => onOpenChange(false)}
-            >
-              {t('common.close')}
-            </Button>
-          </DialogFooter>
-        </div>
-      </DialogContent>
-    </Dialog>
+    <RouteMapDialog
+      open={open}
+      onOpenChange={onOpenChange}
+      title={t('trips.location.dialogTitle')}
+      subtitle={
+        trip
+          ? `${trip.terminal} → ${trip.drop_off_point}`
+          : t('trips.location.dialogDescription')
+      }
+      facts={facts}
+      terminal={rawTerminal}
+      dropoff={rawDropoff}
+      route={route}
+      terminalLabel={t('trips.fields.terminal')}
+      dropoffLabel={t('trips.fields.dropOffPoint')}
+      terminalPopupHtml={buildPopupHtml({
+        color: '#16A34A',
+        bg: '#dcfce7',
+        label: t('trips.fields.terminal'),
+        value: trip?.terminal ?? '—',
+      })}
+      dropoffPopupHtml={buildPopupHtml({
+        color: '#DC2626',
+        bg: '#fee2e2',
+        label: t('trips.fields.dropOffPoint'),
+        value: trip?.drop_off_point ?? '—',
+      })}
+      isLoading={isLoading}
+      isError={isError}
+      onRetry={() => void refetch()}
+    />
   );
 }
-
-/* -------------------------------------------------------------------------- */
-/* Sub-components                                                              */
-/* -------------------------------------------------------------------------- */
-
-interface StatFieldProps {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-  className?: string;
-}
-
-function StatField({ icon, label, value, className }: StatFieldProps) {
-  return (
-    <div className={cn('flex min-w-0 items-center gap-2.5', className)}>
-      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
-        {icon}
-      </span>
-      <div className="min-w-0">
-        <p className="truncate text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-          {label}
-        </p>
-        <p className="truncate text-sm font-semibold leading-tight">{value}</p>
-      </div>
-    </div>
-  );
-}
-
-function StatsSkeleton() {
-  return (
-    <div className="flex gap-4 rounded-lg border bg-muted/40 p-3">
-      {Array.from({ length: 4 }).map((_, i) => (
-        <div key={i} className="flex flex-1 items-center gap-2.5">
-          <Skeleton className="h-7 w-7 rounded-md" />
-          <div className="flex-1 space-y-1.5">
-            <Skeleton className="h-2.5 w-12 rounded-sm" />
-            <Skeleton className="h-3.5 w-20 rounded-sm" />
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function LegendDot({ color, label }: { color: string; label: string }) {
-  return (
-    <span className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
-      <span
-        className="h-1.5 w-1.5 rounded-full ring-2 ring-background"
-        style={{ backgroundColor: color }}
-      />
-      {label}
-    </span>
-  );
-}
-
-function MapErrorState({
-  message,
-  onRetry,
-}: {
-  message: string;
-  onRetry?: () => void;
-}) {
-  const { t } = useTranslation();
-  return (
-    <div className="flex h-full flex-col items-center justify-center gap-3 text-muted-foreground">
-      <div className="rounded-full bg-warning/10 p-3">
-        <AlertCircle className="h-6 w-6 text-warning" />
-      </div>
-      <p className="text-xs">{message}</p>
-      {onRetry && (
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onRetry}
-          className="h-7 gap-1.5 px-2.5 text-xs"
-        >
-          <RefreshCw />
-          {t('common.retry')}
-        </Button>
-      )}
-    </div>
-  );
-}
-
-function MapLoadingState() {
-  const { t } = useTranslation();
-  return (
-    <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/70 backdrop-blur-sm">
-      <div className="flex flex-col items-center gap-2 text-muted-foreground">
-        <Loader2 className="h-7 w-7 animate-spin text-primary motion-reduce:animate-none" />
-        <span className="text-xs">{t('common.loadingMap')}</span>
-      </div>
-    </div>
-  );
-}
-
-/* -------------------------------------------------------------------------- */
-/* Popup HTML builder                                                         */
-/* -------------------------------------------------------------------------- */
 
 interface PopupHtmlOptions {
   color: string;

@@ -1279,10 +1279,11 @@
       "distance": "المسافة (كم)",
       "distanceShort": "المسافة",
       "distanceManual": "المسافة اليدوية",
-      "osrmDistance": "OSRM (كم)",
+      "osrmDistance": "مسافة الطريق",
       "osrmDuration": "المدة",
       "fee": "الرسوم (ج.م)",
-      "accuracy": "الدقة"
+      "accuracy": "الدقة",
+      "difference": "الفرق"
     },
     "form": {
       "createTitle": "إضافة خريطة جديدة",
@@ -1329,7 +1330,9 @@
       "setLocation": "تعيين الموقع",
       "updateLocation": "تحديث الموقع",
       "bulkEnrich": "إثراء OSRM المجمع",
-      "export": "تصدير"
+      "export": "تصدير",
+      "viewRoute": "عرض المسار على الخريطة",
+      "noPin": "لا يوجد موقع — يتم تحديده من شاشة المواقع"
     },
     "location": {
       "title": "تعيين موقع نقطة التسليم",
@@ -1368,6 +1371,10 @@
     },
     "errors": {
       "loadFailed": "فشل تحميل خرائط الأسعار"
+    },
+    "route": {
+      "title": "المسار",
+      "unpinned": "لا توجد إحداثيات محددة لهذا المسار بعد"
     }
   },
   "etit": {
@@ -1905,7 +1912,9 @@
     "tabs": {
       "inbox": "بحاجة إلى مراجعة",
       "terminals": "المحطات",
-      "dropoffs": "نقاط التسليم"
+      "dropoffs": "نقاط التسليم",
+      "inboxShort": "الوارد",
+      "dropoffsShort": "نقاط التفريغ"
     },
     "kind": {
       "terminal": "محطة",
@@ -2036,7 +2045,8 @@
     "actions": {
       "editPin": "تعديل الموقع",
       "setPin": "تثبيت الموقع",
-      "manage": "إدارة"
+      "manage": "إدارة",
+      "recomputeDistances": "إعادة حساب المسافات"
     }
   },
   "tripAudit": {

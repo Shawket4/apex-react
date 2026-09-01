@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { MapPin, Pencil, Trash2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { MapPin, MapPinOff, Pencil, Trash2 } from 'lucide-react';
 import type { ColumnDef } from '@tanstack/react-table';
 import { DataTable } from '@/shared/ui/data-table';
 import { Button } from '@/shared/ui/button';
@@ -17,7 +18,8 @@ interface FeeMappingsTableProps {
   loading?: boolean;
   onEdit: (m: FeeMapping) => void;
   onDelete: (m: FeeMapping) => void;
-  onSetLocation: (m: FeeMapping) => void;
+  /** Opens the route map for this mapping. */
+  onShowRoute: (m: FeeMapping) => void;
 }
 
 /**
@@ -33,7 +35,7 @@ export function FeeMappingsTable({
   loading,
   onEdit,
   onDelete,
-  onSetLocation,
+  onShowRoute,
 }: FeeMappingsTableProps) {
   const { t } = useTranslation();
 
@@ -148,28 +150,40 @@ export function FeeMappingsTable({
         const hasLoc = isValidCoordinate(m.lat, m.lng);
         return (
           <div className="flex items-center justify-end gap-1">
+            {/* Unpinned: send them to the screen that owns pins rather than
+                offering to set one here, which used to change every mapping
+                sharing this drop-off without saying so. */}
+            {!hasLoc ? (
+              <Button
+                size="icon"
+                variant="ghost"
+                asChild
+                className="h-7 w-7 text-muted-foreground hover:bg-muted"
+                title={t('feeMappings.actions.noPin')}
+                aria-label={t('feeMappings.actions.noPin')}
+              >
+                <Link
+                  to={`/locations?tab=dropoffs&q=${encodeURIComponent(m.dropOffPoint)}`}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <MapPinOff aria-hidden="true" />
+                </Link>
+              </Button>
+            ) : (
             <Button
               size="icon"
               variant="ghost"
-              className={
-                hasLoc
-                  ? 'h-7 w-7 text-primary hover:bg-primary/10 hover:text-primary'
-                  : 'h-7 w-7 text-muted-foreground hover:bg-muted'
-              }
-              onClick={() => onSetLocation(m)}
-              title={
-                hasLoc
-                  ? t('feeMappings.actions.updateLocation')
-                  : t('feeMappings.actions.setLocation')
-              }
-              aria-label={
-                hasLoc
-                  ? t('feeMappings.actions.updateLocation')
-                  : t('feeMappings.actions.setLocation')
-              }
+              className="h-7 w-7 text-primary hover:bg-primary/10 hover:text-primary"
+              onClick={() => onShowRoute(m)}
+              // Disabled without a pin: there is no route to draw, and the
+              // button no longer offers to create one — pins are set on the
+              // locations screen, which owns them.
+              title={t('feeMappings.actions.viewRoute')}
+              aria-label={t('feeMappings.actions.viewRoute')}
             >
               <MapPin aria-hidden="true" />
             </Button>
+            )}
             <Button
               size="icon"
               variant="ghost"
@@ -195,7 +209,7 @@ export function FeeMappingsTable({
       },
       meta: { align: 'end' },
     },
-  ], [t, onEdit, onDelete, onSetLocation]);
+  ], [t, onEdit, onDelete, onShowRoute]);
 
   return (
     <DataTable

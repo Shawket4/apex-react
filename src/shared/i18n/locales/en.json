@@ -1275,10 +1275,11 @@
       "distance": "Distance (km)",
       "distanceShort": "Distance",
       "distanceManual": "Manual Distance",
-      "osrmDistance": "OSRM (km)",
+      "osrmDistance": "Road distance",
       "osrmDuration": "Duration",
       "fee": "Fee (EGP)",
-      "accuracy": "Accuracy"
+      "accuracy": "Accuracy",
+      "difference": "Difference"
     },
     "form": {
       "createTitle": "Add new mapping",
@@ -1325,7 +1326,9 @@
       "setLocation": "Set location",
       "updateLocation": "Update location",
       "bulkEnrich": "Bulk OSRM enrich",
-      "export": "Export"
+      "export": "Export",
+      "viewRoute": "View route on map",
+      "noPin": "No pin yet — set it on the Locations screen"
     },
     "location": {
       "title": "Set drop-off location",
@@ -1364,6 +1367,10 @@
     },
     "errors": {
       "loadFailed": "Failed to load fee mappings"
+    },
+    "route": {
+      "title": "Route",
+      "unpinned": "This route has no pinned endpoints yet"
     }
   },
   "etit": {
@@ -1893,7 +1900,9 @@
     "tabs": {
       "inbox": "Needs Attention",
       "terminals": "Terminals",
-      "dropoffs": "Drop-off Points"
+      "dropoffs": "Drop-off Points",
+      "inboxShort": "Inbox",
+      "dropoffsShort": "Drop-offs"
     },
     "kind": {
       "terminal": "Terminal",
@@ -2024,7 +2033,8 @@
     "actions": {
       "editPin": "Edit pin",
       "setPin": "Set pin",
-      "manage": "Manage"
+      "manage": "Manage",
+      "recomputeDistances": "Recompute distances"
     }
   },
   "tripAudit": {

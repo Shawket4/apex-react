@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from '@/shared/ui/toast';
-import { AlertCircle, Banknote, Download, Loader2, RefreshCw } from 'lucide-react';
+import { AlertCircle, Banknote, Download, RefreshCw } from 'lucide-react';
 import { Button } from '@/shared/ui/button';
 import { Card, CardContent } from '@/shared/ui/card';
 import { Skeleton } from '@/shared/ui/skeleton';
@@ -9,13 +9,11 @@ import { ConfirmDialog } from '@/shared/ui/confirm-dialog';
 import { PageShell } from '@/shared/ui/page-shell';
 import { extractErrorMessage } from '@/shared/api/errors';
 import {
-  useBulkEnrichFeeMappings,
   useDeleteFeeMapping,
   useFeeMappings,
 } from '@/entities/fee-mapping/queries';
 import {
   calculateAccuracy,
-  type EnrichmentResult,
   type FeeMapping,
 } from '@/entities/fee-mapping/schemas';
 import { FeeMappingsStats } from '@/widgets/fee-mappings/fee-mappings-stats';
@@ -25,8 +23,9 @@ import {
 } from '@/widgets/fee-mappings/fee-mappings-filters';
 import { FeeMappingsForm } from '@/widgets/fee-mappings/fee-mappings-form';
 import { FeeMappingsTable } from '@/widgets/fee-mappings/fee-mappings-table';
-import { FeeMappingLocationDialog } from '@/widgets/fee-mappings/fee-mappings-location-dialog';
-import { BulkEnrichDialog } from '@/widgets/fee-mappings/fee-mappings-bulk-enrich-dialog';
+import { FeeMappingRouteDialog } from '@/widgets/fee-mappings/fee-mapping-route-dialog';
+import { FeeMappingsMobileList } from '@/widgets/fee-mappings/fee-mappings-mobile-list';
+import { useIsMobile } from '@/shared/hooks/use-media-query';
 import { exportFeeMappingsExcel } from '@/widgets/fee-mappings/fee-mappings-excel';
 
 /**
@@ -43,7 +42,6 @@ export function FeeMappingsPage() {
   /* ---- Server data ---- */
   const { data: mappings = [], isLoading, isError, refetch } = useFeeMappings();
   const deleteMutation = useDeleteFeeMapping();
-  const bulkEnrich = useBulkEnrichFeeMappings();
 
   /* ---- UI state ---- */
   const [filters, setFilters] = React.useState<FeeMappingsFilterState>({
@@ -51,10 +49,13 @@ export function FeeMappingsPage() {
     company: '',
     accuracy: 'all',
   });
+  const isMobile = useIsMobile();
   const [editing, setEditing] = React.useState<FeeMapping | null>(null);
-  const [locationTarget, setLocationTarget] = React.useState<FeeMapping | null>(null);
+  // The map icon opens the ROUTE, not a pin editor. Pins are geography and
+  // belong to the locations screen — editing one from here quietly changed
+  // every other mapping sharing that drop-off.
+  const [routeTarget, setRouteTarget] = React.useState<FeeMapping | null>(null);
   const [pendingDelete, setPendingDelete] = React.useState<FeeMapping | null>(null);
-  const [enrichResults, setEnrichResults] = React.useState<EnrichmentResult[] | null>(null);
 
   /* ---- Filtering ---- */
   const filtered = React.useMemo(() => {
@@ -109,15 +110,6 @@ export function FeeMappingsPage() {
     }
   };
 
-  const handleBulkEnrich = async () => {
-    try {
-      const results = await bulkEnrich.mutateAsync();
-      setEnrichResults(results);
-    } catch (err) {
-      toast.error(extractErrorMessage(err, t('feeMappings.bulkEnrich.failed')));
-    }
-  };
-
   const handleExport = () => {
     if (filtered.length === 0) {
       toast.error(t('feeMappings.export.empty'));
@@ -130,19 +122,6 @@ export function FeeMappingsPage() {
 
   const actions = (
     <>
-      <Button
-        size="sm"
-        variant="outline"
-        onClick={() => void handleBulkEnrich()}
-        disabled={bulkEnrich.isPending}
-      >
-        {bulkEnrich.isPending ? (
-          <Loader2 className="animate-spin motion-reduce:animate-none" aria-hidden="true" />
-        ) : (
-          <RefreshCw aria-hidden="true" />
-        )}
-        {t('feeMappings.actions.bulkEnrich')}
-      </Button>
       <Button
         size="sm"
         onClick={handleExport}
@@ -210,25 +189,33 @@ export function FeeMappingsPage() {
       />
 
       {/* Table */}
-      <FeeMappingsTable
-        mappings={filtered}
-        loading={isLoading}
-        onEdit={handleEdit}
-        onDelete={(m) => setPendingDelete(m)}
-        onSetLocation={(m) => setLocationTarget(m)}
+      {/* A six-column table with two distances does not survive a phone; the
+          same rows render as cards there, as on trips, oil changes and cars. */}
+      {isMobile ? (
+        <FeeMappingsMobileList
+          rows={filtered}
+          loading={isLoading}
+          onEdit={handleEdit}
+          onDelete={(m) => setPendingDelete(m)}
+          onShowRoute={(m) => setRouteTarget(m)}
+        />
+      ) : (
+        <FeeMappingsTable
+          mappings={filtered}
+          loading={isLoading}
+          onEdit={handleEdit}
+          onDelete={(m) => setPendingDelete(m)}
+          onShowRoute={(m) => setRouteTarget(m)}
+        />
+      )}
+
+      {/* The same map dialog the trips list uses. */}
+      <FeeMappingRouteDialog
+        mapping={routeTarget}
+        onOpenChange={(open) => !open && setRouteTarget(null)}
       />
 
-      {/* Location dialog */}
-      <FeeMappingLocationDialog
-        mapping={locationTarget}
-        onOpenChange={(open) => !open && setLocationTarget(null)}
-      />
 
-      {/* Bulk enrich results */}
-      <BulkEnrichDialog
-        results={enrichResults}
-        onOpenChange={(open) => !open && setEnrichResults(null)}
-      />
 
       {/* Delete confirm */}
       <ConfirmDialog
