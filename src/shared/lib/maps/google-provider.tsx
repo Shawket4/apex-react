@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/react';
 import * as React from 'react';
 import { Locate, Layers } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -277,6 +278,8 @@ export function GoogleMapView({
           // Store for cleanup if needed, though the container itself goes away.
         }
       } catch (err) {
+        // The map simply does not appear. Nothing else notices.
+        Sentry.captureException(err, { tags: { source: 'google-map-init' } });
         console.error('[GoogleMapView] Failed to init map', err);
       }
     };

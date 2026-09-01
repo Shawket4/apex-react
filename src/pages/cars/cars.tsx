@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/react';
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Car as CarIcon } from 'lucide-react';
@@ -65,8 +66,11 @@ export default function CarsPage() {
         );
       }
     } catch (err) {
+      // "Likely handled by the mutation hooks" was a guess, and it only holds
+      // for errors the mutation raised. Anything thrown by the form logic
+      // around it landed here and went nowhere at all — no toast, no report.
+      Sentry.captureException(err, { tags: { source: 'car-submit' } });
       console.error('Error submitting car:', err);
-      // Errors are likely handled by the mutation hooks (toast.error)
     }
   };
 

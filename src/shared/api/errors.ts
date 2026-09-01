@@ -95,16 +95,43 @@ export function extractErrorMessage(
   return fallback;
 }
 
+/**
+ * Marks an error as already reported.
+ *
+ * The same failure can reach Sentry down two paths: a hook's own onError
+ * calling extractErrorMessage, and the global query/mutation cache handler.
+ * Both are wanted — the first covers non-query catches, the second covers
+ * hooks that never call the first — but between them one failure would raise
+ * two issues.
+ */
+const REPORTED = Symbol('apex.sentry.reported');
+
 function reportIfServerFault(error: unknown): void {
+  reportServerFault(error, 'handled-api-error');
+}
+
+/**
+ * Report a server fault once, whichever path finds it first.
+ *
+ * 4xx stays silent: that is the server telling a user something, not a bug,
+ * and reporting it would bury the faults that are. A missing status means the
+ * request never got an answer at all — a network or CORS failure — which is
+ * worth knowing about.
+ */
+export function reportServerFault(error: unknown, source: string, entity?: string): void {
   const status =
     error instanceof ApiError
       ? error.status
       : (error as { response?: { status?: number } } | null)?.response?.status;
 
-  // No status at all means the request never got an answer — a network or CORS
-  // failure, which is worth knowing about.
   if (typeof status === 'number' && status < 500) return;
   if (!(error instanceof Error)) return;
 
-  Sentry.captureException(error, { tags: { source: 'handled-api-error' } });
+  const marked = error as Error & { [REPORTED]?: boolean };
+  if (marked[REPORTED]) return;
+  marked[REPORTED] = true;
+
+  Sentry.captureException(error, {
+    tags: entity ? { source, entity } : { source },
+  });
 }

@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/react';
 /**
  * Central Excel export service.
  *
@@ -207,6 +208,10 @@ export async function exportToExcel(config: ExcelExportConfig): Promise<void> {
         const total = config.sheets.reduce((sum, s) => sum + s.rows.length, 0);
         toast.success(t('excel.done', { count: total }), { id: toastId });
     } catch (err) {
+        // Reported, not just toasted. An export that fails is a feature that
+        // does not work, and a caught error never reaches the SDK's global
+        // handler — so this was a red toast the user saw and we did not.
+        Sentry.captureException(err, { tags: { source: 'excel-export' } });
         console.error('Excel export failed', err);
         toast.error(t('excel.failed'), { id: toastId });
     }
