@@ -63,6 +63,7 @@ const OilChangeHistoryPage = React.lazy(
   () => import('@/pages/oil-changes/oil-change-history'),
 );
 const FeeMappingsPage = React.lazy(() => import('@/pages/fee-mappings/fee-mappings'));
+const ReceiptPilesPage = React.lazy(() => import('@/pages/receipt-piles/receipt-piles'));
 const UsersPage = React.lazy(() => import('@/pages/users/users'));
 const ServiceInvoicesPage = React.lazy(() => import('@/pages/service-invoices/service-invoices'));
 const ServiceInvoiceNewPage = React.lazy(() => import('@/pages/service-invoices/service-invoice-new'));
@@ -227,6 +228,16 @@ export const router = createBrowserRouter([
             element: (
               <ProtectedRoute minPermissionLevel={PERMISSION_LEVELS.MANAGER}>
                 <FeeMappingsPage />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            // Manager, matching the backend: the plan names every drop-off
+            // point and receipt number in the range.
+            path: 'receipt-piles',
+            element: (
+              <ProtectedRoute minPermissionLevel={PERMISSION_LEVELS.MANAGER}>
+                <ReceiptPilesPage />
               </ProtectedRoute>
             ),
           },

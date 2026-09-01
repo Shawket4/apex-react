@@ -1,5 +1,6 @@
 import {
   Banknote,
+  Boxes,
   Building2,
   Car,
   CircleDot,
@@ -69,6 +70,12 @@ export const NAV_SECTIONS: NavSection[] = [
         to: '/trip-audit',
         labelKey: 'nav.tripAudit',
         icon: ClipboardCheck,
+        minPermission: PERMISSION_LEVELS.MANAGER,
+      },
+      {
+        to: '/receipt-piles',
+        labelKey: 'nav.receiptPiles',
+        icon: Boxes,
         minPermission: PERMISSION_LEVELS.MANAGER,
       },
       { to: '/oil-changes', labelKey: 'nav.oilChanges', icon: Droplets },

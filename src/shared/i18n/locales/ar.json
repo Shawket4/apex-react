@@ -109,7 +109,8 @@
     "locations": "المواقع",
     "tripAudit": "تدقيق الرحلات",
     "expensesReview": "قائمة المراجعة",
-    "primary": "التنقل الرئيسي"
+    "primary": "التنقل الرئيسي",
+    "receiptPiles": "أكوام الإيصالات"
   },
   "auth": {
     "loginTitle": "مرحباً بعودتك",
@@ -1375,6 +1376,56 @@
     "route": {
       "title": "المسار",
       "unpinned": "لا توجد إحداثيات محددة لهذا المسار بعد"
+    }
+  },
+  "receiptPiles": {
+    "title": "أكوام الإيصالات",
+    "description": "فرز إيصالات وطنية العائدة إلى صناديق معنونة بحسب أول حرف من اسم نقطة التسليم.",
+    "box": "صندوق {{n}}",
+    "receiptCount_zero": "لا إيصالات",
+    "receiptCount_one": "إيصال واحد",
+    "receiptCount_two": "إيصالان",
+    "receiptCount_few": "{{count}} إيصالات",
+    "receiptCount_many": "{{count}} إيصالاً",
+    "receiptCount_other": "{{count}} إيصال",
+    "pointCount_zero": "لا نقاط",
+    "pointCount_one": "نقطة واحدة",
+    "pointCount_two": "نقطتان",
+    "pointCount_few": "{{count}} نقاط",
+    "pointCount_many": "{{count}} نقطة",
+    "pointCount_other": "{{count}} نقطة",
+    "fewerBoxes": "صناديق أقل",
+    "moreBoxes": "صناديق أكثر",
+    "auto": "اختيار عدد الصناديق تلقائياً",
+    "loadFailed": "تعذّر بناء خطة الأكوام.",
+    "mode": {
+      "label": "طريقة التقسيم",
+      "balanced": "توزيع متوازن",
+      "letter": "حرف لكل صندوق"
+    },
+    "balance": {
+      "title": "توازن الصناديق",
+      "receipts": "إيصال",
+      "dropOffs": "نقطة تسليم",
+      "spread": "الأثقل / الأخف",
+      "average": "المتوسط",
+      "floor": "لا يمكن لأي صندوق أن يقل عن {{count}} إيصالاً — هذا حرف {{letter}} وحده، والحرف لا يُقسَّم بين صندوقين.",
+      "skipped_zero": "لا رحلات بلا رقم إيصال.",
+      "skipped_one": "رحلة واحدة بلا رقم إيصال لم تدخل أي صندوق.",
+      "skipped_two": "رحلتان بلا رقم إيصال لم تدخلا أي صندوق.",
+      "skipped_few": "{{count}} رحلات بلا رقم إيصال لم تدخل أي صندوق.",
+      "skipped_many": "{{count}} رحلة بلا رقم إيصال لم تدخل أي صندوق.",
+      "skipped_other": "{{count}} رحلة بلا رقم إيصال لم تدخل أي صندوق."
+    },
+    "empty": {
+      "title": "لا إيصالات في هذه الفترة",
+      "description": "وسّع المدى الزمني، أو تأكد من إدخال رحلات الشهر."
+    },
+    "export": {
+      "action": "تصدير Excel",
+      "working": "جارٍ البناء…",
+      "success": "تم تنزيل الملف.",
+      "failed": "تعذّر بناء الملف."
     }
   },
   "etit": {

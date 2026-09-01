@@ -109,7 +109,8 @@
     "locations": "Locations",
     "tripAudit": "Trip Audit",
     "expensesReview": "Review queue",
-    "primary": "Main navigation"
+    "primary": "Main navigation",
+    "receiptPiles": "Receipt piles"
   },
   "auth": {
     "loginTitle": "Welcome back",
@@ -1371,6 +1372,44 @@
     "route": {
       "title": "Route",
       "unpinned": "This route has no pinned endpoints yet"
+    }
+  },
+  "receiptPiles": {
+    "title": "Receipt piles",
+    "description": "Sort the month's returned Watanya receipts into labelled boxes by the first letter of the drop-off point.",
+    "box": "Box {{n}}",
+    "receiptCount_one": "{{count}} receipt",
+    "receiptCount_other": "{{count}} receipts",
+    "pointCount_one": "{{count}} point",
+    "pointCount_other": "{{count}} points",
+    "fewerBoxes": "Fewer boxes",
+    "moreBoxes": "More boxes",
+    "auto": "Choose the box count automatically",
+    "loadFailed": "Could not build the pile plan.",
+    "mode": {
+      "label": "Split mode",
+      "balanced": "Balanced boxes",
+      "letter": "One box per letter"
+    },
+    "balance": {
+      "title": "Box balance",
+      "receipts": "receipts",
+      "dropOffs": "drop-off points",
+      "spread": "heaviest / lightest",
+      "average": "average",
+      "floor": "No box can hold fewer than {{count}} receipts — that is the letter {{letter}} on its own, and a letter is never split across boxes.",
+      "skipped_one": "{{count}} trip has no receipt number and is not in any box.",
+      "skipped_other": "{{count}} trips have no receipt number and are not in any box."
+    },
+    "empty": {
+      "title": "No receipts in this range",
+      "description": "Pick a wider date range, or check that the month's trips have been entered."
+    },
+    "export": {
+      "action": "Export Excel",
+      "working": "Building…",
+      "success": "Workbook downloaded.",
+      "failed": "Could not build the workbook."
     }
   },
   "etit": {
