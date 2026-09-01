@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { saveAs } from 'file-saver';
 import { AlertTriangle, Boxes, FileSpreadsheet, Loader2, RefreshCw } from 'lucide-react';
 
@@ -11,10 +12,12 @@ import { Skeleton } from '@/shared/ui/skeleton';
 import { toast } from '@/shared/ui/toast';
 import { extractErrorMessage } from '@/shared/api/errors';
 import { useScope } from '@/shared/scope';
+import { intentProps } from '@/shared/lib/prefetch';
 import { format } from '@/shared/lib/format';
 import { cn } from '@/shared/lib/cn';
 
 import {
+  prefetchDropOffDetail,
   useExportReceiptPiles,
   useReceiptPilePlan,
 } from '@/entities/receipt-pile/queries';
@@ -27,6 +30,7 @@ import {
 import { ReceiptPilesBalance } from '@/widgets/receipt-piles/receipt-piles-balance';
 import { ReceiptPilesBoxes } from '@/widgets/receipt-piles/receipt-piles-boxes';
 import { ReceiptPilesControls } from '@/widgets/receipt-piles/receipt-piles-controls';
+import { ReceiptPilesDropOffSheet } from '@/widgets/receipt-piles/receipt-piles-dropoff-sheet';
 
 /* -------------------------------------------------------------------------- */
 /* Receipt piles                                                               */
@@ -52,6 +56,7 @@ const isMode = (v: string | null): v is PileMode =>
 export default function ReceiptPilesPage() {
   const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
+  const queryClient = useQueryClient();
 
   // Dates come from the global header scope (URL), like every other module.
   const { range } = useScope();
@@ -82,6 +87,9 @@ export default function ReceiptPilesPage() {
     );
   }, [mode, boxes, setSearchParams]);
 
+  /** The drop-off whose per-terminal tables are open; null closes the sheet. */
+  const [openDropOff, setOpenDropOff] = React.useState<string | null>(null);
+
   /* ---- Server data ---- */
 
   const params: PilePlanParams = React.useMemo(
@@ -97,6 +105,19 @@ export default function ReceiptPilesPage() {
   const { data: plan, isPending, isFetching, isError, error, refetch } =
     useReceiptPilePlan(params);
   const exportPlan = useExportReceiptPiles();
+
+  /** Warm a drop-off's tables on hover — the sheet then opens already filled. */
+  const dropOffIntent = React.useCallback(
+    (dropOffPoint: string) =>
+      intentProps(() =>
+        prefetchDropOffDetail(queryClient, {
+          startDate: range.from,
+          endDate: range.to,
+          dropOffPoint,
+        }),
+      ),
+    [queryClient, range.from, range.to],
+  );
 
   const handleExport = async () => {
     try {
@@ -192,9 +213,22 @@ export default function ReceiptPilesPage() {
           )}
         >
           <ReceiptPilesBalance plan={plan} />
-          <ReceiptPilesBoxes piles={plan.piles} />
+          <ReceiptPilesBoxes
+            piles={plan.piles}
+            onSelectDropOff={setOpenDropOff}
+            intentFor={dropOffIntent}
+          />
         </div>
       )}
+
+      <ReceiptPilesDropOffSheet
+        dropOffPoint={openDropOff}
+        startDate={range.from}
+        endDate={range.to}
+        onOpenChange={(open) => {
+          if (!open) setOpenDropOff(null);
+        }}
+      />
     </PageShell>
   );
 }

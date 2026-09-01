@@ -1,9 +1,15 @@
 import { useTranslation } from 'react-i18next';
+import { ChevronLeft } from 'lucide-react';
 import { cn } from '@/shared/lib/cn';
 import { flattenPile, type Pile } from '@/entities/receipt-pile/schemas';
+import type { IntentHandlers } from '@/shared/lib/prefetch';
 
 interface Props {
   piles: Pile[];
+  /** Opens the drop-off's per-terminal tables. */
+  onSelectDropOff: (name: string) => void;
+  /** Hover/focus warming for the call that click will make. */
+  intentFor: (name: string) => IntentHandlers;
 }
 
 /**
@@ -14,19 +20,32 @@ interface Props {
  * organising key, not a per-row attribute, and repeating it down the column
  * turns the one thing the filer scans for into noise.
  */
-export function ReceiptPilesBoxes({ piles }: Props) {
+export function ReceiptPilesBoxes({ piles, onSelectDropOff, intentFor }: Props) {
   return (
     // items-start: a box with six names should not be stretched to the height
     // of one with twenty just because they share a row.
     <div className="grid items-start gap-3 md:grid-cols-2 xl:grid-cols-3">
       {piles.map((pile) => (
-        <PileBox key={pile.index} pile={pile} />
+        <PileBox
+          key={pile.index}
+          pile={pile}
+          onSelectDropOff={onSelectDropOff}
+          intentFor={intentFor}
+        />
       ))}
     </div>
   );
 }
 
-function PileBox({ pile }: { pile: Pile }) {
+function PileBox({
+  pile,
+  onSelectDropOff,
+  intentFor,
+}: {
+  pile: Pile;
+  onSelectDropOff: (name: string) => void;
+  intentFor: (name: string) => IntentHandlers;
+}) {
   const { t } = useTranslation();
   const rows = flattenPile(pile);
 
@@ -51,25 +70,37 @@ function PileBox({ pile }: { pile: Pile }) {
 
       <ul className="max-h-80 overflow-y-auto">
         {rows.map((row) => (
-          <li
-            key={`${row.letter}-${row.name}`}
-            className="flex items-baseline gap-2 border-b border-border/50 px-3 py-1.5 last:border-b-0"
-          >
-            <span
-              aria-hidden={!row.firstOfLetter}
-              className={cn(
-                'w-4 shrink-0 text-xs font-semibold text-muted-foreground',
-                !row.firstOfLetter && 'invisible',
-              )}
+          <li key={`${row.letter}-${row.name}`} className="border-b border-border/50 last:border-b-0">
+            <button
+              type="button"
+              onClick={() => onSelectDropOff(row.name)}
+              {...intentFor(row.name)}
+              // 44px tall: this is the primary action on the card and these
+              // rows sit directly on top of one another.
+              className="flex min-h-11 w-full items-center gap-2 px-3 py-1.5 text-start transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
             >
-              {row.letter}
-            </span>
-            <span className="min-w-0 flex-1 truncate text-[13px]" title={row.name}>
-              {row.name}
-            </span>
-            <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
-              {row.receipt_count}
-            </span>
+              <span
+                aria-hidden={!row.firstOfLetter}
+                className={cn(
+                  'w-4 shrink-0 text-xs font-semibold text-muted-foreground',
+                  !row.firstOfLetter && 'invisible',
+                )}
+              >
+                {row.letter}
+              </span>
+              <span className="min-w-0 flex-1 truncate text-[13px]" title={row.name}>
+                {row.name}
+              </span>
+              <span className="shrink-0 text-xs text-muted-foreground tabular-nums">
+                {row.receipt_count}
+              </span>
+              {/* rtl:rotate-180 so the chevron points out of the row, not into
+                  it, when the page flips to Arabic. */}
+              <ChevronLeft
+                className="h-3.5 w-3.5 shrink-0 text-muted-foreground/60 rtl:rotate-180"
+                aria-hidden
+              />
+            </button>
           </li>
         ))}
       </ul>

@@ -1410,6 +1410,23 @@
       "action": "Export",
       "success": "Workbook downloaded.",
       "failed": "Could not build the workbook."
+    },
+    "detail": {
+      "failed": "Could not load this drop-off's receipts.",
+      "empty": "No receipts for this drop-off in this range.",
+      "band": "Band {{n}}",
+      "unmapped": "Not in the report",
+      "unmappedNote_one": "{{count}} receipt is on a route with no fee mapping, so the fee report leaves it out. It is still in the box — shown last, unpriced.",
+      "unmappedNote_other": "{{count}} receipts are on routes with no fee mapping, so the fee report leaves them out. They are still in the box — shown last, unpriced.",
+      "date": "Date",
+      "receipt": "Receipt",
+      "driver": "Driver",
+      "plate": "Vehicle",
+      "capacity": "Litres",
+      "cost": "Cost",
+      "total": "Total",
+      "receiptsAcross_one": "{{receipts}} receipts from 1 terminal",
+      "receiptsAcross_other": "{{receipts}} receipts across {{count}} terminals"
     }
   },
   "etit": {

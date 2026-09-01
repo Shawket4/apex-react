@@ -110,3 +110,65 @@ export function flattenPile(pile: Pile): Array<PileDropOff & { firstOfLetter: bo
     letter.drop_offs.map((drop, i) => ({ ...drop, firstOfLetter: i === 0 })),
   );
 }
+
+/* -------------------------------------------------------------------------- */
+/* One drop-off, as the Watanya fee report lays it out                         */
+/*                                                                            */
+/* Fetched separately when a drop-off is opened: the plan already carries      */
+/* every receipt in the range, and inlining a priced per-terminal breakdown    */
+/* for a hundred drop-offs would multiply that payload for a view of one.      */
+/*                                                                            */
+/* The order is the server's and must not be touched here. Terminals come      */
+/* back in the report's byte-order sort and the receipts inside each by date   */
+/* then receipt number, so any re-sorting in the UI would break the one thing  */
+/* this view exists to guarantee.                                              */
+/* -------------------------------------------------------------------------- */
+
+const dropOffReceiptSchema = z.object({
+  seq: z.number(),
+  date: z.string(),
+  receipt_no: z.string(),
+  driver_name: z.string(),
+  car_no_plate: z.string(),
+  tank_capacity: z.number(),
+  mileage: z.number(),
+  actual_fee: z.number(),
+  cost: z.number(),
+});
+
+const dropOffTerminalSchema = z.object({
+  terminal: z.string(),
+  distance: z.number(),
+  fee_index: z.number(),
+  actual_fee: z.number(),
+  /**
+   * The terminal-drop-off pair has no fee mapping, so the fee report omits
+   * this table entirely. The paper still exists, so it is shown and flagged.
+   */
+  unmapped: z.boolean(),
+  receipts: list(dropOffReceiptSchema),
+  receipt_count: z.number(),
+  total_capacity: z.number(),
+  total_cost: z.number(),
+});
+
+export const dropOffDetailSchema = z.object({
+  drop_off_point: z.string(),
+  start_date: z.string(),
+  end_date: z.string(),
+  terminals: list(dropOffTerminalSchema),
+  receipt_count: z.number(),
+  total_capacity: z.number(),
+  total_cost: z.number(),
+  unmapped_receipts: z.number(),
+});
+
+export type DropOffDetail = z.infer<typeof dropOffDetailSchema>;
+export type DropOffTerminal = DropOffDetail['terminals'][number];
+export type DropOffReceipt = DropOffTerminal['receipts'][number];
+
+export interface DropOffDetailParams {
+  startDate: string;
+  endDate: string;
+  dropOffPoint: string;
+}

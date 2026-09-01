@@ -1,5 +1,12 @@
 import { apiClient } from '@/shared/api/client';
-import { pilePlanSchema, type PilePlan, type PilePlanParams } from './schemas';
+import {
+  dropOffDetailSchema,
+  pilePlanSchema,
+  type DropOffDetail,
+  type DropOffDetailParams,
+  type PilePlan,
+  type PilePlanParams,
+} from './schemas';
 
 /**
  * One query string for both endpoints, so the workbook a user downloads is
@@ -21,6 +28,21 @@ export const receiptPileApi = {
   async plan(params: PilePlanParams): Promise<PilePlan> {
     const res = await apiClient.get('/api/receipt-piles', { params: toQuery(params) });
     return pilePlanSchema.parse(res.data);
+  },
+
+  /**
+   * `GET /api/receipt-piles/drop-off` — one drop-off's receipts, split per
+   * terminal, in the order the Watanya fee report prints them.
+   */
+  async dropOff(params: DropOffDetailParams): Promise<DropOffDetail> {
+    const res = await apiClient.get('/api/receipt-piles/drop-off', {
+      params: {
+        start_date: params.startDate,
+        end_date: params.endDate,
+        drop_off_point: params.dropOffPoint,
+      },
+    });
+    return dropOffDetailSchema.parse(res.data);
   },
 
   /**
