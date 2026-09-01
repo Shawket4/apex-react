@@ -255,6 +255,10 @@ export const TrackingMap = React.forwardRef<TrackingMapHandle, Props>(
     const readyRef = React.useRef(false);
     const pendingLiveRef = React.useRef<LiveMarkerDatum[] | null>(null);
     const infoRef = React.useRef<google.maps.InfoWindow | null>(null);
+    /** Vehicle whose tooltip is currently open — its content must track the
+     *  live feed, not the datum frozen into the click that opened it. */
+    const openVehicleRef = React.useRef<string | null>(null);
+    const latestLiveRef = React.useRef<Map<string, LiveMarkerDatum>>(new Map());
     const followRef = React.useRef(true);
     const lastPanRef = React.useRef(0);
     const lastPickRef = React.useRef<{ key: string; at: number }>({ key: '', at: 0 });
@@ -293,6 +297,12 @@ export const TrackingMap = React.forwardRef<TrackingMapHandle, Props>(
       overlay.setProps({ layers });
     }, []);
 
+    /** Closing always drops the open-tooltip binding. */
+    const closeInfo = React.useCallback(() => {
+      openVehicleRef.current = null;
+      infoRef.current?.close();
+    }, []);
+
     const applyLive = React.useCallback((data: LiveMarkerDatum[]) => {
       const map = mapRef.current;
       if (!map || !readyRef.current) {
@@ -301,6 +311,9 @@ export const TrackingMap = React.forwardRef<TrackingMapHandle, Props>(
       }
       const markers = markersRef.current;
       const seen = new Set<string>();
+      const latest = latestLiveRef.current;
+      latest.clear();
+      for (const datum of data) latest.set(datum.vehicle.id, datum);
       for (const datum of data) {
         const id = datum.vehicle.id;
         const lat = datum.live?.lat ?? datum.vehicle.lat;
@@ -315,10 +328,20 @@ export const TrackingMap = React.forwardRef<TrackingMapHandle, Props>(
         ].join('|');
         const existing = markers.get(id);
         if (existing) {
-          if (existing.fingerprint === fingerprint) continue;
+          if (existing.fingerprint === fingerprint) {
+            // Position and status are unchanged, but speed or the timestamp
+            // may have moved — the open tooltip still needs the new text.
+            if (openVehicleRef.current === id) {
+              infoRef.current?.setContent(vehicleInfoHtml(datum, lat, lng));
+            }
+            continue;
+          }
           existing.marker.position = { lat, lng };
           existing.marker.content = chipElement(datum);
           existing.fingerprint = fingerprint;
+          if (openVehicleRef.current === id) {
+            infoRef.current?.setContent(vehicleInfoHtml(datum, lat, lng));
+          }
         } else {
           const marker = new google.maps.marker.AdvancedMarkerElement({
             map,
@@ -336,7 +359,7 @@ export const TrackingMap = React.forwardRef<TrackingMapHandle, Props>(
             lastPickRef.current = { key: `v:${id}`, at: now };
             const pos = marker.position as google.maps.LatLngLiteral | null;
             if (isDouble && pos) {
-              infoRef.current?.close();
+              closeInfo();
               map.panTo(pos);
               map.setZoom(Math.max(map.getZoom() ?? 0, 16));
               return;
@@ -348,7 +371,11 @@ export const TrackingMap = React.forwardRef<TrackingMapHandle, Props>(
               pickAtRef.current = now;
               const latN = typeof pos.lat === 'function' ? (pos.lat as () => number)() : pos.lat;
               const lngN = typeof pos.lng === 'function' ? (pos.lng as () => number)() : pos.lng;
-              infoRef.current.setContent(vehicleInfoHtml(datum, latN, lngN));
+              openVehicleRef.current = id;
+              // The click closure captures the datum of the frame that
+              // created the marker; render from the newest one instead.
+              const current = latestLiveRef.current.get(id) ?? datum;
+              infoRef.current.setContent(vehicleInfoHtml(current, latN, lngN));
               infoRef.current.setOptions({ pixelOffset: new google.maps.Size(0, 0) });
               // Anchoring to the marker aligns the window above the artwork.
               infoRef.current.open({ map, anchor: marker });
@@ -359,11 +386,12 @@ export const TrackingMap = React.forwardRef<TrackingMapHandle, Props>(
       }
       for (const [id, entry] of markers) {
         if (!seen.has(id)) {
+          if (openVehicleRef.current === id) closeInfo();
           entry.marker.map = null;
           markers.delete(id);
         }
       }
-    }, []);
+    }, [closeInfo]);
 
     React.useImperativeHandle(
       ref,
@@ -463,7 +491,7 @@ export const TrackingMap = React.forwardRef<TrackingMapHandle, Props>(
               lastPickRef.current.key === key && now - lastPickRef.current.at < 350;
             lastPickRef.current = { key, at: now };
             if (isDouble) {
-              infoRef.current?.close();
+              closeInfo();
               map.panTo({ lat, lng });
               map.setZoom(Math.max(map.getZoom() ?? 0, 16));
               return;
@@ -489,6 +517,7 @@ export const TrackingMap = React.forwardRef<TrackingMapHandle, Props>(
                         : null;
             if (html && infoRef.current) {
               pickAtRef.current = performance.now();
+              openVehicleRef.current = null;
               infoRef.current.setContent(html);
               infoRef.current.setPosition({ lat, lng });
               // Lift the window clear of the icon artwork beneath it.
@@ -513,7 +542,7 @@ export const TrackingMap = React.forwardRef<TrackingMapHandle, Props>(
         map.addListener('click', () => {
           // The map click that accompanies a deck pick must not close the
           // tooltip the pick just opened.
-          if (performance.now() - pickAtRef.current > 250) infoRef.current?.close();
+          if (performance.now() - pickAtRef.current > 250) closeInfo();
         });
         map.addListener('dragstart', () => onUserPanRef.current?.());
         // Double-press on a picked object flies in (native dblclick zoom is
@@ -530,7 +559,7 @@ export const TrackingMap = React.forwardRef<TrackingMapHandle, Props>(
               radius: 12,
             }) as { coordinate?: number[] } | null;
             if (picked?.coordinate) {
-              infoRef.current?.close();
+              closeInfo();
               const [lng, lat] = picked.coordinate;
               map.panTo({ lat, lng });
               map.setZoom(Math.max(map.getZoom() ?? 0, 16));
@@ -555,6 +584,7 @@ export const TrackingMap = React.forwardRef<TrackingMapHandle, Props>(
       const markers = markersRef.current;
       return () => {
         cancelled = true;
+        openVehicleRef.current = null;
         infoRef.current?.close();
         infoRef.current = null;
         overlayRef.current?.finalize();
