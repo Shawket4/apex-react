@@ -133,6 +133,20 @@ export function initSentry(): void {
     // Env-tunable so the rate can be changed at build time without a code
     // change; this Sentry runs on modest hardware and tracing is what loads it.
     tracesSampleRate: tracesSampleRate(),
+    // Which requests carry the trace id onward, as `sentry-trace` and
+    // `baggage`, so a backend error lands on the same Sentry trace as the
+    // click that caused it.
+    //
+    // Left unset, the SDK propagates to same-origin requests only. In the
+    // browser the API is same-origin (nginx serves the app and proxies
+    // /api/*), so that was already working — but in the Tauri build the page
+    // is served from tauri://localhost and every API call is cross-origin, so
+    // nothing propagated there at all.
+    //
+    // The relative pattern must stay: with this option set, the same-origin
+    // default no longer applies on its own, and dropping it would break the
+    // web build to fix the desktop one.
+    tracePropagationTargets: [/^\//, 'apextransport.ddns.net'],
     // Never record sessions that are going fine: that is continuous DOM
     // capture of every user all day, for no diagnostic gain, on a Sentry box
     // with modest hardware.
