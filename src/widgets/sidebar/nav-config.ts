@@ -72,12 +72,7 @@ export const NAV_SECTIONS: NavSection[] = [
         icon: ClipboardCheck,
         minPermission: PERMISSION_LEVELS.MANAGER,
       },
-      {
-        to: '/receipt-piles',
-        labelKey: 'nav.receiptPiles',
-        icon: Boxes,
-        minPermission: PERMISSION_LEVELS.MANAGER,
-      },
+      { to: '/receipt-piles', labelKey: 'nav.receiptPiles', icon: Boxes },
       { to: '/oil-changes', labelKey: 'nav.oilChanges', icon: Droplets },
       { to: '/service-invoices', labelKey: 'nav.serviceInvoices', icon: Wrench },
     ],

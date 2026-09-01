@@ -231,16 +231,11 @@ export const router = createBrowserRouter([
               </ProtectedRoute>
             ),
           },
-          {
-            // Manager, matching the backend route: the plan names every
-            // drop-off point and receipt number in the range.
-            path: 'receipt-piles',
-            element: (
-              <ProtectedRoute minPermissionLevel={PERMISSION_LEVELS.MANAGER}>
-                <ReceiptPilesPage />
-              </ProtectedRoute>
-            ),
-          },
+          // Ungated, matching the backend: filing paper into boxes is
+          // warehouse work, and the people who do it are not the people with
+          // financial access. The money on the screen is withheld per-field by
+          // the server instead.
+          { path: 'receipt-piles', element: <ReceiptPilesPage /> },
           { path: 'etit', element: <TrackingPage /> },
           {
             path: 'zones',

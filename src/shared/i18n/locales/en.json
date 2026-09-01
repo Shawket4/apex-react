@@ -1426,7 +1426,11 @@
       "cost": "Cost",
       "total": "Total",
       "receiptsAcross_one": "{{receipts}} receipts from 1 terminal",
-      "receiptsAcross_other": "{{receipts}} receipts across {{count}} terminals"
+      "receiptsAcross_other": "{{receipts}} receipts across {{count}} terminals",
+      "status": "Where",
+      "status_office": "Office",
+      "status_garage": "Garage",
+      "status_none": "Not logged"
     },
     "index": {
       "title": "Letter → box",

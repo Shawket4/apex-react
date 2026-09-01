@@ -153,6 +153,10 @@ export function flattenPlan(plan: PilePlan): PlanRow[] {
 /* this view exists to guarantee.                                              */
 /* -------------------------------------------------------------------------- */
 
+/** Where the paper is, from the receipt's most recent step. */
+export const RECEIPT_STATUSES = ['office', 'garage', 'none'] as const;
+export type ReceiptStatus = (typeof RECEIPT_STATUSES)[number];
+
 const dropOffReceiptSchema = z.object({
   seq: z.number(),
   date: z.string(),
@@ -161,15 +165,24 @@ const dropOffReceiptSchema = z.object({
   car_no_plate: z.string(),
   tank_capacity: z.number(),
   mileage: z.number(),
-  actual_fee: z.number(),
-  cost: z.number(),
+  status: z.enum(RECEIPT_STATUSES).nullish().transform((v) => v ?? 'none'),
+  // Money. ABSENT below the financial permission, never zero — the server
+  // omits the field rather than sending a 0, because a 0 would read as "this
+  // route earns nothing" rather than "not for you".
+  actual_fee: z.number().nullish(),
+  cost: z.number().nullish(),
 });
 
 const dropOffTerminalSchema = z.object({
   terminal: z.string(),
   distance: z.number(),
+  // The band NUMBER and the distance are route metadata, not prices, so they
+  // are served at every permission level and stay required.
   fee_index: z.number(),
-  actual_fee: z.number(),
+  // The rate the band converts to is money: absent below the financial
+  // permission. Required here meant a viewer's response failed to parse and
+  // the drawer sat in react-query's retry loop showing skeletons forever.
+  actual_fee: z.number().nullish(),
   /**
    * The terminal-drop-off pair has no fee mapping, so the fee report omits
    * this table entirely. The paper still exists, so it is shown and flagged.
@@ -178,7 +191,10 @@ const dropOffTerminalSchema = z.object({
   receipts: list(dropOffReceiptSchema),
   receipt_count: z.number(),
   total_capacity: z.number(),
-  total_cost: z.number(),
+  total_cost: z.number().nullish(),
+  at_office: z.number().nullish().transform((v) => v ?? 0),
+  at_garage: z.number().nullish().transform((v) => v ?? 0),
+  not_filed: z.number().nullish().transform((v) => v ?? 0),
 });
 
 export const dropOffDetailSchema = z.object({
@@ -188,7 +204,10 @@ export const dropOffDetailSchema = z.object({
   terminals: list(dropOffTerminalSchema),
   receipt_count: z.number(),
   total_capacity: z.number(),
-  total_cost: z.number(),
+  total_cost: z.number().nullish(),
+  at_office: z.number().nullish().transform((v) => v ?? 0),
+  at_garage: z.number().nullish().transform((v) => v ?? 0),
+  not_filed: z.number().nullish().transform((v) => v ?? 0),
   unmapped_receipts: z.number(),
 });
 

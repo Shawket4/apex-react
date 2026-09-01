@@ -1449,7 +1449,11 @@
       "receiptsAcross_two": "{{receipts}} إيصالاً من مستودعين",
       "receiptsAcross_few": "{{receipts}} إيصالاً من {{count}} مستودعات",
       "receiptsAcross_many": "{{receipts}} إيصالاً من {{count}} مستودعاً",
-      "receiptsAcross_other": "{{receipts}} إيصالاً من {{count}} مستودع"
+      "receiptsAcross_other": "{{receipts}} إيصالاً من {{count}} مستودع",
+      "status": "الموقع",
+      "status_office": "المكتب",
+      "status_garage": "الجراج",
+      "status_none": "لم تُسجَّل"
     },
     "index": {
       "title": "الحرف ← الصندوق",

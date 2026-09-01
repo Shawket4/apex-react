@@ -9,7 +9,7 @@ import { formatNumber } from '@/shared/lib/format';
 import { extractErrorMessage } from '@/shared/api/errors';
 import { useIsMobile } from '@/shared/hooks/use-media-query';
 import { useDropOffDetail } from '@/entities/receipt-pile/queries';
-import type { DropOffTerminal } from '@/entities/receipt-pile/schemas';
+import type { DropOffTerminal, ReceiptStatus } from '@/entities/receipt-pile/schemas';
 
 /* -------------------------------------------------------------------------- */
 /* One drop-off's receipts, exactly as the fee report prints them              */
@@ -138,6 +138,11 @@ export function ReceiptPilesDropOffSheet({
 /** One terminal's table — the report's table, column for column. */
 function TerminalTable({ terminal }: { terminal: DropOffTerminal }) {
   const { t } = useTranslation();
+  // Driven by what the server sent, not by re-reading the permission here:
+  // it withholds the money fields entirely below the financial level, and a
+  // second copy of that rule on the client is a second thing to get wrong.
+  // Note `!= null` rather than a truthiness test — 0 is a real fee.
+  const showMoney = terminal.actual_fee != null;
 
   return (
     <section className="overflow-hidden rounded-lg border bg-card">
@@ -157,13 +162,30 @@ function TerminalTable({ terminal }: { terminal: DropOffTerminal }) {
         ) : (
           // Only the Latin fragments are isolated. dir="ltr" on the whole line
           // scrambled it for Arabic, where the band label reads "الفئة 2".
+          //
+          // The band NUMBER always shows: it says which tariff row applies,
+          // not what anyone is paid. The rate it converts to is money and is
+          // absent from the payload below the financial permission.
           <span className="text-[11px] text-muted-foreground">
-            {t('receiptPiles.detail.band', { n: terminal.fee_index })} ·{' '}
-            <span dir="ltr">{formatNumber(terminal.actual_fee, 1)}</span> ·{' '}
+            {t('receiptPiles.detail.band', { n: terminal.fee_index })}
+            {terminal.actual_fee != null && (
+              <>
+                {' · '}
+                <span dir="ltr">{formatNumber(terminal.actual_fee, 1)}</span>
+              </>
+            )}
+            {' · '}
             <span dir="ltr">{formatNumber(terminal.distance, 0)} km</span>
           </span>
         )}
-        <span className="ms-auto text-[11px] text-muted-foreground tabular-nums">
+        <span className="ms-auto flex items-center gap-1.5 text-[11px] text-muted-foreground tabular-nums">
+          {/* Where the paper is, at a glance, so a terminal that still has
+              sheets outstanding is visible without reading its rows. */}
+          {terminal.not_filed > 0 && (
+            <span className="rounded-full border border-warning/40 px-1.5 py-0.5 text-[10px] font-medium leading-none text-warning">
+              {terminal.not_filed}
+            </span>
+          )}
           {t('receiptPiles.receiptCount', { count: terminal.receipt_count })}
         </span>
       </header>
@@ -193,7 +215,10 @@ function TerminalTable({ terminal }: { terminal: DropOffTerminal }) {
               <th className="px-2 py-1.5 text-end font-semibold">
                 {t('receiptPiles.detail.capacity')}
               </th>
-              {!terminal.unmapped && (
+              <th className="px-2 py-1.5 text-start font-semibold">
+                {t('receiptPiles.detail.status')}
+              </th>
+              {showMoney && (
                 <th className="px-2 py-1.5 text-end font-semibold">
                   {t('receiptPiles.detail.cost')}
                 </th>
@@ -219,7 +244,10 @@ function TerminalTable({ terminal }: { terminal: DropOffTerminal }) {
                 <td className="px-2 py-1.5 text-end tabular-nums">
                   {formatNumber(receipt.tank_capacity, 0)}
                 </td>
-                {!terminal.unmapped && (
+                <td className="px-2 py-1.5">
+                  <ReceiptStatusFlag status={receipt.status} />
+                </td>
+                {showMoney && (
                   <td className="px-2 py-1.5 text-end tabular-nums">
                     {formatNumber(receipt.cost, 2)}
                   </td>
@@ -235,7 +263,8 @@ function TerminalTable({ terminal }: { terminal: DropOffTerminal }) {
               <td className="px-2 py-1.5 text-end tabular-nums">
                 {formatNumber(terminal.total_capacity, 0)}
               </td>
-              {!terminal.unmapped && (
+              <td />
+              {showMoney && (
                 <td className="px-2 py-1.5 text-end tabular-nums">
                   {formatNumber(terminal.total_cost, 2)}
                 </td>
@@ -269,10 +298,11 @@ function TerminalTable({ terminal }: { terminal: DropOffTerminal }) {
                 {receipt.driver_name || '—'}
               </span>
               <span dir="auto">{receipt.car_no_plate || '—'}</span>
+              <ReceiptStatusFlag status={receipt.status} />
               <span className="ms-auto tabular-nums">
                 {formatNumber(receipt.tank_capacity, 0)} L
               </span>
-              {!terminal.unmapped && (
+              {showMoney && (
                 <span className="tabular-nums text-foreground">
                   {formatNumber(receipt.cost, 2)}
                 </span>
@@ -285,11 +315,35 @@ function TerminalTable({ terminal }: { terminal: DropOffTerminal }) {
           <span className="ms-auto tabular-nums">
             {formatNumber(terminal.total_capacity, 0)} L
           </span>
-          {!terminal.unmapped && (
+          {showMoney && (
             <span className="tabular-nums">{formatNumber(terminal.total_cost, 2)}</span>
           )}
         </li>
       </ul>
     </section>
+  );
+}
+
+/**
+ * Where this receipt's paper currently is, from its most recent step.
+ *
+ * Three states, and "none" is the one worth spotting: it means the sheet has
+ * never been logged anywhere, so it is the one somebody has to go and find.
+ * Colour carries that — a tint for the two settled states, a warning outline
+ * for the one that needs a person.
+ */
+function ReceiptStatusFlag({ status }: { status: ReceiptStatus }) {
+  const { t } = useTranslation();
+  return (
+    <span
+      className={cn(
+        'inline-flex shrink-0 items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium leading-none',
+        status === 'office' && 'bg-success/15 text-success',
+        status === 'garage' && 'bg-primary/10 text-primary',
+        status === 'none' && 'border border-warning/40 text-warning',
+      )}
+    >
+      {t(`receiptPiles.detail.status_${status}`)}
+    </span>
   );
 }
