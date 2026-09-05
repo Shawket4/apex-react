@@ -116,6 +116,20 @@ export type TripLocation = z.infer<typeof tripLocationSchema>;
 // Trip (standalone or sub-trip / container)
 // -----------------------------------------------------------------------------
 
+/**
+ * One compartment of the truck as loaded for a single drop.
+ *
+ * `index` is positional into the car's `compartments` array; `volume` and
+ * `gas_type` are stored alongside it so a trip stays readable even after the
+ * car's layout is edited.
+ */
+export const tripCompartmentSchema = z.object({
+  index: z.number().int().min(0),
+  volume: z.number().positive(),
+  gas_type: z.string().default(''),
+});
+export type TripCompartment = z.infer<typeof tripCompartmentSchema>;
+
 export const tripSchema = z.object({
   ID: z.number().int(),
   CreatedAt: z.string().optional(),
@@ -145,6 +159,9 @@ export const tripSchema = z.object({
   tank_capacity: z.number(),
   capacity: z.number().optional().default(0),
   gas_type: z.string().optional().default(''),
+  // Which of the truck's compartments this drop was loaded from. Null on
+  // trips recorded before compartment planning existed.
+  compartments: z.array(tripCompartmentSchema).nullable().optional(),
 
   // Admin
   date: z.string(), // YYYY-MM-DD
@@ -276,8 +293,11 @@ export type TripListParams = z.infer<typeof tripListParamsSchema>;
 export const containerInputSchema = z.object({
   id: z.number().int().optional(), // set on edit
   drop_off_point: z.string().min(1),
+  // Derived from `compartments` whenever a compartment plan is in play; the
+  // backend recomputes both and rejects the payload if they disagree.
   tank_capacity: z.number().positive(),
   gas_type: z.string().default(''),
+  compartments: z.array(tripCompartmentSchema).optional(),
   receipt_no: z.string().min(1),
   /** Explicit user override when the receipt fails the terminal's pattern. */
   receipt_override: z.boolean().optional(),

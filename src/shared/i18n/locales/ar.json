@@ -888,7 +888,9 @@
         "duplicateInForm": {
           "title": "رقم إيصال مكرر",
           "description": "رقم الإيصال {{receipt}} مستخدم أيضاً في عين {{others}}"
-        }
+        },
+        "compartmentsUnassigned": "{{count}} خزان غير مسند إلى نقطة تفريغ",
+        "compartmentsUnassigned_other": "{{count}} خزانات غير مسندة إلى نقاط تفريغ"
       },
       "capacity": {
         "hint": "سعة تنك السيارة {{capacity}} لتر. مجموع العيون يجب أن يطابق هذه القيمة.",
@@ -897,7 +899,8 @@
         "overrideWarning": "السعة غير متطابقة — يمكن للمسؤول التجاوز",
         "overrideTitle": "عدم تطابق السعة",
         "overrideBody": "إجمالي سعة العيون {{total}} لتر بينما السعة المسجلة للشاحنة {{capacity}} لتر (فرق {{delta}} لتر). هل تريد الحفظ على أي حال؟",
-        "overrideConfirm": "حفظ على أي حال"
+        "overrideConfirm": "حفظ على أي حال",
+        "overrideCompartmentBody": "{{unassigned}} خزان غير مسند و{{overridden}} خزان محمّل بخلاف سعته المسجلة. الحفظ يسجل الخطة كما أُدخلت."
       },
       "batchBanner": {
         "title": "إنشاء من دفعة إيصالات",
@@ -947,6 +950,31 @@
         "mismatch": "رقم الإيصال لا يطابق تسلسل إيصالات {{terminal}} ({{hint}})",
         "override": "الحفظ على أي حال (تجاوز)",
         "blocked": "بعض أرقام الإيصالات لا تطابق تسلسل إيصالات المحطة — فعّل «الحفظ على أي حال (تجاوز)» للمتابعة."
+      },
+      "compartments": {
+        "assignTo": "إسناد إلى",
+        "clear": "مسح",
+        "diagramLabel": "توزيع خزانات {{plate}}",
+        "nth": "خ{{n}}",
+        "assign": "إسناد",
+        "assignedToN": "نقطة {{n}}",
+        "overrideVolume": "المحمّل",
+        "noneAssigned": "لا توجد خزانات مسندة",
+        "allAssigned": "تم إسناد جميع الخزانات",
+        "unassignedCount": "{{count}} خزان غير مسند",
+        "unassignedCount_other": "{{count}} خزانات غير مسندة",
+        "volumeOverridden": "{{count}} خزان محمّل بخلاف سعته المسجلة",
+        "volumeOverridden_other": "{{count}} خزانات محمّلة بخلاف سعتها المسجلة",
+        "blocked": "أسند كل الخزانات للحفظ.",
+        "release": "إلغاء الإسناد",
+        "newContainer": "حاوية جديدة",
+        "needsReceipt": "يحتاج رقم إيصال",
+        "needsDropOff": "يحتاج نقطة تسليم",
+        "noCompartments": "بلا خزانات",
+        "missingProducts": "{{count}} خزان بلا منتج",
+        "missingProducts_other": "{{count}} خزانات بلا منتج",
+        "noReceipt": "لا يوجد إيصال بعد",
+        "empty": "فارغ"
       }
     },
     "tabs": {

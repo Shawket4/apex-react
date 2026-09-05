@@ -884,7 +884,9 @@
         "duplicateInForm": {
           "title": "Duplicate receipt number",
           "description": "Receipt #{{receipt}} is also used in container {{others}}"
-        }
+        },
+        "compartmentsUnassigned": "{{count}} compartment isn't assigned to a drop",
+        "compartmentsUnassigned_other": "{{count}} compartments aren't assigned to a drop"
       },
       "capacity": {
         "hint": "Vehicle tank capacity is {{capacity}} L. The sum of containers should match.",
@@ -893,7 +895,8 @@
         "overrideWarning": "Capacity mismatch — admin override available",
         "overrideTitle": "Capacity mismatch",
         "overrideBody": "Total container capacity is {{total}} L but the truck's registered capacity is {{capacity}} L ({{delta}} L difference). Save anyway?",
-        "overrideConfirm": "Save anyway"
+        "overrideConfirm": "Save anyway",
+        "overrideCompartmentBody": "{{unassigned}} compartment(s) are unassigned and {{overridden}} were loaded off their registered volume. Saving records the plan as entered."
       },
       "batchBanner": {
         "title": "Creating from receipt batch",
@@ -943,6 +946,31 @@
         "mismatch": "Receipt number doesn't match {{terminal}}'s serialization ({{hint}})",
         "override": "Save anyway (override)",
         "blocked": "Some receipt numbers don’t match the terminal’s serialization — tick \"Save anyway (override)\" to proceed."
+      },
+      "compartments": {
+        "assignTo": "Assign to",
+        "clear": "Clear",
+        "diagramLabel": "Compartment layout for {{plate}}",
+        "nth": "C{{n}}",
+        "assign": "Assign",
+        "assignedToN": "Drop {{n}}",
+        "overrideVolume": "Loaded",
+        "noneAssigned": "No compartments assigned",
+        "allAssigned": "Every compartment assigned",
+        "unassignedCount": "{{count}} compartment still unassigned",
+        "unassignedCount_other": "{{count}} compartments still unassigned",
+        "volumeOverridden": "{{count}} compartment loaded off its registered volume",
+        "volumeOverridden_other": "{{count}} compartments loaded off their registered volume",
+        "blocked": "Assign every compartment to save.",
+        "release": "Release",
+        "newContainer": "New container",
+        "needsReceipt": "needs a receipt number",
+        "needsDropOff": "needs a drop-off point",
+        "noCompartments": "has no compartments",
+        "missingProducts": "{{count}} compartment without a product",
+        "missingProducts_other": "{{count}} compartments without a product",
+        "noReceipt": "No receipt yet",
+        "empty": "Empty"
       }
     },
     "tabs": {

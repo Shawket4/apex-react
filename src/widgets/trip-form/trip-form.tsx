@@ -24,6 +24,7 @@ import { SearchableSelect } from '@/shared/ui/searchable-select';
 import { DatePicker } from '@/shared/ui/date-picker';
 import { Skeleton } from '@/shared/ui/skeleton';
 import { MultiSelect } from '@/shared/ui/multi-select';
+import { gasColor } from '@/shared/ui/tanker-diagram';
 
 import { useCars } from '@/entities/car/queries';
 import { useDrivers } from '@/entities/driver/queries';
@@ -45,6 +46,7 @@ import type {
   ContainerInput,
   DuplicateDetectionResponse,
   MultiContainerTripInput,
+  TripCompartment,
 } from '@/entities/trip/schemas';
 import type { ApproveBatchNavState } from '@/entities/receipt-batch/schemas';
 import type { MappingDetail } from '@/entities/mapping/schemas';
@@ -60,6 +62,11 @@ import {
   DROP_OFF_UNREGISTERED,
 } from './drop-off-picker-modal';
 import { DuplicateComparisonDialog } from './duplicate-comparison-dialog';
+import {
+  CompartmentPlanner,
+  emptyPlan,
+  type CompartmentSlot,
+} from './compartment-planner';
 
 /* -------------------------------------------------------------------------- */
 /* Types                                                                       */
@@ -167,6 +174,27 @@ export function TripForm({ parentId }: TripFormProps) {
   const [pickingContainerIdx, setPickingContainerIdx] =
     React.useState<number | null>(null);
 
+  // The compartment plan: one slot per compartment the car is registered
+  // with, saying which drop took it and what was in it. Empty for cars with
+  // no registered layout — those keep the old typed-volume form.
+  const [slots, setSlots] = React.useState<CompartmentSlot[]>([]);
+  const [activeDrop, setActiveDrop] = React.useState(0);
+  /** Stored plan waiting for the car's layout to load, on edit. */
+  const hydratedPlanRef = React.useRef<
+    ({ dropIndex: number } & TripCompartment)[] | null
+  >(null);
+  const planCarIdRef = React.useRef<number | null>(null);
+  /**
+   * Containers of a trip saved before compartment planning existed, waiting
+   * to be fitted onto the car's layout once it loads. Such a trip has typed
+   * litres and no compartments; opening it for edit must not present an
+   * empty truck, so each container is laid onto the next run of compartments
+   * whose registered volumes sum to exactly its litres. A container that
+   * fits no such run is left unassigned and listed under the diagram — the
+   * user resolves it, the form never guesses.
+   */
+  const legacyFitRef = React.useRef<Array<{ capacity: number; gasType: string }> | null>(null);
+
   // Track which receipt fields have been touched so we don't show min-length
   // errors before the user has had a chance to type.
   const [receiptTouched, setReceiptTouched] = React.useState<Set<number>>(
@@ -213,6 +241,20 @@ export function TripForm({ parentId }: TripFormProps) {
     return drivers.find((d) => d.ID === driverId) ?? null;
   }, [drivers, driverId]);
 
+  /**
+   * The car's registered compartment layout. The API normalizes this into
+   * `compartments`; `json_compartments` is the raw column, kept as a fallback
+   * for any caller still reading an older response.
+   */
+  const carCompartments = React.useMemo<number[]>(() => {
+    const raw = selectedCar?.compartments ?? selectedCar?.json_compartments;
+    if (!Array.isArray(raw)) return [];
+    return raw.filter((n): n is number => typeof n === 'number' && n > 0);
+  }, [selectedCar]);
+
+  /** Whether this truck is planned by compartment or by typed volume. */
+  const compartmentMode = carCompartments.length > 0;
+
   /* ---- Hydrate from parent data when editing --------------------------- */
 
   const hydratedRef = React.useRef(false);
@@ -244,6 +286,19 @@ export function TripForm({ parentId }: TripFormProps) {
         _distance: c.mileage || c.distance || 0,
       })),
     );
+    // Park the stored plan until the car's layout is available — the cars
+    // query may not have resolved yet.
+    const storedPlan = fetchedContainers.flatMap((c, dropIndex) =>
+      (c.compartments ?? []).map((compartment) => ({ ...compartment, dropIndex })),
+    );
+    hydratedPlanRef.current = storedPlan.length > 0 ? storedPlan : null;
+    legacyFitRef.current =
+      storedPlan.length > 0
+        ? null
+        : fetchedContainers.map((c) => {
+            const gases = parseGasTypes(c.gas_type);
+            return { capacity: c.tank_capacity ?? 0, gasType: gases.length === 1 ? gases[0] : '' };
+          });
     // Mark all hydrated receipts as touched so existing receipts that happen
     // to be shorter than 4 chars aren't silently flagged on first render.
     setReceiptTouched(
@@ -296,6 +351,108 @@ export function TripForm({ parentId }: TripFormProps) {
     lastTerminalRef.current = terminal;
   }, [terminal]);
 
+  /* ---- Compartment plan ------------------------------------------------ */
+
+  // Rebuild the plan when the truck changes, and apply a stored plan the
+  // moment the layout it refers to is known.
+  React.useEffect(() => {
+    if (!compartmentMode) {
+      planCarIdRef.current = carId;
+      setSlots((prev) => (prev.length === 0 ? prev : []));
+      return;
+    }
+    const pending = hydratedPlanRef.current;
+    const legacy = legacyFitRef.current;
+    if (planCarIdRef.current === carId && !pending && !legacy) return;
+    planCarIdRef.current = carId;
+
+    const next = emptyPlan(carCompartments);
+    if (legacy) {
+      let cursor = 0;
+      for (let drop = 0; drop < legacy.length && cursor < next.length; drop++) {
+        const { capacity, gasType } = legacy[drop];
+        let sum = 0;
+        let end = cursor;
+        while (end < next.length && sum < capacity) sum += carCompartments[end++];
+        // Only an exact run counts; after the first miss the rest is guesswork.
+        if (sum !== capacity || capacity <= 0) break;
+        for (let i = cursor; i < end; i++) next[i] = { dropIndex: drop, gasType, volume: carCompartments[i] };
+        cursor = end;
+      }
+      legacyFitRef.current = null;
+    }
+    if (pending) {
+      pending.forEach((compartment) => {
+        if (compartment.index < 0 || compartment.index >= next.length) return;
+        next[compartment.index] = {
+          dropIndex: compartment.dropIndex,
+          gasType: compartment.gas_type ?? '',
+          volume: compartment.volume || carCompartments[compartment.index],
+        };
+      });
+      hydratedPlanRef.current = null;
+    }
+    setSlots(next);
+    setActiveDrop(0);
+  }, [compartmentMode, carCompartments, carId]);
+
+  /** The compartments each drop took, in payload shape. */
+  const containerPlans = React.useMemo<TripCompartment[][]>(
+    () =>
+      containers.map((_, dropIndex) =>
+        slots.flatMap((slot, index) =>
+          slot.dropIndex === dropIndex
+            ? [{ index, volume: slot.volume, gas_type: slot.gasType }]
+            : [],
+        ),
+      ),
+    [containers, slots],
+  );
+
+  // tank_capacity and gas_type stop being typed and start being read off the
+  // plan. The backend derives them the same way and rejects a payload where
+  // the two disagree, so they must be computed, never edited, in this mode.
+  const derivedCapacities = React.useMemo(
+    () => containerPlans.map((plan) => plan.reduce((sum, c) => sum + c.volume, 0)),
+    [containerPlans],
+  );
+  const derivedGasTypes = React.useMemo(
+    () =>
+      containerPlans.map((plan) =>
+        serializeGasTypes(
+          Array.from(new Set(plan.map((c) => c.gas_type).filter(Boolean))) as GasTypeValue[],
+        ),
+      ),
+    [containerPlans],
+  );
+
+  const derivedKey = `${derivedCapacities.join(',')}|${derivedGasTypes.join(',')}`;
+  React.useEffect(() => {
+    if (!compartmentMode) return;
+    setContainers((cs) => {
+      let changed = false;
+      const next = cs.map((c, i) => {
+        const capacity = derivedCapacities[i] ?? 0;
+        const gasType = derivedGasTypes[i] ?? '';
+        if (c.tank_capacity === capacity && c.gas_type === gasType) return c;
+        changed = true;
+        return { ...c, tank_capacity: capacity, gas_type: gasType };
+      });
+      return changed ? next : cs;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [compartmentMode, derivedKey]);
+
+  const unassignedCompartments = compartmentMode
+    ? slots.filter((slot) => slot.dropIndex === null).length
+    : 0;
+  const overriddenVolumes = compartmentMode
+    ? slots.filter((slot, i) => slot.volume !== (carCompartments[i] ?? slot.volume)).length
+    : 0;
+  const missingProducts = compartmentMode
+    ? slots.filter((slot) => slot.dropIndex !== null && !slot.gasType).length
+    : 0;
+
   /* ---- Capacity validator ---------------------------------------------- */
 
   const carCapacity = selectedCar?.tank_capacity ?? 0;
@@ -304,8 +461,13 @@ export function TripForm({ parentId }: TripFormProps) {
     0,
   );
   const capacityDelta = totalContainerCapacity - carCapacity;
-  const capacityValid =
-    carCapacity === 0 || Math.abs(capacityDelta) <= CAPACITY_TOLERANCE;
+  // With a plan, "valid" means every compartment is spoken for, carries a
+  // product, and none was re-measured — not that four typed numbers happen
+  // to add up. Below permission 4 this is the whole gate: the trip is either
+  // exactly the truck as registered, or it does not save.
+  const capacityValid = compartmentMode
+    ? unassignedCompartments === 0 && overriddenVolumes === 0 && missingProducts === 0
+    : carCapacity === 0 || Math.abs(capacityDelta) <= CAPACITY_TOLERANCE;
 
   // Level-4 admins may save a trip whose container capacities don't sum to
   // the truck's registered capacity — after confirming a warning dialog.
@@ -320,7 +482,7 @@ export function TripForm({ parentId }: TripFormProps) {
   const capacityAcceptedRef = React.useRef(false);
   React.useEffect(() => {
     capacityAcceptedRef.current = false;
-  }, [capacityDelta, selectedCar?.ID]);
+  }, [capacityDelta, selectedCar?.ID, unassignedCompartments, overriddenVolumes]);
 
   /* -------------------------------------------------------------------------- */
   /* Receipt validators — min-length (hard) + in-form duplicates (soft warn)   */
@@ -448,14 +610,30 @@ export function TripForm({ parentId }: TripFormProps) {
     setContainers((cs) => cs.map((c, i) => (i === idx ? { ...c, ...patch } : c)));
   };
 
+  /** Returns the new container's index, so the planner can assign to it. */
   const addContainer = () => {
-    if (containers.length >= MAX_CONTAINERS) return;
+    if (containers.length >= MAX_CONTAINERS) return containers.length - 1;
     setContainers((cs) => [...cs, emptyContainer()]);
+    return containers.length;
   };
 
   const removeContainer = (idx: number) => {
     if (containers.length <= 1) return;
     setContainers((cs) => cs.filter((_, i) => i !== idx));
+    // The plan is keyed by drop index too: release this drop's compartments
+    // and pull the later drops down to match the new numbering.
+    setSlots((prev) =>
+      prev.map((slot) => {
+        if (slot.dropIndex === null) return slot;
+        if (slot.dropIndex === idx) return { ...slot, dropIndex: null };
+        if (slot.dropIndex > idx) return { ...slot, dropIndex: slot.dropIndex - 1 };
+        return slot;
+      }),
+    );
+    setActiveDrop((current) => {
+      if (current === idx) return Math.max(0, idx - 1);
+      return current > idx ? current - 1 : current;
+    });
     // Clean up index-keyed state when removing — re-index remaining entries
     const reindex = (prev: Set<number>) => {
       const next = new Set<number>();
@@ -473,6 +651,30 @@ export function TripForm({ parentId }: TripFormProps) {
     if (carCapacity <= 0 || containers.length === 0) return;
     const each = Math.round((carCapacity / containers.length) * 100) / 100;
     setContainers((cs) => cs.map((c) => ({ ...c, tank_capacity: each })));
+  };
+
+  /* ---- Compartment plan handlers --------------------------------------- */
+
+  const assignCompartment = (index: number, dropIndex: number | null) => {
+    setSlots((prev) =>
+      prev.map((slot, i) => (i === index ? { ...slot, dropIndex } : slot)),
+    );
+  };
+
+  const setCompartmentGas = (index: number, gasType: string) => {
+    setSlots((prev) =>
+      prev.map((slot, i) => (i === index ? { ...slot, gasType } : slot)),
+    );
+  };
+
+  const setCompartmentVolume = (index: number, volume: number) => {
+    setSlots((prev) =>
+      prev.map((slot, i) => (i === index ? { ...slot, volume } : slot)),
+    );
+  };
+
+  const clearPlan = () => {
+    setSlots((prev) => prev.map((slot) => ({ ...slot, dropIndex: null })));
   };
 
   const handleDropOffPicked = (
@@ -512,19 +714,35 @@ export function TripForm({ parentId }: TripFormProps) {
    * receipt across containers (e.g. a single bulk receipt covering two
    * deliveries).
    */
+  // A container nobody touched — no receipt, no drop-off, no compartments —
+  // is scaffolding, not a drop. The plan starts with one and the diagram
+  // makes more as you go, so they are ignored rather than demanded.
+  const isBlankContainer = React.useCallback(
+    (c: ContainerForm, idx: number) =>
+      compartmentMode &&
+      !c.receipt_no.trim() &&
+      !c.drop_off_point &&
+      (containerPlans[idx] ?? []).length === 0,
+    [compartmentMode, containerPlans],
+  );
+  const liveContainers = React.useMemo(
+    () => containers.filter((c, idx) => !isBlankContainer(c, idx)),
+    [containers, isBlankContainer],
+  );
+
   const isValid = React.useMemo(() => {
     if (!selectedCar) return false;
     if (!driverId) return false;
     if (!company || !terminal || terminalId == null) return false;
     if (!date) return false;
-    if (containers.length === 0 || containers.length > MAX_CONTAINERS) return false;
-    return containers.every(
+    if (liveContainers.length === 0 || liveContainers.length > MAX_CONTAINERS) return false;
+    return liveContainers.every(
       (c) =>
         c.receipt_no.trim().length >= RECEIPT_MIN_LENGTH &&
         !!c.drop_off_point &&
         c.tank_capacity > 0,
     );
-  }, [selectedCar, driverId, company, terminal, terminalId, date, containers]);
+  }, [selectedCar, driverId, company, terminal, terminalId, date, liveContainers]);
 
   /* ---- Submit ---------------------------------------------------------- */
 
@@ -560,13 +778,19 @@ export function TripForm({ parentId }: TripFormProps) {
         receipt_override: anyOverride,
         date,
       },
-      containers: containers.map((c, idx) => ({
+      containers: containers.flatMap((c, idx) => isBlankContainer(c, idx) ? [] : [{
         ...(c.id ? { id: c.id } : {}),
         receipt_no: c.receipt_no.trim(),
         receipt_override: receiptPatternMismatches.has(idx),
         drop_off_point: c.drop_off_point,
-        tank_capacity: c.tank_capacity,
-        gas_type: c.gas_type ?? '',
+        // Derived from the plan when there is one. The backend recomputes both
+        // from `compartments` and rejects the payload if they disagree, so
+        // these travel as a cross-check, not as the source of truth.
+        tank_capacity: compartmentMode
+          ? derivedCapacities[idx] ?? 0
+          : c.tank_capacity,
+        gas_type: compartmentMode ? derivedGasTypes[idx] ?? '' : c.gas_type ?? '',
+        ...(compartmentMode ? { compartments: containerPlans[idx] ?? [] } : {}),
         // Propagate parent-level fields so the backend doesn't need to infer
         // them — critical for updates where the user changed company/terminal.
         car_id: selectedCar.ID,
@@ -578,7 +802,7 @@ export function TripForm({ parentId }: TripFormProps) {
         terminal,
         ...(terminalId != null ? { terminal_id: terminalId } : {}),
         date,
-      })),
+      }]),
       update_containers: isEdit ? true : undefined,
       receipt_batch_id: batchNavState?.receiptBatchId,
       set_as_current_trip: batchNavState?.setAsCurrentTrip,
@@ -598,9 +822,13 @@ export function TripForm({ parentId }: TripFormProps) {
     if (!capacityValid) {
       if (!canOverrideCapacity) {
         toast.error(
-          t('trips.form.validation.capacityMismatch', {
-            delta: formatNumber(capacityDelta, 1),
-          }),
+          compartmentMode
+            ? t('trips.form.validation.compartmentsUnassigned', {
+                count: unassignedCompartments,
+              })
+            : t('trips.form.validation.capacityMismatch', {
+                delta: formatNumber(capacityDelta, 1),
+              }),
         );
         return;
       }
@@ -823,7 +1051,7 @@ export function TripForm({ parentId }: TripFormProps) {
               })}
             </h3>
             <div className="flex items-center gap-2">
-              {carCapacity > 0 && containers.length > 0 && (
+              {!compartmentMode && carCapacity > 0 && containers.length > 0 && (
                 <Button
                   type="button"
                   variant="outline"
@@ -837,7 +1065,7 @@ export function TripForm({ parentId }: TripFormProps) {
                   </span>
                 </Button>
               )}
-              {containers.length < MAX_CONTAINERS && (
+              {!compartmentMode && containers.length < MAX_CONTAINERS && (
                 <Button
                   type="button"
                   variant="outline"
@@ -854,6 +1082,76 @@ export function TripForm({ parentId }: TripFormProps) {
             </div>
           </div>
 
+          {compartmentMode && (
+            <CompartmentPlanner
+              layout={carCompartments}
+              slots={slots}
+              plate={selectedCar?.car_no_plate}
+              containers={containers.map((c, idx) => {
+                const mismatch =
+                  receiptPatternMismatches.has(idx) && receiptPattern
+                    ? {
+                        severity: 'warning' as const,
+                        title: t('trips.form.receiptPattern.mismatchTitle'),
+                        description: t('trips.form.receiptPattern.mismatch', {
+                          terminal: selectedTerminal?.name ?? terminal,
+                          hint: receiptPattern.hint,
+                        }),
+                        override: {
+                          checked: overriddenReceipts.has(idx),
+                          label: t('trips.form.receiptPattern.override'),
+                          onToggle: () => toggleReceiptOverride(idx),
+                        },
+                      }
+                    : null;
+                const dup = inFormDuplicates.get(idx);
+                const duplicate =
+                  dup && dup.length > 0
+                    ? {
+                        severity: 'warning' as const,
+                        title: t('trips.form.validation.duplicateInForm.title'),
+                        description: t('trips.form.validation.duplicateInForm.description', {
+                          receipt: c.receipt_no.trim(),
+                          others: dup.map((i) => i + 1).join(', '),
+                        }),
+                      }
+                    : null;
+                const tooShort =
+                  receiptTouched.has(idx) && receiptLengthErrors.get(idx)
+                    ? {
+                        severity: 'error' as const,
+                        title: t('trips.fields.receiptNo'),
+                        description: t('trips.form.validation.receiptTooShort', {
+                          min: RECEIPT_MIN_LENGTH,
+                        }),
+                      }
+                    : null;
+                return {
+                  receipt: c.receipt_no,
+                  dropOff: c.drop_off_point,
+                  fee: c._fee ?? 0,
+                  distance: c._distance ?? 0,
+                  issue: tooShort ?? mismatch ?? duplicate,
+                };
+              })}
+              maxContainers={MAX_CONTAINERS}
+              activeDrop={Math.min(activeDrop, containers.length - 1)}
+              onAssign={assignCompartment}
+              onGasChange={setCompartmentGas}
+              onVolumeChange={setCompartmentVolume}
+              onAddContainer={addContainer}
+              onRemoveContainer={removeContainer}
+              onReceiptChange={(idx, receipt_no) => updateContainer(idx, { receipt_no })}
+              onReceiptBlur={markReceiptTouched}
+              company={company}
+              terminal={terminal}
+              onDropOffPicked={handleDropOffPicked}
+              onClear={clearPlan}
+              canOverride={canOverrideCapacity}
+              missingProducts={missingProducts}
+            />
+          )}
+
           {carCapacity > 0 && (
             <CapacityBanner
               carCapacity={carCapacity}
@@ -861,10 +1159,15 @@ export function TripForm({ parentId }: TripFormProps) {
               delta={capacityDelta}
               valid={capacityValid}
               adminOverride={canOverrideCapacity}
+              unassignedCompartments={compartmentMode ? unassignedCompartments : null}
+              overriddenVolumes={overriddenVolumes}
+              missingProducts={missingProducts}
             />
           )}
 
-          {/* Container forms */}
+          {/* Container forms. With a compartment layout they live inside the
+              diagram's popovers instead. */}
+          {!compartmentMode && (
           <div className="space-y-3">
             {containers.map((container, idx) => (
               <ContainerCard
@@ -885,6 +1188,16 @@ export function TripForm({ parentId }: TripFormProps) {
                       }
                     : null
                 }
+                compartmentSummary={
+                  compartmentMode
+                    ? {
+                        compartments: containerPlans[idx] ?? [],
+                        volume: derivedCapacities[idx] ?? 0,
+                        active: Math.min(activeDrop, containers.length - 1) === idx,
+                        onFocusDrop: () => setActiveDrop(idx),
+                      }
+                    : null
+                }
                 overridden={overriddenReceipts.has(idx)}
                 onToggleOverride={() => toggleReceiptOverride(idx)}
                 onChange={(patch) => updateContainer(idx, patch)}
@@ -894,6 +1207,7 @@ export function TripForm({ parentId }: TripFormProps) {
               />
             ))}
           </div>
+          )}
         </CardContent>
       </Card>
 
@@ -957,11 +1271,18 @@ export function TripForm({ parentId }: TripFormProps) {
         variant="default"
         lottieSrc="/animations/warning.lottie"
         title={t('trips.form.capacity.overrideTitle')}
-        description={t('trips.form.capacity.overrideBody', {
-          total: formatNumber(totalContainerCapacity, 1),
-          capacity: formatNumber(carCapacity, 0),
-          delta: formatNumber(capacityDelta, 1),
-        })}
+        description={
+          compartmentMode
+            ? t('trips.form.capacity.overrideCompartmentBody', {
+                unassigned: unassignedCompartments,
+                overridden: overriddenVolumes,
+              })
+            : t('trips.form.capacity.overrideBody', {
+                total: formatNumber(totalContainerCapacity, 1),
+                capacity: formatNumber(carCapacity, 0),
+                delta: formatNumber(capacityDelta, 1),
+              })
+        }
         confirmLabel={t('trips.form.capacity.overrideConfirm')}
         loading={isPending}
         onConfirm={() => {
@@ -984,6 +1305,10 @@ interface CapacityBannerProps {
   delta: number;
   valid: boolean;
   adminOverride: boolean;
+  /** Null when the truck has no registered compartment layout. */
+  unassignedCompartments: number | null;
+  overriddenVolumes: number;
+  missingProducts: number;
 }
 
 function CapacityBanner({
@@ -992,8 +1317,58 @@ function CapacityBanner({
   delta,
   valid,
   adminOverride,
+  unassignedCompartments,
+  overriddenVolumes,
+  missingProducts,
 }: CapacityBannerProps) {
   const { t } = useTranslation();
+
+  // With a plan, the number that matters is how many compartments are still
+  // unspoken for — a litre delta is arithmetic the user no longer does.
+  if (unassignedCompartments !== null) {
+    const clean =
+      unassignedCompartments === 0 && overriddenVolumes === 0 && missingProducts === 0;
+    return (
+      <div
+        className={cn(
+          'flex items-start gap-2 rounded-lg border border-dashed px-3 py-2.5 text-[12.5px]',
+          clean
+            ? 'border-success/40 bg-success/10 text-success'
+            : 'border-warning/40 bg-warning/10 text-warning',
+        )}
+      >
+        {clean ? (
+          <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+        ) : (
+          <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+        )}
+        <div className="flex-1 space-y-0.5">
+          <div className="font-medium">
+            {clean
+              ? t('trips.form.compartments.allAssigned')
+              : unassignedCompartments > 0
+                ? t('trips.form.compartments.unassignedCount', {
+                    count: unassignedCompartments,
+                  })
+                : missingProducts > 0
+                  ? t('trips.form.compartments.missingProducts', { count: missingProducts })
+                  : t('trips.form.compartments.volumeOverridden', {
+                      count: overriddenVolumes,
+                    })}
+          </div>
+          <div className="text-muted-foreground">
+            <span className="font-mono tabular-nums">
+              {formatNumber(total, 0)} L
+            </span>{' '}
+            / {formatNumber(carCapacity, 0)} L
+            {!clean && !adminOverride && (
+              <span className="ms-2">{t('trips.form.compartments.blocked')}</span>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (total === 0) {
     return (
@@ -1058,6 +1433,16 @@ interface ContainerCardProps {
   duplicateWith: number[] | null;
   /** Set when the receipt fails the selected terminal's serialization. */
   patternMismatch: { terminalName: string; hint: string } | null;
+  /**
+   * The compartments this drop took, when the truck has a registered layout.
+   * Null keeps the older typed-volume fields.
+   */
+  compartmentSummary: {
+    compartments: TripCompartment[];
+    volume: number;
+    active: boolean;
+    onFocusDrop: () => void;
+  } | null;
   /** "Save anyway (override)" acknowledged for this container. */
   overridden: boolean;
   onToggleOverride: () => void;
@@ -1075,6 +1460,7 @@ function ContainerCard({
   receiptTooShort,
   duplicateWith,
   patternMismatch,
+  compartmentSummary,
   overridden,
   onToggleOverride,
   onChange,
@@ -1214,43 +1600,91 @@ function ContainerCard({
           )}
         </div>
 
-        {/* Tank capacity */}
-        <div className="space-y-1">
-          <Label htmlFor={`capacity-${idx}`} className="text-xs">
-            {t('trips.fields.tankCapacity')}
-            <span className="text-destructive">*</span>
-          </Label>
-          <Input
-            id={`capacity-${idx}`}
-            type="number"
-            min={0}
-            step={0.1}
-            value={container.tank_capacity || ''}
-            onChange={(e) =>
-              onChange({ tank_capacity: Number(e.target.value) || 0 })
-            }
-            placeholder="0"
-            className="tabular-nums"
-          />
-        </div>
+        {/* Load. Read-only once the truck has a compartment layout: the
+            figures come off the plan, and letting them be typed here would
+            just be a second, contradictory answer. */}
+        {compartmentSummary ? (
+          <div className="space-y-1 md:col-span-2">
+            <Label className="text-xs">{t('trips.fields.tankCapacity')}</Label>
+            <button
+              type="button"
+              onClick={compartmentSummary.onFocusDrop}
+              className={cn(
+                'flex h-10 w-full items-center gap-2 rounded-md border bg-card px-3 text-start transition-colors',
+                compartmentSummary.active
+                  ? 'border-primary/50 ring-1 ring-primary/30'
+                  : 'hover:bg-muted/60',
+              )}
+            >
+              <span className="font-mono text-sm font-semibold tabular-nums">
+                {formatNumber(compartmentSummary.volume, 0)} L
+              </span>
+              {compartmentSummary.compartments.length > 0 ? (
+                <span className="flex flex-wrap items-center gap-1">
+                  {compartmentSummary.compartments.map((compartment) => (
+                    <span
+                      key={compartment.index}
+                      className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px]"
+                    >
+                      <span
+                        className="inline-block h-1.5 w-1.5 rounded-full"
+                        style={{ backgroundColor: gasColor(compartment.gas_type) }}
+                        aria-hidden
+                      />
+                      {t('trips.form.compartments.nth', {
+                        n: compartment.index + 1,
+                      })}
+                    </span>
+                  ))}
+                </span>
+              ) : (
+                <span className="text-xs text-muted-foreground">
+                  {t('trips.form.compartments.noneAssigned')}
+                </span>
+              )}
+            </button>
+          </div>
+        ) : (
+          <>
+            {/* Tank capacity */}
+            <div className="space-y-1">
+              <Label htmlFor={`capacity-${idx}`} className="text-xs">
+                {t('trips.fields.tankCapacity')}
+                <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id={`capacity-${idx}`}
+                type="number"
+                min={0}
+                step={0.1}
+                value={container.tank_capacity || ''}
+                onChange={(e) =>
+                  onChange({ tank_capacity: Number(e.target.value) || 0 })
+                }
+                placeholder="0"
+                className="tabular-nums"
+              />
+            </div>
 
-        {/* Gas type — multi-select */}
-        <div className="space-y-1">
-          <Label htmlFor={`gas-${idx}`} className="text-xs">
-            {t('trips.fields.gasType')}
-          </Label>
-          <MultiSelect
-            id={`gas-${idx}`}
-            options={gasOptions}
-            value={gasValues}
-            onChange={(next) =>
-              onChange({ gas_type: serializeGasTypes(next as GasTypeValue[]) })
-            }
-            placeholder={t('trips.form.gasType.placeholder')}
-            heading={t('trips.form.gasType.heading')}
-            triggerHeight="md"
-          />
-        </div>
+            {/* Gas type — multi-select */}
+            <div className="space-y-1">
+              <Label htmlFor={`gas-${idx}`} className="text-xs">
+                {t('trips.fields.gasType')}
+              </Label>
+              <MultiSelect
+                id={`gas-${idx}`}
+                options={gasOptions}
+                value={gasValues}
+                onChange={(next) =>
+                  onChange({ gas_type: serializeGasTypes(next as GasTypeValue[]) })
+                }
+                placeholder={t('trips.form.gasType.placeholder')}
+                heading={t('trips.form.gasType.heading')}
+                triggerHeight="md"
+              />
+            </div>
+          </>
+        )}
 
         {/* Drop-off picker */}
         <div className="space-y-1 md:col-span-2 lg:col-span-1">
