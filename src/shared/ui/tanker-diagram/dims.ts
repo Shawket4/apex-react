@@ -69,7 +69,6 @@ export const TANK_Y = 2.42;
 export const TANK_Z = 5.6;
 export const TANK_BODY_LEN = 10.9;
 export const TANK_CAP = 0.34;
-export const TANK_BEVEL = 0.26;
 
 export const TANK_LEN = TANK_BODY_LEN + 2 * TANK_CAP;
 export const TANK_FRONT = TANK_Z - TANK_LEN / 2;
@@ -153,48 +152,6 @@ export const cabGeo = (() => {
   return g;
 })();
 
-/** Rounded-rectangle profile, centred on the origin in XY. */
-export function roundedRect(w: number, h: number, r: number) {
-  const s = new THREE.Shape();
-  const x = w / 2 - r;
-  const y = h / 2 - r;
-  s.absarc(x, y, r, 0, Math.PI / 2, false);
-  s.absarc(-x, y, r, Math.PI / 2, Math.PI, false);
-  s.absarc(-x, -y, r, Math.PI, Math.PI * 1.5, false);
-  s.absarc(x, -y, r, Math.PI * 1.5, Math.PI * 2, false);
-  return s;
-}
-
-/**
- * One compartment of the barrel: the tank's rounded-rect section extruded to
- * the compartment's own length.
- *
- * Only the two ends of the whole tank are domed; an internal bulkhead is flat,
- * because that is what it is, and because a domed face between two compartments
- * reads as a gap in the tank. Note three's `bevelSize` grows the section
- * OUTWARD from the profile passed in, so a domed end is built from a profile
- * shrunk by the bevel — otherwise the midsection comes out 2*bevel too big.
- */
-export function compartmentGeo(length: number, domeFront: boolean, domeBack: boolean) {
-  const domed = domeFront || domeBack;
-  const g = new THREE.ExtrudeGeometry(
-    domed
-      ? roundedRect(TANK_W - 2 * TANK_BEVEL, TANK_H - 2 * TANK_BEVEL, TANK_RAD - TANK_BEVEL)
-      : roundedRect(TANK_W, TANK_H, TANK_RAD),
-    {
-      depth: length,
-      bevelEnabled: domed,
-      bevelThickness: TANK_CAP,
-      bevelSize: TANK_BEVEL,
-      bevelSegments: 6,
-      curveSegments: 18,
-    },
-  );
-  g.center();
-  g.computeVertexNormals();
-  return g;
-}
-
 /**
  * Rounded rectangle with a radius per corner, so one path can be domed at one
  * end and square at the other. Corners run top-right, top-left, bottom-left,
@@ -236,9 +193,9 @@ export const FRAME_RING = 0.07;
 
 /**
  * The compartment's side silhouette, as shape-space (z, y) with the dome
- * allowance folded in. A domed end adds TANK_CAP, and compartmentGeo centres
- * its result, so a compartment domed at one end only sits half a cap off its
- * nominal centre; the offset returned here follows it.
+ * allowance folded in. A domed end adds TANK_CAP on that side only, so a
+ * compartment domed at one end sits half a cap off its body's centre; the
+ * offset returned here is that shift.
  */
 function silhouette(length: number, domeFront: boolean, domeBack: boolean, grow = 0) {
   const back = domeBack ? TANK_CAP : 0;

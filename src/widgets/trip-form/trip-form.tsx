@@ -24,7 +24,7 @@ import { SearchableSelect } from '@/shared/ui/searchable-select';
 import { DatePicker } from '@/shared/ui/date-picker';
 import { Skeleton } from '@/shared/ui/skeleton';
 import { MultiSelect } from '@/shared/ui/multi-select';
-import { gasColor } from '@/shared/ui/tanker-diagram';
+import { gasColor } from '@/shared/ui/tanker-diagram/palette';
 
 import { useCars } from '@/entities/car/queries';
 import { useDrivers } from '@/entities/driver/queries';
@@ -54,6 +54,7 @@ import { extractErrorMessage } from '@/shared/api/errors';
 import { today, formatNumber, formatCurrency } from '@/shared/lib/format';
 import { cn } from '@/shared/lib/cn';
 import { normalize } from '@/shared/lib/normalize';
+import { decodeUrlState, encodeUrlState } from '@/shared/lib/url-state';
 import { useAuthStore } from '@/shared/auth/store';
 import { ConfirmDialog } from '@/shared/ui/confirm-dialog';
 
@@ -95,6 +96,48 @@ const emptyContainer = (): ContainerForm => ({
 });
 
 const MAX_CONTAINERS = 4;
+
+/**
+ * The form's draft as it travels in the `s` query parameter. Short keys on
+ * purpose: this rides in a URL. `v` guards against reading a draft written by
+ * an older shape; anything unrecognised is dropped rather than half-applied.
+ */
+interface TripDraft {
+  v: 1;
+  car: number | null;
+  driver: number | null;
+  date: string;
+  company: string;
+  terminal: string;
+  terminalId: number | null;
+  containers: Array<{
+    id?: number;
+    r: string;
+    d: string;
+    c: number;
+    g: string;
+    f?: number;
+    m?: number;
+  }>;
+  /** Per compartment: drop index (or null), product, litres. */
+  slots: Array<{ d: number | null; g: string; v: number }>;
+  /** Containers whose receipt-pattern mismatch was acknowledged. */
+  ovr: number[];
+}
+
+function isTripDraft(value: unknown): value is TripDraft {
+  const d = value as Partial<TripDraft> | null;
+  return (
+    !!d &&
+    typeof d === 'object' &&
+    d.v === 1 &&
+    Array.isArray(d.containers) &&
+    Array.isArray(d.slots) &&
+    Array.isArray(d.ovr) &&
+    typeof d.date === 'string'
+  );
+}
+const DRAFT_PARAM = 's';
 const CAPACITY_TOLERANCE = 0; // Exact match required
 const RECEIPT_MIN_LENGTH = 4;
 
@@ -145,32 +188,53 @@ export function TripForm({ parentId }: TripFormProps) {
 
   /* ---- Form state ------------------------------------------------------- */
 
-  const [carId, setCarId] = React.useState<number | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  // The whole form lives in the URL (see shared/lib/url-state): a refresh or a
+  // shared link lands on the same half-filled form. Read once, on mount; the
+  // ref keeps the draft for the effects that need to know it was applied.
+  const draftRef = React.useRef<TripDraft | null>(
+    decodeUrlState(searchParams.get(DRAFT_PARAM), isTripDraft),
+  );
+  const draft = draftRef.current;
+
+  const [carId, setCarId] = React.useState<number | null>(draft?.car ?? null);
   const [driverId, setDriverId] = React.useState<number | null>(
-    batchNavState?.driverId ?? null,
+    draft?.driver ?? batchNavState?.driverId ?? null,
   );
   const initialDriverNameRef = React.useRef<string | null>(null);
-  const previousCarIdRef = React.useRef<number | null>(null);
-  const [date, setDate] = React.useState<string>(today());
-  const [searchParams] = useSearchParams();
+  // Seeded with the draft's car so the driver auto-fill does not fire on the
+  // car the draft already carries a driver for.
+  const previousCarIdRef = React.useRef<number | null>(draft?.car ?? null);
+  const [date, setDate] = React.useState<string>(draft?.date ?? today());
   const paramCompany = searchParams.get('company');
   const paramTerminal = searchParams.get('terminal');
 
-  const [company, setCompany] = React.useState<string>(paramCompany ?? '');
+  const [company, setCompany] = React.useState<string>(draft?.company ?? paramCompany ?? '');
   // Terminals are picked-by-id entities now. `terminal` keeps the canonical
   // name (legacy payload field + drop-off mapping cascade); `terminalId` is
   // the id the backend actually stores.
-  const [terminal, setTerminal] = React.useState<string>(paramTerminal ?? '');
-  const [terminalId, setTerminalId] = React.useState<number | null>(null);
+  const [terminal, setTerminal] = React.useState<string>(draft?.terminal ?? paramTerminal ?? '');
+  const [terminalId, setTerminalId] = React.useState<number | null>(draft?.terminalId ?? null);
 
   React.useEffect(() => {
+    if (draftRef.current) return;
     if (paramCompany) setCompany(paramCompany);
     if (paramTerminal) setTerminal(paramTerminal);
   }, [paramCompany, paramTerminal]);
 
-  const [containers, setContainers] = React.useState<ContainerForm[]>([
-    emptyContainer(),
-  ]);
+  const [containers, setContainers] = React.useState<ContainerForm[]>(() =>
+    draft && draft.containers.length > 0
+      ? draft.containers.map((c) => ({
+          ...(c.id != null ? { id: c.id } : {}),
+          receipt_no: c.r,
+          drop_off_point: c.d,
+          tank_capacity: c.c,
+          gas_type: c.g,
+          _fee: c.f ?? 0,
+          _distance: c.m ?? 0,
+        }))
+      : [emptyContainer()],
+  );
   const [pickingContainerIdx, setPickingContainerIdx] =
     React.useState<number | null>(null);
 
@@ -179,10 +243,17 @@ export function TripForm({ parentId }: TripFormProps) {
   // no registered layout — those keep the old typed-volume form.
   const [slots, setSlots] = React.useState<CompartmentSlot[]>([]);
   const [activeDrop, setActiveDrop] = React.useState(0);
-  /** Stored plan waiting for the car's layout to load, on edit. */
+  /** Stored plan waiting for the car's layout to load — from the URL draft or, on edit, the server. */
   const hydratedPlanRef = React.useRef<
     ({ dropIndex: number } & TripCompartment)[] | null
-  >(null);
+  >(
+    (() => {
+      const fromDraft = draftRef.current?.slots.flatMap((slot, index) =>
+        slot.d === null ? [] : [{ index, volume: slot.v, gas_type: slot.g, dropIndex: slot.d }],
+      );
+      return fromDraft && fromDraft.length > 0 ? fromDraft : null;
+    })(),
+  );
   const planCarIdRef = React.useRef<number | null>(null);
   /**
    * Containers of a trip saved before compartment planning existed, waiting
@@ -261,6 +332,9 @@ export function TripForm({ parentId }: TripFormProps) {
   React.useEffect(() => {
     if (!isEdit || !parentData || hydratedRef.current) return;
     hydratedRef.current = true;
+    // A draft in the URL is the user's unsaved work on this very trip; the
+    // server's copy is what they started from. The draft wins.
+    if (draftRef.current) return;
 
     const parent = parentData.parent_trip;
     const fetchedContainers = parentData.containers;
@@ -574,7 +648,7 @@ export function TripForm({ parentId }: TripFormProps) {
   // terminal changes — a mismatch against one terminal says nothing about
   // another's serialization.
   const [overriddenReceipts, setOverriddenReceipts] = React.useState<Set<number>>(
-    () => new Set(),
+    () => new Set(draftRef.current?.ovr ?? []),
   );
   React.useEffect(() => {
     setOverriddenReceipts(new Set());
@@ -652,6 +726,80 @@ export function TripForm({ parentId }: TripFormProps) {
     const each = Math.round((carCapacity / containers.length) * 100) / 100;
     setContainers((cs) => cs.map((c) => ({ ...c, tank_capacity: each })));
   };
+
+  /* ---- Draft in the URL ------------------------------------------------- */
+
+  // Mirror the form into the `s` parameter, debounced so typing a receipt
+  // number is one history entry, not one per keystroke (replace, so Back
+  // still leaves the page). Two moments are skipped: before an edit has
+  // loaded its trip, and while a draft's plan is still waiting for the car's
+  // layout — writing then would replace the draft with a blank.
+  const pristine =
+    !isEdit &&
+    carId === null &&
+    (driverId === null || driverId === (batchNavState?.driverId ?? null)) &&
+    !company &&
+    !terminal &&
+    date === today() &&
+    containers.length === 1 &&
+    !containers[0].receipt_no &&
+    !containers[0].drop_off_point &&
+    slots.every((slot) => slot.dropIndex === null);
+  React.useEffect(() => {
+    if (isEdit && !hydratedRef.current) return;
+    if (hydratedPlanRef.current) return;
+    const handle = window.setTimeout(() => {
+      setSearchParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          if (pristine) {
+            next.delete(DRAFT_PARAM);
+            return next;
+          }
+          const draft: TripDraft = {
+            v: 1,
+            car: carId,
+            driver: driverId,
+            date,
+            company,
+            terminal,
+            terminalId,
+            containers: containers.map((c) => ({
+              ...(c.id != null ? { id: c.id } : {}),
+              r: c.receipt_no,
+              d: c.drop_off_point,
+              c: c.tank_capacity,
+              g: c.gas_type,
+              ...(c._fee ? { f: c._fee } : {}),
+              ...(c._distance ? { m: c._distance } : {}),
+            })),
+            slots: slots.map((slot) => ({ d: slot.dropIndex, g: slot.gasType, v: slot.volume })),
+            ovr: [...overriddenReceipts],
+          };
+          next.set(DRAFT_PARAM, encodeUrlState(draft));
+          // The draft carries these itself; the plain params were the old way in.
+          next.delete('company');
+          next.delete('terminal');
+          return next;
+        },
+        { replace: true },
+      );
+    }, 250);
+    return () => window.clearTimeout(handle);
+  }, [
+    isEdit,
+    pristine,
+    carId,
+    driverId,
+    date,
+    company,
+    terminal,
+    terminalId,
+    containers,
+    slots,
+    overriddenReceipts,
+    setSearchParams,
+  ]);
 
   /* ---- Compartment plan handlers --------------------------------------- */
 

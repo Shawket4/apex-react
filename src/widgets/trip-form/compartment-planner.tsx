@@ -7,12 +7,18 @@ import { Checkbox } from '@/shared/ui/checkbox';
 import { Chip, ChipGroup } from '@/shared/ui/chip-group';
 import { Input } from '@/shared/ui/input';
 import { Label } from '@/shared/ui/label';
-import { TankerDiagram, dropColor, gasColor } from '@/shared/ui/tanker-diagram';
+import { dropColor, gasColor } from '@/shared/ui/tanker-diagram/palette';
 import { cn } from '@/shared/lib/cn';
 import { formatNumber } from '@/shared/lib/format';
 import type { MappingDetail } from '@/entities/mapping/schemas';
 
 import { DropOffPickerModal } from './drop-off-picker-modal';
+
+// three.js is the bulk of this route's chunk and only a truck with a
+// registered layout needs it, so it arrives on its own.
+const TankerDiagram = React.lazy(() =>
+  import('@/shared/ui/tanker-diagram').then((m) => ({ default: m.TankerDiagram })),
+);
 
 /* -------------------------------------------------------------------------- */
 /* Compartment planner                                                        */
@@ -452,6 +458,7 @@ export function CompartmentPlanner({
       </div>
 
       <div className="rounded-lg border bg-muted/30 px-2 py-3 sm:px-4">
+        <React.Suspense fallback={<div className="aspect-[16/10] w-full animate-pulse rounded-md bg-muted/40 sm:aspect-[16/6]" />}>
         <TankerDiagram
           compartments={diagramCompartments}
           activeDrop={activeDrop}
@@ -468,6 +475,7 @@ export function CompartmentPlanner({
             plate: plate ?? '',
           })}
         />
+        </React.Suspense>
       </div>
 
       {unassigned > 0 && (

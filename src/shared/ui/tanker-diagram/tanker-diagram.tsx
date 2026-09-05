@@ -1,19 +1,12 @@
 import * as React from 'react';
 import * as THREE from 'three';
 import { Canvas, useThree } from '@react-three/fiber';
-import {
-  ContactShadows,
-  Environment,
-  Html,
-  Lightformer,
-  Outlines,
-} from '@react-three/drei';
-import { EffectComposer, N8AO } from '@react-three/postprocessing';
+import { Html, Outlines } from '@react-three/drei';
 
 import { cn } from '@/shared/lib/cn';
 import { Popover, PopoverAnchor, PopoverContent } from '@/shared/ui/popover';
 import { useThemeTokens } from '@/shared/lib/theme-tokens';
-import { CHART_SERIES_COLORS } from '@/shared/lib/chart-theme';
+import { DIESEL_HEX, GAS_TOKENS, dropColor, gasCode, gasColor } from './palette';
 import {
   BODY_WHITE,
   CAB_FLOOR,
@@ -55,7 +48,6 @@ import {
   TRAILER_ZS,
   capGeo,
   cabGeo,
-  compartmentGeo,
   fillGeo,
   frameGeo,
   rimGeo,
@@ -72,12 +64,15 @@ import {
 /* compartments. Typing a volume into a box cannot express that; pointing at   */
 /* the compartment you loaded can.                                            */
 /*                                                                            */
-/* The rig is the maintenance app's — same dims.ts geometry, same studio       */
-/* Lightformer environment, same contact shadows and AO — so the two apps draw */
-/* one truck rather than two. What differs is the barrel: there it is an       */
-/* opaque white shell and the wheels are the subject, here the shell is        */
-/* transparent and stripped of livery, manholes and cabinetry, because the     */
-/* subject is what is inside it. You have to be able to see the load.          */
+/* The rig is the maintenance app's dims.ts geometry, so the two apps draw one */
+/* truck rather than two. What differs is the barrel and the lighting: there  */
+/* the barrel is an opaque white shell under a studio environment with AO and */
+/* contact shadows, because the wheels are the subject; here it is a flat,    */
+/* see-through set of plates under two plain lights, because the subject is   */
+/* what is inside it — and because this canvas mounts on every fresh trip     */
+/* form. The environment bake, shadow map and AO pass cost a second of first  */
+/* paint for a picture that is flat by design, so they are gone, and the      */
+/* frame loop only runs when something changed.                               */
 /*                                                                            */
 /* It is a flat side elevation, not the maintenance app's 3/4 view. Seen from  */
 /* the corner a 16 m rig foreshortens the far compartments into a sliver and   */
@@ -145,50 +140,7 @@ export interface TankerDiagramProps {
   onOpenIndexChange?: (compartmentIndex: number | null) => void;
 }
 
-/* -- Palette --------------------------------------------------------------- */
-
-const GAS_TOKENS: Record<string, string> = {
-  '80': 'money',
-  '92': 'primary',
-  '95': 'success',
-};
-const DIESEL_HEX = '#8B5CF6';
-
-const GAS_CSS: Record<string, string> = {
-  '80': 'hsl(var(--money))',
-  '92': 'hsl(var(--primary))',
-  '95': 'hsl(var(--success))',
-  diesel: DIESEL_HEX,
-};
-const UNSET_CSS = 'hsl(var(--muted-foreground))';
-
-/** Short product code shown on the tank. */
-export function gasCode(gasType: string): string {
-  const gas = gasType?.trim().toLowerCase();
-  if (gas === 'diesel') return 'DSL';
-  return gas.toUpperCase();
-}
-
-/** Product colour as a CSS value, for the DOM controls around the scene. */
-export function gasColor(gasType: string): string {
-  return GAS_CSS[gasType?.trim().toLowerCase()] ?? UNSET_CSS;
-}
-
-/**
- * Drop colours, deliberately disjoint from the product colours above.
- *
- * A compartment is filled with its product and marked with its drop, so the two
- * encodings sit on the same shape; drawing drop 1 in the same navy as gas 92
- * made a compartment holding 92 for drop 1 read as one flat block. These four
- * are the chart palette's later slots, which no product uses. Four is enough —
- * the form caps a trip at four drops.
- */
-const DROP_COLORS = CHART_SERIES_COLORS.slice(4);
-
-/** Marker colour identifying the drop a compartment belongs to. */
-export function dropColor(dropIndex: number): string {
-  return DROP_COLORS[dropIndex % DROP_COLORS.length];
-}
+export { gasCode, gasColor, dropColor } from './palette';
 
 const TOKENS = ['money', 'primary', 'success', 'muted-foreground', 'foreground'] as const;
 
@@ -253,7 +205,7 @@ function Part({
   outline?: boolean;
 }) {
   return (
-    <mesh position={position} castShadow receiveShadow>
+    <mesh position={position}>
       {geometry === 'box' ? (
         <boxGeometry args={args as [number, number, number]} />
       ) : (
@@ -268,7 +220,7 @@ function Part({
 function Wheel({ x, z }: { x: number; z: number }) {
   return (
     <group position={[x, TIRE_R, z]} rotation={[0, 0, Math.PI / 2]}>
-      <mesh geometry={tireGeo} castShadow>
+      <mesh geometry={tireGeo}>
         <meshStandardMaterial
           color={RUBBER}
           roughness={0.92}
@@ -276,7 +228,7 @@ function Wheel({ x, z }: { x: number; z: number }) {
           side={THREE.DoubleSide}
         />
       </mesh>
-      <mesh geometry={rimGeo} castShadow>
+      <mesh geometry={rimGeo}>
         <meshStandardMaterial color={RIM_C} roughness={0.26} metalness={0.72} />
       </mesh>
       <mesh geometry={capGeo}>
@@ -305,7 +257,7 @@ function Rig() {
           color={CHASSIS}
         />
       ))}
-      <mesh geometry={cabGeo} castShadow receiveShadow>
+      <mesh geometry={cabGeo}>
         <meshPhysicalMaterial
           color={BODY_WHITE}
           roughness={0.34}
@@ -370,7 +322,7 @@ function Rig() {
 
       {/* axles and wheels */}
       {[STEER_Z, ...DRIVE_ZS, ...TRAILER_ZS].map((z) => (
-        <mesh key={z} position={[0, TIRE_R, z]} rotation={[0, 0, Math.PI / 2]} castShadow>
+        <mesh key={z} position={[0, TIRE_R, z]} rotation={[0, 0, Math.PI / 2]}>
           <cylinderGeometry args={[0.095, 0.095, 2.62, 16]} />
           <meshStandardMaterial color={CHASSIS} roughness={0.6} />
         </mesh>
@@ -389,27 +341,19 @@ function Rig() {
 
 /** The load inside one compartment, cut down to the volume it is carrying. */
 function Fill({
-  length,
+  geometry,
   z,
-  domeFront,
-  domeBack,
   color,
   ratio,
 }: {
-  length: number;
+  geometry: THREE.BufferGeometry;
   z: number;
-  domeFront: boolean;
-  domeBack: boolean;
   color: string;
   ratio: number;
 }) {
-  const geometry = React.useMemo(
-    () => fillGeo(length, domeFront, domeBack),
-    [length, domeFront, domeBack],
-  );
-  React.useEffect(() => () => geometry.dispose(), [geometry]);
   // A clipping plane keeps everything below the fill line; the plate's own
-  // outline supplies the rounded bottom, so nothing has to be re-shaped.
+  // outline supplies the rounded bottom, so nothing has to be re-shaped, and
+  // a plate cut by a horizontal plane has a dead-straight top.
   const planes = React.useMemo(() => {
     if (ratio >= 1) return [];
     const level = TANK_Y - TANK_H / 2 + TANK_H * Math.max(ratio, 0);
@@ -717,7 +661,6 @@ export function TankerDiagram({
           : TANK_BODY_LEN / Math.max(count, 1);
       const domeFront = index === 0;
       const domeBack = index === count - 1;
-      const geometry = compartmentGeo(length, domeFront, domeBack);
       const z = cursor + length / 2;
       cursor += length;
       // A domed end adds TANK_CAP beyond the body, so what is drawn is longer
@@ -728,6 +671,13 @@ export function TankerDiagram({
       const back = domeBack ? TANK_CAP : 0;
       const drawnZ = z + (back - front) / 2;
       const drawnLength = length + front + back;
+      // The compartment as drawn: one silhouette plate serves as the shell,
+      // the fill's outline and the pointer target. It used to be a bevelled
+      // extrusion, and three.js bevels both ends, so an end compartment's
+      // shell ran a full cap into its neighbour. The plate already carries
+      // the dome offset, so it is placed at `z`; only DOM labels and the
+      // pointer hit-test, which have no geometry, use `drawnZ`.
+      const geometry = fillGeo(length, domeFront, domeBack);
       return { compartment, index, z, length, drawnZ, drawnLength, geometry };
     });
   }, [compartments, total]);
@@ -825,7 +775,7 @@ export function TankerDiagram({
       >
         <Canvas
           orthographic
-          shadows
+          frameloop="demand"
           dpr={[1, 2]}
           camera={{ position: [CAMERA_X, 2, FRAME_Z], near: 0.1, far: 200 }}
           gl={{ antialias: true, alpha: true, localClippingEnabled: true }}
@@ -835,29 +785,9 @@ export function TankerDiagram({
             </div>
           }
         >
-          <ambientLight intensity={0.4} />
-          <directionalLight
-            position={[16, 14, -4]}
-            intensity={1.5}
-            castShadow
-            shadow-mapSize={[2048, 2048]}
-            shadow-bias={-0.0002}
-            shadow-camera-left={-16}
-            shadow-camera-right={16}
-            shadow-camera-top={16}
-            shadow-camera-bottom={-16}
-            shadow-camera-far={60}
-          />
+          <ambientLight intensity={0.55} />
+          <directionalLight position={[16, 14, -4]} intensity={1.3} />
           <directionalLight position={[-10, 7, 10]} intensity={0.4} />
-          {/* Procedural studio environment — Lightformers only, nothing
-              fetched. This is what makes the paint and rims read as materials
-              instead of flat fills. */}
-          <Environment resolution={256} frames={1}>
-            <Lightformer form="rect" intensity={2.2} position={[0, 12, 0]} rotation={[-Math.PI / 2, 0, 0]} scale={[26, 26, 1]} />
-            <Lightformer form="rect" intensity={1.1} position={[14, 5, -6]} rotation={[0, -Math.PI / 2.6, 0]} scale={[16, 5, 1]} />
-            <Lightformer form="rect" intensity={0.8} position={[-14, 4, 8]} rotation={[0, Math.PI / 2.4, 0]} scale={[14, 4, 1]} />
-            <Lightformer form="ring" intensity={0.6} position={[0, 6, 16]} scale={[9, 9, 1]} />
-          </Environment>
 
           <Framing />
 
@@ -872,17 +802,15 @@ export function TankerDiagram({
                 <React.Fragment key={index}>
                   {assigned && (
                     <Fill
-                      length={length}
+                      geometry={geometry}
                       z={z}
-                      domeFront={index === 0}
-                      domeBack={index === cells.length - 1}
                       color={gasHex(compartment.gasType)}
                       ratio={ratio}
                     />
                   )}
                   <mesh
                     geometry={geometry}
-                    position={[0, TANK_Y, z]}
+                    position={[TANK_HW + 0.01, TANK_Y, z]}
                     onClick={interactive && !flow ? () => onSelect?.(index) : undefined}
                     onPointerDown={flow ? () => startPress(index) : undefined}
                     onPointerOver={
@@ -951,21 +879,6 @@ export function TankerDiagram({
             />
           </group>
 
-          <ContactShadows
-            position={[0, 0.005, 3.4]}
-            scale={38}
-            resolution={1024}
-            blur={2.3}
-            opacity={0.34}
-            far={5}
-            color="#0f172a"
-          />
-          {/* AO grounds the wheels against the body. No bloom or vignette here
-              — this sits inside a form, and a darkened frame reads as the page
-              dimming rather than as depth. */}
-          <EffectComposer multisampling={4}>
-            <N8AO aoRadius={0.5} intensity={2.2} distanceFalloff={0.7} quality="medium" />
-          </EffectComposer>
         </Canvas>
 
         {plate && (
