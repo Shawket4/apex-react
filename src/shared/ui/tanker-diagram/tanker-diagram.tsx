@@ -1,7 +1,7 @@
 import * as React from 'react';
 import * as THREE from 'three';
 import { Canvas, useThree } from '@react-three/fiber';
-import { Html, Outlines } from '@react-three/drei';
+import { Html } from '@react-three/drei';
 
 import { cn } from '@/shared/lib/cn';
 import { Popover, PopoverAnchor, PopoverContent } from '@/shared/ui/popover';
@@ -16,7 +16,6 @@ import {
   CHASSIS,
   DARK,
   DRIVE_ZS,
-  DUAL_INNER,
   DUAL_OUTER,
   FIFTH_Z,
   GLASS,
@@ -70,9 +69,10 @@ import {
 /* contact shadows, because the wheels are the subject; here it is a flat,    */
 /* see-through set of plates under two plain lights, because the subject is   */
 /* what is inside it — and because this canvas mounts on every fresh trip     */
-/* form. The environment bake, shadow map and AO pass cost a second of first  */
-/* paint for a picture that is flat by design, so they are gone, and the      */
-/* frame loop only runs when something changed.                               */
+/* form. The environment bake, shadow map, AO pass and per-part outline       */
+/* shaders cost a second of first paint for a picture that is flat by design, */
+/* so they are gone: every material is unlit, only the near-side wheels are   */
+/* drawn, and the frame loop only runs when something changed.                */
 /*                                                                            */
 /* It is a flat side elevation, not the maintenance app's 3/4 view. Seen from  */
 /* the corner a 16 m rig foreshortens the far compartments into a sliver and   */
@@ -178,16 +178,20 @@ function Framing() {
 /* -- Labels ----------------------------------------------------------------- */
 /* Labels are DOM, so they are sized in pixels while the tank is sized in
    metres, and the ratio between the two swings 3× between a phone and a
-   desktop. A label sits inside its compartment when the compartment is wide
-   enough in pixels to hold it, which is every realistic layout on a desktop.
-   When it is not — a 12,000 L compartment on a phone is under 50 px — the
-   label lifts above the tank on a leader, alternating two rows so that
-   neighbours, the only labels that can ever be closer than a label's width,
-   never share one. Placing them in scene units cannot do this: a stagger that
-   separates two rows at 940 px stacks them at 380 px. */
+   desktop. On a desktop a label sits inside its compartment, which has room
+   for it in every realistic layout. On a phone every label lifts above the
+   tank on a leader, in two alternating rows: a compartment there is 50 px
+   wide and a readable label is not, so the rows let each label be nearly
+   two compartments wide, and only neighbours — which never share a row —
+   could ever collide. Mixing the two on one phone screen, inside where it
+   fit and outside where it did not, read as an inconsistency, so the rule
+   is by screen, not by compartment. Placing labels in scene units cannot do
+   any of this: a stagger that separates two rows at 940 px stacks them at
+   380 px. */
+const PHONE_MAX_PX = 640;
 const INSIDE_MIN_PX = 68;
 const LEADER_PX = 6;
-const ROW_PX = 46;
+const ROW_PX = 54;
 
 /* -- Fixed parts ----------------------------------------------------------- */
 
@@ -196,13 +200,11 @@ function Part({
   args,
   position,
   color = BODY_WHITE,
-  outline = true,
 }: {
   geometry?: 'box' | 'cyl';
   args: number[];
   position?: [number, number, number];
   color?: string;
-  outline?: boolean;
 }) {
   return (
     <mesh position={position}>
@@ -211,8 +213,7 @@ function Part({
       ) : (
         <cylinderGeometry args={args as [number, number, number, number]} />
       )}
-      <meshStandardMaterial color={color} roughness={0.6} metalness={0.05} />
-      {outline && <Outlines thickness={0.004} color={OUT} screenspace />}
+      <meshBasicMaterial color={color} />
     </mesh>
   );
 }
@@ -221,18 +222,13 @@ function Wheel({ x, z }: { x: number; z: number }) {
   return (
     <group position={[x, TIRE_R, z]} rotation={[0, 0, Math.PI / 2]}>
       <mesh geometry={tireGeo}>
-        <meshStandardMaterial
-          color={RUBBER}
-          roughness={0.92}
-          metalness={0}
-          side={THREE.DoubleSide}
-        />
+        <meshBasicMaterial color={RUBBER} side={THREE.DoubleSide} />
       </mesh>
       <mesh geometry={rimGeo}>
-        <meshStandardMaterial color={RIM_C} roughness={0.26} metalness={0.72} />
+        <meshBasicMaterial color={RIM_C} />
       </mesh>
       <mesh geometry={capGeo}>
-        <meshStandardMaterial color="#c8d1db" roughness={0.3} metalness={0.6} />
+        <meshBasicMaterial color="#c8d1db" />
       </mesh>
     </group>
   );
@@ -258,14 +254,7 @@ function Rig() {
         />
       ))}
       <mesh geometry={cabGeo}>
-        <meshPhysicalMaterial
-          color={BODY_WHITE}
-          roughness={0.34}
-          metalness={0.05}
-          clearcoat={0.55}
-          clearcoatRoughness={0.28}
-        />
-        <Outlines thickness={0.004} color={OUT} screenspace />
+        <meshBasicMaterial color={BODY_WHITE} />
       </mesh>
       {/* Side glass and door: the only cab detail a side elevation can see.
           The windscreen and grille face the camera edge-on and are left out. */}
@@ -273,13 +262,11 @@ function Rig() {
         args={[0.04, 0.78, 1.15]}
         position={[CAB_W / 2, CAB_TOP - 0.72, NOSE_Z + 1.35]}
         color={GLASS}
-        outline={false}
       />
       <Part
         args={[0.03, CAB_TOP - 0.42 - (CAB_FLOOR + 0.08) - 0.12, 0.02]}
         position={[CAB_W / 2 + 0.01, (CAB_TOP - 0.42 + CAB_FLOOR + 0.08) / 2 - 0.06, CAB_REAR_Z - 0.06]}
         color={OUT}
-        outline={false}
       />
       <Part
         args={[0.03, 0.42, 0.38]}
@@ -320,21 +307,13 @@ function Rig() {
         />
       ))}
 
-      {/* axles and wheels */}
-      {[STEER_Z, ...DRIVE_ZS, ...TRAILER_ZS].map((z) => (
-        <mesh key={z} position={[0, TIRE_R, z]} rotation={[0, 0, Math.PI / 2]}>
-          <cylinderGeometry args={[0.095, 0.095, 2.62, 16]} />
-          <meshStandardMaterial color={CHASSIS} roughness={0.6} />
-        </mesh>
+      {/* Wheels: the near side only. From square-on the far side and the
+          inner duals are hidden behind these, and each wheel is three
+          meshes; drawing 22 of them cost a visible slice of first paint. */}
+      <Wheel x={TRACK_SINGLE} z={STEER_Z} />
+      {[...DRIVE_ZS, ...TRAILER_ZS].map((z) => (
+        <Wheel key={z} x={DUAL_OUTER} z={z} />
       ))}
-      {[-TRACK_SINGLE, TRACK_SINGLE].map((x) => (
-        <Wheel key={x} x={x} z={STEER_Z} />
-      ))}
-      {[...DRIVE_ZS, ...TRAILER_ZS].map((z) =>
-        [-DUAL_OUTER, -DUAL_INNER, DUAL_INNER, DUAL_OUTER].map((x) => (
-          <Wheel key={`${z}:${x}`} x={x} z={z} />
-        )),
-      )}
     </group>
   );
 }
@@ -449,13 +428,16 @@ function Labels({
             ? (dropLabels[compartment.dropIndex] ?? String(compartment.dropIndex + 1))
             : null;
         const widthPx = length * pxPerMetre;
-        const inside = widthPx >= INSIDE_MIN_PX;
+        const inside = width >= PHONE_MAX_PX && widthPx >= INSIDE_MIN_PX;
         const leader = LEADER_PX + (index % 2) * ROW_PX;
         // Inside a compartment the label may not cross the bulkhead, so it is
         // capped to the compartment's width and its long lines truncate. The
-        // registered figure of an override is the first thing to go.
-        const maxWidth = inside ? Math.max(INSIDE_MIN_PX - 12, widthPx - 12) : 140;
-        const roomForNominal = !inside || widthPx >= 110;
+        // registered figure of an override is the first thing to go. Lifted,
+        // a label may span towards both neighbours, which are on the other row.
+        const maxWidth = inside
+          ? Math.max(INSIDE_MIN_PX - 12, widthPx - 12)
+          : Math.min(160, Math.max(72, 2 * widthPx - 8));
+        const roomForNominal = maxWidth >= 110;
         // Receipt and drop-off ride on the label when the caller knows them.
         // The line is always reserved once `drops` is given, so an assigned
         // label and an empty one stay the same height.
@@ -471,8 +453,8 @@ function Labels({
             disabled={!interactive}
             onClick={flow ? undefined : () => onSelect?.(index)}
             onPointerDown={flow ? () => onPressStart(index) : undefined}
-            onMouseEnter={() => onHover(index)}
-            onMouseLeave={() => onHover(null)}
+            onPointerEnter={() => onHover(index)}
+            onPointerLeave={() => onHover(null)}
             onFocus={() => onHover(index)}
             onBlur={() => onHover(null)}
             aria-pressed={flow ? undefined : interactive ? assigned : undefined}
@@ -785,10 +767,6 @@ export function TankerDiagram({
             </div>
           }
         >
-          <ambientLight intensity={0.55} />
-          <directionalLight position={[16, 14, -4]} intensity={1.3} />
-          <directionalLight position={[-10, 7, 10]} intensity={0.4} />
-
           <Framing />
 
           <group>
@@ -810,7 +788,7 @@ export function TankerDiagram({
                   )}
                   <mesh
                     geometry={geometry}
-                    position={[TANK_HW + 0.01, TANK_Y, z]}
+                    position={[TANK_HW + 0.045, TANK_Y, z]}
                     onClick={interactive && !flow ? () => onSelect?.(index) : undefined}
                     onPointerDown={flow ? () => startPress(index) : undefined}
                     onPointerOver={
@@ -837,13 +815,14 @@ export function TankerDiagram({
                         through the near wall drew a pale band beside every
                         bulkhead. depthWrite off stops one compartment's wall
                         from punching a hole in the next. */}
-                    {/* Hover brightens the shell rather than fading the fill:
-                        a translucent fill shows its own domed end through
-                        itself as a dark band. */}
+                    {/* The shell sits in front of the fill so hovering — on
+                        the barrel or on its label — lightens the whole
+                        compartment; behind the fill it only ever lit the
+                        empty ones. */}
                     <meshBasicMaterial
                       color={BODY_WHITE}
                       transparent
-                      opacity={hovered === index ? 0.32 : 0.1}
+                      opacity={hovered === index ? 0.38 : 0.06}
                       depthWrite={false}
                     />
                   </mesh>

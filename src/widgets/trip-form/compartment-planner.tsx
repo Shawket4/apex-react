@@ -242,8 +242,9 @@ export function CompartmentPlanner({
           </span>
         </div>
 
-        {/* Which container. Existing ones first, then a new one. */}
-        <ChipGroup edgeBleed={false} className="gap-1">
+        {/* Which container. Existing ones first, then a new one. Wraps: the
+            popover is 288 px on a phone and four receipts do not fit a row. */}
+        <ChipGroup edgeBleed={false} className="flex-wrap gap-1 overflow-visible">
           {containers.map((c, drop) => isBlank(drop) && slot.dropIndex !== drop ? null : (
             <Chip
               key={drop}
@@ -399,7 +400,7 @@ export function CompartmentPlanner({
               <span className="text-[11px] font-medium text-muted-foreground">
                 {t('trips.form.gasType.heading')}
               </span>
-              <ChipGroup edgeBleed={false} className="gap-1">
+              <ChipGroup edgeBleed={false} className="flex-wrap gap-1 overflow-visible">
                 {GAS_TYPE_VALUES.map((gas) => (
                   <Chip
                     key={gas}
