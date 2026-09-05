@@ -968,11 +968,18 @@
         "blocked": "أسند كل الخزانات للحفظ.",
         "release": "إلغاء الإسناد",
         "newContainer": "حاوية جديدة",
+        "hint": "اضغط على خزان لإسناده. اسحب على طول الصهريج لتمديد إيصال واحد على عدة خزانات.",
+        "compartmentAria": "الخزان {{n}}، {{litres}} لتر، {{state}}",
+        "onReceipt": "إيصال {{receipt}}",
+        "removeContainerTitle": "إزالة هذه الحاوية؟",
+        "removeContainerDescription": "ستُزال {{name}} وخزاناتها من الرحلة.",
         "needsReceipt": "يحتاج رقم إيصال",
         "needsDropOff": "يحتاج نقطة تسليم",
         "noCompartments": "بلا خزانات",
         "missingProducts": "{{count}} خزان بلا منتج",
         "missingProducts_other": "{{count}} خزانات بلا منتج",
+        "invalidVolumes": "{{count}} خزان بلا لترات",
+        "invalidVolumes_other": "{{count}} خزانات بلا لترات",
         "noReceipt": "لا يوجد إيصال بعد",
         "empty": "فارغ"
       }

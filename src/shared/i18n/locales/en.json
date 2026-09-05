@@ -964,11 +964,18 @@
         "blocked": "Assign every compartment to save.",
         "release": "Release",
         "newContainer": "New container",
+        "hint": "Tap a compartment to assign it. Drag along the tank to run one receipt over several.",
+        "compartmentAria": "Compartment {{n}}, {{litres}} litres, {{state}}",
+        "onReceipt": "receipt {{receipt}}",
+        "removeContainerTitle": "Remove this container?",
+        "removeContainerDescription": "{{name}} and its compartments come off the trip.",
         "needsReceipt": "needs a receipt number",
         "needsDropOff": "needs a drop-off point",
         "noCompartments": "has no compartments",
         "missingProducts": "{{count}} compartment without a product",
         "missingProducts_other": "{{count}} compartments without a product",
+        "invalidVolumes": "{{count}} compartment with no litres",
+        "invalidVolumes_other": "{{count}} compartments with no litres",
         "noReceipt": "No receipt yet",
         "empty": "Empty"
       }

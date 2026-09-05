@@ -4,6 +4,7 @@ import { AlertTriangle, MapPin, Plus, RotateCcw, Trash2 } from 'lucide-react';
 
 import { Button } from '@/shared/ui/button';
 import { Checkbox } from '@/shared/ui/checkbox';
+import { ConfirmDialog } from '@/shared/ui/confirm-dialog';
 import { Chip, ChipGroup } from '@/shared/ui/chip-group';
 import { Input } from '@/shared/ui/input';
 import { Label } from '@/shared/ui/label';
@@ -13,6 +14,24 @@ import { formatNumber } from '@/shared/lib/format';
 import type { MappingDetail } from '@/entities/mapping/schemas';
 
 import { DropOffPickerModal } from './drop-off-picker-modal';
+import {
+  activeContainers,
+  assign,
+  choicesFor,
+  dragTarget,
+  freshContainer,
+  planIssues,
+  pruneBlanks,
+  releaseAll,
+  reindexAfterRemove,
+  reindexAfterRemovals,
+  release,
+  setGas,
+  setVolume,
+  type Plan,
+  type PlanContainer,
+  type PlanSlot,
+} from './compartment-plan';
 
 // three.js is the bulk of this route's chunk and only a truck with a
 // registered layout needs it, so it arrives on its own.
@@ -40,41 +59,22 @@ const TankerDiagram = React.lazy(() =>
 /* every assignment a second time and made the form twice as long as the    */
 /* picture that already said it.                                             */
 /*                                                                            */
-/* A popover is about one container. An assigned compartment shows its own;  */
-/* an empty one offers exactly two things — the container you last worked   */
-/* on, and a new one — because that is the whole decision when loading a    */
-/* truck: "same receipt as the last compartment, or a new receipt?". A list */
-/* of every container was the first version and it turned each tap into a  */
-/* lookup. The form always starts with one blank container, and a blank is */
-/* not a choice anyone makes, so "new" reuses it before adding another.     */
+/* Every state change goes through compartment-plan.ts, which is pure and    */
+/* tested; this file only decides what to show and which function a tap    */
+/* calls. A popover offers every real container plus "new"; the blank the  */
+/* form starts with is never a choice, and "new" reuses it before adding.  */
 /* The drop-off picker is rendered here rather than in the trip form so the */
 /* popover can step aside while the picker is up and come back after.       */
 /* -------------------------------------------------------------------------- */
 
-/** One compartment's planned state, indexed alongside the car's layout. */
-export interface CompartmentSlot {
-  /** Which drop took it, `null` while unassigned. */
-  dropIndex: number | null;
-  /** Product loaded. `''` until chosen. */
-  gasType: string;
-  /** Litres taken. Equals the car's registered figure unless overridden. */
-  volume: number;
-}
-
 export const GAS_TYPE_VALUES = ['80', '92', '95', 'diesel'] as const;
 export type GasTypeValue = (typeof GAS_TYPE_VALUES)[number];
 
-/** Build a fresh plan for a car's layout, everything unassigned. */
-export function emptyPlan(layout: number[]): CompartmentSlot[] {
-  return layout.map((volume) => ({ dropIndex: null, gasType: '', volume }));
-}
-
-export interface PlannerContainer {
-  receipt: string;
-  dropOff: string;
+/** What the planner needs to know about a container beyond the plan itself. */
+export interface PlannerContainer extends PlanContainer {
   fee: number;
   distance: number;
-  /** Rendered validation for this container, if any. */
+  /** Rendered validation the trip form owns (receipt serialization, duplicates). */
   issue: {
     severity: 'error' | 'warning';
     title: string;
@@ -84,118 +84,71 @@ export interface PlannerContainer {
   } | null;
 }
 
-export interface CompartmentPlannerProps {
+export interface CompartmentPlannerProps<C extends PlannerContainer> {
   /** The car's registered compartment volumes, in order. */
   layout: number[];
-  slots: CompartmentSlot[];
-  plate?: string;
-  containers: ReadonlyArray<PlannerContainer>;
-  maxContainers: number;
-  /** Which container a drag from an empty compartment extends. */
-  activeDrop: number;
-  onAssign: (compartmentIndex: number, dropIndex: number | null) => void;
-  onGasChange: (compartmentIndex: number, gasType: string) => void;
-  onVolumeChange: (compartmentIndex: number, volume: number) => void;
-  /** Starts a container and returns its index. */
-  onAddContainer: () => number;
+  plan: Plan<C>;
+  onPlanChange: (next: Plan<C>) => void;
+  /** Removal is separate: the form keeps index-keyed state it must reindex. */
   onRemoveContainer: (dropIndex: number) => void;
-  onReceiptChange: (dropIndex: number, receipt: string) => void;
+  blankContainer: () => C;
+  maxContainers: number;
+  plate?: string;
   onReceiptBlur: (dropIndex: number) => void;
   /** Route context for the drop-off picker; the picker is disabled until both are set. */
   company: string;
   terminal: string;
   onDropOffPicked: (dropIndex: number, dropOff: string, mapping?: MappingDetail) => void;
-  onClear: () => void;
   /** Permission >= 4. Reveals the per-compartment volume field. */
   canOverride: boolean;
-  /** Assigned compartments still without a product. */
-  missingProducts: number;
+  minReceiptLength: number;
 }
 
-export function CompartmentPlanner({
+export function CompartmentPlanner<C extends PlannerContainer>({
   layout,
-  slots,
-  plate,
-  containers,
-  maxContainers,
-  activeDrop,
-  onAssign,
-  onGasChange,
-  onVolumeChange,
-  onAddContainer,
+  plan,
+  onPlanChange,
   onRemoveContainer,
-  onReceiptChange,
+  blankContainer,
+  maxContainers,
+  plate,
   onReceiptBlur,
   company,
   terminal,
   onDropOffPicked,
-  onClear,
   canOverride,
-  missingProducts,
-}: CompartmentPlannerProps) {
+  minReceiptLength,
+}: CompartmentPlannerProps<C>) {
   const { t } = useTranslation();
+  const { slots, containers } = plan;
 
-  const assignedCount = slots.filter((s) => s.dropIndex !== null).length;
-  const unassigned = slots.length - assignedCount;
+  // A drag hands over several changes inside one pointer event, before React
+  // re-renders with the first. Each is applied to the latest plan, not to the
+  // one this render closed over, or the last write would win.
+  const planRef = React.useRef(plan);
+  planRef.current = plan;
+  const change = React.useCallback(
+    (f: (current: Plan<C>) => Plan<C>) => {
+      const next = f(planRef.current);
+      if (next === planRef.current) return;
+      planRef.current = next;
+      onPlanChange(next);
+    },
+    [onPlanChange],
+  );
 
   const [openIndex, setOpenIndex] = React.useState<number | null>(null);
-  const [picking, setPicking] = React.useState<number | null>(null);
-  /** The container the previous tap dealt with — what an empty compartment is offered first. */
+  /** Drop-off picker: which container, and which compartment's popover to come back to. */
+  const [picking, setPicking] = React.useState<{ drop: number; from: number } | null>(null);
+  const [removing, setRemoving] = React.useState<number | null>(null);
+  /** The container the previous tap dealt with — what a drag from an empty compartment extends. */
   const [lastDrop, setLastDrop] = React.useState<number | null>(null);
   const canPickDropOff = Boolean(company.trim() && terminal.trim());
 
-  const isBlank = React.useCallback(
-    (d: number) =>
-      !containers[d]?.receipt.trim() &&
-      !containers[d]?.dropOff.trim() &&
-      !slots.some((s) => s.dropIndex === d),
-    [containers, slots],
+  const issues = React.useMemo(
+    () => planIssues(plan, layout, minReceiptLength),
+    [plan, layout, minReceiptLength],
   );
-  const firstBlank = containers.findIndex((_, d) => isBlank(d));
-  const canAdd = firstBlank >= 0 || containers.length < maxContainers;
-
-  /** A container nobody has filled yet: a blank if there is one, else new. */
-  const freshContainer = React.useCallback(
-    () => (firstBlank >= 0 ? firstBlank : onAddContainer()),
-    [firstBlank, onAddContainer],
-  );
-
-  const realContainers = containers.filter((_, d) => !isBlank(d)).length;
-
-  // Opening an empty compartment when no container exists yet starts one, so
-  // the very first tap lands on a form rather than a lone "new" button. With
-  // containers about, the choice is the user's. Closing sweeps up any blank
-  // left behind — the trip form ignores blanks, but a phantom would confuse.
-  const handleOpenChange = (index: number | null) => {
-    setOpenIndex(index);
-    if (index !== null) {
-      const own = slots[index]?.dropIndex ?? null;
-      if (own !== null) setLastDrop(own);
-      else if (realContainers === 0 && canAdd) choose(index, freshContainer());
-    }
-    if (index === null && containers.length > 1) {
-      const blank = containers.findIndex((_, d) => isBlank(d));
-      if (blank >= 0) onRemoveContainer(blank);
-    }
-  };
-
-  const choose = (index: number, drop: number) => {
-    onAssign(index, drop);
-    setLastDrop(drop);
-  };
-
-  // What still stands between the plan and a save, per container, in the
-  // words of the popover that fixes it. Tapping one opens that popover.
-  const containerIssues = containers.flatMap((c, d) => {
-    if (isBlank(d)) return [];
-    const first = slots.findIndex((s) => s.dropIndex === d);
-    const problems = [
-      first < 0 ? t('trips.form.compartments.noCompartments') : null,
-      c.receipt.trim().length < 4 ? t('trips.form.compartments.needsReceipt') : null,
-      !c.dropOff.trim() ? t('trips.form.compartments.needsDropOff') : null,
-    ].filter((m): m is string => m !== null);
-    return problems.length === 0 ? [] : [{ d, first, problems }];
-  });
 
   const diagramCompartments = React.useMemo(
     () =>
@@ -207,43 +160,102 @@ export function CompartmentPlanner({
       })),
     [slots, layout],
   );
-
   const dropLabels = React.useMemo(
-    () => Array.from({ length: containers.length }, (_, i) => String(i + 1)),
-    [containers.length],
+    () => containers.map((_, d) => String(d + 1)),
+    [containers],
   );
-
   const drops = React.useMemo(
     () =>
       containers.map((c) => ({
-        receipt: c.receipt || undefined,
-        dropOff: c.dropOff || undefined,
+        receipt: c.receipt_no || undefined,
+        dropOff: c.drop_off_point || undefined,
       })),
     [containers],
   );
 
-  // A drag from an empty compartment needs a container to extend. The
-  // focused one if it has nothing yet, else the first with nothing, else a
-  // new one — the drag is how a fresh receipt is started without a tap.
+  const choose = (index: number, drop: number) => {
+    change((current) => assign(current, index, drop));
+    setLastDrop(drop);
+  };
+
+  const chooseNew = (index: number) => {
+    const made = freshContainer(planRef.current, blankContainer, maxContainers);
+    if (made.drop === null) return;
+    change(() => assign(made.plan, index, made.drop!));
+    setLastDrop(made.drop);
+  };
+
+  // Leaving a popover sweeps up any blank a switch of container left behind.
+  // The form ignores blanks, but a stale one would be reused with a
+  // misleading number. Removals go through the form's own channel, one by
+  // one, because it keeps index-keyed state of its own to shift; `lastDrop`
+  // is such an index here. Not while a dialog holds an index of its own —
+  // it would delete or fill the wrong container.
+  const prune = () => {
+    if (removing !== null || picking !== null) return;
+    const { removed } = pruneBlanks(planRef.current);
+    if (removed.length === 0) return;
+    removed.forEach((d) => onRemoveContainer(d));
+    setLastDrop((d) => reindexAfterRemovals(d, removed));
+  };
+
+  const handleOpenChange = (index: number | null) => {
+    setOpenIndex(index);
+    prune();
+    if (index !== null) {
+      const own = slots[index]?.dropIndex ?? null;
+      if (own !== null) setLastDrop(own);
+    }
+  };
+
+  const removeNow = (drop: number) => {
+    setRemoving(null);
+    setOpenIndex(null);
+    setLastDrop((d) => reindexAfterRemove(d, drop));
+    onRemoveContainer(drop);
+  };
+
   const resolveDragDrop = React.useCallback(
     (index: number) => {
-      const own = slots[index]?.dropIndex;
-      if (own != null) return own;
-      if (lastDrop !== null && lastDrop < containers.length && !isBlank(lastDrop)) return lastDrop;
-      const taken = new Set(slots.map((s) => s.dropIndex));
-      if (!taken.has(activeDrop) && activeDrop < containers.length) return activeDrop;
-      for (let d = 0; d < containers.length; d++) if (!taken.has(d)) return d;
-      return canAdd ? freshContainer() : null;
+      const made = dragTarget(planRef.current, index, lastDrop, blankContainer, maxContainers);
+      change(() => made.plan);
+      if (made.drop !== null) setLastDrop(made.drop);
+      return made.drop;
     },
-    [slots, lastDrop, isBlank, activeDrop, containers.length, canAdd, freshContainer],
+    [lastDrop, blankContainer, maxContainers, change],
+  );
+
+  const patchContainer = (d: number, patch: Partial<C>) =>
+    change((current) => ({
+      ...current,
+      containers: current.containers.map((c, i) => (i === d ? { ...c, ...patch } : c)),
+    }));
+
+  const containerChip = (d: number, index: number, active: boolean) => (
+    <Chip
+      key={d}
+      type="button"
+      active={active}
+      aria-pressed={active}
+      onClick={() => choose(index, d)}
+      className="h-8 min-w-0 max-w-[160px] px-2.5 text-[11px]"
+    >
+      <span
+        className="me-1.5 inline-block h-2.5 w-2.5 shrink-0 rounded-full align-middle"
+        style={{ backgroundColor: dropColor(d) }}
+        aria-hidden
+      />
+      <span className="truncate">
+        {containers[d]?.receipt_no.trim() || t('trips.form.containerN', { n: d + 1 })}
+      </span>
+    </Chip>
   );
 
   const renderPopover = (index: number) => {
     const slot = slots[index];
     if (!slot) return null;
-    const assigned = slot.dropIndex !== null;
-    const container = slot.dropIndex !== null ? containers[slot.dropIndex] : undefined;
-    const d = slot.dropIndex ?? -1;
+    const { own, containers: choices, canNew } = choicesFor(plan, index, maxContainers);
+    const container = own !== null ? containers[own] : undefined;
     const hasMapping = container ? container.fee > 0 || container.distance > 0 : false;
 
     return (
@@ -257,72 +269,52 @@ export function CompartmentPlanner({
           </span>
         </div>
 
-        {!assigned && (
-          <ChipGroup edgeBleed={false} className="flex-wrap gap-1 overflow-visible">
-            {lastDrop !== null && lastDrop < containers.length && !isBlank(lastDrop) && (
-              <Chip
-                type="button"
-                onClick={() => choose(index, lastDrop)}
-                className="h-8 min-w-0 max-w-[160px] px-2.5 text-[11px]"
-              >
-                <span
-                  className="me-1.5 inline-block h-2.5 w-2.5 shrink-0 rounded-full align-middle"
-                  style={{ backgroundColor: dropColor(lastDrop) }}
-                  aria-hidden
-                />
-                <span className="truncate">
-                  {containers[lastDrop]?.receipt || t('trips.form.containerN', { n: lastDrop + 1 })}
-                </span>
-              </Chip>
-            )}
-            {canAdd && (
-              <Chip
-                type="button"
-                onClick={() => choose(index, freshContainer())}
-                className="h-8 min-w-0 px-2.5 text-[11px]"
-              >
-                <Plus className="me-1 h-3 w-3" />
-                {t('trips.form.compartments.newContainer')}
-              </Chip>
-            )}
-          </ChipGroup>
-        )}
+        {/* Every real container, then new. Wraps: the popover is 288 px on a
+            phone and four receipts do not fit a row. */}
+        <ChipGroup edgeBleed={false} className="flex-wrap gap-1 overflow-visible">
+          {choices.map((d) => containerChip(d, index, own === d))}
+          {canNew && (
+            <Chip
+              type="button"
+              onClick={() => chooseNew(index)}
+              className="h-8 min-w-0 px-2.5 text-[11px]"
+            >
+              <Plus className="me-1 h-3 w-3" />
+              {t('trips.form.compartments.newContainer')}
+            </Chip>
+          )}
+          {own !== null && (
+            <Chip
+              type="button"
+              onClick={() => change((current) => release(current, index, layout))}
+              className="h-8 min-w-0 px-2.5 text-[11px]"
+            >
+              {t('trips.form.compartments.release')}
+            </Chip>
+          )}
+        </ChipGroup>
 
-        {container && (
-          <div
-            className="space-y-2.5 rounded-md border p-2.5"
-            style={{ borderColor: dropColor(d) }}
-          >
+        {container && own !== null && (
+          <div className="space-y-2.5 rounded-md border p-2.5" style={{ borderColor: dropColor(own) }}>
             <div className="flex items-center justify-between gap-2">
               <span className="flex items-center gap-1.5 text-xs font-semibold">
                 <span
                   className="inline-block h-2.5 w-2.5 rounded-full"
-                  style={{ backgroundColor: dropColor(d) }}
+                  style={{ backgroundColor: dropColor(own) }}
                   aria-hidden
                 />
-                {t('trips.form.containerN', { n: d + 1 })}
+                {t('trips.form.containerN', { n: own + 1 })}
               </span>
-              <span className="flex items-center gap-1">
-                <Chip
-                  type="button"
-                  onClick={() => onAssign(index, null)}
-                  className="h-7 min-w-0 px-2 text-[11px]"
-                >
-                  {t('trips.form.compartments.release')}
-                </Chip>
-              {containers.length > 1 && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => onRemoveContainer(d)}
-                  className="h-6 w-6 text-destructive hover:bg-destructive/10 hover:text-destructive"
-                  aria-label={t('common.remove')}
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
-              )}
-              </span>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setRemoving(own)}
+                className="h-8 gap-1 px-2 text-[11px] text-destructive hover:bg-destructive/10 hover:text-destructive"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                {t('common.remove')}
+              </Button>
             </div>
 
             {container.issue && (
@@ -357,15 +349,15 @@ export function CompartmentPlanner({
             )}
 
             <div className="space-y-1">
-              <Label htmlFor={`receipt-${d}`} className="text-[11px]">
+              <Label htmlFor={`receipt-${own}`} className="text-[11px]">
                 {t('trips.fields.receiptNo')}
                 <span className="text-destructive">*</span>
               </Label>
               <Input
-                id={`receipt-${d}`}
-                value={container.receipt}
-                onChange={(e) => onReceiptChange(d, e.target.value)}
-                onBlur={() => onReceiptBlur(d)}
+                id={`receipt-${own}`}
+                value={container.receipt_no}
+                onChange={(e) => patchContainer(own, { receipt_no: e.target.value } as Partial<C>)}
+                onBlur={() => onReceiptBlur(own)}
                 placeholder="WT-12345"
                 className={cn(
                   'h-8 tabular-nums',
@@ -388,14 +380,14 @@ export function CompartmentPlanner({
                 onClick={() => {
                   // The picker is a dialog and popovers float above dialogs,
                   // so this one steps aside and comes back when it closes.
-                  setPicking(d);
+                  setPicking({ drop: own, from: index });
                   setOpenIndex(null);
                 }}
                 className="h-8 w-full justify-start gap-1.5 px-2 font-normal disabled:opacity-40"
               >
                 <MapPin className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                <span className={cn('truncate', !container.dropOff && 'text-muted-foreground')}>
-                  {container.dropOff ||
+                <span className={cn('truncate', !container.drop_off_point && 'text-muted-foreground')}>
+                  {container.drop_off_point ||
                     (canPickDropOff
                       ? t('trips.form.placeholder.selectDropOff')
                       : t('trips.form.placeholder.selectCompanyFirst'))}
@@ -419,7 +411,7 @@ export function CompartmentPlanner({
                     type="button"
                     active={slot.gasType === gas}
                     aria-pressed={slot.gasType === gas}
-                    onClick={() => onGasChange(index, slot.gasType === gas ? '' : gas)}
+                    onClick={() => change((current) => setGas(current, index, slot.gasType === gas ? '' : gas))}
                     className="h-7 min-w-0 px-2 text-[11px]"
                   >
                     <span
@@ -444,7 +436,7 @@ export function CompartmentPlanner({
                   min={0}
                   step={100}
                   value={slot.volume || ''}
-                  onChange={(e) => onVolumeChange(index, Number(e.target.value) || 0)}
+                  onChange={(e) => change((current) => setVolume(current, index, Number(e.target.value)))}
                   className="h-8 w-28 tabular-nums"
                 />
               </div>
@@ -455,6 +447,8 @@ export function CompartmentPlanner({
     );
   };
 
+  const assignedCount = slots.length - issues.unassigned;
+
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-end gap-1.5">
@@ -462,7 +456,7 @@ export function CompartmentPlanner({
           type="button"
           variant="ghost"
           size="sm"
-          onClick={onClear}
+          onClick={() => change((current) => releaseAll(current, layout))}
           disabled={assignedCount === 0}
         >
           <RotateCcw />
@@ -474,29 +468,49 @@ export function CompartmentPlanner({
         <React.Suspense fallback={<div className="aspect-[16/10] w-full animate-pulse rounded-md bg-muted/40 sm:aspect-[16/6]" />}>
         <TankerDiagram
           compartments={diagramCompartments}
-          activeDrop={activeDrop}
+          activeDrop={lastDrop}
           dropLabels={dropLabels}
           plate={plate}
-          onAssign={onAssign}
+          onAssign={(index, drop) => change((current) => assign(current, index, drop))}
           renderPopover={renderPopover}
           resolveDragDrop={resolveDragDrop}
           drops={drops}
           openIndex={openIndex}
           onOpenIndexChange={handleOpenChange}
           emptyLabel={t('trips.form.compartments.empty')}
+          describeCompartment={(index, nominal, dropLabel) =>
+            t('trips.form.compartments.compartmentAria', {
+              n: index + 1,
+              litres: formatNumber(nominal, 0),
+              state:
+                dropLabel !== null && slots[index]?.dropIndex !== null
+                  ? t('trips.form.compartments.onReceipt', {
+                      receipt:
+                        containers[slots[index].dropIndex!]?.receipt_no.trim() ||
+                        t('trips.form.containerN', { n: (slots[index].dropIndex ?? 0) + 1 }),
+                    })
+                  : t('trips.form.compartments.empty'),
+            })
+          }
           aria-label={t('trips.form.compartments.diagramLabel', {
             plate: plate ?? '',
           })}
         />
         </React.Suspense>
+        <p className="mt-2 text-[11px] text-muted-foreground">{t('trips.form.compartments.hint')}</p>
       </div>
 
-      {unassigned > 0 && (
+      {issues.unassigned > 0 && (
         <p className="text-[12px] text-muted-foreground">
-          {t('trips.form.compartments.unassignedCount', { count: unassigned })}
+          {t('trips.form.compartments.unassignedCount', { count: issues.unassigned })}
         </p>
       )}
-      {missingProducts > 0 && (
+      {issues.invalidVolumes > 0 && (
+        <p className="text-[12px] text-destructive">
+          {t('trips.form.compartments.invalidVolumes', { count: issues.invalidVolumes })}
+        </p>
+      )}
+      {issues.missingProducts > 0 && (
         <button
           type="button"
           onClick={() => {
@@ -505,31 +519,49 @@ export function CompartmentPlanner({
           }}
           className="block text-[12px] text-warning underline-offset-2 hover:underline"
         >
-          {t('trips.form.compartments.missingProducts', { count: missingProducts })}
+          {t('trips.form.compartments.missingProducts', { count: issues.missingProducts })}
         </button>
       )}
-      {containerIssues.length > 0 && (
+      {issues.containers.length > 0 && (
         <ul className="space-y-1 text-[12px]">
-          {containerIssues.map(({ d, first, problems }) => (
-            <li key={d} className="flex flex-wrap items-center gap-x-2 gap-y-1">
-              <button
-                type="button"
-                onClick={() => (first >= 0 ? handleOpenChange(first) : onRemoveContainer(d))}
-                className="inline-flex items-center gap-1.5 font-medium text-foreground underline-offset-2 hover:underline"
-              >
-                <span
-                  className="inline-block h-2 w-2 rounded-full"
-                  style={{ backgroundColor: dropColor(d) }}
-                  aria-hidden
-                />
-                {containers[d]?.receipt.trim() || t('trips.form.containerN', { n: d + 1 })}
-              </button>
-              <span className="text-warning">{problems.join(' · ')}</span>
-              {first < 0 && (
-                <span className="text-muted-foreground">({t('common.remove')})</span>
-              )}
-            </li>
-          ))}
+          {issues.containers.map(({ drop, noCompartments, receiptTooShort, noDropOff }) => {
+            const first = slots.findIndex((s) => s.dropIndex === drop);
+            const problems = [
+              noCompartments ? t('trips.form.compartments.noCompartments') : null,
+              receiptTooShort ? t('trips.form.compartments.needsReceipt') : null,
+              noDropOff ? t('trips.form.compartments.needsDropOff') : null,
+            ].filter((m): m is string => m !== null);
+            return (
+              <li key={drop} className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                <span className="inline-flex items-center gap-1.5 font-medium">
+                  <span
+                    className="inline-block h-2 w-2 rounded-full"
+                    style={{ backgroundColor: dropColor(drop) }}
+                    aria-hidden
+                  />
+                  {containers[drop]?.receipt_no.trim() || t('trips.form.containerN', { n: drop + 1 })}
+                </span>
+                <span className="text-warning">{problems.join(' · ')}</span>
+                {first >= 0 ? (
+                  <button
+                    type="button"
+                    onClick={() => handleOpenChange(first)}
+                    className="text-foreground underline underline-offset-2"
+                  >
+                    {t('common.edit')}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setRemoving(drop)}
+                    className="text-destructive underline underline-offset-2"
+                  >
+                    {t('common.remove')}
+                  </button>
+                )}
+              </li>
+            );
+          })}
         </ul>
       )}
 
@@ -537,19 +569,38 @@ export function CompartmentPlanner({
         open={picking !== null}
         onOpenChange={(open) => {
           if (open) return;
-          const drop = picking;
+          const from = picking?.from ?? null;
           setPicking(null);
           // Back to the compartment whose form sent us here.
-          const index = drop === null ? -1 : slots.findIndex((s) => s.dropIndex === drop);
-          if (index >= 0) setOpenIndex(index);
+          if (from !== null && from < slots.length) setOpenIndex(from);
         }}
         company={company}
         terminal={terminal}
-        value={picking !== null ? (containers[picking]?.dropOff ?? '') : ''}
+        value={picking !== null ? (containers[picking.drop]?.drop_off_point ?? '') : ''}
         onSelect={(dropOff, mapping) => {
-          if (picking !== null) onDropOffPicked(picking, dropOff, mapping);
+          if (picking !== null) onDropOffPicked(picking.drop, dropOff, mapping);
+        }}
+      />
+
+      <ConfirmDialog
+        open={removing !== null}
+        onOpenChange={(open) => !open && setRemoving(null)}
+        title={t('trips.form.compartments.removeContainerTitle')}
+        description={t('trips.form.compartments.removeContainerDescription', {
+          name:
+            removing !== null
+              ? containers[removing]?.receipt_no.trim() ||
+                t('trips.form.containerN', { n: removing + 1 })
+              : '',
+        })}
+        confirmLabel={t('common.remove')}
+        onConfirm={() => {
+          if (removing !== null) removeNow(removing);
         }}
       />
     </div>
   );
 }
+
+export type { PlanSlot as CompartmentSlot };
+export { activeContainers };

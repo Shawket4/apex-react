@@ -88,11 +88,15 @@ import {
 /* A receipt is several compartments, never the other way round, so the       */
 /* gestures are about receipts. Tap a compartment: a popover, whose content   */
 /* the caller renders — in the trip form it is the container form itself.    */
-/* Press and drag across the barrel: every compartment the pointer crosses   */
-/* joins the receipt the drag started on; from an empty compartment the      */
-/* caller says which (it may create one). Hit-testing for the drag is done   */
-/* from the pointer's x alone, because a touch that starts on a label is     */
-/* captured by that label and the canvas never hears about it.               */
+/* Press and drag across the barrel: every compartment between the start and */
+/* the pointer joins the receipt the drag started on, and backing up gives   */
+/* them back. From an empty compartment the caller says which receipt (it    */
+/* may create one) — asked on the first crossing, not on the press, so a     */
+/* plain tap never creates anything. Hit-testing for the drag is done from   */
+/* the pointer's x alone, because a touch that starts on a label is captured */
+/* by that label and the canvas never hears about it. The tap itself is the  */
+/* click event, which a keyboard produces too; a drag swallows the click     */
+/* that follows it.                                                          */
 /* -------------------------------------------------------------------------- */
 
 /** One compartment as the diagram needs to draw it. */
@@ -138,6 +142,8 @@ export interface TankerDiagramProps {
   /** Controlled popover: which compartment's is open. */
   openIndex?: number | null;
   onOpenIndexChange?: (compartmentIndex: number | null) => void;
+  /** Localized accessible name for a compartment's control. */
+  describeCompartment?: (compartmentIndex: number, nominal: number, dropLabel: string | null) => string;
 }
 
 export { gasCode, gasColor, dropColor } from './palette';
@@ -163,6 +169,7 @@ const CAMERA_X = 40;
 function Framing() {
   const camera = useThree((state) => state.camera);
   const size = useThree((state) => state.size);
+  const invalidate = useThree((state) => state.invalidate);
   React.useEffect(() => {
     if (!(camera instanceof THREE.OrthographicCamera)) return;
     const zoom = size.width / FRAME_W;
@@ -171,7 +178,12 @@ function Framing() {
     camera.position.set(CAMERA_X, visibleH / 2 - GROUND_MARGIN, FRAME_Z);
     camera.lookAt(0, camera.position.y, FRAME_Z);
     camera.updateProjectionMatrix();
-  }, [camera, size]);
+    // The first frame was drawn with the default camera before this effect
+    // ran, and an on-demand loop will not draw another on its own: without
+    // this the truck sat as a speck, with every label misplaced, until a
+    // resize or a hover happened to ask for a frame.
+    invalidate();
+  }, [camera, size, invalidate]);
   return null;
 }
 
@@ -396,8 +408,10 @@ function Labels({
   onOpenChange,
   onSelect,
   onPressStart,
+  onTap,
   renderPopover,
   drops,
+  describeCompartment,
 }: {
   cells: Cell[];
   activeDrop: number | null;
@@ -411,8 +425,10 @@ function Labels({
   onOpenChange: (index: number | null) => void;
   onSelect?: (compartmentIndex: number) => void;
   onPressStart: (index: number) => void;
+  onTap: (index: number) => void;
   renderPopover?: TankerDiagramProps['renderPopover'];
   drops?: TankerDiagramProps['drops'];
+  describeCompartment?: TankerDiagramProps['describeCompartment'];
 }) {
   const width = useThree((state) => state.size.width);
   const pxPerMetre = width / FRAME_W;
@@ -452,7 +468,7 @@ function Labels({
             type="button"
             data-compartment-label={index}
             disabled={!interactive}
-            onClick={flow ? undefined : () => onSelect?.(index)}
+            onClick={flow ? () => onTap(index) : () => onSelect?.(index)}
             onPointerDown={flow ? () => onPressStart(index) : undefined}
             onPointerEnter={() => onHover(index)}
             onPointerLeave={() => onHover(null)}
@@ -460,11 +476,14 @@ function Labels({
             onBlur={() => onHover(null)}
             aria-pressed={flow ? undefined : interactive ? assigned : undefined}
             aria-expanded={flow ? open === index : undefined}
-            aria-label={`Compartment ${index + 1}, ${compartment.nominal.toLocaleString()} litres${
-              assigned ? `, drop ${label}` : `, ${emptyLabel.toLowerCase()}`
-            }`}
+            aria-label={
+              describeCompartment?.(index, compartment.nominal, label) ??
+              `Compartment ${index + 1}, ${compartment.nominal.toLocaleString()} litres${
+                assigned ? `, drop ${label}` : `, ${emptyLabel.toLowerCase()}`
+              }`
+            }
             className={cn(
-              'pointer-events-auto flex w-max min-w-[56px] flex-col items-center justify-center gap-0.5',
+              'pointer-events-auto flex w-max min-w-[56px] select-none flex-col items-center justify-center gap-0.5',
               withDetail ? 'h-12' : 'h-9',
               'rounded-md border bg-card/95 px-1.5 shadow-sm transition-[transform,box-shadow,background-color] duration-150',
               interactive && 'cursor-pointer hover:bg-card',
@@ -546,7 +565,9 @@ function Labels({
               // read as focus leaving and closed the popover on arrival.
               onInteractOutside={(e) => {
                 const target = e.target as Element | null;
-                if (target?.closest?.('[role="dialog"], [data-compartment-label]')) e.preventDefault();
+                if (target?.closest?.('[role="dialog"], [data-compartment-label], [data-tanker-frame]')) {
+                  e.preventDefault();
+                }
               }}
               onFocusOutside={(e) => {
                 const target = e.target as Element | null;
@@ -611,6 +632,7 @@ export function TankerDiagram({
   drops,
   openIndex,
   onOpenIndexChange,
+  describeCompartment,
 }: TankerDiagramProps) {
   const tokens = useThemeTokens(TOKENS);
   const flow = !readOnly && typeof onAssign === 'function';
@@ -710,40 +732,81 @@ export function TankerDiagram({
   const compartmentsRef = React.useRef(compartments);
   compartmentsRef.current = compartments;
 
+  // A press arms a drag; the drag claims every compartment between its start
+  // and the pointer, restoring whatever a compartment had when the pointer
+  // backs off it. A press that never crosses into another compartment is a
+  // tap, and the tap is delivered by the click event that follows — the same
+  // event a keyboard produces — so the press only has to remember to swallow
+  // that click when it did turn into a drag.
+  const swallowClickRef = React.useRef(false);
   const startPress = React.useCallback(
     (index: number) => {
       if (!flow || !onAssign) return;
-      const drop = resolveDragDrop
-        ? resolveDragDrop(index)
-        : (compartmentsRef.current[index]?.dropIndex ?? activeDrop);
-      let moved = false;
+      let drop: number | null | undefined;
+      const claimed = new Map<number, number | null>();
       let last = index;
       const onMove = (ev: PointerEvent) => {
         const under = cellAt(ev.clientX);
         if (under === null || under === last) return;
-        moved = true;
-        if (drop !== null) {
-          // The compartment the drag started on comes along too: an empty one
-          // is the natural place to begin a new receipt's run.
-          if (last === index && compartmentsRef.current[index]?.dropIndex !== drop) {
-            onAssign(index, drop);
-          }
-          if (compartmentsRef.current[under]?.dropIndex !== drop) onAssign(under, drop);
-        }
         last = under;
+        if (drop === undefined) {
+          drop = resolveDragDrop
+            ? resolveDragDrop(index)
+            : (compartmentsRef.current[index]?.dropIndex ?? activeDrop);
+          swallowClickRef.current = true;
+        }
+        if (drop === null) return;
+        const lo = Math.min(index, under);
+        const hi = Math.max(index, under);
+        claimed.forEach((previous, i) => {
+          if (i < lo || i > hi) {
+            onAssign(i, previous);
+            claimed.delete(i);
+          }
+        });
+        for (let i = lo; i <= hi; i++) {
+          if (claimed.has(i)) continue;
+          const previous = compartmentsRef.current[i]?.dropIndex ?? null;
+          claimed.set(i, previous);
+          if (previous !== drop) onAssign(i, drop);
+        }
       };
-      const onUp = () => {
+      const stop = () => {
         window.removeEventListener('pointermove', onMove);
-        window.removeEventListener('pointerup', onUp);
-        window.removeEventListener('pointercancel', onUp);
-        if (!moved) setOpen(openRef.current === index ? null : index);
+        window.removeEventListener('pointerup', stop);
+        window.removeEventListener('pointercancel', cancel);
+        // The click a drag produces, if any, arrives right after pointerup;
+        // a drag that ends over a different element, or a touch drag,
+        // produces none, and the flag must not eat the next real tap.
+        window.setTimeout(() => (swallowClickRef.current = false), 0);
+      };
+      // The browser took the gesture (a scroll, usually): neither a tap nor
+      // a drag — whatever the drag claimed so far goes back.
+      const cancel = () => {
+        stop();
+        claimed.forEach((previous, i) => onAssign(i, previous));
+        claimed.clear();
       };
       window.addEventListener('pointermove', onMove);
-      window.addEventListener('pointerup', onUp);
-      window.addEventListener('pointercancel', onUp);
+      window.addEventListener('pointerup', stop);
+      window.addEventListener('pointercancel', cancel);
     },
-    [flow, onAssign, activeDrop, cellAt, resolveDragDrop, setOpen],
+    [flow, onAssign, activeDrop, cellAt, resolveDragDrop],
   );
+
+  const tap = React.useCallback(
+    (index: number) => {
+      if (swallowClickRef.current) {
+        swallowClickRef.current = false;
+        return;
+      }
+      setOpen(openRef.current === index ? null : index);
+    },
+    [setOpen],
+  );
+
+  // The pointer cursor is set on <body>; put it back if we unmount mid-hover.
+  React.useEffect(() => () => void (document.body.style.cursor = ''), []);
 
   if (compartments.length === 0) return null;
 
@@ -761,6 +824,7 @@ export function TankerDiagram({
           scrolling. */}
       <div
         ref={frameRef}
+        data-tanker-frame
         className="relative aspect-[16/10] w-full sm:aspect-[16/6]"
         style={{ touchAction: 'pan-y' }}
       >
@@ -798,7 +862,9 @@ export function TankerDiagram({
                   <mesh
                     geometry={geometry}
                     position={[TANK_HW + 0.045, TANK_Y, z]}
-                    onClick={interactive && !flow ? () => onSelect?.(index) : undefined}
+                    onClick={
+                      flow ? () => tap(index) : interactive ? () => onSelect?.(index) : undefined
+                    }
                     onPointerDown={flow ? () => startPress(index) : undefined}
                     onPointerOver={
                       interactive
@@ -862,8 +928,10 @@ export function TankerDiagram({
               onOpenChange={setOpen}
               onSelect={onSelect}
               onPressStart={startPress}
+              onTap={tap}
               renderPopover={renderPopover}
               drops={drops}
+              describeCompartment={describeCompartment}
             />
           </group>
 
