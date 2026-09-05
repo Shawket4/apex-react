@@ -450,6 +450,7 @@ function Labels({
         const button = (
           <button
             type="button"
+            data-compartment-label={index}
             disabled={!interactive}
             onClick={flow ? undefined : () => onSelect?.(index)}
             onPointerDown={flow ? () => onPressStart(index) : undefined}
@@ -539,9 +540,17 @@ function Labels({
               side="top"
               className="w-72 p-3"
               // The container form opens a drop-off picker dialog from in
-              // here; a click inside that dialog is not "outside" this.
+              // here; a click inside that dialog is not "outside" this. Nor
+              // is the label the popover hangs off: on a phone the tap that
+              // opened it also focuses the label a moment later, which Radix
+              // read as focus leaving and closed the popover on arrival.
               onInteractOutside={(e) => {
-                if ((e.target as Element | null)?.closest?.('[role="dialog"]')) e.preventDefault();
+                const target = e.target as Element | null;
+                if (target?.closest?.('[role="dialog"], [data-compartment-label]')) e.preventDefault();
+              }}
+              onFocusOutside={(e) => {
+                const target = e.target as Element | null;
+                if (target?.closest?.('[data-compartment-label]')) e.preventDefault();
               }}
             >
               {renderPopover(index, () => onOpenChange(null))}

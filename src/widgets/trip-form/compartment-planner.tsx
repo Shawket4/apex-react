@@ -40,12 +40,15 @@ const TankerDiagram = React.lazy(() =>
 /* every assignment a second time and made the form twice as long as the    */
 /* picture that already said it.                                             */
 /*                                                                            */
-/* The form always starts with one blank container, but a blank is not a     */
-/* choice anyone makes, so blanks never appear as chips: tapping an empty    */
-/* compartment drops it straight into a fresh container's form, and "New     */
-/* container" reuses a blank before adding another. The drop-off picker is  */
-/* rendered here rather than in the trip form so the popover can step aside */
-/* while the picker is up and come back to the same compartment after.      */
+/* A popover is about one container. An assigned compartment shows its own;  */
+/* an empty one offers exactly two things — the container you last worked   */
+/* on, and a new one — because that is the whole decision when loading a    */
+/* truck: "same receipt as the last compartment, or a new receipt?". A list */
+/* of every container was the first version and it turned each tap into a  */
+/* lookup. The form always starts with one blank container, and a blank is */
+/* not a choice anyone makes, so "new" reuses it before adding another.     */
+/* The drop-off picker is rendered here rather than in the trip form so the */
+/* popover can step aside while the picker is up and come back after.       */
 /* -------------------------------------------------------------------------- */
 
 /** One compartment's planned state, indexed alongside the car's layout. */
@@ -137,6 +140,8 @@ export function CompartmentPlanner({
 
   const [openIndex, setOpenIndex] = React.useState<number | null>(null);
   const [picking, setPicking] = React.useState<number | null>(null);
+  /** The container the previous tap dealt with — what an empty compartment is offered first. */
+  const [lastDrop, setLastDrop] = React.useState<number | null>(null);
   const canPickDropOff = Boolean(company.trim() && terminal.trim());
 
   const isBlank = React.useCallback(
@@ -155,19 +160,28 @@ export function CompartmentPlanner({
     [firstBlank, onAddContainer],
   );
 
-  // Opening an unassigned compartment starts a container for it, so the form
-  // the user asked for is already there when the popover lands. Closing
-  // sweeps up any blank the switch to another container left behind — the
-  // trip form ignores blanks, but a phantom chip would still confuse.
+  const realContainers = containers.filter((_, d) => !isBlank(d)).length;
+
+  // Opening an empty compartment when no container exists yet starts one, so
+  // the very first tap lands on a form rather than a lone "new" button. With
+  // containers about, the choice is the user's. Closing sweeps up any blank
+  // left behind — the trip form ignores blanks, but a phantom would confuse.
   const handleOpenChange = (index: number | null) => {
     setOpenIndex(index);
-    if (index !== null && slots[index]?.dropIndex === null && canAdd) {
-      onAssign(index, freshContainer());
+    if (index !== null) {
+      const own = slots[index]?.dropIndex ?? null;
+      if (own !== null) setLastDrop(own);
+      else if (realContainers === 0 && canAdd) choose(index, freshContainer());
     }
     if (index === null && containers.length > 1) {
       const blank = containers.findIndex((_, d) => isBlank(d));
       if (blank >= 0) onRemoveContainer(blank);
     }
+  };
+
+  const choose = (index: number, drop: number) => {
+    onAssign(index, drop);
+    setLastDrop(drop);
   };
 
   // What still stands between the plan and a save, per container, in the
@@ -215,12 +229,13 @@ export function CompartmentPlanner({
     (index: number) => {
       const own = slots[index]?.dropIndex;
       if (own != null) return own;
+      if (lastDrop !== null && lastDrop < containers.length && !isBlank(lastDrop)) return lastDrop;
       const taken = new Set(slots.map((s) => s.dropIndex));
       if (!taken.has(activeDrop) && activeDrop < containers.length) return activeDrop;
       for (let d = 0; d < containers.length; d++) if (!taken.has(d)) return d;
       return canAdd ? freshContainer() : null;
     },
-    [slots, activeDrop, containers.length, canAdd, freshContainer],
+    [slots, lastDrop, isBlank, activeDrop, containers.length, canAdd, freshContainer],
   );
 
   const renderPopover = (index: number) => {
@@ -242,48 +257,36 @@ export function CompartmentPlanner({
           </span>
         </div>
 
-        {/* Which container. Existing ones first, then a new one. Wraps: the
-            popover is 288 px on a phone and four receipts do not fit a row. */}
-        <ChipGroup edgeBleed={false} className="flex-wrap gap-1 overflow-visible">
-          {containers.map((c, drop) => isBlank(drop) && slot.dropIndex !== drop ? null : (
-            <Chip
-              key={drop}
-              type="button"
-              active={slot.dropIndex === drop}
-              aria-pressed={slot.dropIndex === drop}
-              onClick={() => onAssign(index, drop)}
-              className="h-8 min-w-0 max-w-[140px] px-2.5 text-[11px]"
-            >
-              <span
-                className="me-1.5 inline-block h-2.5 w-2.5 shrink-0 rounded-full align-middle"
-                style={{ backgroundColor: dropColor(drop) }}
-                aria-hidden
-              />
-              <span className="truncate">
-                {c.receipt || t('trips.form.containerN', { n: drop + 1 })}
-              </span>
-            </Chip>
-          ))}
-          {canAdd && !(slot.dropIndex !== null && isBlank(slot.dropIndex)) && (
-            <Chip
-              type="button"
-              onClick={() => onAssign(index, freshContainer())}
-              className="h-8 min-w-0 px-2.5 text-[11px]"
-            >
-              <Plus className="me-1 h-3 w-3" />
-              {t('trips.form.compartments.newContainer')}
-            </Chip>
-          )}
-          {assigned && (
-            <Chip
-              type="button"
-              onClick={() => onAssign(index, null)}
-              className="h-8 min-w-0 px-2.5 text-[11px]"
-            >
-              {t('trips.form.compartments.release')}
-            </Chip>
-          )}
-        </ChipGroup>
+        {!assigned && (
+          <ChipGroup edgeBleed={false} className="flex-wrap gap-1 overflow-visible">
+            {lastDrop !== null && lastDrop < containers.length && !isBlank(lastDrop) && (
+              <Chip
+                type="button"
+                onClick={() => choose(index, lastDrop)}
+                className="h-8 min-w-0 max-w-[160px] px-2.5 text-[11px]"
+              >
+                <span
+                  className="me-1.5 inline-block h-2.5 w-2.5 shrink-0 rounded-full align-middle"
+                  style={{ backgroundColor: dropColor(lastDrop) }}
+                  aria-hidden
+                />
+                <span className="truncate">
+                  {containers[lastDrop]?.receipt || t('trips.form.containerN', { n: lastDrop + 1 })}
+                </span>
+              </Chip>
+            )}
+            {canAdd && (
+              <Chip
+                type="button"
+                onClick={() => choose(index, freshContainer())}
+                className="h-8 min-w-0 px-2.5 text-[11px]"
+              >
+                <Plus className="me-1 h-3 w-3" />
+                {t('trips.form.compartments.newContainer')}
+              </Chip>
+            )}
+          </ChipGroup>
+        )}
 
         {container && (
           <div
@@ -299,6 +302,14 @@ export function CompartmentPlanner({
                 />
                 {t('trips.form.containerN', { n: d + 1 })}
               </span>
+              <span className="flex items-center gap-1">
+                <Chip
+                  type="button"
+                  onClick={() => onAssign(index, null)}
+                  className="h-7 min-w-0 px-2 text-[11px]"
+                >
+                  {t('trips.form.compartments.release')}
+                </Chip>
               {containers.length > 1 && (
                 <Button
                   type="button"
@@ -311,6 +322,7 @@ export function CompartmentPlanner({
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>
               )}
+              </span>
             </div>
 
             {container.issue && (
