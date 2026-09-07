@@ -24,10 +24,8 @@ export async function getDriverProfiles(): Promise<Driver[]> {
 
 /* ─── Get single driver ─── */
 export async function getDriver(id: number | string): Promise<Driver> {
-  const fd = new FormData();
-  fd.append('id', String(id));
-  const res = await apiClient.post('/api/GetDriver', fd);
-  return driverSchema.parse(res.data);
+  const data = await apiGet<unknown>(`/api/drivers/${id}`);
+  return driverSchema.parse(data);
 }
 
 /* ─── Register (create) driver ─── */

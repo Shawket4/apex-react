@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import {
   getDrivers,
   getDriverProfiles,
+  getDriver,
   registerDriver,
   updateDriver,
   updateDriverDocuments,
@@ -40,17 +41,14 @@ export function useDriverProfiles() {
   });
 }
 
-/* ─── Detail (derived from cached profiles list) ─── */
+/* ─── Detail (fetched per-driver — do not derive from the all-drivers list) ─── */
 export function useDriver(id: number | string | undefined) {
-  const profilesQuery = useDriverProfiles();
-  const numId = id ? Number(id) : undefined;
-
-  return {
-    ...profilesQuery,
-    data: numId
-      ? profilesQuery.data?.find((d) => d.ID === numId) ?? undefined
-      : undefined,
-  };
+  return useQuery({
+    queryKey: QUERY_KEYS.driver(id ?? ''),
+    queryFn: () => getDriver(id as number | string),
+    enabled: id !== undefined,
+    staleTime: 5 * 60_000,
+  });
 }
 
 /* ─── Create ─── */
@@ -192,8 +190,12 @@ export function prefetchDriversList(qc: QueryClient): void {
   });
 }
 
-export function prefetchDriver(qc: QueryClient, _id?: number | string): void {
-  // useDriver(id) reads the profiles cache — there is no per-id query to warm.
-  prefetchDrivers(qc);
+export function prefetchDriver(qc: QueryClient, id?: number | string): void {
+  if (id === undefined) return;
+  void qc.prefetchQuery({
+    queryKey: QUERY_KEYS.driver(id),
+    queryFn: () => getDriver(id),
+    staleTime: 5 * 60_000,
+  });
 }
 
