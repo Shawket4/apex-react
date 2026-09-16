@@ -1748,6 +1748,35 @@
     "description": "Manage map zones and run dead-zone scans.",
     "newZone": "New Zone",
     "scanNow": "Run scan now",
+    "scanRange": {
+      "action": "Scan a range",
+      "title": "Scan a date range",
+      "description": "Pick the days to check against every active zone. The result comes back here as a report.",
+      "noAlerts": "Nothing is sent to the WhatsApp group — this run only reports.",
+      "run": "Generate report",
+      "runAgain": "Run again",
+      "tooLong": "Pick at most {{max}} days ({{days}} selected).",
+      "reportTitle": "Dead-zone report",
+      "sheet": "Violations",
+      "empty": "No violations in this range.",
+      "daysScanned": "Days scanned",
+      "vehiclesScanned": "Vehicles scanned",
+      "violationsFound": "Violations found",
+      "columns": {
+        "vehicle": "Vehicle",
+        "zone": "Zone",
+        "entry": "In",
+        "exit": "Out",
+        "dwell": "Dwell",
+        "points": "Points",
+        "location": "Zone center"
+      }
+    },
+    "dwell": {
+      "hm": "{{hours}}h {{minutes}}m",
+      "m": "{{minutes}}m",
+      "s": "{{seconds}}s"
+    },
     "fields": {
       "name": "Zone Name",
       "namePlaceholder": "e.g. Headquarters…",

@@ -5,6 +5,7 @@ import {
   type CreateZonePayload,
   type UpdateZonePayload,
   type Zone,
+  type ZoneScanRange,
   type ZoneScanResponse,
 } from './schemas';
 import { z } from 'zod';
@@ -40,8 +41,13 @@ async function deleteZone(id: number): Promise<Zone> {
   return zoneSchema.parse(res.data);
 }
 
-async function scanZones(): Promise<ZoneScanResponse> {
-  const res = await apiClientEtit.post(`${PREFIX}/zones/scan`);
+/**
+ * With no `range`, runs the scheduled round — it may alert the WhatsApp group.
+ * With a `range`, runs a manual scan over those inclusive local days: the
+ * violations come back in `violations` and nobody is notified.
+ */
+async function scanZones(range?: ZoneScanRange): Promise<ZoneScanResponse> {
+  const res = await apiClientEtit.post(`${PREFIX}/zones/scan`, range);
   return zoneScanResponseSchema.parse(res.data);
 }
 

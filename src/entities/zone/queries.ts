@@ -2,7 +2,7 @@ import { type QueryClient, useMutation, useQuery, useQueryClient } from '@tansta
 import { toast } from 'sonner';
 import { useTranslation } from 'react-i18next';
 import { zoneApi } from './api';
-import type { CreateZonePayload, UpdateZonePayload } from './schemas';
+import type { CreateZonePayload, UpdateZonePayload, ZoneScanRange } from './schemas';
 
 export const zoneKeys = {
   all: ['zones'] as const,
@@ -92,6 +92,23 @@ export function useScanZones() {
         });
       }
     },
+    onError: (err) => {
+      console.error(err);
+      toast.error(t('zones.toast.scanError', 'Failed to run scan'));
+    },
+  });
+}
+
+/**
+ * Manual, range-bounded scan. Kept separate from `useScanZones` so the two
+ * can't be confused: this one reports and notifies nobody, and its result is
+ * the report itself rather than a toast summary — the caller renders it.
+ */
+export function useScanZonesRange() {
+  const { t } = useTranslation();
+
+  return useMutation({
+    mutationFn: (range: ZoneScanRange) => zoneApi.scanZones(range),
     onError: (err) => {
       console.error(err);
       toast.error(t('zones.toast.scanError', 'Failed to run scan'));

@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
-import { Plus, Radar, Loader2 } from 'lucide-react';
+import { Plus, Radar, FileSearch, Loader2 } from 'lucide-react';
 import {
   useZones,
   useCreateZone,
@@ -15,6 +15,7 @@ import { ConfirmDialog } from '@/shared/ui/confirm-dialog';
 import { EmptyState } from '@/shared/ui/empty-state';
 import { ZonesTable } from '@/widgets/zones-table';
 import { ZoneFormDialog } from '@/widgets/zone-form-dialog';
+import { ZoneScanDialog } from '@/widgets/zone-scan-dialog';
 
 export default function ZonesPage() {
   const { t } = useTranslation();
@@ -28,6 +29,7 @@ export default function ZonesPage() {
   const [dialogOpen, setDialogOpen] = React.useState(false);
   const [selectedZone, setSelectedZone] = React.useState<Zone | null>(null);
   const [deletingZone, setDeletingZone] = React.useState<Zone | null>(null);
+  const [scanRangeOpen, setScanRangeOpen] = React.useState(false);
 
   const handleCreateNew = () => {
     setSelectedZone(null);
@@ -82,6 +84,16 @@ export default function ZonesPage() {
           <Button
             variant="outline"
             size="sm"
+            onClick={() => setScanRangeOpen(true)}
+          >
+            <FileSearch aria-hidden="true" />
+            <span className="hidden sm:inline">
+              {t('zones.scanRange.action', 'Scan a range')}
+            </span>
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
             onClick={handleScanNow}
             disabled={scanMutation.isPending}
           >
@@ -129,6 +141,8 @@ export default function ZonesPage() {
         onSubmit={handleSubmit}
         loading={createMutation.isPending || updateMutation.isPending}
       />
+
+      <ZoneScanDialog open={scanRangeOpen} onOpenChange={setScanRangeOpen} />
 
       <ConfirmDialog
         open={!!deletingZone}
