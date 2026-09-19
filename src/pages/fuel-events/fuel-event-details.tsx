@@ -14,12 +14,10 @@ import {
   Edit,
   Trash2,
   Fuel,
-  AlertTriangle,
 } from 'lucide-react';
 import { PageShell } from '@/shared/ui/page-shell';
 import { Button } from '@/shared/ui/button';
 import { Card, CardContent } from '@/shared/ui/card';
-import { Badge } from '@/shared/ui/badge';
 import { Skeleton } from '@/shared/ui/skeleton';
 import { Separator } from '@/shared/ui/separator';
 import { EmptyState } from '@/shared/ui/empty-state';
@@ -152,12 +150,6 @@ export default function FuelEventDetailsPage() {
               <Trash2 />
               <span className="hidden sm:inline">{t('common.delete')}</span>
             </Button>
-          )}
-          {!canEditFuel && !canDeleteFuel && (
-            <Badge variant="warning">
-              <AlertTriangle className="h-3 w-3" />
-              {t('common.viewOnly')}
-            </Badge>
           )}
         </>
       }

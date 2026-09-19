@@ -112,21 +112,36 @@ export const router = createBrowserRouter([
         children: [
           { index: true, element: <DashboardPage /> },
 
-          // Fuel events
-          { path: 'fuel-events', element: <FuelEventsPage /> },
+          // Fuel events — admin only, reads included. Nothing here is exposed
+          // below level 4, not even the list or a single event's detail.
+          {
+            path: 'fuel-events',
+            element: (
+              <ProtectedRoute minPermissionLevel={PERMISSION_LEVELS.ADMIN}>
+                <FuelEventsPage />
+              </ProtectedRoute>
+            ),
+          },
           {
             path: 'fuel-events/new',
             element: (
-              <ProtectedRoute minPermissionLevel={PERMISSION_LEVELS.MANAGER}>
+              <ProtectedRoute minPermissionLevel={PERMISSION_LEVELS.ADMIN}>
                 <FuelEventNewPage />
               </ProtectedRoute>
             ),
           },
-          { path: 'fuel-events/:id', element: <FuelEventDetailsPage /> },
+          {
+            path: 'fuel-events/:id',
+            element: (
+              <ProtectedRoute minPermissionLevel={PERMISSION_LEVELS.ADMIN}>
+                <FuelEventDetailsPage />
+              </ProtectedRoute>
+            ),
+          },
           {
             path: 'fuel-events/:id/edit',
             element: (
-              <ProtectedRoute minPermissionLevel={PERMISSION_LEVELS.MANAGER}>
+              <ProtectedRoute minPermissionLevel={PERMISSION_LEVELS.ADMIN}>
                 <FuelEventEditPage />
               </ProtectedRoute>
             ),

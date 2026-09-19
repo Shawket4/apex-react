@@ -56,7 +56,12 @@ export const NAV_SECTIONS: NavSection[] = [
   {
     titleKey: 'nav.operations',
     items: [
-      { to: '/fuel-events', labelKey: 'nav.fuelEvents', icon: Fuel },
+      {
+        to: '/fuel-events',
+        labelKey: 'nav.fuelEvents',
+        icon: Fuel,
+        minPermission: PERMISSION_LEVELS.ADMIN,
+      },
       { to: '/trips', labelKey: 'nav.trips', icon: Route },
       { to: '/etit', labelKey: 'nav.etit', icon: Radar },
       { to: '/zones', labelKey: 'nav.zones', icon: MapPin },

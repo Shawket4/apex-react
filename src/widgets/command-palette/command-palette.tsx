@@ -157,6 +157,8 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
   const inputRef = React.useRef<HTMLInputElement>(null);
 
   const canManage = atLeast(PERMISSION_LEVELS.MANAGER);
+  // Fuel events are admin-only, so the palette must not offer a way in either.
+  const canViewFuel = atLeast(PERMISSION_LEVELS.ADMIN);
 
   // Reset on close
   React.useEffect(() => {
@@ -289,28 +291,32 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
             <CommandSeparator />
 
             {/* Quick Actions (Fuel Events) */}
-            <CommandGroup
-              heading={
-                <span className="flex items-center gap-1.5">
-                  <Droplet className="h-3 w-3" />
-                  {t('nav.fuelEvents')}
-                </span>
-              }
-            >
-              <CommandItem
-                value="fuel events quick fuel up create car"
-                onSelect={() => {
-                  setPage({ type: 'fuel-up' });
-                  setSearch('');
-                }}
-                className="group flex items-center gap-2 px-4 py-2.5"
-              >
-                <Plus className="h-4 w-4 shrink-0 text-muted-foreground" />
-                <span>{t('fuelEvents.addEvent')}</span>
-                <ChevronRight className="ms-auto h-3.5 w-3.5 shrink-0 text-muted-foreground opacity-0 transition-opacity group-aria-selected:opacity-100" />
-              </CommandItem>
-            </CommandGroup>
-            <CommandSeparator />
+            {canViewFuel && (
+              <>
+                <CommandGroup
+                  heading={
+                    <span className="flex items-center gap-1.5">
+                      <Droplet className="h-3 w-3" />
+                      {t('nav.fuelEvents')}
+                    </span>
+                  }
+                >
+                  <CommandItem
+                    value="fuel events quick fuel up create car"
+                    onSelect={() => {
+                      setPage({ type: 'fuel-up' });
+                      setSearch('');
+                    }}
+                    className="group flex items-center gap-2 px-4 py-2.5"
+                  >
+                    <Plus className="h-4 w-4 shrink-0 text-muted-foreground" />
+                    <span>{t('fuelEvents.addEvent')}</span>
+                    <ChevronRight className="ms-auto h-3.5 w-3.5 shrink-0 text-muted-foreground opacity-0 transition-opacity group-aria-selected:opacity-100" />
+                  </CommandItem>
+                </CommandGroup>
+                <CommandSeparator />
+              </>
+            )}
 
 
 
@@ -520,7 +526,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
           </CommandGroup>
         )}
         {/* ── FUEL UP: CAR SELECTION ── */}
-        {page.type === 'fuel-up' && (
+        {page.type === 'fuel-up' && canViewFuel && (
           <CommandGroup heading={t('fuelEvents.fields.selectCar')}>
             {cars.map((car) => (
               <CommandItem
