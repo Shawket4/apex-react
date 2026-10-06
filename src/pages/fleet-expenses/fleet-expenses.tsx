@@ -13,6 +13,8 @@ import {
   Download,
   Fuel,
   HandCoins,
+  Inbox,
+  List,
   Plus,
   Receipt,
   RefreshCw,
@@ -44,6 +46,7 @@ import { Switch } from '@/shared/ui/switch';
 import { Label } from '@/shared/ui/label';
 import { NativeSelect } from '@/shared/ui/native-select';
 import { Tabs, TabsList, TabsTrigger } from '@/shared/ui/tabs';
+import { Chip, ChipGroup, ChipRadioGroup } from '@/shared/ui/chip-group';
 import { cn } from '@/shared/lib/cn';
 import { formatMoney, addMoneyStrings } from '@/shared/lib/money';
 import {
@@ -349,20 +352,27 @@ export default function FleetExpensesPage() {
         </div>
       }
     >
-      {/* ── View tabs: the work queue first, the full ledger one tap away ── */}
+      {/* ── View tabs: the work queue first, the full ledger one tap away.
+            Same chip-tabs as Locations' Needs Attention: Radix keeps the
+            tablist semantics, Chip supplies the look and the count. ──────── */}
       <Tabs value={view} onValueChange={(v) => setView(v as LedgerView)}>
-        <TabsList aria-label={t('fleetExpenses.views.label')} className="h-auto w-full sm:w-auto">
-          <TabsTrigger value="pending" className="min-h-10 flex-1 gap-2 sm:flex-none lg:min-h-8">
-            {t('fleetExpenses.views.pending')}
-            {!statsQuery.isLoading && actionCount > 0 && (
-              <span className="rounded-full bg-warning/15 px-1.5 text-[11px] font-semibold tabular-nums text-warning">
-                {actionCount}
-              </span>
-            )}
-          </TabsTrigger>
-          <TabsTrigger value="all" className="min-h-10 flex-1 sm:flex-none lg:min-h-8">
-            {t('fleetExpenses.views.all')}
-          </TabsTrigger>
+        <TabsList asChild unstyled aria-label={t('fleetExpenses.views.label')}>
+          <ChipGroup className="justify-start">
+            <TabsTrigger value="pending" asChild unstyled>
+              <Chip
+                icon={<Inbox className="h-3.5 w-3.5" />}
+                count={!statsQuery.isLoading && actionCount > 0 ? actionCount : undefined}
+                active={pending}
+              >
+                {t('fleetExpenses.views.pending')}
+              </Chip>
+            </TabsTrigger>
+            <TabsTrigger value="all" asChild unstyled>
+              <Chip icon={<List className="h-3.5 w-3.5" />} active={!pending}>
+                {t('fleetExpenses.views.all')}
+              </Chip>
+            </TabsTrigger>
+          </ChipGroup>
         </TabsList>
       </Tabs>
 
@@ -722,23 +732,24 @@ export default function FleetExpensesPage() {
 
       {/* ── The ledger ────────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between gap-3">
-        <span id="ledger-sort-label" className="text-xs font-medium text-muted-foreground">
+        <span className="text-xs font-medium text-muted-foreground" aria-hidden="true">
           {t('fleetExpenses.sort.label')}
         </span>
-        <SortToggle
+        <ChipRadioGroup<TransactionSort>
+          label={t('fleetExpenses.sort.label')}
           value={sort}
           onChange={setSort}
-          labelledBy="ledger-sort-label"
+          edgeBleed={false}
           options={[
             {
               value: 'amount',
               label: t('fleetExpenses.sort.amount'),
-              icon: <ArrowDownWideNarrow className="h-3.5 w-3.5" aria-hidden="true" />,
+              icon: <ArrowDownWideNarrow className="h-3.5 w-3.5" />,
             },
             {
               value: 'date',
               label: t('fleetExpenses.sort.date'),
-              icon: <CalendarDays className="h-3.5 w-3.5" aria-hidden="true" />,
+              icon: <CalendarDays className="h-3.5 w-3.5" />,
             },
           ]}
         />
@@ -837,50 +848,6 @@ export default function FleetExpensesPage() {
 /* -------------------------------------------------------------------------- */
 /* Bits                                                                        */
 /* -------------------------------------------------------------------------- */
-
-/** Two-way segmented control — always visible, so the order is never a
- *  mystery. Radio semantics: exactly one option is on. */
-function SortToggle({
-  value,
-  onChange,
-  options,
-  labelledBy,
-}: {
-  value: TransactionSort;
-  onChange: (v: TransactionSort) => void;
-  options: { value: TransactionSort; label: string; icon: React.ReactNode }[];
-  labelledBy: string;
-}) {
-  return (
-    <div
-      role="radiogroup"
-      aria-labelledby={labelledBy}
-      className="inline-flex shrink-0 rounded-lg border bg-muted/40 p-0.5"
-    >
-      {options.map((o) => {
-        const active = o.value === value;
-        return (
-          <button
-            key={o.value}
-            type="button"
-            role="radio"
-            aria-checked={active}
-            onClick={() => onChange(o.value)}
-            className={cn(
-              'inline-flex min-h-11 items-center gap-1.5 rounded-md px-3 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:min-h-8',
-              active
-                ? 'bg-card text-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground',
-            )}
-          >
-            {o.icon}
-            {o.label}
-          </button>
-        );
-      })}
-    </div>
-  );
-}
 
 function FilterChip({
   active,
