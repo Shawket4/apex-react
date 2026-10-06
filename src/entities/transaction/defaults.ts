@@ -35,9 +35,10 @@ export function defaultLedgerFilters(): TransactionFilters {
 }
 
 /** The default view is the work queue: the statistics key adds the
- *  uncategorized filter to the base filters — same shape the page builds. */
+ *  uncategorized filter to the base filters and drops the company (the queue
+ *  spans every company) — same shape the page builds. */
 export function defaultLedgerStatsFilters(): TransactionFilters {
-  return { ...defaultLedgerFilters(), category: UNCATEGORIZED_KEY };
+  return { ...defaultLedgerFilters(), company: undefined, category: UNCATEGORIZED_KEY };
 }
 
 /** The queue's list adds the out-only direction and its sort on top. */

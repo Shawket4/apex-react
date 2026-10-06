@@ -143,7 +143,9 @@ export default function FleetExpensesPage() {
       // A category chip means nothing in the queue — everything there is
       // uncategorized — so it only applies on the All tab.
       category: (!pending && category) || undefined,
-      company: company === ALL ? undefined : company,
+      // The queue is every company's backlog: work doesn't stop being
+      // pending because the header is scoped to one company. Dates still apply.
+      company: pending || company === ALL ? undefined : company,
       payment_method: paymentMethod === ALL ? undefined : paymentMethod,
       source: source === ALL ? undefined : source,
       q: debouncedSearch || undefined,
