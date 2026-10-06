@@ -1868,7 +1868,7 @@
     "noExpenses": "لا مصروفات في هذه الفترة",
     "noExpensesDescription": "جرّب توسيع نطاق التاريخ، أو أضف مصروفًا يدويًا.",
     "noUncategorized": "لا يوجد ما يحتاج تصنيفًا",
-    "noUncategorizedDescription": "كل الصفوف المحمّلة في هذه الفترة مصنّفة. حمّل المزيد أو ألغِ الفلتر.",
+    "noUncategorizedDescription": "كل مصروف في هذه الفترة له تصنيف.",
     "recordedSuccessfully": "تم تسجيل المصروف",
     "updatedSuccessfully": "تم تحديث المصروف",
     "deletedSuccessfully": "تم حذف المصروف",
@@ -1883,6 +1883,12 @@
     "allCompanies": "كل الشركات",
     "allMethods": "كل الطرق",
     "allSources": "كل المصادر",
+    "views": {
+      "label": "عرض السجل",
+      "pending": "بحاجة إلى إجراء",
+      "all": "كل المصروفات",
+      "seeAll": "عرض كل المصروفات"
+    },
     "sort": {
       "label": "ترتيب حسب",
       "amount": "الأعلى مبلغًا",
@@ -1906,8 +1912,7 @@
       "uncategorized": "غير مصنّف",
       "records": "{{count}} قيد",
       "rowsArrow": "{{count}} صف ←",
-      "tapToFilter": "اضغط لتصفية غير المصنّف",
-      "showingUncategorized": "يعرض غير المصنّف فقط"
+      "tapToFilter": "اضغط لتصفية غير المصنّف"
     },
     "charts": {
       "daily": "الإنفاق اليومي",

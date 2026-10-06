@@ -43,6 +43,7 @@ import { Skeleton } from '@/shared/ui/skeleton';
 import { Switch } from '@/shared/ui/switch';
 import { Label } from '@/shared/ui/label';
 import { NativeSelect } from '@/shared/ui/native-select';
+import { Tabs, TabsList, TabsTrigger } from '@/shared/ui/tabs';
 import { cn } from '@/shared/lib/cn';
 import { formatMoney, addMoneyStrings } from '@/shared/lib/money';
 import {
@@ -65,6 +66,7 @@ import {
   PAYMENT_METHODS,
   TRANSACTION_SORTS,
   TRANSACTION_SOURCES,
+  UNCATEGORIZED_KEY,
   type ByCategory,
   type ByDate,
   type TransactionFilters,
@@ -80,6 +82,9 @@ import { CashInReview } from '@/widgets/fleet-expenses-table/cash-in-review';
 
 
 const ALL = '__all__';
+
+/** `pending` is the work queue (default); `all` is the full ledger. */
+type LedgerView = 'pending' | 'all';
 
 /* -------------------------------------------------------------------------- */
 /* Page                                                                        */
@@ -113,9 +118,12 @@ export default function FleetExpensesPage() {
   const [includeLoans, setIncludeLoans] = React.useState(
     () => searchParams.get('include_loans') !== 'false',
   );
-  /** The uncategorized-tile filter — a client-side view over loaded rows,
-   *  since the wire contract has no server filter for a null category. */
-  const [uncatOnly, setUncatOnly] = React.useState(() => searchParams.get('uncat') === '1');
+  /** Needs action by default. Only `view=all` rides the URL; old `uncat=1`
+   *  links land on the default, which is what they meant anyway. */
+  const [view, setView] = React.useState<LedgerView>(() =>
+    searchParams.get('view') === 'all' ? 'all' : 'pending',
+  );
+  const pending = view === 'pending';
   /** Ledger order. Amount is the default, so only `sort=date` rides the URL. */
   const [sort, setSort] = React.useState<TransactionSort>(() => {
     const v = searchParams.get('sort');
@@ -132,7 +140,9 @@ export default function FleetExpensesPage() {
     () => ({
       from: range.from,
       to: range.to,
-      category: category || undefined,
+      // A category chip means nothing in the queue — everything there is
+      // uncategorized — so it only applies on the All tab.
+      category: (!pending && category) || undefined,
       company: company === ALL ? undefined : company,
       payment_method: paymentMethod === ALL ? undefined : paymentMethod,
       source: source === ALL ? undefined : source,
@@ -142,7 +152,7 @@ export default function FleetExpensesPage() {
     }),
     [
       range, category, company, paymentMethod, source, debouncedSearch,
-      includeFuel, includeLoans,
+      includeFuel, includeLoans, pending,
     ],
   );
 
@@ -160,7 +170,8 @@ export default function FleetExpensesPage() {
         setOrDelete('q', debouncedSearch || null);
         setOrDelete('include_fuel', includeFuel ? null : 'false');
         setOrDelete('include_loans', includeLoans ? null : 'false');
-        setOrDelete('uncat', uncatOnly ? '1' : null);
+        setOrDelete('view', pending ? null : 'all');
+        next.delete('uncat');
         setOrDelete('sort', sort !== DEFAULT_TRANSACTION_SORT ? sort : null);
         next.delete('range');
         next.delete('company');
@@ -170,7 +181,7 @@ export default function FleetExpensesPage() {
     );
   }, [
     category, paymentMethod, source, debouncedSearch,
-    includeFuel, includeLoans, uncatOnly, sort, setSearchParams,
+    includeFuel, includeLoans, pending, sort, setSearchParams,
   ]);
 
   // The LEDGER is cash-out only; incoming transfers live in the review
@@ -178,13 +189,22 @@ export default function FleetExpensesPage() {
   // base filters — the new wire shape is already out-only and carries the
   // pending_in counter for the pocket badge. Sort only reorders rows, so it
   // stays off the statistics key — flipping it never refetches the charts.
+  //
+  // The queue is a SERVER filter (category IS NULL), so it pages like any
+  // other view and a categorized row drops out on the refetch that follows
+  // its save. Its statistics are scoped the same way, so day totals and the
+  // "showing N of M" count describe the queue, not the whole range.
+  const viewFilters = React.useMemo(
+    () => (pending ? { ...filters, category: UNCATEGORIZED_KEY } : filters),
+    [filters, pending],
+  );
   const listFilters = React.useMemo(
-    () => ({ ...filters, direction: 'out' as const, sort }),
-    [filters, sort],
+    () => ({ ...viewFilters, direction: 'out' as const, sort }),
+    [viewFilters, sort],
   );
 
   const rowsQuery = useTransactionsPaged(listFilters);
-  const statsQuery = useTransactionStatistics(filters);
+  const statsQuery = useTransactionStatistics(viewFilters);
   const categories = useCategories();
   const exportMutation = useExportTransactions();
 
@@ -194,10 +214,6 @@ export default function FleetExpensesPage() {
   );
   const stats = statsQuery.data;
 
-  const visibleRows = React.useMemo(
-    () => (uncatOnly ? rows.filter((r) => !r.category) : rows),
-    [rows, uncatOnly],
-  );
 
   const dayTotals = React.useMemo(() => {
     const map = new Map<string, ByDate>();
@@ -211,6 +227,8 @@ export default function FleetExpensesPage() {
   );
 
   const pendingIn = stats?.pending_in ?? { count: 0, total: '0' };
+  /** Everything the queue holds: rows to categorize + transfers to review. */
+  const actionCount = uncatCount + pendingIn.count;
 
   /** Tile placeholder while /statistics is in flight. */
   const statSkeleton = {
@@ -278,7 +296,7 @@ export default function FleetExpensesPage() {
   }, [stats]);
 
   const isLoading = rowsQuery.isLoading || statsQuery.isLoading;
-  const hasRows = visibleRows.length > 0;
+  const hasRows = rows.length > 0;
 
   return (
     <PageShell
@@ -304,7 +322,9 @@ export default function FleetExpensesPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => exportMutation.mutate({ ...filters, sort })}
+            onClick={() =>
+              exportMutation.mutate(pending ? listFilters : { ...filters, sort })
+            }
             disabled={exportMutation.isPending}
             aria-label={t('common.export')}
           >
@@ -327,69 +347,74 @@ export default function FleetExpensesPage() {
         </div>
       }
     >
+      {/* ── View tabs: the work queue first, the full ledger one tap away ── */}
+      <Tabs value={view} onValueChange={(v) => setView(v as LedgerView)}>
+        <TabsList aria-label={t('fleetExpenses.views.label')} className="h-auto w-full sm:w-auto">
+          <TabsTrigger value="pending" className="min-h-10 flex-1 gap-2 sm:flex-none lg:min-h-8">
+            {t('fleetExpenses.views.pending')}
+            {!statsQuery.isLoading && actionCount > 0 && (
+              <span className="rounded-full bg-warning/15 px-1.5 text-[11px] font-semibold tabular-nums text-warning">
+                {actionCount}
+              </span>
+            )}
+          </TabsTrigger>
+          <TabsTrigger value="all" className="min-h-10 flex-1 sm:flex-none lg:min-h-8">
+            {t('fleetExpenses.views.all')}
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
+
       {/* ── Summary strip — cash-out only; inflows never make a tile ─────── */}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
-        <StatCard
-          label={t('fleetExpenses.stats.spent')}
-          value={
-            statsQuery.isLoading
-              ? statSkeleton
-              : {
-                  full: `${formatMoney(stats?.total_out)} EGP`,
-                  // Compact tile figure only — approximate by design. No
-                  // currency suffix: it truncates inside a narrow tile.
-                  compact: formatCompactNumber(Number(stats?.total_out ?? 0)),
-                }
-          }
-          valueClassName="font-mono text-money"
-          subvalue={t('fleetExpenses.stats.records', { count: stats?.count ?? 0 })}
-          icon={TrendingDown}
-          tone="default"
-        />
-        <StatCard
-          label={t('fleetExpenses.stats.fees')}
-          value={
-            statsQuery.isLoading
-              ? statSkeleton
-              : {
-                  full: `${formatMoney(stats?.total_fees)} EGP`,
-                  compact: formatCompactNumber(Number(stats?.total_fees ?? 0)),
-                }
-          }
-          valueClassName="font-mono text-money"
-          subvalue={t('fleetExpenses.stats.feesHint')}
-          icon={Wallet}
-        />
-        {/* The uncategorized tile IS the filter — one tap turns the backlog
-            into a workable queue. */}
-        <button
-          type="button"
-          onClick={() => {
-            // The uncategorized view and a category chip are mutually
-            // exclusive — combining them is always an empty list.
-            setUncatOnly((v) => !v);
-            setCategory('');
-          }}
-          className={cn(
-            'col-span-2 rounded-lg text-start outline-none transition-shadow focus-visible:ring-2 focus-visible:ring-ring lg:col-span-1',
-            uncatOnly && '[&>*]:border-primary [&>*]:bg-primary/10',
-          )}
-          aria-pressed={uncatOnly}
-        >
+      {!pending && (
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
           <StatCard
-            label={t('fleetExpenses.stats.uncategorized')}
-            value={t('fleetExpenses.stats.rowsArrow', { count: uncatCount })}
-            subvalue={
-              uncatOnly
-                ? t('fleetExpenses.stats.showingUncategorized')
-                : t('fleetExpenses.stats.tapToFilter')
+            label={t('fleetExpenses.stats.spent')}
+            value={
+              statsQuery.isLoading
+                ? statSkeleton
+                : {
+                    full: `${formatMoney(stats?.total_out)} EGP`,
+                    // Compact tile figure only — approximate by design. No
+                    // currency suffix: it truncates inside a narrow tile.
+                    compact: formatCompactNumber(Number(stats?.total_out ?? 0)),
+                  }
             }
-            icon={Receipt}
-            tone={uncatCount > 0 ? 'warning' : 'default'}
-            className="h-full"
+            valueClassName="font-mono text-money"
+            subvalue={t('fleetExpenses.stats.records', { count: stats?.count ?? 0 })}
+            icon={TrendingDown}
+            tone="default"
           />
-        </button>
-      </div>
+          <StatCard
+            label={t('fleetExpenses.stats.fees')}
+            value={
+              statsQuery.isLoading
+                ? statSkeleton
+                : {
+                    full: `${formatMoney(stats?.total_fees)} EGP`,
+                    compact: formatCompactNumber(Number(stats?.total_fees ?? 0)),
+                  }
+            }
+            valueClassName="font-mono text-money"
+            subvalue={t('fleetExpenses.stats.feesHint')}
+            icon={Wallet}
+          />
+          {/* The uncategorized tile is a shortcut into the work queue. */}
+          <button
+            type="button"
+            onClick={() => setView('pending')}
+            className="col-span-2 rounded-lg text-start outline-none transition-shadow focus-visible:ring-2 focus-visible:ring-ring lg:col-span-1"
+          >
+            <StatCard
+              label={t('fleetExpenses.stats.uncategorized')}
+              value={t('fleetExpenses.stats.rowsArrow', { count: uncatCount })}
+              subvalue={t('fleetExpenses.stats.tapToFilter')}
+              icon={Receipt}
+              tone={uncatCount > 0 ? 'warning' : 'default'}
+              className="h-full"
+            />
+          </button>
+        </div>
+      )}
 
       {/* ── Cash in — needs review. A quiet amber pocket that only exists
             while there is something in it. ─────────────────────────────────── */}
@@ -421,13 +446,13 @@ export default function FleetExpensesPage() {
       />
 
       {/* ── Charts (D10: daily spend + category donut survive) ───────────── */}
-      {isLoading && (
+      {!pending && isLoading && (
         <div className="grid gap-3 lg:grid-cols-3">
           <Skeleton className="h-60 w-full rounded-lg lg:col-span-2" />
           <Skeleton className="h-60 w-full rounded-lg" />
         </div>
       )}
-      {!isLoading && stats && stats.count > 0 && (
+      {!pending && !isLoading && stats && stats.count > 0 && (
         <div className="grid gap-3 lg:grid-cols-3">
           <ChartCard
             title={t('fleetExpenses.charts.daily')}
@@ -539,7 +564,7 @@ export default function FleetExpensesPage() {
       )}
 
       {/* ── Breakdowns: by-category list + advances-by-person rollup ─────── */}
-      {!isLoading && stats && stats.count > 0 && (
+      {!pending && !isLoading && stats && stats.count > 0 && (
         <div className="grid gap-3 sm:grid-cols-2">
           {byCategoryList.length > 0 && (
             <ChartCard title={t('fleetExpenses.charts.byCategoryList')} height="auto">
@@ -648,48 +673,49 @@ export default function FleetExpensesPage() {
           </div>
         </div>
 
-        {/* Category chips — one tap, horizontally scrollable on phones. */}
-        <div className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] md:mx-0 md:px-0">
-          <FilterChip
-            active={!category && !uncatOnly}
-            onClick={() => {
-              setCategory('');
-              setUncatOnly(false);
-            }}
-          >
-            {t('fleetExpenses.allCategories')}
-          </FilterChip>
-          {(categories.data ?? []).map((c) => (
-            <FilterChip
-              key={c.key}
-              active={category === c.key}
-              onClick={() => {
-                setCategory(category === c.key ? '' : c.key);
-                setUncatOnly(false);
-              }}
-            >
-              {categoryLabel(c, i18n.language)}
-            </FilterChip>
-          ))}
-        </div>
+        {/* Category chips and source toggles belong to the full ledger: the
+            queue is uncategorized by definition, and fuel/loan rows always
+            carry a category, so neither would change what it shows. */}
+        {!pending && (
+          <>
+            {/* Category chips — one tap, horizontally scrollable on phones. */}
+            <div className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] md:mx-0 md:px-0">
+              <FilterChip
+                active={!category}
+                onClick={() => setCategory('')}
+              >
+                {t('fleetExpenses.allCategories')}
+              </FilterChip>
+              {(categories.data ?? []).map((c) => (
+                <FilterChip
+                  key={c.key}
+                  active={category === c.key}
+                  onClick={() => setCategory(category === c.key ? '' : c.key)}
+                >
+                  {categoryLabel(c, i18n.language)}
+                </FilterChip>
+              ))}
+            </div>
 
-        {/* Source toggles: they change WHICH LEDGERS are summed (D4). */}
-        <div className="flex flex-wrap items-center gap-4 rounded-lg border bg-muted/40 px-3 py-2">
-          <div className="flex items-center gap-2">
-            <Fuel className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-            <Label htmlFor="include-fuel" className="cursor-pointer text-sm">
-              {t('fleetExpenses.includeFuel')}
-            </Label>
-            <Switch id="include-fuel" checked={includeFuel} onCheckedChange={setIncludeFuel} />
-          </div>
-          <div className="flex items-center gap-2">
-            <HandCoins className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-            <Label htmlFor="include-loans" className="cursor-pointer text-sm">
-              {t('fleetExpenses.includeLoans')}
-            </Label>
-            <Switch id="include-loans" checked={includeLoans} onCheckedChange={setIncludeLoans} />
-          </div>
-        </div>
+            {/* Source toggles: they change WHICH LEDGERS are summed (D4). */}
+            <div className="flex flex-wrap items-center gap-4 rounded-lg border bg-muted/40 px-3 py-2">
+              <div className="flex items-center gap-2">
+                <Fuel className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                <Label htmlFor="include-fuel" className="cursor-pointer text-sm">
+                  {t('fleetExpenses.includeFuel')}
+                </Label>
+                <Switch id="include-fuel" checked={includeFuel} onCheckedChange={setIncludeFuel} />
+              </div>
+              <div className="flex items-center gap-2">
+                <HandCoins className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                <Label htmlFor="include-loans" className="cursor-pointer text-sm">
+                  {t('fleetExpenses.includeLoans')}
+                </Label>
+                <Switch id="include-loans" checked={includeLoans} onCheckedChange={setIncludeLoans} />
+              </div>
+            </div>
+          </>
+        )}
       </div>
 
       {/* ── The ledger ────────────────────────────────────────────────────── */}
@@ -721,19 +747,24 @@ export default function FleetExpensesPage() {
             <Skeleton key={i} className="h-14 w-full rounded-none" />
           ))}
         </div>
+      ) : !hasRows && pending ? (
+        <EmptyState
+          icon={<Receipt className="h-8 w-8" />}
+          title={t('fleetExpenses.noUncategorized')}
+          description={t('fleetExpenses.noUncategorizedDescription')}
+          action={
+            <Button variant="outline" onClick={() => setView('all')}>
+              {t('fleetExpenses.views.seeAll')}
+            </Button>
+          }
+        />
       ) : !hasRows ? (
         <EmptyState
           icon={<Receipt className="h-8 w-8" />}
-          title={
-            uncatOnly ? t('fleetExpenses.noUncategorized') : t('fleetExpenses.noExpenses')
-          }
-          description={
-            uncatOnly
-              ? t('fleetExpenses.noUncategorizedDescription')
-              : t('fleetExpenses.noExpensesDescription')
-          }
+          title={t('fleetExpenses.noExpenses')}
+          description={t('fleetExpenses.noExpensesDescription')}
           action={
-            canManageExpenses && !uncatOnly ? (
+            canManageExpenses ? (
               <Button
                 onClick={() => navigate('/fleet-expenses/new', { state: { from: 'ledger' } })}
               {...intentProps(() => warmLedgerForm(queryClient))}
@@ -746,7 +777,7 @@ export default function FleetExpensesPage() {
         />
       ) : (
         <LedgerList
-          rows={visibleRows}
+          rows={rows}
           dayTotals={dayTotals}
           canEdit={canManageExpenses}
           sort={sort}
@@ -773,7 +804,7 @@ export default function FleetExpensesPage() {
         <div className="flex flex-col items-center gap-2 py-1">
           <p className="text-xs text-muted-foreground">
             {t('fleetExpenses.showingCount', {
-              shown: visibleRows.length,
+              shown: rows.length,
               total: stats?.count ?? rows.length,
             })}
           </p>

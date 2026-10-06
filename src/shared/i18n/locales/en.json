@@ -1841,7 +1841,7 @@
     "noExpenses": "No expenses in this range",
     "noExpensesDescription": "Try widening the date range, or add an expense manually.",
     "noUncategorized": "Nothing left to categorize",
-    "noUncategorizedDescription": "Every loaded row in this range has a category. Load more rows or clear the filter.",
+    "noUncategorizedDescription": "Every expense in this range has a category.",
     "recordedSuccessfully": "Expense recorded",
     "updatedSuccessfully": "Expense updated",
     "deletedSuccessfully": "Expense deleted",
@@ -1856,6 +1856,12 @@
     "allCompanies": "All companies",
     "allMethods": "All methods",
     "allSources": "All sources",
+    "views": {
+      "label": "Ledger view",
+      "pending": "Needs action",
+      "all": "All expenses",
+      "seeAll": "See all expenses"
+    },
     "sort": {
       "label": "Sort by",
       "amount": "Largest amount",
@@ -1879,8 +1885,7 @@
       "uncategorized": "Uncategorized",
       "records": "{{count}} records",
       "rowsArrow": "{{count}} rows →",
-      "tapToFilter": "Tap to work the backlog",
-      "showingUncategorized": "Showing uncategorized only"
+      "tapToFilter": "Tap to work the backlog"
     },
     "charts": {
       "daily": "Daily spend",

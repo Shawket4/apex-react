@@ -9,7 +9,12 @@ import {
   readScopeCompany,
   scopeRangeToInstants,
 } from '@/shared/scope';
-import { DEFAULT_TRANSACTION_SORT, type TransactionFilters, type TransactionSort } from './schemas';
+import {
+  DEFAULT_TRANSACTION_SORT,
+  UNCATEGORIZED_KEY,
+  type TransactionFilters,
+  type TransactionSort,
+} from './schemas';
 
 /** Mount filters of a navigation — the GLOBAL scope's range as Cairo
  *  day-boundary instants + its company, every field explicit so the object
@@ -29,11 +34,16 @@ export function defaultLedgerFilters(): TransactionFilters {
   };
 }
 
-/** The ledger list adds the out-only direction and its sort on top of the
- *  base filters — same key order as the page builds. */
+/** The default view is the work queue: the statistics key adds the
+ *  uncategorized filter to the base filters — same shape the page builds. */
+export function defaultLedgerStatsFilters(): TransactionFilters {
+  return { ...defaultLedgerFilters(), category: UNCATEGORIZED_KEY };
+}
+
+/** The queue's list adds the out-only direction and its sort on top. */
 export function defaultLedgerListFilters(): TransactionFilters & {
   direction: 'out';
   sort: TransactionSort;
 } {
-  return { ...defaultLedgerFilters(), direction: 'out', sort: DEFAULT_TRANSACTION_SORT };
+  return { ...defaultLedgerStatsFilters(), direction: 'out', sort: DEFAULT_TRANSACTION_SORT };
 }

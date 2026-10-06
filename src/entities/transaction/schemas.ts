@@ -28,6 +28,9 @@ export const TRANSACTION_SORTS = ['amount', 'date'] as const;
 export type TransactionSort = (typeof TRANSACTION_SORTS)[number];
 export const DEFAULT_TRANSACTION_SORT: TransactionSort = 'amount';
 
+/** `category` filter value the API reads as "category IS NULL". */
+export const UNCATEGORIZED_KEY = '__uncategorized__';
+
 /** The linked loans row, when categorising registered one (D2). */
 export const loanRefSchema = z.object({
   id: z.number(),
