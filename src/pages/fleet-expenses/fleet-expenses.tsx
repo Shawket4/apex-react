@@ -690,24 +690,19 @@ export default function FleetExpensesPage() {
             carry a category, so neither would change what it shows. */}
         {!pending && (
           <>
-            {/* Category chips — one tap, horizontally scrollable on phones. */}
-            <div className="-mx-4 flex gap-1.5 overflow-x-auto px-4 pb-1 [scrollbar-width:none] md:mx-0 md:px-0">
-              <FilterChip
-                active={!category}
-                onClick={() => setCategory('')}
-              >
-                {t('fleetExpenses.allCategories')}
-              </FilterChip>
-              {(categories.data ?? []).map((c) => (
-                <FilterChip
-                  key={c.key}
-                  active={category === c.key}
-                  onClick={() => setCategory(category === c.key ? '' : c.key)}
-                >
-                  {categoryLabel(c, i18n.language)}
-                </FilterChip>
-              ))}
-            </div>
+            {/* Category chips — one choice, horizontally scrollable on phones. */}
+            <ChipRadioGroup<string>
+              label={t('fleetExpenses.fields.expenseType')}
+              value={category}
+              onChange={setCategory}
+              options={[
+                { value: '', label: t('fleetExpenses.allCategories') },
+                ...(categories.data ?? []).map((c) => ({
+                  value: c.key,
+                  label: categoryLabel(c, i18n.language),
+                })),
+              ]}
+            />
 
             {/* Source toggles: they change WHICH LEDGERS are summed (D4). */}
             <div className="flex flex-wrap items-center gap-4 rounded-lg border bg-muted/40 px-3 py-2">
@@ -842,36 +837,5 @@ export default function FleetExpensesPage() {
         </div>
       )}
     </PageShell>
-  );
-}
-
-/* -------------------------------------------------------------------------- */
-/* Bits                                                                        */
-/* -------------------------------------------------------------------------- */
-
-function FilterChip({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        // 44px minimum tap height on touch widths; compact again with a
-        // pointer at lg and up.
-        'min-h-11 shrink-0 whitespace-nowrap rounded-full border px-3.5 py-1 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:min-h-8 lg:px-3',
-        active
-          ? 'border-primary bg-primary text-primary-foreground'
-          : 'bg-card text-muted-foreground hover:bg-accent',
-      )}
-    >
-      {children}
-    </button>
   );
 }
