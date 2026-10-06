@@ -12,7 +12,13 @@ import { NativeSelect } from '@/shared/ui/native-select';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/shared/ui/tooltip';
 import { cn } from '@/shared/lib/cn';
 import { formatMoney } from '@/shared/lib/money';
-import { cairoDayKey, formatCairoDay, formatCairoTime, formatCairoDate } from '@/shared/lib/cairo';
+import {
+  cairoDayKey,
+  formatCairoDay,
+  formatCairoDayShort,
+  formatCairoTime,
+  formatCairoDate,
+} from '@/shared/lib/cairo';
 import {
   categoryLabel,
   posts,
@@ -27,6 +33,7 @@ import {
   splitEligible,
   type ByDate,
   type Transaction,
+  type TransactionSort,
 } from '@/entities/transaction/schemas';
 import { SmartPartyField, type PartyValue } from './party-picker';
 import { SplitChip, SplitEditor } from './split-editor';
@@ -60,6 +67,18 @@ function groupByCairoDay(rows: Transaction[]): DayGroup[] {
   return groups;
 }
 
+/** Amount order has no day runs to group, so it is one flat, headerless
+ *  group and every row carries its own date instead. */
+function groupRows(rows: Transaction[], sort: TransactionSort): DayGroup[] {
+  if (sort === 'amount') return rows.length ? [{ key: '', rows }] : [];
+  return groupByCairoDay(rows);
+}
+
+/** "9 Aug · 14:05" — the row's own when, for the flat amount-sorted list. */
+function formatRowWhen(occurredAt: string, language: string): string {
+  return `${formatCairoDayShort(occurredAt, language)} · ${formatCairoTime(occurredAt, language)}`;
+}
+
 /* -------------------------------------------------------------------------- */
 /* Inline category flow                                                        */
 /* -------------------------------------------------------------------------- */
@@ -77,6 +96,8 @@ interface LedgerListProps {
   /** statistics.by_date, keyed by Cairo day — the only source of day totals. */
   dayTotals: Map<string, ByDate>;
   canEdit: boolean;
+  /** 'date' groups under sticky day headers; 'amount' is one flat list. */
+  sort?: TransactionSort;
 }
 
 /**
@@ -90,7 +111,7 @@ interface LedgerListProps {
  * card around the list and no `overflow-x-auto` around the desktop table;
  * the table uses `table-fixed` + truncation for width containment instead.
  */
-export function LedgerList({ rows, dayTotals, canEdit }: LedgerListProps) {
+export function LedgerList({ rows, dayTotals, canEdit, sort = 'date' }: LedgerListProps) {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const categories = useCategories();
@@ -102,7 +123,8 @@ export function LedgerList({ rows, dayTotals, canEdit }: LedgerListProps) {
   const [splitRow, setSplitRow] = React.useState<Transaction | null>(null);
   const [splitOpen, setSplitOpen] = React.useState(false);
 
-  const groups = React.useMemo(() => groupByCairoDay(rows), [rows]);
+  const groups = React.useMemo(() => groupRows(rows, sort), [rows, sort]);
+  const flat = sort === 'amount';
   const catByKey = React.useMemo(
     () => new Map((categories.data ?? []).map((c) => [c.key, c])),
     [categories.data],
@@ -186,14 +208,19 @@ export function LedgerList({ rows, dayTotals, canEdit }: LedgerListProps) {
           <section key={`${group.key}-${index}`}>
             {/* Sticky day header — top-0 because the app bar is outside the
                 scroll root. bg required: content scrolls beneath it. */}
-            <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-y bg-background px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-              <span>{formatCairoDay(group.key, i18n.language)}</span>
-              {total && (
-                <span className="font-mono font-medium normal-case tracking-normal tabular-nums text-money" dir="ltr">
-                  − {formatMoney(total.out)}
-                </span>
-              )}
-            </div>
+            {!flat && (
+              <div className="sticky top-0 z-10 flex items-center justify-between gap-3 border-y bg-background px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                <span>{formatCairoDay(group.key, i18n.language)}</span>
+                {total && (
+                  <span
+                    className="font-mono font-medium normal-case tracking-normal tabular-nums text-money"
+                    dir="ltr"
+                  >
+                    − {formatMoney(total.out)}
+                  </span>
+                )}
+              </div>
+            )}
 
             {/* Phones ≤ lg: cards. */}
             <ul className="lg:hidden">
@@ -205,6 +232,7 @@ export function LedgerList({ rows, dayTotals, canEdit }: LedgerListProps) {
                     catByKey={catByKey}
                     onOpen={() => openEdit(row)}
                     onAddCategory={() => setFlow({ row, step: 'category' })}
+                    showDate={flat}
                     splitSiblings={splitSiblings}
                     onOpenSplit={() => openSplit(row)}
                   />
@@ -214,7 +242,7 @@ export function LedgerList({ rows, dayTotals, canEdit }: LedgerListProps) {
 
             {/* Desktop: a table per day. table-fixed with shared widths keeps
                 columns aligned across day groups without an overflow wrapper. */}
-            <table className="hidden w-full table-fixed text-sm lg:table">
+            <table className={cn('hidden w-full table-fixed text-sm lg:table', flat && 'border-t')}>
               {/* Delegated intent: rows are <tr>s rendered by TxnRow, so the
                   warm listens once here and resolves the row from the id the
                   <tr> stamps. */}
@@ -236,6 +264,7 @@ export function LedgerList({ rows, dayTotals, canEdit }: LedgerListProps) {
                     saving={update.isPending}
                     onOpen={() => openEdit(row)}
                     onPickCategory={(key) => pickCategory(row, key)}
+                    showDate={flat}
                     splitSiblings={splitSiblings}
                     onOpenSplit={() => openSplit(row)}
                   />
@@ -390,13 +419,7 @@ function Amount({ row, className }: { row: Transaction; className?: string }) {
 }
 
 /** Category chip for categorized rows. */
-function CategoryChip({
-  row,
-  catByKey,
-}: {
-  row: Transaction;
-  catByKey: Map<string, Category>;
-}) {
+function CategoryChip({ row, catByKey }: { row: Transaction; catByKey: Map<string, Category> }) {
   const { i18n } = useTranslation();
   if (!row.category) return null;
   const cat = catByKey.get(row.category);
@@ -479,6 +502,7 @@ function TxnCard({
   catByKey,
   onOpen,
   onAddCategory,
+  showDate,
   splitSiblings,
   onOpenSplit,
 }: {
@@ -487,6 +511,7 @@ function TxnCard({
   catByKey: Map<string, Category>;
   onOpen: () => void;
   onAddCategory: () => void;
+  showDate: boolean;
   splitSiblings: Map<number, number[]>;
   onOpenSplit: () => void;
 }) {
@@ -521,7 +546,11 @@ function TxnCard({
           <span className="font-mono [overflow-wrap:anywhere]">{row.reference}</span>
         )}
         {row.account && <span className="tabular-nums">****{row.account}</span>}
-        <span className="tabular-nums">{formatCairoTime(row.occurred_at, i18n.language)}</span>
+        <span className="tabular-nums">
+          {showDate
+            ? formatRowWhen(row.occurred_at, i18n.language)
+            : formatCairoTime(row.occurred_at, i18n.language)}
+        </span>
         <RowFlags row={row} />
         {row.category ? (
           <CategoryChip row={row} catByKey={catByKey} />
@@ -575,6 +604,7 @@ function TxnRow({
   saving,
   onOpen,
   onPickCategory,
+  showDate,
   splitSiblings,
   onOpenSplit,
 }: {
@@ -585,6 +615,7 @@ function TxnRow({
   saving: boolean;
   onOpen: () => void;
   onPickCategory: (key: string) => void;
+  showDate: boolean;
   splitSiblings: Map<number, number[]>;
   onOpenSplit: () => void;
 }) {
@@ -613,8 +644,15 @@ function TxnRow({
           'cursor-pointer transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ring-inset',
       )}
     >
-      <td className="w-16 whitespace-nowrap px-3 py-2.5 text-xs tabular-nums text-muted-foreground">
-        {formatCairoTime(row.occurred_at, i18n.language)}
+      <td
+        className={cn(
+          'whitespace-nowrap px-3 py-2.5 text-xs tabular-nums text-muted-foreground',
+          showDate ? 'w-28' : 'w-16',
+        )}
+      >
+        {showDate
+          ? formatRowWhen(row.occurred_at, i18n.language)
+          : formatCairoTime(row.occurred_at, i18n.language)}
       </td>
       <td className="px-3 py-2.5">
         <div className="flex min-w-0 items-center gap-2">

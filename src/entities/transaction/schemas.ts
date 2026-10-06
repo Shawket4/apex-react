@@ -23,6 +23,11 @@ export type TransactionSource = (typeof TRANSACTION_SOURCES)[number];
 export const TRANSACTION_DIRECTIONS = ['in', 'out'] as const;
 export type TransactionDirection = (typeof TRANSACTION_DIRECTIONS)[number];
 
+/** Ledger order: biggest spend first (the default) or newest first. */
+export const TRANSACTION_SORTS = ['amount', 'date'] as const;
+export type TransactionSort = (typeof TRANSACTION_SORTS)[number];
+export const DEFAULT_TRANSACTION_SORT: TransactionSort = 'amount';
+
 /** The linked loans row, when categorising registered one (D2). */
 export const loanRefSchema = z.object({
   id: z.number(),
@@ -222,6 +227,8 @@ export interface TransactionFilters {
   /** Omitted means included (server default true). */
   include_fuel?: string;
   include_loans?: string;
+  /** List + export only. Omitted means the server's date order. */
+  sort?: TransactionSort;
 }
 
 /* -------------------------------------------------------------------------- */

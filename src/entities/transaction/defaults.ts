@@ -9,7 +9,7 @@ import {
   readScopeCompany,
   scopeRangeToInstants,
 } from '@/shared/scope';
-import type { TransactionFilters } from './schemas';
+import { DEFAULT_TRANSACTION_SORT, type TransactionFilters, type TransactionSort } from './schemas';
 
 /** Mount filters of a navigation — the GLOBAL scope's range as Cairo
  *  day-boundary instants + its company, every field explicit so the object
@@ -29,7 +29,11 @@ export function defaultLedgerFilters(): TransactionFilters {
   };
 }
 
-/** The ledger list adds the out-only direction on top of the base filters. */
-export function defaultLedgerListFilters(): TransactionFilters & { direction: 'out' } {
-  return { ...defaultLedgerFilters(), direction: 'out' };
+/** The ledger list adds the out-only direction and its sort on top of the
+ *  base filters — same key order as the page builds. */
+export function defaultLedgerListFilters(): TransactionFilters & {
+  direction: 'out';
+  sort: TransactionSort;
+} {
+  return { ...defaultLedgerFilters(), direction: 'out', sort: DEFAULT_TRANSACTION_SORT };
 }

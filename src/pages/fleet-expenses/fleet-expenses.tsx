@@ -7,6 +7,8 @@ import { useTranslation } from 'react-i18next';
 import { useTheme } from 'next-themes';
 import {
   ArrowDownLeft,
+  ArrowDownWideNarrow,
+  CalendarDays,
   ChevronRight,
   Download,
   Fuel,
@@ -59,11 +61,14 @@ import {
   useTransactionStatistics,
 } from '@/entities/transaction/queries';
 import {
+  DEFAULT_TRANSACTION_SORT,
   PAYMENT_METHODS,
+  TRANSACTION_SORTS,
   TRANSACTION_SOURCES,
   type ByCategory,
   type ByDate,
   type TransactionFilters,
+  type TransactionSort,
 } from '@/entities/transaction/schemas';
 import { categoryLabel, useCategories } from '@/entities/transaction/categories';
 import { LedgerList } from '@/widgets/fleet-expenses-table/ledger-list';
@@ -111,6 +116,13 @@ export default function FleetExpensesPage() {
   /** The uncategorized-tile filter — a client-side view over loaded rows,
    *  since the wire contract has no server filter for a null category. */
   const [uncatOnly, setUncatOnly] = React.useState(() => searchParams.get('uncat') === '1');
+  /** Ledger order. Amount is the default, so only `sort=date` rides the URL. */
+  const [sort, setSort] = React.useState<TransactionSort>(() => {
+    const v = searchParams.get('sort');
+    return (TRANSACTION_SORTS as readonly string[]).includes(v ?? '')
+      ? (v as TransactionSort)
+      : DEFAULT_TRANSACTION_SORT;
+  });
   /** The cash-in review pocket — sheet on phones, inline section on desktop. */
   const [cashInOpen, setCashInOpen] = React.useState(false);
 
@@ -149,6 +161,7 @@ export default function FleetExpensesPage() {
         setOrDelete('include_fuel', includeFuel ? null : 'false');
         setOrDelete('include_loans', includeLoans ? null : 'false');
         setOrDelete('uncat', uncatOnly ? '1' : null);
+        setOrDelete('sort', sort !== DEFAULT_TRANSACTION_SORT ? sort : null);
         next.delete('range');
         next.delete('company');
         return next;
@@ -157,16 +170,17 @@ export default function FleetExpensesPage() {
     );
   }, [
     category, paymentMethod, source, debouncedSearch,
-    includeFuel, includeLoans, uncatOnly, setSearchParams,
+    includeFuel, includeLoans, uncatOnly, sort, setSearchParams,
   ]);
 
   // The LEDGER is cash-out only; incoming transfers live in the review
   // pocket until someone reclassifies or removes them. Statistics keep the
   // base filters — the new wire shape is already out-only and carries the
-  // pending_in counter for the pocket badge.
+  // pending_in counter for the pocket badge. Sort only reorders rows, so it
+  // stays off the statistics key — flipping it never refetches the charts.
   const listFilters = React.useMemo(
-    () => ({ ...filters, direction: 'out' as const }),
-    [filters],
+    () => ({ ...filters, direction: 'out' as const, sort }),
+    [filters, sort],
   );
 
   const rowsQuery = useTransactionsPaged(listFilters);
@@ -290,7 +304,7 @@ export default function FleetExpensesPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => exportMutation.mutate(filters)}
+            onClick={() => exportMutation.mutate({ ...filters, sort })}
             disabled={exportMutation.isPending}
             aria-label={t('common.export')}
           >
@@ -679,6 +693,28 @@ export default function FleetExpensesPage() {
       </div>
 
       {/* ── The ledger ────────────────────────────────────────────────────── */}
+      <div className="flex items-center justify-between gap-3">
+        <span id="ledger-sort-label" className="text-xs font-medium text-muted-foreground">
+          {t('fleetExpenses.sort.label')}
+        </span>
+        <SortToggle
+          value={sort}
+          onChange={setSort}
+          labelledBy="ledger-sort-label"
+          options={[
+            {
+              value: 'amount',
+              label: t('fleetExpenses.sort.amount'),
+              icon: <ArrowDownWideNarrow className="h-3.5 w-3.5" aria-hidden="true" />,
+            },
+            {
+              value: 'date',
+              label: t('fleetExpenses.sort.date'),
+              icon: <CalendarDays className="h-3.5 w-3.5" aria-hidden="true" />,
+            },
+          ]}
+        />
+      </div>
       {isLoading ? (
         <div className="space-y-2">
           {Array.from({ length: 6 }).map((_, i) => (
@@ -709,7 +745,12 @@ export default function FleetExpensesPage() {
           }
         />
       ) : (
-        <LedgerList rows={visibleRows} dayTotals={dayTotals} canEdit={canManageExpenses} />
+        <LedgerList
+          rows={visibleRows}
+          dayTotals={dayTotals}
+          canEdit={canManageExpenses}
+          sort={sort}
+        />
       )}
 
       {/* Quiet link into Messages — replaces the amber queue badge. */}
@@ -763,6 +804,50 @@ export default function FleetExpensesPage() {
 /* -------------------------------------------------------------------------- */
 /* Bits                                                                        */
 /* -------------------------------------------------------------------------- */
+
+/** Two-way segmented control — always visible, so the order is never a
+ *  mystery. Radio semantics: exactly one option is on. */
+function SortToggle({
+  value,
+  onChange,
+  options,
+  labelledBy,
+}: {
+  value: TransactionSort;
+  onChange: (v: TransactionSort) => void;
+  options: { value: TransactionSort; label: string; icon: React.ReactNode }[];
+  labelledBy: string;
+}) {
+  return (
+    <div
+      role="radiogroup"
+      aria-labelledby={labelledBy}
+      className="inline-flex shrink-0 rounded-lg border bg-muted/40 p-0.5"
+    >
+      {options.map((o) => {
+        const active = o.value === value;
+        return (
+          <button
+            key={o.value}
+            type="button"
+            role="radio"
+            aria-checked={active}
+            onClick={() => onChange(o.value)}
+            className={cn(
+              'inline-flex min-h-11 items-center gap-1.5 rounded-md px-3 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring lg:min-h-8',
+              active
+                ? 'bg-card text-foreground shadow-sm'
+                : 'text-muted-foreground hover:text-foreground',
+            )}
+          >
+            {o.icon}
+            {o.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
 
 function FilterChip({
   active,
