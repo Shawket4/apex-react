@@ -157,7 +157,7 @@ export function ZoneScanDialog({
           {result && result.violations.length > 0 ? (
             <Button variant="outline" onClick={() => void onExport()} disabled={exporting}>
               {exporting ? (
-                <Loader2 className="animate-spin motion-reduce:animate-none" aria-hidden="true" />
+                <Loader2 className="animate-spin" aria-hidden="true" />
               ) : (
                 <Download aria-hidden="true" />
               )}
@@ -169,7 +169,7 @@ export function ZoneScanDialog({
           </Button>
           <Button onClick={() => void onRun()} disabled={!canRun || scan.isPending}>
             {scan.isPending ? (
-              <Loader2 className="animate-spin motion-reduce:animate-none" aria-hidden="true" />
+              <Loader2 className="animate-spin" aria-hidden="true" />
             ) : (
               <FileSearch aria-hidden="true" />
             )}

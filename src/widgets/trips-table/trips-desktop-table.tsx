@@ -231,7 +231,7 @@ function Row({
           <ChevronRight
             aria-hidden
             className={cn(
-              'h-4 w-4 text-muted-foreground transition-transform duration-200',
+              'h-4 w-4 text-muted-foreground transition-transform duration-base',
               isExpanded && 'rotate-90',
             )}
           />

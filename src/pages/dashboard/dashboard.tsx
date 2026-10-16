@@ -49,6 +49,7 @@ import { prefetchLedgerMount } from '@/entities/transaction/queries';
 import { Button } from '@/shared/ui/button';
 import { PageShell } from '@/shared/ui/page-shell';
 import { Skeleton } from '@/shared/ui/skeleton';
+import { CountUpText, SkeletonSwap, Stagger, useChangeSignal, useLanding, usePop } from '@/shared/lib/motion';
 import { format, formatNumber } from '@/shared/lib/format';
 import { cn } from '@/shared/lib/cn';
 
@@ -101,6 +102,8 @@ export default function DashboardPage() {
   const t0 = cairoToday();
   const today = `${t0.y}-${String(t0.m + 1).padStart(2, '0')}-${String(t0.d).padStart(2, '0')}`;
   const asOf = dashboard.data?.as_of;
+  // The KPI skeletons fade out before the cards rise in, one after another.
+  const kpis = useLanding<HTMLDivElement>(dashboard.isPending);
 
   return (
     // The same PageShell every other screen uses — one page frame, one title
@@ -126,14 +129,28 @@ export default function DashboardPage() {
           message={t('dashboard.apexDown')}
           onRetry={() => void dashboard.refetch()}
         />
-      ) : dashboard.isPending ? (
-        <div className={cn('grid grid-cols-2 gap-3', showMoney ? 'lg:grid-cols-4' : 'lg:grid-cols-3')}>
-          {Array.from({ length: showMoney ? 4 : 3 }).map((_, i) => (
-            <Skeleton key={i} className="h-[92px] rounded-lg" />
-          ))}
-        </div>
       ) : (
-        <KpiRow data={dashboard.data} showMoney={showMoney} scope={scope} />
+        // The KPI skeletons fade out (an overlay) before the cards rise in,
+        // one after another; the cards render behind them in the same commit.
+        <div className="relative">
+          {kpis.showSkeleton ? (
+            <KpiSkeleton showMoney={showMoney} />
+          ) : (
+            dashboard.data && (
+              <KpiRow
+                data={dashboard.data}
+                showMoney={showMoney}
+                scope={scope}
+                delay={kpis.delay}
+              />
+            )
+          )}
+          {kpis.leaving && (
+            <div ref={kpis.ghostRef} aria-hidden className="pointer-events-none absolute inset-x-0 top-0">
+              <KpiSkeleton showMoney={showMoney} />
+            </div>
+          )}
+        </div>
       )}
 
       {/* ---- fleet + exceptions ---- */}
@@ -157,16 +174,19 @@ export default function DashboardPage() {
                 compact
               />
             )}
-            {dashboard.data ? (
-              <FleetGrid
-                fleet={dashboard.data.fleet}
-                vehicles={live.vehicles}
-                connection={live.connection}
-                today={today}
-              />
-            ) : (
-              <Skeleton className="h-40 rounded-lg" />
-            )}
+            <SkeletonSwap
+              loading={!dashboard.data}
+              skeleton={<Skeleton className="h-40 rounded-lg" />}
+            >
+              {dashboard.data && (
+                <FleetGrid
+                  fleet={dashboard.data.fleet}
+                  vehicles={live.vehicles}
+                  connection={live.connection}
+                  today={today}
+                />
+              )}
+            </SkeletonSwap>
           </div>
         </section>
 
@@ -177,22 +197,29 @@ export default function DashboardPage() {
               <p className="py-6 text-center text-xs text-muted-foreground">
                 {t('dashboard.exceptions.unavailable')}
               </p>
-            ) : dashboard.isPending ? (
-              <div className="grid gap-2">
-                {Array.from({ length: 3 }).map((_, i) => (
-                  <Skeleton key={i} className="h-12 rounded-lg" />
-                ))}
-              </div>
-            ) : dashboard.data && dashboard.data.exceptions.length === 0 ? (
-              <p className="py-6 text-center text-xs text-muted-foreground">
-                {t('dashboard.exceptions.allClear')}
-              </p>
             ) : (
-              <div className="grid gap-2">
-                {(dashboard.data?.exceptions ?? []).map((e) => (
-                  <ExceptionRow key={e.key} exception={e} />
-                ))}
-              </div>
+              <SkeletonSwap
+                loading={dashboard.isPending}
+                skeleton={
+                  <div className="grid gap-2">
+                    {Array.from({ length: 3 }).map((_, i) => (
+                      <Skeleton key={i} className="h-12 rounded-lg" />
+                    ))}
+                  </div>
+                }
+              >
+                {dashboard.data && dashboard.data.exceptions.length === 0 ? (
+                  <p className="py-6 text-center text-xs text-muted-foreground">
+                    {t('dashboard.exceptions.allClear')}
+                  </p>
+                ) : (
+                  <div className="grid gap-2">
+                    {(dashboard.data?.exceptions ?? []).map((e) => (
+                      <ExceptionRow key={e.key} exception={e} />
+                    ))}
+                  </div>
+                )}
+              </SkeletonSwap>
             )}
           </div>
         </section>
@@ -227,8 +254,13 @@ export default function DashboardPage() {
 function ConnectionBadge({ live }: { live: ReturnType<typeof useEtitLive> }) {
   const { t } = useTranslation();
   const state = live.connection;
+  // Success feedback: the badge settles in when the stream comes (back) up.
+  const ref = React.useRef<HTMLSpanElement>(null);
+  const changed = useChangeSignal(state);
+  usePop(ref, state === 'live' ? changed : 0);
   return (
     <span
+      ref={ref}
       className={cn(
         'inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-medium',
         state === 'live' && 'border-success/40 bg-success/10 text-success',
@@ -239,8 +271,8 @@ function ConnectionBadge({ live }: { live: ReturnType<typeof useEtitLive> }) {
       <span
         className={cn(
           'h-1.5 w-1.5 rounded-full',
-          state === 'live' && 'animate-pulse bg-success motion-reduce:animate-none',
-          state === 'connecting' && 'animate-pulse bg-muted-foreground motion-reduce:animate-none',
+          state === 'live' && 'animate-pulse bg-success',
+          state === 'connecting' && 'animate-pulse bg-muted-foreground',
           state === 'down' && 'bg-warning',
         )}
         aria-hidden
@@ -265,14 +297,27 @@ function ConnectionBadge({ live }: { live: ReturnType<typeof useEtitLive> }) {
 /* KPI cards                                                                   */
 /* -------------------------------------------------------------------------- */
 
+function KpiSkeleton({ showMoney }: { showMoney: boolean }) {
+  return (
+    <div className={cn('grid grid-cols-2 gap-3', showMoney ? 'lg:grid-cols-4' : 'lg:grid-cols-3')}>
+      {Array.from({ length: showMoney ? 4 : 3 }).map((_, i) => (
+        <Skeleton key={i} className="h-[92px] rounded-lg" />
+      ))}
+    </div>
+  );
+}
+
 function KpiRow({
   data,
   showMoney,
   scope,
+  delay,
 }: {
   data: Dashboard;
   showMoney: boolean;
   scope: DashboardScope;
+  /** Seconds to wait for the skeleton to fade out first. */
+  delay: number;
 }) {
   const { t } = useTranslation();
   const [open, setOpen] = React.useState<DrawerKind | null>(null);
@@ -362,7 +407,10 @@ function KpiRow({
       ];
 
   return (
-    <div className={cn('grid grid-cols-2 gap-3', money ? 'lg:grid-cols-4' : 'lg:grid-cols-3')}>
+    <Stagger
+      delay={delay}
+      className={cn('grid grid-cols-2 gap-3', money ? 'lg:grid-cols-4' : 'lg:grid-cols-3')}
+    >
       {cards.map((card) => (
         <KpiCard
           key={card.kind}
@@ -378,7 +426,7 @@ function KpiRow({
           <StaticKpi title={t('dashboard.kpi.trucks')} value={formatNumber(data.month.trucks, 0)} />
         </>
       )}
-    </div>
+    </Stagger>
   );
 }
 
@@ -388,7 +436,9 @@ function StaticKpi({ title, value }: { title: string; value: string }) {
       <dt className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
         {title}
       </dt>
-      <dd className="m-0 font-mono text-[22px] font-semibold leading-none tabular-nums">{value}</dd>
+      <dd className="m-0 font-mono text-[22px] font-semibold leading-none tabular-nums">
+        <CountUpText>{value}</CountUpText>
+      </dd>
     </div>
   );
 }
@@ -434,7 +484,7 @@ function KpiCard({
           {title}
           <ChevronDown
             aria-hidden
-            className={cn('h-3 w-3 shrink-0 transition-transform duration-200', isOpen && 'rotate-180')}
+            className={cn('h-3 w-3 shrink-0 transition-transform duration-base', isOpen && 'rotate-180')}
           />
         </dt>
         <dd
@@ -443,7 +493,7 @@ function KpiCard({
             isMoney && 'text-money',
           )}
         >
-          {value}
+          <CountUpText>{value}</CountUpText>
         </dd>
         <p className="mt-1.5 min-h-[17px] text-[11.5px] text-muted-foreground">{detail}</p>
       </button>

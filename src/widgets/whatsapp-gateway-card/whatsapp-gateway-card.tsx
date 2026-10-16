@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { Loader2, MessageCircle, QrCode, RefreshCw } from 'lucide-react';
@@ -19,6 +19,7 @@ import {
   useWhatsAppReconnect,
   useWhatsAppStatus,
 } from '@/entities/whatsapp/queries';
+import { useChangeSignal, usePop } from '@/shared/lib/motion';
 
 export function WhatsAppGatewayCard() {
   const { t } = useTranslation();
@@ -51,6 +52,12 @@ export function WhatsAppGatewayCard() {
     }
   }, [qrOpen, loggedIn, t]);
 
+  // Success feedback: the status badge settles in when the gateway connects
+  // while the card is on screen (never on load).
+  const badgeRef = useRef<HTMLSpanElement>(null);
+  const connectedChange = useChangeSignal(status ? connected : null);
+  usePop(badgeRef, connected ? connectedChange : 0);
+
   const badge = statusQuery.isLoading ? (
     <Skeleton className="h-5 w-24 rounded-full" />
   ) : statusQuery.isError || !status ? (
@@ -71,7 +78,9 @@ export function WhatsAppGatewayCard() {
             <MessageCircle className="h-4 w-4" aria-hidden="true" />
             {t('settings.whatsappTitle', 'WhatsApp Gateway')}
           </CardTitle>
-          {badge}
+          <span ref={badgeRef} className="inline-flex">
+            {badge}
+          </span>
         </div>
         <CardDescription>
           {t(
@@ -94,7 +103,7 @@ export function WhatsAppGatewayCard() {
               disabled={reconnect.isPending}
             >
               {reconnect.isPending ? (
-                <Loader2 className="animate-spin motion-reduce:animate-none" aria-hidden="true" />
+                <Loader2 className="animate-spin" aria-hidden="true" />
               ) : (
                 <RefreshCw aria-hidden="true" />
               )}
@@ -136,7 +145,7 @@ export function WhatsAppGatewayCard() {
               </p>
             ) : (
               <Loader2
-                className="h-8 w-8 animate-spin text-muted-foreground motion-reduce:animate-none"
+                className="h-8 w-8 animate-spin text-muted-foreground"
                 aria-hidden="true"
               />
             )}

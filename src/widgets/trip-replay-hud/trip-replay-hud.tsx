@@ -179,7 +179,7 @@ export function TripReplayHud({
       {state.dwellDurationMs != null && (
         <div className="mt-1.5 inline-flex items-center gap-1.5 rounded-full border border-warning/40 bg-warning/10 px-2 py-0.5 text-[10px] font-semibold text-warning">
           <span
-            className="inline-block h-1.5 w-1.5 animate-ping rounded-full bg-warning motion-reduce:animate-none"
+            className="inline-block h-1.5 w-1.5 animate-ping rounded-full bg-warning"
             aria-hidden="true"
           />
           {t('tripReplay.hud.stoppedFor', 'stopped {{duration}}', {

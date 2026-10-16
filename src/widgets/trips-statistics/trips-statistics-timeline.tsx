@@ -33,6 +33,7 @@ import {
   CHART_OTHER_COLOR,
 } from '@/shared/lib/chart-theme';
 import type { DailyStat } from '@/entities/trip-statistics/schemas';
+import { useChartMotion } from '@/shared/lib/motion';
 
 type Metric = 'revenue' | 'volume' | 'trips' | 'distance';
 
@@ -69,6 +70,8 @@ export function TripsStatisticsTimeline({
   endDate,
 }: TripsStatisticsTimelineProps) {
   const { t } = useTranslation();
+  // Series draws run on the count token, in step with the KPI count-ups.
+  const chartMotion = useChartMotion();
   const [metric, setMetric] = React.useState<Metric>(
     hasFinancialAccess ? 'revenue' : 'volume',
   );
@@ -382,6 +385,7 @@ export function TripsStatisticsTimeline({
                 {/* Render each series as a stacked Area with gradient fill. */}
                 {visibleSeries.map((s) => (
                   <Area
+                    {...chartMotion}
                     key={s.key}
                     type="monotone"
                     dataKey={s.key}

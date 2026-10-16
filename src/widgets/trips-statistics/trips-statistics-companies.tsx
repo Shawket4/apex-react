@@ -36,6 +36,7 @@ import type {
 import { useQueryClient } from '@tanstack/react-query';
 import { intentProps } from '@/shared/lib/prefetch';
 import { prefetchRouteDays, useRouteDays } from '@/entities/trip-statistics/queries';
+import { useChartMotion } from '@/shared/lib/motion';
 
 interface TripsStatisticsCompaniesProps {
   companies: CompanyStat[];
@@ -227,6 +228,8 @@ function CompanyPie({
   hasFinancialAccess: boolean;
 }) {
   const { t } = useTranslation();
+  // Series draws run on the count token, in step with the KPI count-ups.
+  const chartMotion = useChartMotion();
   const groups = company.details ?? [];
 
   const groupData = groups
@@ -282,6 +285,7 @@ function CompanyPie({
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>
           <Pie
+            {...chartMotion}
             data={groupData}
             dataKey="value"
             nameKey="name"
@@ -954,7 +958,7 @@ function DaysSubTable({
   if (isLoading) {
     return (
       <div className="border-s-2 border-success/40 ms-4 my-2 flex items-center gap-2 p-2.5 text-[11px] text-muted-foreground">
-        <Loader2 className="h-3 w-3 animate-spin motion-reduce:animate-none" />
+        <Loader2 className="h-3 w-3 animate-spin" />
         {t('common.loading')}
       </div>
     );

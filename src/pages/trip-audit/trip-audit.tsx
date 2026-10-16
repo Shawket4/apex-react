@@ -210,7 +210,7 @@ export default function TripAuditPage() {
             className="gap-2"
           >
             {runScan.isPending ? (
-              <Loader2 className="animate-spin motion-reduce:animate-none" />
+              <Loader2 className="animate-spin" />
             ) : (
               <Radar />
             )}

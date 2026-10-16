@@ -78,7 +78,7 @@ export function FleetPanel({
     <aside
       className={cn(
         'pointer-events-auto absolute inset-y-0 start-0 z-30 flex w-[300px] max-w-[86vw] flex-col',
-        'border-e bg-card/95 shadow-lg backdrop-blur transition-transform duration-200',
+        'border-e bg-card/95 shadow-lg backdrop-blur transition-transform duration-slow ease-drawer',
         open ? 'translate-x-0' : '-translate-x-full rtl:translate-x-full',
       )}
       aria-hidden={!open}

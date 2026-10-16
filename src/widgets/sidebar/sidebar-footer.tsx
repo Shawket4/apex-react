@@ -47,7 +47,7 @@ export function SidebarFooter({ collapsed, onToggleCollapse, onNavigate }: Sideb
         >
           <ChevronLeft
             className={cn(
-              'h-4 w-4 transition-transform duration-200 motion-reduce:transition-none',
+              'h-4 w-4 transition-transform duration-base',
               collapsed ? 'rotate-180 rtl:rotate-0' : 'rtl:rotate-180',
             )}
             aria-hidden

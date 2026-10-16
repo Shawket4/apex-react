@@ -692,7 +692,7 @@ export default function FleetExpenseFormPage({ mode }: { mode: 'create' | 'edit'
                 className="order-2 min-h-11 flex-1 sm:order-3 sm:min-h-9 sm:flex-none"
               >
                 {saving ? (
-                  <Loader2 className="animate-spin motion-reduce:animate-none" />
+                  <Loader2 className="animate-spin" />
                 ) : (
                   <Save />
                 )}

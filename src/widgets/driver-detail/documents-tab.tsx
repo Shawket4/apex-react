@@ -366,7 +366,7 @@ export function DocumentsTab({ driver }: DocumentsTabProps) {
               <img
                 src={previewUrl}
                 alt={previewTitle}
-                className="transition-transform duration-200"
+                className="transition-transform duration-base"
                 style={{
                   transform: `scale(${zoom}) rotate(${rotation}deg)`,
                   maxWidth: '100%',

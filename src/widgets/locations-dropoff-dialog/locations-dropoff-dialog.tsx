@@ -238,7 +238,7 @@ export function LocationsDropoffDialog({
             </Button>
             <Button onClick={() => void handleSave()} disabled={!canSave || saving}>
               {saving ? (
-                <Loader2 className="animate-spin motion-reduce:animate-none" />
+                <Loader2 className="animate-spin" />
               ) : (
                 <Save />
               )}

@@ -93,7 +93,7 @@ export default function FleetExpensesMessagesPage() {
             aria-label={t('common.refresh')}
           >
             <RefreshCw
-              className={cn(query.isFetching && 'animate-spin motion-reduce:animate-none')}
+              className={cn(query.isFetching && 'animate-spin')}
             />
             <span className="hidden sm:inline">{t('common.refresh')}</span>
           </Button>

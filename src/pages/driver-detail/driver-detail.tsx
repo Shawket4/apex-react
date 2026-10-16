@@ -185,7 +185,7 @@ export default function DriverDetailPage() {
                 className="h-7 px-2.5 gap-1.5"
               >
                 {approveMutation.isPending ? (
-                  <Loader2 className="animate-spin motion-reduce:animate-none" aria-hidden="true" />
+                  <Loader2 className="animate-spin" aria-hidden="true" />
                 ) : (
                   <ShieldCheck aria-hidden="true" />
                 )}
@@ -199,7 +199,7 @@ export default function DriverDetailPage() {
                 className="h-7 px-2.5 gap-1.5"
               >
                 {rejectMutation.isPending ? (
-                  <Loader2 className="animate-spin motion-reduce:animate-none" aria-hidden="true" />
+                  <Loader2 className="animate-spin" aria-hidden="true" />
                 ) : (
                   <ShieldX aria-hidden="true" />
                 )}

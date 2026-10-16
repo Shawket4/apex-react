@@ -11,6 +11,7 @@ import {
   CalendarDays,
   ChevronRight,
   Download,
+  Loader2,
   Fuel,
   HandCoins,
   Inbox,
@@ -78,6 +79,7 @@ import {
 import { categoryLabel, useCategories } from '@/entities/transaction/categories';
 import { LedgerList } from '@/widgets/fleet-expenses-table/ledger-list';
 import { CashInReview } from '@/widgets/fleet-expenses-table/cash-in-review';
+import { useChartMotion } from '@/shared/lib/motion';
 
 /* -------------------------------------------------------------------------- */
 /* Range presets — all boundaries are CAIRO calendar days (D6)                 */
@@ -95,6 +97,8 @@ type LedgerView = 'pending' | 'all';
 
 export default function FleetExpensesPage() {
   const { t, i18n } = useTranslation();
+  // Series draws run on the count token, in step with the KPI count-ups.
+  const chartMotion = useChartMotion();
   const navigate = useNavigate();
   const { resolvedTheme } = useTheme();
   const { canManageExpenses } = usePermissions();
@@ -320,7 +324,7 @@ export default function FleetExpensesPage() {
             disabled={isLoading}
             aria-label={t('common.refresh')}
           >
-            <RefreshCw className={cn(isLoading && 'animate-spin motion-reduce:animate-none')} />
+            <RefreshCw className={cn(isLoading && 'animate-spin')} />
             <span className="hidden sm:inline">{t('common.refresh')}</span>
           </Button>
           {/* Server-rendered XLSX over the CURRENT filters — whole set, uncapped. */}
@@ -333,9 +337,11 @@ export default function FleetExpensesPage() {
             disabled={exportMutation.isPending}
             aria-label={t('common.export')}
           >
-            <Download
-              className={cn(exportMutation.isPending && 'animate-pulse motion-reduce:animate-none')}
-            />
+            {exportMutation.isPending ? (
+              <Loader2 className="animate-spin" aria-hidden="true" />
+            ) : (
+              <Download />
+            )}
             <span className="hidden sm:inline">{t('common.export')}</span>
           </Button>
           {canManageExpenses && (
@@ -515,6 +521,7 @@ export default function FleetExpensesPage() {
                   }}
                 />
                 <Area
+                  {...chartMotion}
                   type="monotone"
                   dataKey="value"
                   stroke="hsl(var(--primary))"
@@ -534,6 +541,7 @@ export default function FleetExpensesPage() {
               <div className="flex items-center gap-4">
                 <PieChart width={120} height={120}>
                   <Pie
+                    {...chartMotion}
                     data={donut}
                     dataKey="value"
                     nameKey="name"

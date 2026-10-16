@@ -344,7 +344,7 @@ function GroupCard({
                 aria-label={t('common.export')}
               >
                 {exporting ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin motion-reduce:animate-none" />
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
                 ) : (
                   <Download className="h-3.5 w-3.5" />
                 )}
@@ -356,7 +356,7 @@ function GroupCard({
           {!alwaysOpen && (
             <ChevronDown
               className={cn(
-                'h-3 w-3 shrink-0 text-muted-foreground transition-transform duration-200',
+                'h-3 w-3 shrink-0 text-muted-foreground transition-transform duration-base',
                 isOpen && 'rotate-180',
               )}
               aria-hidden

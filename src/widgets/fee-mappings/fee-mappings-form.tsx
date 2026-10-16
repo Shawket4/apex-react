@@ -301,7 +301,7 @@ export function FeeMappingsForm({
               </Button>
             )}
             <Button type="submit" size="sm" disabled={isPending}>
-              {isPending && <Loader2 className="animate-spin motion-reduce:animate-none" aria-hidden="true" />}
+              {isPending && <Loader2 className="animate-spin" aria-hidden="true" />}
               {isEdit ? t('feeMappings.form.save') : t('feeMappings.form.add')}
             </Button>
           </div>

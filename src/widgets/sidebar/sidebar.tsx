@@ -43,7 +43,8 @@ export function Sidebar({
       data-collapsed={collapsed}
       className={cn(
         'flex h-full shrink-0 flex-col border-e bg-card print:hidden',
-        'transition-[width] duration-200 ease-out motion-reduce:transition-none',
+        // The one width transition: the collapse is a layout change by design.
+        'transition-[width] duration-base ease-drawer',
         collapsed ? 'w-[72px]' : 'w-64',
         className,
       )}

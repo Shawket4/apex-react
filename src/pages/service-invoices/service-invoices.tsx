@@ -125,7 +125,7 @@ export default function ServiceInvoicesPage() {
             <div className="relative group">
               <div className="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
                 {searchLoading ? (
-                  <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none text-primary" aria-hidden="true" />
+                  <Loader2 className="h-4 w-4 animate-spin text-primary" aria-hidden="true" />
                 ) : isSearching ? (
                   <Sparkles className="h-4 w-4 text-primary" aria-hidden="true" />
                 ) : (

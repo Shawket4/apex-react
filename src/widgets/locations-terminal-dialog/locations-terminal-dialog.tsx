@@ -259,7 +259,7 @@ export function LocationsTerminalDialog({
             disabled={!radiusValid || updateTerminal.isPending}
           >
             {updateTerminal.isPending ? (
-              <Loader2 className="animate-spin motion-reduce:animate-none" />
+              <Loader2 className="animate-spin" />
             ) : (
               <Save />
             )}
@@ -465,7 +465,7 @@ function ReceiptPatternsSection({ terminalId }: { terminalId: number }) {
                     aria-label={t('common.delete', 'Delete')}
                   >
                     {busy ? (
-                      <Loader2 className="animate-spin motion-reduce:animate-none" />
+                      <Loader2 className="animate-spin" />
                     ) : (
                       <Trash2 />
                     )}
@@ -581,7 +581,7 @@ function ReceiptPatternsSection({ terminalId }: { terminalId: number }) {
                 onClick={() => void handleSavePattern()}
               >
                 {upsertPattern.isPending ? (
-                  <Loader2 className="animate-spin motion-reduce:animate-none" />
+                  <Loader2 className="animate-spin" />
                 ) : (
                   <Save />
                 )}

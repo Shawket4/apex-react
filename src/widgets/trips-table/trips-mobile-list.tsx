@@ -169,7 +169,7 @@ function MobileRow({
             <ChevronDown
               aria-hidden
               className={cn(
-                'h-3.5 w-3.5 transition-transform duration-200',
+                'h-3.5 w-3.5 transition-transform duration-base',
                 open && 'rotate-180',
               )}
             />

@@ -48,7 +48,7 @@ function injectLeafletStyles() {
       background: transparent; border: none;
       border-bottom: 1px solid hsl(var(--border));
       color: hsl(var(--foreground)); font-weight: 600;
-      transition: background-color 0.15s ease, color 0.15s ease;
+      transition: background-color var(--motion-fast) var(--ease-out), color var(--motion-fast) var(--ease-out);
       width: 40px; height: 40px; line-height: 40px; font-size: 18px;
     }
     .leaflet-control-zoom a:last-child { border-bottom: none; }
@@ -61,7 +61,7 @@ function injectLeafletStyles() {
     .leaflet-container { background: hsl(var(--muted)); font-family: inherit; border-radius: 12px; }
     .leaflet-popup-close-button {
       color: inherit; opacity: 0.7; font-size: 18px; padding: 4px 8px;
-      border-radius: 8px; transition: background-color 0.15s ease, color 0.15s ease;
+      border-radius: 8px; transition: background-color var(--motion-fast) var(--ease-out), color var(--motion-fast) var(--ease-out);
     }
     .leaflet-popup-close-button:hover { opacity: 1; background: hsl(var(--accent)); color: hsl(var(--accent-foreground)); }
 

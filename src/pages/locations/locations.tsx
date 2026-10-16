@@ -242,7 +242,7 @@ export default function LocationsPage() {
           disabled={bulkEnrich.isPending}
         >
           {bulkEnrich.isPending ? (
-            <Loader2 className="animate-spin motion-reduce:animate-none" aria-hidden="true" />
+            <Loader2 className="animate-spin" aria-hidden="true" />
           ) : (
             <RefreshCw aria-hidden="true" />
           )}

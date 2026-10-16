@@ -99,7 +99,7 @@ export default function SettingsPage() {
                   <div className="flex justify-end pt-2">
                     <Button type="submit" disabled={mutation.isPending}>
                       {mutation.isPending ? (
-                        <Loader2 className="animate-spin motion-reduce:animate-none" aria-hidden="true" />
+                        <Loader2 className="animate-spin" aria-hidden="true" />
                       ) : (
                         <Save aria-hidden="true" />
                       )}

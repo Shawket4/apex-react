@@ -154,7 +154,7 @@ export function ServiceInvoiceForm({
           </Button>
           <Button onClick={form.handleSubmit(onSubmit)} disabled={submitting}>
             {submitting ? (
-              <Loader2 className="animate-spin motion-reduce:animate-none" aria-hidden="true" />
+              <Loader2 className="animate-spin" aria-hidden="true" />
             ) : (
               <Save aria-hidden="true" />
             )}
@@ -377,7 +377,7 @@ export function ServiceInvoiceForm({
             </Button>
             <Button className="flex-1" onClick={form.handleSubmit(onSubmit)} disabled={submitting}>
               {submitting ? (
-                <Loader2 className="animate-spin motion-reduce:animate-none" aria-hidden="true" />
+                <Loader2 className="animate-spin" aria-hidden="true" />
               ) : (
                 <Save aria-hidden="true" />
               )}

@@ -163,7 +163,7 @@ export function TripsStatistics({ filters }: TripsStatisticsProps) {
         >
           {isFetching && (
             <span className="inline-flex items-center gap-1.5">
-              <Loader2 className="h-3 w-3 animate-spin motion-reduce:animate-none" />
+              <Loader2 className="h-3 w-3 animate-spin" />
               {t('common.refreshing')}
             </span>
           )}

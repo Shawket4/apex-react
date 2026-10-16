@@ -321,7 +321,7 @@ export function CarForm({
             disabled={submitting || (mode === 'edit' && !form.formState.isDirty)}
           >
             {submitting ? (
-              <Loader2 className="animate-spin motion-reduce:animate-none" />
+              <Loader2 className="animate-spin" />
             ) : (
               <Save />
             )}

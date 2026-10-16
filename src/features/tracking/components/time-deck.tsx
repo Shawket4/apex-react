@@ -275,7 +275,7 @@ export function TimeDeck({
                   className={cn(
                     'h-1 min-w-1 flex-1 rounded-sm',
                     d.status === 'loaded' && 'bg-success',
-                    d.status === 'pending' && 'animate-pulse bg-muted motion-reduce:animate-none',
+                    d.status === 'pending' && 'motion-shimmer bg-muted',
                     d.status === 'error' && 'bg-destructive',
                   )}
                 />

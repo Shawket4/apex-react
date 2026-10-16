@@ -1372,7 +1372,7 @@ export function TripForm({ parentId }: TripFormProps) {
           disabled={!isValid || capacityBlocked || receiptPatternBlocked || isPending}
         >
           {isPending ? (
-            <Loader2 className="animate-spin motion-reduce:animate-none" />
+            <Loader2 className="animate-spin" />
           ) : (
             <Save />
           )}

@@ -210,7 +210,7 @@ export function DuplicateComparisonDialog({
             onClick={onForceProceed}
             disabled={loading}
           >
-            {loading && <Loader2 className="animate-spin motion-reduce:animate-none" />}
+            {loading && <Loader2 className="animate-spin" />}
             {forceLabel}
           </Button>
         </DialogFooter>

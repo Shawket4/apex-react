@@ -148,7 +148,7 @@ function TireStockCard() {
           )}
           <Button type="submit" disabled={credit.isPending} className="w-full">
             {credit.isPending ? (
-              <Loader2 className="animate-spin motion-reduce:animate-none" aria-hidden="true" />
+              <Loader2 className="animate-spin" aria-hidden="true" />
             ) : (
               <Plus aria-hidden="true" />
             )}
@@ -245,7 +245,7 @@ function OilStockCard() {
           )}
           <Button type="submit" disabled={credit.isPending} className="w-full">
             {credit.isPending ? (
-              <Loader2 className="animate-spin motion-reduce:animate-none" aria-hidden="true" />
+              <Loader2 className="animate-spin" aria-hidden="true" />
             ) : (
               <Plus aria-hidden="true" />
             )}

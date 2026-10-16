@@ -202,7 +202,7 @@ export default function AddDriverLoanPage() {
               className="min-h-11 w-full sm:min-h-9 sm:w-auto"
             >
               {addMutation.isPending ? (
-                <Loader2 className="animate-spin motion-reduce:animate-none" aria-hidden="true" />
+                <Loader2 className="animate-spin" aria-hidden="true" />
               ) : (
                 <Save aria-hidden="true" />
               )}

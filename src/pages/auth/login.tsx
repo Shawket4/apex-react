@@ -7,6 +7,7 @@ import { Eye, EyeOff, Loader2, LogIn, Truck } from 'lucide-react';
 import { loginSchema, type LoginInput } from '@/entities/auth/schemas';
 import { useLogin } from '@/entities/auth/queries';
 import { useAuthStore } from '@/shared/auth/store';
+import { useShake } from '@/shared/lib/motion';
 import { useIsDesktop } from '@/shared/hooks/use-media-query';
 import { Button } from '@/shared/ui/button';
 import { Card, CardContent } from '@/shared/ui/card';
@@ -28,6 +29,10 @@ export default function LoginPage() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const login = useLogin();
   const isDesktop = useIsDesktop();
+  // A refused sign-in shakes the card (never the field being typed in); each
+  // failure is a new error object, so each one shakes once.
+  const cardRef = React.useRef<HTMLDivElement>(null);
+  useShake(cardRef, login.error);
 
   // Release any modal lock left behind on the way here.
   //
@@ -95,7 +100,7 @@ export default function LoginPage() {
               <span className="text-xl font-semibold">{t('common.appName')}</span>
             </div>
 
-            <Card className="border shadow-none">
+            <Card ref={cardRef} className="border shadow-none">
               <CardContent className="space-y-6 p-6 md:p-8">
                 <div className="space-y-1">
                   <h2 className="text-lg font-semibold leading-tight sm:text-xl">
@@ -170,7 +175,7 @@ export default function LoginPage() {
                     >
                       {login.isPending ? (
                         <>
-                          <Loader2 className="animate-spin motion-reduce:animate-none" />
+                          <Loader2 className="animate-spin" />
                           {t('auth.signingIn')}
                         </>
                       ) : (

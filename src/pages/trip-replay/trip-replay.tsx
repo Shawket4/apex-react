@@ -544,7 +544,7 @@ export default function TripReplayPage() {
           )}
           {history.loading && (
             <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <Loader2 className="h-3 w-3 animate-spin motion-reduce:animate-none" aria-hidden="true" />
+              <Loader2 className="h-3 w-3 animate-spin" aria-hidden="true" />
               {t('tripReplay.loadingTrace', 'Loading GPS trace…')}
             </span>
           )}

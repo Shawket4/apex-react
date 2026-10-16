@@ -366,7 +366,7 @@ export default function TripsPage() {
           disabled={isExporting || total === 0}
         >
           {isExporting ? (
-            <Loader2 className="animate-spin motion-reduce:animate-none" />
+            <Loader2 className="animate-spin" />
           ) : (
             <Download />
           )}
@@ -381,7 +381,7 @@ export default function TripsPage() {
         disabled={isExportingWatanya || !from || !to}
       >
         {isExportingWatanya ? (
-          <Loader2 className="animate-spin motion-reduce:animate-none" />
+          <Loader2 className="animate-spin" />
         ) : (
           <FileSpreadsheet />
         )}

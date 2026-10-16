@@ -135,7 +135,7 @@ export const TripReplayMap = React.forwardRef<TripReplayMapHandle, TripReplayMap
             className="absolute inset-0 flex items-center justify-center bg-muted/40"
           >
             <Loader2
-              className="h-7 w-7 animate-spin text-primary motion-reduce:animate-none"
+              className="h-7 w-7 animate-spin text-primary"
               aria-hidden="true"
             />
           </div>

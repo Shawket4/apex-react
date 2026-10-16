@@ -14,6 +14,7 @@ import { formatNumber } from '@/shared/lib/format';
 import type { MappingDetail } from '@/entities/mapping/schemas';
 
 import { DropOffPickerModal } from './drop-off-picker-modal';
+import { Skeleton } from '@/shared/ui/skeleton';
 import {
   activeContainers,
   assign,
@@ -465,7 +466,7 @@ export function CompartmentPlanner<C extends PlannerContainer>({
       </div>
 
       <div className="rounded-lg border bg-muted/30 px-2 py-3 sm:px-4">
-        <React.Suspense fallback={<div className="aspect-[16/10] w-full animate-pulse rounded-md bg-muted/40 sm:aspect-[16/6]" />}>
+        <React.Suspense fallback={<Skeleton className="aspect-[16/10] w-full sm:aspect-[16/6]" />}>
         <TankerDiagram
           compartments={diagramCompartments}
           activeDrop={lastDrop}

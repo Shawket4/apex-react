@@ -526,7 +526,7 @@ function QueueRow({
             onApply(item.s, 'gps_suggested');
           }}
         >
-          {busy ? <Loader2 className="animate-spin motion-reduce:animate-none" /> : <MapPin />}
+          {busy ? <Loader2 className="animate-spin" /> : <MapPin />}
           {t('locations.inbox.movePin', 'Move pin')}
         </Button>
       );
@@ -542,7 +542,7 @@ function QueueRow({
             onApply(item.s, 'manual');
           }}
         >
-          {busy ? <Loader2 className="animate-spin motion-reduce:animate-none" /> : <CheckCircle2 />}
+          {busy ? <Loader2 className="animate-spin" /> : <CheckCircle2 />}
           {t('locations.inbox.confirmPin', 'Confirm')}
         </Button>
       );
@@ -558,7 +558,7 @@ function QueueRow({
             onApply(s, 'gps_suggested');
           }}
         >
-          {busy ? <Loader2 className="animate-spin motion-reduce:animate-none" /> : <Sparkles />}
+          {busy ? <Loader2 className="animate-spin" /> : <Sparkles />}
           {t('locations.inbox.applyPin', 'Apply pin')}
         </Button>
       );
@@ -616,7 +616,7 @@ function QueueRow({
             <ChevronDown
               aria-hidden="true"
               className={cn(
-                'h-3 w-3 text-muted-foreground transition-transform duration-200',
+                'h-3 w-3 text-muted-foreground transition-transform duration-base',
                 expanded && 'rotate-180',
               )}
             />

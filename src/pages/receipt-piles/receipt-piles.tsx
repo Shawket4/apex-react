@@ -166,7 +166,7 @@ export default function ReceiptPilesPage() {
       disabled={exportPlan.isPending || !plan || plan.piles.length === 0}
     >
       {exportPlan.isPending ? (
-        <Loader2 className="animate-spin motion-reduce:animate-none" />
+        <Loader2 className="animate-spin" />
       ) : (
         <FileSpreadsheet />
       )}

@@ -666,7 +666,7 @@ function PlaybackMap({ detail, history, previewLeg }: PlaybackMapProps) {
         )}
         {history.loading && (
           <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <Loader2 className="h-3 w-3 animate-spin motion-reduce:animate-none" aria-hidden="true" />
+            <Loader2 className="h-3 w-3 animate-spin" aria-hidden="true" />
             {t('tripAudit.detail.loadingTrace', 'Loading GPS trace…')}
           </span>
         )}
@@ -1114,7 +1114,7 @@ function ReviewSection({ detail }: { detail: TripMatchDetail }) {
         className="gap-2"
       >
         {reviewMatch.isPending ? (
-          <Loader2 className="animate-spin motion-reduce:animate-none" aria-hidden="true" />
+          <Loader2 className="animate-spin" aria-hidden="true" />
         ) : (
           <CheckCircle2 aria-hidden="true" />
         )}

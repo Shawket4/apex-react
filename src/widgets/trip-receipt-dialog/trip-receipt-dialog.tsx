@@ -318,7 +318,7 @@ export function TripReceiptDialog({
                   disabled={!newReceivedBy.trim() || createMutation.isPending}
                 >
                   {createMutation.isPending && (
-                    <Loader2 className="animate-spin motion-reduce:animate-none" />
+                    <Loader2 className="animate-spin" />
                   )}
                   {t('trips.receipt.addStep')}
                 </Button>
@@ -412,7 +412,7 @@ function ReceiptStepRow({
           }
         >
           {busy ? (
-            <Loader2 className="animate-spin motion-reduce:animate-none" />
+            <Loader2 className="animate-spin" />
           ) : step.stamped ? (
             <CheckCircle2 />
           ) : (

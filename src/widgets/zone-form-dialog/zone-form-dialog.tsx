@@ -225,7 +225,7 @@ export function ZoneFormDialog({
               </Button>
               <Button type="submit" disabled={loading}>
                 {loading && (
-                  <Loader2 className="animate-spin motion-reduce:animate-none" aria-hidden="true" />
+                  <Loader2 className="animate-spin" aria-hidden="true" />
                 )}
                 {isEdit ? t('common.save', 'Save') : t('common.create', 'Create')}
               </Button>

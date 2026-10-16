@@ -509,8 +509,8 @@ export default function TrackingPage() {
             <span
               className={cn(
                 'h-1.5 w-1.5 rounded-full',
-                fleet.connection === 'live' && 'animate-pulse motion-reduce:animate-none bg-success',
-                fleet.connection === 'connecting' && 'animate-pulse motion-reduce:animate-none bg-muted-foreground',
+                fleet.connection === 'live' && 'animate-pulse bg-success',
+                fleet.connection === 'connecting' && 'animate-pulse bg-muted-foreground',
                 fleet.connection === 'down' && 'bg-warning',
               )}
             />

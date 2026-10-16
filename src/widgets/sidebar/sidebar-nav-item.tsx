@@ -59,7 +59,7 @@ function SidebarNavItemImpl({
       aria-current={active ? 'page' : undefined}
       className={cn(
         'flex h-9 items-center rounded-md text-sm font-medium touch-manipulation',
-        'transition-colors motion-reduce:transition-none',
+        'transition-colors',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
         active
           ? 'bg-primary/10 text-primary'
