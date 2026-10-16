@@ -39,6 +39,74 @@ export default [
 
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
       '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+
+      // Motion (CLAUDE.md, "Motion"): every animation goes through
+      // src/shared/lib/motion. GSAP is private to it (it loads lazily, in its
+      // own chunk), and the Radix overlays are wired to it in shared/ui.
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['gsap', 'gsap/*', '@gsap/*'],
+              message: 'GSAP is private to src/shared/lib/motion; use its hooks and components.',
+            },
+            {
+              group: [
+                '@radix-ui/react-dialog',
+                '@radix-ui/react-popover',
+                '@radix-ui/react-dropdown-menu',
+                '@radix-ui/react-select',
+                '@radix-ui/react-tooltip',
+                '@radix-ui/react-tabs',
+              ],
+              message: 'Use the shared/ui wrapper: it carries the motion.',
+            },
+            {
+              group: ['tailwindcss-animate', 'tw-animate-css', 'framer-motion', 'motion/react'],
+              message: 'Animation goes through src/shared/lib/motion.',
+            },
+          ],
+        },
+      ],
+      'no-restricted-syntax': [
+        'error',
+        ...['Literal', 'TemplateElement > .value'].flatMap((node) => [
+          {
+            selector: `${node}[${node === 'Literal' ? 'value' : 'raw'}=/transition-all/]`,
+            message: 'transition-all animates layout; name the properties (transition-colors, transition-transform, …).',
+          },
+          {
+            selector: `${node}[${node === 'Literal' ? 'value' : 'raw'}=/(^|\\s|:)(animate-in|animate-out|fade-in-0|fade-out-0|zoom-in-9|zoom-out-9|slide-in-from-|slide-out-to-)/]`,
+            message: 'tailwindcss-animate is gone; overlays and entrances animate through src/shared/lib/motion.',
+          },
+          {
+            selector: `${node}[${node === 'Literal' ? 'value' : 'raw'}=/(^|\\s|:)duration-\\d/]`,
+            message: 'Use a duration token: duration-fast | base | slow | count.',
+          },
+        ]),
+      ],
+    },
+  },
+  {
+    // The motion system itself, and the shared/ui primitives that wrap Radix.
+    files: ['src/shared/lib/motion/**/*.{ts,tsx}'],
+    rules: { 'no-restricted-imports': 'off' },
+  },
+  {
+    files: ['src/shared/ui/**/*.{ts,tsx}'],
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['gsap', 'gsap/*', '@gsap/*'],
+              message: 'GSAP is private to src/shared/lib/motion; use its hooks and components.',
+            },
+          ],
+        },
+      ],
     },
   },
   {
