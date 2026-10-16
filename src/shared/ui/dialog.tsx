@@ -4,7 +4,8 @@ import { X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/shared/lib/cn';
 import {
-  composeRefs,
+  useComposedRefs,
+  useElementRef,
   OverlayOpenProvider,
   recipes,
   useOverlayOpen,
@@ -63,11 +64,13 @@ const DialogContent = React.forwardRef<
 >(({ className, children, stacked = false, ...props }, ref) => {
   const { t } = useTranslation();
   const open = useOverlayOpen();
-  const overlayRef = React.useRef<HTMLDivElement>(null);
-  const contentRef = React.useRef<HTMLDivElement>(null);
+  // Elements as state: the portal mounts them a pass after this renders.
+  const [overlayEl, overlayRef] = useElementRef<HTMLDivElement>();
+  const [contentEl, contentRef] = useElementRef<HTMLDivElement>();
+  const composed = useComposedRefs(contentRef, ref);
   const mounted = usePresence(open ?? true, [
-    [overlayRef, recipes.backdrop],
-    [contentRef, recipes.dialog],
+    [overlayEl, recipes.backdrop],
+    [contentEl, recipes.dialog],
   ]);
   if (!mounted) return null;
   // Outside our Dialog root, Radix mounts and unmounts on its own.
@@ -80,7 +83,7 @@ const DialogContent = React.forwardRef<
         className={stacked ? DIALOG_STACKED_Z : undefined}
       />
       <DialogPrimitive.Content
-        ref={composeRefs(contentRef, ref)}
+        ref={composed}
         forceMount={forceMount}
         className={cn(
           // w-[calc(100%-2rem)] + rounded: on phones a dialog floats with a

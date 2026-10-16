@@ -1,7 +1,7 @@
 import * as React from 'react';
 import * as TabsPrimitive from '@radix-ui/react-tabs';
 import { cn } from '@/shared/lib/cn';
-import { composeRefs, useReveal } from '@/shared/lib/motion';
+import { useComposedRefs, useReveal } from '@/shared/lib/motion';
 
 const Tabs = TabsPrimitive.Root;
 
@@ -58,9 +58,10 @@ const TabsContent = React.forwardRef<
 >(({ className, ...props }, ref) => {
   const own = React.useRef<HTMLDivElement>(null);
   useReveal(own);
+  const composed = useComposedRefs(own, ref);
   return (
     <TabsPrimitive.Content
-      ref={composeRefs(own, ref)}
+      ref={composed}
       className={cn(
         'mt-2 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
         className,

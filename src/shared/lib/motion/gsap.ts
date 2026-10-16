@@ -31,6 +31,11 @@ export function loadGsap(): Promise<Gsap> {
     gsap.defaults({ duration: sec(DURATION.base), ease: EASE_NAME.out });
     // Targets that unmounted mid-tween are expected, not an error.
     gsap.config({ nullTargetWarn: false });
+    // A long frame (mounting a heavy form, a slow phone) must not eat the
+    // animation: any gap over 50 ms counts as one 33 ms step, so on a device
+    // that drops frames the motion runs slower instead of jumping to its end
+    // behind the jank. At 60 fps (16 ms frames) nothing changes.
+    gsap.ticker.lagSmoothing(50, 33);
     core = gsap;
     return gsap;
   });

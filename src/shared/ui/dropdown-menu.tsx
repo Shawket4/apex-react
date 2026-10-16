@@ -2,7 +2,7 @@ import * as React from 'react';
 import * as DropdownMenuPrimitive from '@radix-ui/react-dropdown-menu';
 import { Check, ChevronRight, Circle } from 'lucide-react';
 import { cn } from '@/shared/lib/cn';
-import { composeRefs, recipes, useEnter } from '@/shared/lib/motion';
+import { recipes, useComposedRefs, useEnter } from '@/shared/lib/motion';
 import { OVERLAY_Z } from './z-index';
 
 const DropdownMenu = DropdownMenuPrimitive.Root;
@@ -35,11 +35,12 @@ const DropdownMenuSubContent = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.SubContent>,
   React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.SubContent>
 >(({ className, ...props }, ref) => {
-  const own = React.useRef<HTMLDivElement>(null);
-  useEnter(own, () => recipes.popper(own.current?.dataset.side));
+  // Enters from its side and leaves the same way (see useEnter).
+  const own = useEnter<HTMLDivElement>((el) => recipes.popper(el.dataset.side));
+  const composed = useComposedRefs(own, ref);
   return (
     <DropdownMenuPrimitive.SubContent
-      ref={composeRefs(own, ref)}
+      ref={composed}
       className={cn(
         `${OVERLAY_Z} min-w-[8rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md`,
         className,
@@ -54,13 +55,13 @@ const DropdownMenuContent = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Content>
 >(({ className, sideOffset = 4, collisionPadding = 8, ...props }, ref) => {
-  const own = React.useRef<HTMLDivElement>(null);
-  // Enters from its side; closes at once.
-  useEnter(own, () => recipes.popper(own.current?.dataset.side));
+  // Enters from its side and leaves the same way (see useEnter).
+  const own = useEnter<HTMLDivElement>((el) => recipes.popper(el.dataset.side));
+  const composed = useComposedRefs(own, ref);
   return (
     <DropdownMenuPrimitive.Portal>
       <DropdownMenuPrimitive.Content
-        ref={composeRefs(own, ref)}
+        ref={composed}
         sideOffset={sideOffset}
         // Keep the menu on screen. Opened from a narrow drawer on a 375px
         // phone, an end-aligned menu ran 30px off the left edge.

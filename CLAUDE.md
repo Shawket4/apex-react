@@ -31,11 +31,14 @@ silently snaps to its final state.
 | A KPI figure | `<CountUp value format>`; already-formatted text: `<CountUpText>` |
 | A chart | `ChartCard` wears the entrance; spread `{...useChartMotion()}` on each Recharts series |
 | Error / success feedback | `useShake` (the card or form, never a field) / `usePop` with `useChangeSignal` |
+| Show/hide a block with an exit | `<Presence show>` (`initial={false}` to skip the first entrance) |
 | A one-off GSAP effect | `useGsap(fn, deps, { scope })`: scoped, reverted on cleanup |
 
 **Already wired, nothing to add:** dialogs and sheets enter and exit (their roots hold the
 open state so the content stays mounted through the exit); menus, popovers, selects and
-tooltips enter from their side and close at once; tab panels rise in; `Button` presses
+tooltips enter from their side and leave the same way (`useEnter`: an inert copy plays the
+exit where the content stood); `CollapsibleSection` bodies and the dashboard KPI drawers
+open and close through `<Presence>`; tab panels rise in; `Button` presses
 (`data-press`); `Skeleton` shimmers; `StatCard` rises on its beat and counts its figure up;
 `DataTable` rows arrive after the skeleton leaves; `EmptyState` rises; every route change
 fades the page area in (`widgets/layout`). Sonner toasts and Recharts keep their own engines.
@@ -52,6 +55,14 @@ fades the page area in (`widgets/layout`). Sonner toasts and Recharts keep their
   `transition-all` (lint refuses it); name the properties.
 - **RTL.** Sheets slide from their physical edge (resolved from `dir`), poppers use Radix's
   `data-side`, the shimmer reverses, a shake is symmetric.
+- **Hear about elements when they attach.** Anything rendered through a Radix `Portal`
+  mounts one layout pass after the component that renders it, so a `RefObject` read in that
+  component's layout effect is still null and the entrance silently snaps open. Overlay
+  motion takes elements from `useElementRef` (state set by a callback ref) or `useEnter`'s
+  callback ref, and refs are combined with `useComposedRefs` (stable, so a re-render is not
+  read as the element leaving).
+- **Jank slows motion, never skips it.** GSAP's lag smoothing counts any frame gap over
+  50 ms as 33 ms, so a slow phone sees the entrance instead of its end state.
 - **Nothing animates off screen.** Entrances skip what is out of view.
 - **No motion on data entry.** Never animate a field someone is typing in; nothing may
   remount, re-key or reparent an input.

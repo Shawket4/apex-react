@@ -49,7 +49,7 @@ import { prefetchLedgerMount } from '@/entities/transaction/queries';
 import { Button } from '@/shared/ui/button';
 import { PageShell } from '@/shared/ui/page-shell';
 import { Skeleton } from '@/shared/ui/skeleton';
-import { CountUpText, SkeletonSwap, Stagger, useChangeSignal, useLanding, usePop } from '@/shared/lib/motion';
+import { CountUpText, Presence, SkeletonSwap, Stagger, useChangeSignal, useLanding, usePop } from '@/shared/lib/motion';
 import { format, formatNumber } from '@/shared/lib/format';
 import { cn } from '@/shared/lib/cn';
 
@@ -497,7 +497,9 @@ function KpiCard({
         </dd>
         <p className="mt-1.5 min-h-[17px] text-[11.5px] text-muted-foreground">{detail}</p>
       </button>
-      {isOpen && <KpiDrawer kind={kind} scope={scope} />}
+      <Presence show={isOpen}>
+        <KpiDrawer kind={kind} scope={scope} />
+      </Presence>
     </div>
   );
 }

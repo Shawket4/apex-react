@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { ChevronDown } from 'lucide-react';
 import { cn } from '@/shared/lib/cn';
+import { Presence } from '@/shared/lib/motion';
 import { Card } from './card';
 
 interface CollapsibleSectionProps {
@@ -120,7 +121,11 @@ export function CollapsibleSection({
           />
         )}
       </div>
-      {isOpen && <div>{children}</div>}
+      {/* The body rises in on open and fades out before it collapses. What is
+          open on the first render just shows. */}
+      <Presence show={isOpen} initial={false}>
+        {children}
+      </Presence>
     </Card>
   );
 }

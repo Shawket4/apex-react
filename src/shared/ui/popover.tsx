@@ -1,7 +1,7 @@
 import * as React from 'react';
 import * as PopoverPrimitive from '@radix-ui/react-popover';
 import { cn } from '@/shared/lib/cn';
-import { composeRefs, recipes, useEnter } from '@/shared/lib/motion';
+import { recipes, useComposedRefs, useEnter } from '@/shared/lib/motion';
 import { OVERLAY_Z } from './z-index';
 
 const Popover = PopoverPrimitive.Root;
@@ -12,13 +12,13 @@ const PopoverContent = React.forwardRef<
   React.ElementRef<typeof PopoverPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof PopoverPrimitive.Content>
 >(({ className, align = 'center', sideOffset = 4, collisionPadding = 8, ...props }, ref) => {
-  const own = React.useRef<HTMLDivElement>(null);
-  // Enters from its side; closes at once.
-  useEnter(own, () => recipes.popper(own.current?.dataset.side));
+  // Enters from its side and leaves the same way (see useEnter).
+  const own = useEnter<HTMLDivElement>((el) => recipes.popper(el.dataset.side));
+  const composed = useComposedRefs(own, ref);
   return (
     <PopoverPrimitive.Portal>
       <PopoverPrimitive.Content
-        ref={composeRefs(own, ref)}
+        ref={composed}
         align={align}
         sideOffset={sideOffset}
         // Keep the popover on screen on narrow viewports.

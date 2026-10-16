@@ -2,7 +2,7 @@ import * as React from 'react';
 import * as SelectPrimitive from '@radix-ui/react-select';
 import { Check, ChevronDown, ChevronUp } from 'lucide-react';
 import { cn } from '@/shared/lib/cn';
-import { composeRefs, recipes, useEnter } from '@/shared/lib/motion';
+import { recipes, useComposedRefs, useEnter } from '@/shared/lib/motion';
 import { OVERLAY_Z } from './z-index';
 
 const Select = SelectPrimitive.Root;
@@ -61,12 +61,13 @@ const SelectContent = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Content>
 >(({ className, children, position = 'popper', sideOffset, ...props }, ref) => {
-  const own = React.useRef<HTMLDivElement>(null);
-  useEnter(own, () => recipes.popper(own.current?.dataset.side));
+  // Enters from its side and leaves the same way (see useEnter).
+  const own = useEnter<HTMLDivElement>((el) => recipes.popper(el.dataset.side));
+  const composed = useComposedRefs(own, ref);
   return (
     <SelectPrimitive.Portal>
       <SelectPrimitive.Content
-        ref={composeRefs(own, ref)}
+        ref={composed}
         className={cn(
           `relative ${OVERLAY_Z} max-h-96 min-w-[8rem] overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-md`,
           className,

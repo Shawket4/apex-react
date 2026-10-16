@@ -30,7 +30,10 @@ export {
   useOverlayOpen,
   OverlayOpenProvider,
   useEnter,
+  useElementRef,
+  Presence,
   composeRefs,
+  useComposedRefs,
   type PresencePart,
 } from './presence';
 export { Reveal, Stagger, CountUp, CountUpText, ChartEntrance, SkeletonSwap } from './components';

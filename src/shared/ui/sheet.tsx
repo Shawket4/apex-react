@@ -4,7 +4,13 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/shared/lib/cn';
-import { composeRefs, recipes, useOverlayOpen, usePresence } from '@/shared/lib/motion';
+import {
+  recipes,
+  useComposedRefs,
+  useElementRef,
+  useOverlayOpen,
+  usePresence,
+} from '@/shared/lib/motion';
 import { Dialog } from './dialog';
 import { CONTAINER_Z, STACKED_CONTAINER_Z } from './z-index';
 
@@ -73,12 +79,14 @@ const SheetContent = React.forwardRef<
 >(({ side = 'right', className, children, hideCloseButton = false, stacked = false, ...props }, ref) => {
   const { t } = useTranslation();
   const open = useOverlayOpen();
-  const overlayRef = React.useRef<HTMLDivElement>(null);
-  const panelRef = React.useRef<HTMLDivElement>(null);
+  // Elements as state: the portal mounts them a pass after this renders.
+  const [overlayEl, overlayRef] = useElementRef<HTMLDivElement>();
+  const [panelEl, panelRef] = useElementRef<HTMLDivElement>();
+  const composed = useComposedRefs(panelRef, ref);
   const resolved = side ?? 'right';
   const mounted = usePresence(open ?? true, [
-    [overlayRef, recipes.sheetBackdrop],
-    [panelRef, recipes.sheet(physicalSide(resolved))],
+    [overlayEl, recipes.sheetBackdrop],
+    [panelEl, recipes.sheet(physicalSide(resolved))],
   ]);
   if (!mounted) return null;
   const forceMount = open === null ? undefined : true;
@@ -86,7 +94,7 @@ const SheetContent = React.forwardRef<
   <SheetPortal forceMount={forceMount}>
     <SheetOverlay ref={overlayRef} forceMount={forceMount} className={stacked ? STACKED_Z : undefined} />
     <DialogPrimitive.Content
-      ref={composeRefs(panelRef, ref)}
+      ref={composed}
       forceMount={forceMount}
       className={cn(sheetVariants({ side: resolved }), stacked && STACKED_Z, className)}
       {...props}
