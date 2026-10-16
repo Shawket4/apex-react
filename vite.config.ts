@@ -1,4 +1,4 @@
-import { defineConfig } from 'vite';
+import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react-swc';
 import { sentryVitePlugin } from '@sentry/vite-plugin';
 import compression from 'vite-plugin-compression';
@@ -18,10 +18,41 @@ const sentryOrg = process.env.SENTRY_ORG;
 const sentryProject = process.env.SENTRY_PROJECT;
 const uploadSourceMaps = Boolean(sentryAuthToken && sentryOrg && sentryProject);
 
+/**
+ * GSAP is a dynamic import (src/shared/lib/motion/gsap.ts), so it stays out of
+ * the entry bundle, but the app asks for it at boot. A modulepreload hint lets
+ * the browser fetch it in parallel with the entry instead of after it, so the
+ * first entrances find it ready. Build only; the dev server has no chunks.
+ */
+function preloadMotionChunk(): Plugin {
+  return {
+    name: 'apex:preload-motion',
+    apply: 'build',
+    transformIndexHtml: {
+      order: 'post',
+      handler(_html, ctx) {
+        const chunk = Object.values(ctx.bundle ?? {}).find(
+          (c) => c.type === 'chunk' && c.name === 'motion-vendor',
+        );
+        return chunk
+          ? [
+              {
+                tag: 'link',
+                attrs: { rel: 'modulepreload', crossorigin: '', href: `/${chunk.fileName}` },
+                injectTo: 'head',
+              },
+            ]
+          : [];
+      },
+    },
+  };
+}
+
 export default defineConfig({
   assetsInclude: ['**/*.lottie'],
   plugins: [
     react(),
+    preloadMotionChunk(),
 
     /**
      * Readable stack traces in Sentry, without shipping the maps to users.
@@ -190,6 +221,10 @@ export default defineConfig({
           //   2. The loader itself enjoys near-permanent cache hits because
           //      it only invalidates when we bump @googlemaps/js-api-loader.
           if (id.includes('@googlemaps/')) return 'maps-vendor';
+
+          // GSAP and its CustomEase: the motion engine, fetched at boot as its
+          // own chunk (see preloadMotionChunk) and never part of the entry.
+          if (id.includes('/node_modules/gsap/')) return 'motion-vendor';
 
           if (id.includes('/leaflet/')) return 'leaflet-vendor';
           // Charts — recharts pulls in a chunk of d3-* sub-packages.

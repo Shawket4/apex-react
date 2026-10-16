@@ -1,5 +1,4 @@
 import type { Config } from 'tailwindcss';
-import animate from 'tailwindcss-animate';
 
 const config: Config = {
   darkMode: ['class'],
@@ -81,28 +80,25 @@ const config: Config = {
         md: 'calc(var(--radius) - 2px)',
         sm: 'calc(var(--radius) - 4px)',
       },
-      keyframes: {
-        'accordion-down': {
-          from: { height: '0' },
-          to: { height: 'var(--radix-accordion-content-height)' },
-        },
-        'accordion-up': {
-          from: { height: 'var(--radix-accordion-content-height)' },
-          to: { height: '0' },
-        },
-        'fade-in': {
-          from: { opacity: '0' },
-          to: { opacity: '1' },
-        },
+      // The motion tokens (src/shared/lib/motion/tokens.ts, mirrored as CSS
+      // variables in motion.css). A bare `transition-colors` gets `fast` + `out`.
+      transitionDuration: {
+        DEFAULT: 'var(--motion-fast)',
+        fast: 'var(--motion-fast)',
+        base: 'var(--motion-base)',
+        slow: 'var(--motion-slow)',
+        count: 'var(--motion-count)',
       },
-      animation: {
-        'accordion-down': 'accordion-down 0.2s ease-out',
-        'accordion-up': 'accordion-up 0.2s ease-out',
-        'fade-in': 'fade-in 0.2s ease-out',
+      transitionTimingFunction: {
+        DEFAULT: 'var(--ease-out)',
+        out: 'var(--ease-out)',
+        in: 'var(--ease-in)',
+        'in-out': 'var(--ease-in-out)',
+        drawer: 'var(--ease-drawer)',
       },
     },
   },
-  plugins: [animate, require('@tailwindcss/container-queries')],
+  plugins: [require('@tailwindcss/container-queries')],
 };
 
 export default config;

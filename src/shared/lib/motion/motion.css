@@ -1,0 +1,74 @@
+/*
+ * Motion tokens for CSS: a mirror of src/shared/lib/motion/tokens.ts.
+ * tokens.test.ts fails if a value here drifts from the TypeScript source, so
+ * change both together. tailwind.config.ts maps them to `duration-fast|base|
+ * slow|count` and `ease-out|in|in-out|drawer`.
+ *
+ * CSS keeps what the compositor does best: hover and colour transitions, the
+ * sidebar collapse, and the infinite loops (spinner, skeleton shimmer, live
+ * dots). Everything one-shot and state-driven runs through GSAP.
+ */
+
+:root {
+  --motion-fast: 160ms;
+  --motion-base: 220ms;
+  --motion-slow: 320ms;
+  --motion-count: 1100ms;
+
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in: cubic-bezier(0.5, 0, 0.75, 0);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* Skeleton shimmer: a highlight band swept across with transform only, in the
+   reading direction (start → end), so it mirrors with the layout. */
+@keyframes motion-shimmer {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+.motion-shimmer {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+.motion-shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, hsl(var(--background) / 0.55), transparent);
+  animation: motion-shimmer 1.6s var(--ease-in-out) infinite;
+}
+[dir='rtl'] .motion-shimmer::after {
+  animation-direction: reverse;
+}
+
+/* Reduced motion. GSAP reads the same query (media.ts); this covers what CSS
+   runs: transitions land at once and the loops stop, except the spinner,
+   which is the only sign that something is still loading. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    transition-duration: 0s !important;
+  }
+  .motion-shimmer::after,
+  .animate-pulse,
+  .animate-ping {
+    animation: none;
+  }
+}
+
+/* Paper never animates: whatever GSAP left mid-tween prints at rest. */
+@media print {
+  [data-motion] {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}

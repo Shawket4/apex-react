@@ -11,12 +11,17 @@ import { Providers } from './providers';
 import { router } from './router';
 import { initConsoleSilencer } from './console-silencer';
 import { prefetchAnimations } from '@/shared/lib/prefetch';
+import { bootMotion } from '@/shared/lib/motion';
 
 // Before anything else renders, so an error during the first paint is still
 // reported. No-op unless VITE_SENTRY_DSN is set.
 initSentry();
 
 initConsoleSilencer();
+
+// GSAP is fetched in its own chunk once the first paint is done; until then
+// everything that would animate simply shows at rest.
+bootMotion();
 
 // Safely prefetch all lottie animations & engine in the background
 prefetchAnimations();
