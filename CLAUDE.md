@@ -65,7 +65,9 @@ fades the page area in (`widgets/layout`). Sonner toasts and Recharts keep their
   50 ms as 33 ms, so a slow phone sees the entrance instead of its end state.
 - **Nothing animates off screen.** Entrances skip what is out of view.
 - **No motion on data entry.** Never animate a field someone is typing in; nothing may
-  remount, re-key or reparent an input.
+  remount, re-key or reparent an input. `e2e/dialog-typing.spec.ts` types into a form dialog
+  while its entrance plays (4x CPU throttle) and fails if a character is lost; it is
+  self-contained (`CHROME_PATH=… npx playwright test e2e/dialog-typing.spec.ts`).
 - **CSS stays** for hover and colour transitions, the spinner (`animate-spin`), the skeleton
   shimmer and live-status dots, all on the tokens. Everything one-shot and state-driven goes
   through the motion module. No `@keyframes` outside `motion.css`.
