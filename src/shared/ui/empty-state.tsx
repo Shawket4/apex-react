@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { cn } from '@/shared/lib/cn';
+import { useReveal } from '@/shared/lib/motion';
 import { resolveAnimationPath } from '@/shared/lib/animations';
 
 const LazyDotLottieReact = React.lazy(() =>
@@ -29,8 +30,12 @@ export function EmptyState({
   lottieWidth = 120,
   lottieHeight = 120,
 }: EmptyStateProps) {
+  // "Nothing here" is an arrival too: it rises in where the data would be.
+  const ref = React.useRef<HTMLDivElement>(null);
+  useReveal(ref);
   return (
     <div
+      ref={ref}
       className={cn(
         'flex flex-col items-center justify-center gap-4 rounded-lg border border-dashed bg-muted/20 px-6 py-16 text-center',
         className,

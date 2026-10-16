@@ -114,7 +114,7 @@ export function CollapsibleSection({
           <ChevronDown
             aria-hidden="true"
             className={cn(
-              'h-3 w-3 shrink-0 text-muted-foreground transition-transform duration-200',
+              'h-3 w-3 shrink-0 text-muted-foreground transition-transform duration-base',
               isOpen && 'rotate-180',
             )}
           />

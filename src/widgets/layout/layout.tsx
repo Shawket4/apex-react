@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 import { Sidebar } from '@/widgets/sidebar';
 import { Header } from '@/widgets/header/header';
 import { CommandPalette } from '@/widgets/command-palette/command-palette';
@@ -7,12 +7,19 @@ import { useCommandPalette } from '@/widgets/command-palette/use-command-palette
 import { Sheet, SheetContent } from '@/shared/ui/sheet';
 import { useIsDesktop } from '@/shared/hooks/use-media-query';
 import { useLayoutStore } from '@/shared/hooks/use-layout-store';
+import { recipes, useReveal } from '@/shared/lib/motion';
 
 export function Layout() {
   const { open: paletteOpen, setOpen: setPaletteOpen } = useCommandPalette();
   const { sidebarCollapsed, toggleSidebar } = useLayoutStore();
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const isDesktop = useIsDesktop();
+
+  // Route transition: the page area fades in on every new path (opacity only,
+  // on the scroll container, so nothing re-keys or remounts with it).
+  const { pathname } = useLocation();
+  const mainRef = React.useRef<HTMLElement>(null);
+  useReveal(mainRef, { recipe: recipes.fade(), replayKey: pathname });
 
   return (
     // h-dvh (not min-h-dvh) bounds the flex row to the viewport, so the
@@ -58,7 +65,7 @@ export function Layout() {
             space — outside this scroll container — and stretches
             documentElement.scrollHeight to match. That is how a page-wide
             overscroll appears from a 1px .sr-only label. */}
-        <main className="relative flex-1 overflow-y-auto overflow-x-hidden">
+        <main ref={mainRef} className="relative flex-1 overflow-y-auto overflow-x-hidden">
           <Outlet />
         </main>
       </div>

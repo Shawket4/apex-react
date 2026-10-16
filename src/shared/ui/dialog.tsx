@@ -3,9 +3,33 @@ import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/shared/lib/cn';
+import {
+  composeRefs,
+  OverlayOpenProvider,
+  recipes,
+  useOverlayOpen,
+  useOverlayRoot,
+  usePresence,
+} from '@/shared/lib/motion';
 import { CONTAINER_Z } from './z-index';
 
-const Dialog = DialogPrimitive.Root;
+/**
+ * The Radix root, with its open state held here so the content can stay
+ * mounted through its exit (see DialogContent). Sheet shares it.
+ */
+function Dialog({
+  open,
+  defaultOpen,
+  onOpenChange,
+  ...props
+}: React.ComponentPropsWithoutRef<typeof DialogPrimitive.Root>) {
+  const [isOpen, setOpen] = useOverlayRoot(open, defaultOpen, onOpenChange);
+  return (
+    <OverlayOpenProvider value={isOpen}>
+      <DialogPrimitive.Root open={isOpen} onOpenChange={setOpen} {...props} />
+    </OverlayOpenProvider>
+  );
+}
 const DialogTrigger = DialogPrimitive.Trigger;
 const DialogPortal = DialogPrimitive.Portal;
 const DialogClose = DialogPrimitive.Close;
@@ -17,7 +41,7 @@ const DialogOverlay = React.forwardRef<
   <DialogPrimitive.Overlay
     ref={ref}
     className={cn(
-      `fixed inset-0 ${CONTAINER_Z} bg-black/50 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0`,
+      `fixed inset-0 ${CONTAINER_Z} bg-black/50 backdrop-blur-sm`,
       className,
     )}
     {...props}
@@ -38,27 +62,44 @@ const DialogContent = React.forwardRef<
   DialogContentProps
 >(({ className, children, stacked = false, ...props }, ref) => {
   const { t } = useTranslation();
+  const open = useOverlayOpen();
+  const overlayRef = React.useRef<HTMLDivElement>(null);
+  const contentRef = React.useRef<HTMLDivElement>(null);
+  const mounted = usePresence(open ?? true, [
+    [overlayRef, recipes.backdrop],
+    [contentRef, recipes.dialog],
+  ]);
+  if (!mounted) return null;
+  // Outside our Dialog root, Radix mounts and unmounts on its own.
+  const forceMount = open === null ? undefined : true;
   return (
-  <DialogPortal>
-    <DialogOverlay className={stacked ? DIALOG_STACKED_Z : undefined} />
-    <DialogPrimitive.Content
-      ref={ref}
-      className={cn(
-        // w-[calc(100%-2rem)] + rounded: on phones a dialog floats with a
-        // margin instead of hitting the screen edges square-cornered.
-        `fixed left-1/2 top-1/2 ${CONTAINER_Z} grid w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 gap-4 rounded-lg border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95`,
-        stacked && DIALOG_STACKED_Z,
-        className,
-      )}
-      {...props}
-    >
-      {children}
-      <DialogPrimitive.Close className="absolute end-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none">
-        <X className="h-4 w-4" />
-        <span className="sr-only">{t('common.close')}</span>
-      </DialogPrimitive.Close>
-    </DialogPrimitive.Content>
-  </DialogPortal>
+    <DialogPortal forceMount={forceMount}>
+      <DialogOverlay
+        ref={overlayRef}
+        forceMount={forceMount}
+        className={stacked ? DIALOG_STACKED_Z : undefined}
+      />
+      <DialogPrimitive.Content
+        ref={composeRefs(contentRef, ref)}
+        forceMount={forceMount}
+        className={cn(
+          // w-[calc(100%-2rem)] + rounded: on phones a dialog floats with a
+          // margin instead of hitting the screen edges square-cornered.
+          // Centred with the `translate` property, not a transform utility, so
+          // the motion system's transform (scale, y) composes with it.
+          `fixed left-1/2 top-1/2 ${CONTAINER_Z} grid w-[calc(100%-2rem)] max-w-lg gap-4 rounded-lg border bg-background p-6 shadow-lg [translate:-50%_-50%]`,
+          stacked && DIALOG_STACKED_Z,
+          className,
+        )}
+        {...props}
+      >
+        {children}
+        <DialogPrimitive.Close className="absolute end-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none">
+          <X className="h-4 w-4" />
+          <span className="sr-only">{t('common.close')}</span>
+        </DialogPrimitive.Close>
+      </DialogPrimitive.Content>
+    </DialogPortal>
   );
 });
 DialogContent.displayName = DialogPrimitive.Content.displayName;

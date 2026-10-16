@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { Card } from './card';
 import { cn } from '@/shared/lib/cn';
+import { ChartEntrance } from '@/shared/lib/motion';
 
 interface ChartCardProps {
   title: React.ReactNode;
@@ -56,7 +57,10 @@ export function ChartCard({
       ? undefined
       : { height: typeof height === 'number' ? `${height}px` : height };
 
+  // The frame fades up while Recharts draws its series (useChartMotion, on the
+  // count token, so the draw lands with the KPI count-ups).
   return (
+    <ChartEntrance asChild>
     <Card className={cn('flex flex-col overflow-hidden', className)}>
       <div className="flex items-start justify-between gap-2 border-b bg-muted/60 px-3 py-2">
         <div className="min-w-0">
@@ -78,5 +82,6 @@ export function ChartCard({
         {children}
       </div>
     </Card>
+    </ChartEntrance>
   );
 }

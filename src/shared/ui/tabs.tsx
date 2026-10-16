@@ -1,6 +1,7 @@
 import * as React from 'react';
 import * as TabsPrimitive from '@radix-ui/react-tabs';
 import { cn } from '@/shared/lib/cn';
+import { composeRefs, useReveal } from '@/shared/lib/motion';
 
 const Tabs = TabsPrimitive.Root;
 
@@ -46,19 +47,28 @@ const TabsTrigger = React.forwardRef<
 ));
 TabsTrigger.displayName = TabsPrimitive.Trigger.displayName;
 
+/**
+ * A panel rises in when its tab is chosen: Radix mounts the active panel
+ * only, so each switch is a mount. The page's first panel arrives with the
+ * page. Nothing re-keys or remounts it after that, so a field inside is safe.
+ */
 const TabsContent = React.forwardRef<
   React.ElementRef<typeof TabsPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof TabsPrimitive.Content>
->(({ className, ...props }, ref) => (
-  <TabsPrimitive.Content
-    ref={ref}
-    className={cn(
-      'mt-2 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-      className,
-    )}
-    {...props}
-  />
-));
+>(({ className, ...props }, ref) => {
+  const own = React.useRef<HTMLDivElement>(null);
+  useReveal(own);
+  return (
+    <TabsPrimitive.Content
+      ref={composeRefs(own, ref)}
+      className={cn(
+        'mt-2 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+        className,
+      )}
+      {...props}
+    />
+  );
+});
 TabsContent.displayName = TabsPrimitive.Content.displayName;
 
 export { Tabs, TabsList, TabsTrigger, TabsContent };

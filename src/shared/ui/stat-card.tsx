@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { type LucideIcon } from 'lucide-react';
 import { cn } from '@/shared/lib/cn';
+import { CountUpText, DURATION, useArriving, useReveal } from '@/shared/lib/motion';
 import { Card, CardContent } from './card';
 import { Tooltip, TooltipContent, TooltipTrigger } from './tooltip';
 
@@ -72,11 +73,19 @@ function StatValue({
     // has been laid out, and again when the web font lands.
     const raf = requestAnimationFrame(measure);
     document.fonts?.ready.then(measure).catch(() => {});
-    if (typeof ResizeObserver === 'undefined') return () => cancelAnimationFrame(raf);
+    // And once the count-up has landed: mid-count the figure is shorter.
+    const settled = setTimeout(measure, DURATION.count + 50);
+    if (typeof ResizeObserver === 'undefined') {
+      return () => {
+        cancelAnimationFrame(raf);
+        clearTimeout(settled);
+      };
+    }
     const observer = new ResizeObserver(measure);
     observer.observe(el);
     return () => {
       cancelAnimationFrame(raf);
+      clearTimeout(settled);
       observer.disconnect();
     };
   }, [children, full]);
@@ -102,7 +111,8 @@ function StatValue({
           // that follows.
           onClick={() => hasMore && setOpen(true)}
         >
-          {children}
+          {/* A figure written as text counts up from zero when the card arrives. */}
+          <CountUpText>{children}</CountUpText>
         </p>
       </TooltipTrigger>
       <TooltipContent className="font-mono tabular-nums">{text}</TooltipContent>
@@ -129,9 +139,15 @@ export function StatCard({
   valueClassName,
 }: StatCardProps) {
   const responsive = isResponsiveValue(value);
+  // The card rises in when it mounts (its data has landed), on its place's
+  // beat among the cards beside it. Inside a Stagger, the Stagger does it.
+  const ref = React.useRef<HTMLDivElement>(null);
+  const grouped = useArriving();
+  useReveal(ref, { inGroup: true, when: !grouped });
 
   return (
     <Card
+      ref={ref}
       className={cn('overflow-hidden', className)}
       style={{ containerType: 'inline-size' }}
     >

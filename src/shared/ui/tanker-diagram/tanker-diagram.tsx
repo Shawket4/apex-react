@@ -485,7 +485,7 @@ function Labels({
             className={cn(
               'pointer-events-auto flex w-max min-w-[56px] select-none flex-col items-center justify-center gap-0.5',
               withDetail ? 'h-12' : 'h-9',
-              'rounded-md border bg-card/95 px-1.5 shadow-sm transition-[transform,box-shadow,background-color] duration-150',
+              'rounded-md border bg-card/95 px-1.5 shadow-sm transition-[transform,box-shadow,background-color] duration-fast',
               interactive && 'cursor-pointer hover:bg-card',
               (hovered === index || open === index) && 'scale-105 shadow-md',
               accent ? 'ring-2' : 'border-border',

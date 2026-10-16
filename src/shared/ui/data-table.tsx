@@ -17,6 +17,7 @@ import {
 import { ChevronLeft, ChevronRight, ArrowUpDown } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/shared/lib/cn';
+import { useLanding, useStagger } from '@/shared/lib/motion';
 import { Button } from './button';
 import { Skeleton } from './skeleton';
 import { EmptyState } from './empty-state';
@@ -144,6 +145,28 @@ export function DataTable<TData, TValue>({
   });
 
   // Resolve the footer slot — accept array-of-cells or rendered element forms
+  // Rows arrive: the skeleton rows fade out first (an overlay; the real rows
+  // render behind it in the same commit), then the rows rise in one after
+  // another (only those on screen, capped). Again on a new page.
+  const landing = useLanding<HTMLDivElement>(!!loading);
+  const rowsRef = React.useRef<HTMLTableSectionElement>(null);
+  const pageIndex = table.getState().pagination.pageIndex;
+  useStagger(rowsRef, {
+    selector: ':scope > tr',
+    when: !loading,
+    delay: landing.delay,
+    replayKey: `${landing.arrivals}:${pageIndex}`,
+  });
+  const skeletonRows = (wrap: (cells: React.ReactNode, i: number) => React.ReactNode) =>
+    Array.from({ length: 5 }).map((_, i) =>
+      wrap(
+        columns.map((_, j) => (
+          <Skeleton key={j} className="h-3.5 w-full rounded-sm" />
+        )),
+        i,
+      ),
+    );
+
   const renderedFooter = React.useMemo(() => {
     if (!footer || loading || data.length === 0) return null;
     const rendered = footer(data);
@@ -203,18 +226,19 @@ export function DataTable<TData, TValue>({
                 </tr>
               ))}
             </thead>
-            <tbody>
-              {loading ? (
-                Array.from({ length: 5 }).map((_, i) => (
+            {loading ? (
+              <tbody>
+                {skeletonRows((cells, i) => (
                   <tr key={i} className="border-b last:border-0">
-                    {columns.map((_, j) => (
-                      <td key={j} className="px-3 py-2.5">
-                        <Skeleton className="h-3.5 w-full rounded-sm" />
-                      </td>
+                    {React.Children.map(cells, (cell) => (
+                      <td className="px-3 py-2.5">{cell}</td>
                     ))}
                   </tr>
-                ))
-              ) : table.getRowModel().rows?.length ? (
+                ))}
+              </tbody>
+            ) : (
+            <tbody ref={rowsRef}>
+              {table.getRowModel().rows?.length ? (
                 table.getRowModel().rows.map((row) => {
                   const canExpand =
                     expansionEnabled && row.getCanExpand && row.getCanExpand();
@@ -294,8 +318,23 @@ export function DataTable<TData, TValue>({
                 </tr>
               )}
             </tbody>
+            )}
             {renderedFooter && <tfoot>{renderedFooter}</tfoot>}
           </table>
+          {landing.leaving && (
+            // Below the 40px header row, over the rows that are about to rise.
+            <div
+              ref={landing.ghostRef}
+              aria-hidden
+              className="pointer-events-none absolute inset-x-0 bottom-0 top-10 overflow-hidden bg-card"
+            >
+              {skeletonRows((cells, i) => (
+                <div key={i} className="flex gap-6 border-b px-3 py-[13px] last:border-0">
+                  {cells}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 

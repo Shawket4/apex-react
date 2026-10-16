@@ -101,7 +101,7 @@ export function ConfirmDialog({
             className="w-full sm:w-auto min-w-[80px]"
           >
             {loading && (
-              <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin motion-reduce:animate-none" />
+              <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin" />
             )}
             {confirmLabel ?? t('common.confirm')}
           </Button>

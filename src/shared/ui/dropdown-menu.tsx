@@ -2,6 +2,7 @@ import * as React from 'react';
 import * as DropdownMenuPrimitive from '@radix-ui/react-dropdown-menu';
 import { Check, ChevronRight, Circle } from 'lucide-react';
 import { cn } from '@/shared/lib/cn';
+import { composeRefs, recipes, useEnter } from '@/shared/lib/motion';
 import { OVERLAY_Z } from './z-index';
 
 const DropdownMenu = DropdownMenuPrimitive.Root;
@@ -33,38 +34,46 @@ DropdownMenuSubTrigger.displayName = DropdownMenuPrimitive.SubTrigger.displayNam
 const DropdownMenuSubContent = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.SubContent>,
   React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.SubContent>
->(({ className, ...props }, ref) => (
-  <DropdownMenuPrimitive.SubContent
-    ref={ref}
-    className={cn(
-      `${OVERLAY_Z} min-w-[8rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md`,
-      className,
-    )}
-    {...props}
-  />
-));
+>(({ className, ...props }, ref) => {
+  const own = React.useRef<HTMLDivElement>(null);
+  useEnter(own, () => recipes.popper(own.current?.dataset.side));
+  return (
+    <DropdownMenuPrimitive.SubContent
+      ref={composeRefs(own, ref)}
+      className={cn(
+        `${OVERLAY_Z} min-w-[8rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md`,
+        className,
+      )}
+      {...props}
+    />
+  );
+});
 DropdownMenuSubContent.displayName = DropdownMenuPrimitive.SubContent.displayName;
 
 const DropdownMenuContent = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Content>
->(({ className, sideOffset = 4, collisionPadding = 8, ...props }, ref) => (
-  <DropdownMenuPrimitive.Portal>
-    <DropdownMenuPrimitive.Content
-      ref={ref}
-      sideOffset={sideOffset}
-      // Keep the menu on screen. Opened from a narrow drawer on a 375px
-      // phone, an end-aligned menu ran 30px off the left edge.
-      collisionPadding={collisionPadding}
-      className={cn(
-        `${OVERLAY_Z} min-w-[8rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md`,
-        'duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95',
-        className,
-      )}
-      {...props}
-    />
-  </DropdownMenuPrimitive.Portal>
-));
+>(({ className, sideOffset = 4, collisionPadding = 8, ...props }, ref) => {
+  const own = React.useRef<HTMLDivElement>(null);
+  // Enters from its side; closes at once.
+  useEnter(own, () => recipes.popper(own.current?.dataset.side));
+  return (
+    <DropdownMenuPrimitive.Portal>
+      <DropdownMenuPrimitive.Content
+        ref={composeRefs(own, ref)}
+        sideOffset={sideOffset}
+        // Keep the menu on screen. Opened from a narrow drawer on a 375px
+        // phone, an end-aligned menu ran 30px off the left edge.
+        collisionPadding={collisionPadding}
+        className={cn(
+          `${OVERLAY_Z} min-w-[8rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md`,
+          className,
+        )}
+        {...props}
+      />
+    </DropdownMenuPrimitive.Portal>
+  );
+});
 DropdownMenuContent.displayName = DropdownMenuPrimitive.Content.displayName;
 
 const DropdownMenuItem = React.forwardRef<
