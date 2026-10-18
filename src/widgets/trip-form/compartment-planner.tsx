@@ -16,7 +16,6 @@ import type { MappingDetail } from '@/entities/mapping/schemas';
 import { DropOffPickerModal } from './drop-off-picker-modal';
 import { Skeleton } from '@/shared/ui/skeleton';
 import {
-  activeContainers,
   assign,
   choicesFor,
   dragTarget,
@@ -31,7 +30,6 @@ import {
   setVolume,
   type Plan,
   type PlanContainer,
-  type PlanSlot,
 } from './compartment-plan';
 
 // three.js is the bulk of this route's chunk and only a truck with a
@@ -603,5 +601,3 @@ export function CompartmentPlanner<C extends PlannerContainer>({
   );
 }
 
-export type { PlanSlot as CompartmentSlot };
-export { activeContainers };

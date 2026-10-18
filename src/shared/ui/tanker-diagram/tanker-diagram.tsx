@@ -146,8 +146,6 @@ export interface TankerDiagramProps {
   describeCompartment?: (compartmentIndex: number, nominal: number, dropLabel: string | null) => string;
 }
 
-export { gasCode, gasColor, dropColor } from './palette';
-
 const TOKENS = ['money', 'primary', 'success', 'muted-foreground', 'foreground'] as const;
 
 /* -- Framing ---------------------------------------------------------------- */
