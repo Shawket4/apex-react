@@ -1,4 +1,5 @@
 import { apiClient } from '@/shared/api/client';
+import { toDownload, type ExportFormat, type ExportLang } from '@/shared/api/download';
 import {
   dropOffDetailSchema,
   pilePlanSchema,
@@ -52,21 +53,20 @@ export const receiptPileApi = {
    * would mean a second copy of the layout to drift from, and the checklist
    * sheet's live COUNTIFS formulas would have to be reproduced by hand.
    */
-  async export(params: PilePlanParams): Promise<{ blob: Blob; filename: string }> {
+  async export(
+    params: PilePlanParams,
+    options: { lang: ExportLang; format: ExportFormat } = { lang: 'ar', format: 'xlsx' },
+  ): Promise<{ blob: Blob; filename: string }> {
     const res = await apiClient.get('/api/receipt-piles/export', {
-      params: toQuery(params),
+      params: { ...toQuery(params), lang: options.lang, format: options.format },
       responseType: 'blob',
     });
-    const blob = new Blob([res.data as BlobPart], {
-      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    });
-
-    let filename = `receipt_piles_${params.startDate}_${params.endDate}.xlsx`;
-    const disposition = res.headers?.['content-disposition'];
-    if (typeof disposition === 'string') {
-      const match = disposition.match(/filename="?([^"]+)"?/i);
-      if (match?.[1]) filename = match[1];
-    }
-    return { blob, filename };
+    const compact = (d: string) => d.replace(/-/g, '');
+    return toDownload(
+      res.data,
+      res.headers,
+      options.format,
+      `receipt_piles_${compact(params.startDate)}_${compact(params.endDate)}.${options.format}`,
+    );
   },
 };

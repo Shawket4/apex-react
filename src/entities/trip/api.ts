@@ -1,5 +1,6 @@
 import { decode as msgpackDecode } from '@msgpack/msgpack';
 import { apiClient, apiClientRust } from '@/shared/api/client';
+import { toDownload, type ExportFormat, type ExportLang } from '@/shared/api/download';
 import {
   tripListResponseSchema,
   tripDetailsResponseSchema,
@@ -12,6 +13,9 @@ import {
   type MultiContainerTripInput,
   type DuplicateDetectionResponse,
 } from './schemas';
+
+/** Which half of the Watanya report a PDF download carries. */
+export type WatanyaPdfPart = 'summary' | 'details';
 
 /**
  * Build query params for the trips list.
@@ -142,29 +146,32 @@ export const tripApi = {
   },
 
   /**
-   * Download the Watanya report as an Excel blob.
-   * Permission-gated on the backend (requires permission level >= 3).
+   * Download the Watanya report: the whole workbook (`format: 'xlsx'`), or
+   * one half of it as a PDF (`format: 'pdf'`, `part: 'summary' | 'details'`).
+   * Permission-gated on the backend (requires permission level >= 3). An
+   * empty range answers 422 with `code: 'WATANYA_EMPTY_RANGE'`.
    */
   async exportWatanyaReport(params: {
     start_date: string;
     end_date: string;
+    lang: ExportLang;
+    format: ExportFormat;
+    part?: WatanyaPdfPart;
   }): Promise<{ blob: Blob; filename: string }> {
-    const response = await apiClient.post('/api/trips/watanya/export_report', params, {
+    const body: Record<string, string> = {
+      start_date: params.start_date,
+      end_date: params.end_date,
+      lang: params.lang,
+      format: params.format,
+    };
+    const part = params.part ?? 'summary';
+    if (params.format === 'pdf') body.part = part;
+
+    const response = await apiClient.post('/api/trips/watanya/export_report', body, {
       responseType: 'blob',
     });
-    const blob = new Blob([response.data as BlobPart], {
-      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    });
-
-    // Pull filename out of Content-Disposition if the server sets one.
-    let filename = 'watanya_report.xlsx';
-    const disposition = response.headers?.['content-disposition'];
-    if (typeof disposition === 'string') {
-      const match = disposition.match(/filename="?([^"]+)"?/i);
-      if (match?.[1]) filename = match[1];
-    }
-
-    return { blob, filename };
+    const fallback = params.format === 'pdf' ? `watanya_${part}.pdf` : 'watanya_report.xlsx';
+    return toDownload(response.data, response.headers, params.format, fallback);
   },
 
   /**
@@ -182,6 +189,7 @@ export const tripApi = {
   async exportExcel(
     params: Omit<TripListParams, 'page' | 'limit'>,
     labels: Record<string, string>,
+    options: { lang: ExportLang; format: ExportFormat } = { lang: 'en', format: 'xlsx' },
   ): Promise<{ blob: Blob; filename: string }> {
     const query: Record<string, string> = {};
     if (params.search) query.search = params.search;
@@ -190,23 +198,13 @@ export const tripApi = {
     if (params.company) query.company = params.company;
     if (params.startDate) query.start_date = params.startDate;
     if (params.endDate) query.end_date = params.endDate;
+    query.format = options.format;
 
-    const response = await apiClient.post('/api/trips/export', labels, {
-      params: query,
-      responseType: 'blob',
-    });
-
-    const blob = new Blob([response.data as BlobPart], {
-      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    });
-
-    let filename = 'trips.xlsx';
-    const disposition = response.headers?.['content-disposition'];
-    if (typeof disposition === 'string') {
-      const match = disposition.match(/filename="?([^";]+)"?/i);
-      if (match?.[1]) filename = match[1];
-    }
-
-    return { blob, filename };
+    const response = await apiClient.post(
+      '/api/trips/export',
+      { ...labels, lang: options.lang },
+      { params: query, responseType: 'blob' },
+    );
+    return toDownload(response.data, response.headers, options.format, `trips.${options.format}`);
   },
 };

@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { saveAs } from 'file-saver';
-import { AlertTriangle, Boxes, FileSpreadsheet, Loader2, RefreshCw } from 'lucide-react';
+import { AlertTriangle, Boxes, RefreshCw } from 'lucide-react';
 
 import { Button } from '@/shared/ui/button';
 import { EmptyState } from '@/shared/ui/empty-state';
@@ -11,6 +11,8 @@ import { PageShell } from '@/shared/ui/page-shell';
 import { Skeleton } from '@/shared/ui/skeleton';
 import { toast } from '@/shared/ui/toast';
 import { extractErrorMessage } from '@/shared/api/errors';
+import { toExportLang, type ExportFormat } from '@/shared/api/download';
+import { ExportFormatMenu } from '@/widgets/export-format-menu/export-format-menu';
 import { useScope } from '@/shared/scope';
 import { useIsMobile } from '@/shared/hooks/use-media-query';
 import { intentProps } from '@/shared/lib/prefetch';
@@ -56,7 +58,7 @@ const isMode = (v: string | null): v is PileMode =>
   !!v && (PILE_MODES as readonly string[]).includes(v);
 
 export default function ReceiptPilesPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
   // 768px, meeting the boxes grid's `md:` exactly, so the two trees never
@@ -124,11 +126,17 @@ export default function ReceiptPilesPage() {
     [queryClient, range.from, range.to],
   );
 
-  const handleExport = async () => {
+  const handleExport = async (exportFormat: ExportFormat) => {
     try {
-      const { blob, filename } = await exportPlan.mutateAsync(params);
+      const { blob, filename } = await exportPlan.mutateAsync({
+        params,
+        lang: toExportLang(i18n.language),
+        format: exportFormat,
+      });
       saveAs(blob, filename);
-      toast.success(t('receiptPiles.export.success'));
+      toast.success(
+        t(exportFormat === 'pdf' ? 'receiptPiles.export.pdfSuccess' : 'receiptPiles.export.success'),
+      );
     } catch (err) {
       toast.error(extractErrorMessage(err, t('receiptPiles.export.failed')));
     }
@@ -154,24 +162,16 @@ export default function ReceiptPilesPage() {
   );
 
   const exportButton = (
-    <Button
-      variant="outline"
-      size="sm"
-      // The label was `hidden sm:inline`, which takes it out of the
-      // accessibility tree too: below 640px this was a 32px unnamed button
-      // that downloads a file, sitting a few pixels from the minus key.
+    <ExportFormatMenu
+      label={t('receiptPiles.export.action')}
+      // The label stays visible: below 640px a hidden label made this a 32px
+      // unnamed button that downloads a file, a few pixels from the minus key.
       // Desktop keeps h-8 and is unchanged.
       className="h-11 sm:h-8"
-      onClick={() => void handleExport()}
-      disabled={exportPlan.isPending || !plan || plan.piles.length === 0}
-    >
-      {exportPlan.isPending ? (
-        <Loader2 className="animate-spin" />
-      ) : (
-        <FileSpreadsheet />
-      )}
-      {t('receiptPiles.export.action')}
-    </Button>
+      pending={exportPlan.isPending}
+      disabled={!plan || plan.piles.length === 0}
+      onExport={(exportFormat) => void handleExport(exportFormat)}
+    />
   );
 
   // On a phone the mode switch and the box stepper move down into the plan

@@ -1,5 +1,6 @@
 import { keepPreviousData, useMutation, useQuery } from '@tanstack/react-query';
 import type { QueryClient } from '@tanstack/react-query';
+import type { ExportFormat, ExportLang } from '@/shared/api/download';
 import { receiptPileApi } from './api';
 import type { DropOffDetailParams, PilePlanParams } from './schemas';
 
@@ -65,7 +66,15 @@ export function prefetchDropOffDetail(qc: QueryClient, params: DropOffDetailPara
 
 export function useExportReceiptPiles() {
   return useMutation({
-    mutationFn: (params: PilePlanParams) => receiptPileApi.export(params),
+    mutationFn: ({
+      params,
+      lang,
+      format,
+    }: {
+      params: PilePlanParams;
+      lang: ExportLang;
+      format: ExportFormat;
+    }) => receiptPileApi.export(params, { lang, format }),
   });
 }
 

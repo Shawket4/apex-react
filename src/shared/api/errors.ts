@@ -5,12 +5,16 @@ import * as Sentry from '@sentry/react';
 export class ApiError extends Error {
   status?: number;
   payload?: unknown;
+  /** Machine-readable reason the server sent alongside the message, if any. */
+  code?: string;
 
   constructor(message: string, status?: number, payload?: unknown) {
     super(message);
     this.name = 'ApiError';
     this.status = status;
     this.payload = payload;
+    const code = (payload as { code?: unknown } | null | undefined)?.code;
+    if (typeof code === 'string') this.code = code;
   }
 }
 
@@ -46,7 +50,7 @@ export class NetworkError extends ApiError {
 export function toApiError(error: unknown): ApiError {
   if (error instanceof ApiError) return error;
 
-  const ax = error as AxiosError<{ message?: string; error?: string }>;
+  const ax = error as AxiosError<{ message?: string; error?: string; code?: string }>;
 
   if (!ax.response) {
     return new NetworkError(
@@ -63,16 +67,23 @@ export function toApiError(error: unknown): ApiError {
     ax.message ||
     i18n.t('errors.unexpected.message', { defaultValue: 'An unexpected error occurred' });
 
+  let mapped: ApiError;
   switch (ax.response.status) {
     case 401:
-      return new UnauthorizedError(message);
+      mapped = new UnauthorizedError(message);
+      break;
     case 403:
-      return new ForbiddenError(message);
+      mapped = new ForbiddenError(message);
+      break;
     case 404:
-      return new NotFoundError(message);
+      mapped = new NotFoundError(message);
+      break;
     default:
       return new ApiError(message, ax.response.status, ax.response.data);
   }
+  const code = ax.response.data?.code;
+  if (typeof code === 'string') mapped.code = code;
+  return mapped;
 }
 
 export function extractErrorMessage(

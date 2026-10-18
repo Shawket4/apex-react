@@ -1,3 +1,4 @@
+import type { ExportFormat, ExportLang } from '@/shared/api/download';
 import {
   useMutation,
   useQuery,
@@ -137,16 +138,20 @@ export function useExportTrips() {
     mutationFn: ({
       params,
       labels,
+      lang,
+      format,
     }: {
       params: Omit<TripListParams, 'page' | 'limit'>;
       labels: Record<string, string>;
-    }) => tripApi.exportExcel(params, labels),
+      lang: ExportLang;
+      format: ExportFormat;
+    }) => tripApi.exportExcel(params, labels, { lang, format }),
   });
 }
 
 export function useExportWatanyaReport() {
   return useMutation({
-    mutationFn: (params: { start_date: string; end_date: string }) =>
+    mutationFn: (params: Parameters<typeof tripApi.exportWatanyaReport>[0]) =>
       tripApi.exportWatanyaReport(params),
   });
 }

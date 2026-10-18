@@ -1,7 +1,8 @@
 import axios, { type AxiosInstance, type AxiosRequestConfig } from 'axios';
 import { env } from '@/shared/config/env';
 import { STORAGE_KEYS } from '@/shared/config/constants';
-import { toApiError } from './errors';
+import { ApiError, toApiError } from './errors';
+import { isJsonBlob, readJsonBlob, unwrapBlobErrorBody } from './blob-error';
 
 type LogoutHandler = () => void;
 
@@ -124,7 +125,16 @@ function createClient(baseURL: string): AxiosInstance {
   });
 
   instance.interceptors.response.use(
-    (response) => {
+    async (response) => {
+      // A download that answered 2xx with a JSON message instead of a file
+      // is a refusal, not a file to save.
+      if (response.config?.responseType === 'blob' && isJsonBlob(response.data)) {
+        const body = (await readJsonBlob(response.data)) as
+          | { message?: string; error?: string }
+          | undefined;
+        const message = body?.error || body?.message;
+        if (message) throw new ApiError(message, response.status, body);
+      }
       // The Vite dev proxy can return JSON bodies as raw strings when the
       // Content-Type header is mangled in transit. Auto-parse to keep
       // downstream Zod schemas happy.
@@ -137,7 +147,10 @@ function createClient(baseURL: string): AxiosInstance {
       }
       return response;
     },
-    (error) => {
+    async (error) => {
+      // Blob downloads get their JSON error body as a Blob; read it back so
+      // the server's message and code reach the toast.
+      await unwrapBlobErrorBody(error);
       const apiError = toApiError(error);
 
       if (apiError.status === 401) {

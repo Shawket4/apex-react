@@ -5,12 +5,9 @@ import { toast } from '@/shared/ui/toast';
 import { saveAs } from 'file-saver';
 import {
   BarChart3,
-  Download,
-  FileSpreadsheet,
   FilterX,
   SlidersHorizontal,
   List,
-  Loader2,
   Plus,
   Truck,
 } from 'lucide-react';
@@ -36,7 +33,11 @@ import {
   useExportTrips,
   useExportWatanyaReport,
 } from '@/entities/trip/queries';
-import { extractErrorMessage } from '@/shared/api/errors';
+import { ApiError, extractErrorMessage } from '@/shared/api/errors';
+import { toExportLang, type ExportFormat } from '@/shared/api/download';
+import type { WatanyaPdfPart } from '@/entities/trip/api';
+import { ExportFormatMenu } from '@/widgets/export-format-menu/export-format-menu';
+import { WatanyaExportPanel, type WatanyaExportRequest } from './watanya-export-panel';
 import type {
   MissingDataFilter,
   ReceiptStatusFilter,
@@ -82,7 +83,7 @@ const isValidTab = (v: string | null): v is ActiveTab =>
 /* -------------------------------------------------------------------------- */
 
 export default function TripsPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -146,7 +147,9 @@ export default function TripsPage() {
   >(null);
 
   const [isExporting, setIsExporting] = React.useState(false);
-  const [isExportingWatanya, setIsExportingWatanya] = React.useState(false);
+  const [watanyaPending, setWatanyaPending] = React.useState<'xlsx' | WatanyaPdfPart | null>(
+    null,
+  );
 
   /* ------------------------------------------------------------------------ */
   /* Sync state → URL                                                          */
@@ -257,13 +260,15 @@ export default function TripsPage() {
     }
   };
 
-  const handleExportExcel = async () => {
+  const handleExportExcel = async (format: ExportFormat) => {
     setIsExporting(true);
     try {
       // The server renders the workbook; the client only names the columns.
       // Sending the translated labels keeps both languages working without the
       // Go side carrying its own copy of the strings.
       const { blob, filename } = await exportTripsAll.mutateAsync({
+        lang: toExportLang(i18n.language),
+        format,
         params: {
           search: debouncedSearch,
           company,
@@ -307,9 +312,10 @@ export default function TripsPage() {
       saveAs(blob, filename);
     } catch (err) {
       // A 404 means the filters matched nothing -- say that rather than
-      // reporting a failure, because nothing actually went wrong.
-      const status = (err as { response?: { status?: number } })?.response?.status;
-      if (status === 404) {
+      // reporting a failure, because nothing actually went wrong. The client
+      // rejects with an ApiError (status on the error itself), not the raw
+      // axios error, so read it from there.
+      if (err instanceof ApiError && err.status === 404) {
         toast.error(t('trips.export.empty'));
       } else {
         toast.error(extractErrorMessage(err, t('trips.export.failed')));
@@ -319,23 +325,32 @@ export default function TripsPage() {
     }
   };
 
-  const handleExportWatanya = async () => {
+  const handleExportWatanya = async ({ lang, format, part }: WatanyaExportRequest) => {
     if (!from || !to) {
       toast.error(t('trips.export.watanyaNeedsDates'));
       return;
     }
-    setIsExportingWatanya(true);
+    setWatanyaPending(format === 'pdf' ? (part ?? 'summary') : 'xlsx');
     try {
       const { blob, filename } = await watanyaExport.mutateAsync({
         start_date: toDateOnly(from),
         end_date: toDateOnly(to),
+        lang,
+        format,
+        part,
       });
       saveAs(blob, filename);
       toast.success(t('trips.export.watanyaSuccess'));
     } catch (err) {
-      toast.error(extractErrorMessage(err, t('trips.export.watanyaFailed')));
+      // An empty range is the user's answer, not a fault: say it in the app's
+      // language. Anything else shows what the server said.
+      if (err instanceof ApiError && err.code === 'WATANYA_EMPTY_RANGE') {
+        toast.error(t('trips.export.watanyaEmpty'));
+      } else {
+        toast.error(extractErrorMessage(err, t('trips.export.watanyaFailed')));
+      }
     } finally {
-      setIsExportingWatanya(false);
+      setWatanyaPending(null);
     }
   };
 
@@ -359,36 +374,20 @@ export default function TripsPage() {
   const actions = (
     <>
       {activeTab === 'list' && (
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => void handleExportExcel()}
-          disabled={isExporting || total === 0}
-        >
-          {isExporting ? (
-            <Loader2 className="animate-spin" />
-          ) : (
-            <Download />
-          )}
-          <span className="hidden sm:inline">{t('common.export')}</span>
-        </Button>
+        <ExportFormatMenu
+          label={t('common.export')}
+          compactLabel
+          pending={isExporting}
+          disabled={total === 0}
+          onExport={(format) => void handleExportExcel(format)}
+        />
       )}
       {/* Watanya export — TODO: gate on permission level >= 3 */}
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={() => void handleExportWatanya()}
-        disabled={isExportingWatanya || !from || !to}
-      >
-        {isExportingWatanya ? (
-          <Loader2 className="animate-spin" />
-        ) : (
-          <FileSpreadsheet />
-        )}
-        <span className="hidden sm:inline">
-          {t('trips.actions.watanyaReport')}
-        </span>
-      </Button>
+      <WatanyaExportPanel
+        disabled={!from || !to}
+        pending={watanyaPending}
+        onExport={(request) => void handleExportWatanya(request)}
+      />
       <Button
         onClick={() => navigate('/trips/new')}
         size="sm"

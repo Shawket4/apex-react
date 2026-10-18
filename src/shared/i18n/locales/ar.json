@@ -74,7 +74,12 @@
     "previous": "السابق",
     "next": "التالي",
     "filters": "فلاتر",
-    "apply": "تطبيق"
+    "apply": "تطبيق",
+    "exportFormat": {
+      "label": "الصيغة",
+      "excel": "إكسل (.xlsx)",
+      "pdf": "PDF"
+    }
   },
   "placeholder": {
     "speedViolations": "يجري حاليًا تجميع تتبع مخالفات السرعة ورادار القياس عن بُعد.",
@@ -793,7 +798,17 @@
       "watanyaSuccess": "تم تنزيل تقرير وطنية",
       "watanyaFailed": "فشل تنزيل تقرير وطنية",
       "summarySheet": "ملخص",
-      "totals": "الإجمالي"
+      "totals": "الإجمالي",
+      "watanyaEmpty": "لا توجد رحلات وطنية مسعّرة في هذه الفترة.",
+      "watanya": {
+        "title": "تقرير وطنية",
+        "hint": "للفترة المحددة أعلاه.",
+        "language": "لغة التقرير",
+        "downloadExcel": "تنزيل ملف إكسل",
+        "pdfHint": "يُنزَّل ملف PDF في ملفين.",
+        "summary": "الملخص",
+        "details": "التفاصيل"
+      }
     },
     "stats": {
       "totalTrips": "إجمالي الرحلات",
@@ -1460,7 +1475,8 @@
     "export": {
       "action": "تصدير",
       "success": "تم تنزيل الملف.",
-      "failed": "تعذّر بناء الملف."
+      "failed": "تعذّر بناء الملف.",
+      "pdfSuccess": "تم تنزيل ملف PDF."
     },
     "detail": {
       "failed": "تعذّر تحميل إيصالات نقطة التسليم.",
