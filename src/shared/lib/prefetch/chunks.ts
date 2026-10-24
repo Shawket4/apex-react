@@ -14,6 +14,7 @@
 
 const CHUNKS = {
   dashboard: () => import('@/pages/dashboard/dashboard'),
+  advisor: () => import('@/pages/advisor/advisor'),
 
   trips: () => import('@/pages/trips/trips'),
   'trip-new': () => import('@/pages/trips/trip-new'),
@@ -129,6 +130,7 @@ const PATH_RULES: [RegExp, ChunkKey][] = [
   [/^\/zones/, 'zones'],
   [/^\/locations/, 'locations'],
   [/^\/trip-audit/, 'trip-audit'],
+  [/^\/advisor/, 'advisor'],
   [/^\/settings/, 'settings'],
   [/^\/logs/, 'logs'],
 ];

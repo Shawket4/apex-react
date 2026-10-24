@@ -1,5 +1,6 @@
 import {
   Banknote,
+  Bot,
   Boxes,
   Building2,
   Car,
@@ -51,7 +52,15 @@ export interface NavSection {
 export const NAV_SECTIONS: NavSection[] = [
   {
     titleKey: 'nav.overview',
-    items: [{ to: '/', labelKey: 'nav.dashboard', icon: LayoutDashboard }],
+    items: [
+      { to: '/', labelKey: 'nav.dashboard', icon: LayoutDashboard },
+      {
+        to: '/advisor',
+        labelKey: 'nav.advisor',
+        icon: Bot,
+        minPermission: PERMISSION_LEVELS.ADMIN,
+      },
+    ],
   },
   {
     titleKey: 'nav.operations',

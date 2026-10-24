@@ -115,7 +115,8 @@
     "tripAudit": "Trip Audit",
     "expensesReview": "Review queue",
     "primary": "Main navigation",
-    "receiptPiles": "Receipt piles"
+    "receiptPiles": "Receipt piles",
+    "advisor": "Advisor"
   },
   "auth": {
     "loginTitle": "Welcome back",
@@ -1671,7 +1672,9 @@
       "keyword": "Keyword",
       "hybrid": "Hybrid",
       "score": "Score",
-      "distance": "Vector Distance"
+      "distance": "Vector Distance",
+      "searchedFor": "Searched for:",
+      "aiUnavailable": "AI search is unavailable right now — showing the standard search."
     },
     "receipt": {
       "title": "Service Receipt",
@@ -2550,5 +2553,115 @@
   "maps": {
     "centerOnMarkers": "Center map on markers",
     "toggleSatellite": "Toggle satellite view"
+  },
+  "advisor": {
+    "title": "Advisor",
+    "subtitle": "Ask about the fleet, revenue, trips and maintenance. Changes it proposes wait for your approval.",
+    "tabs": {
+      "chat": "Chat",
+      "pending": "Pending changes",
+      "digests": "Digests"
+    },
+    "status": {
+      "checking": "Checking whether the advisor is available…",
+      "disabled": "The advisor is not configured on the server yet.",
+      "enabled": "Online · {{model}}",
+      "off": "Not configured"
+    },
+    "rail": {
+      "title": "Conversations",
+      "new": "New",
+      "empty": "No conversations yet.",
+      "loadError": "Could not load conversations.",
+      "untitled": "Untitled conversation",
+      "delete": "Delete conversation",
+      "deleteTitle": "Delete this conversation?",
+      "deleteDescription": "Its messages are removed. Changes it proposed keep their status."
+    },
+    "chat": {
+      "transcript": "Conversation",
+      "placeholder": "Ask the advisor… (Enter to send, Shift+Enter for a new line)",
+      "send": "Send",
+      "stop": "Stop",
+      "hint": "Answers come from live fleet data. Nothing changes until you approve it.",
+      "thinking": "Thinking…",
+      "toolFailed": "This step failed",
+      "emptyTitle": "What do you want to know?",
+      "emptyDescription": "For example: which trucks were idle yesterday, revenue by company this month, or when truck 1234 last had its brakes serviced.",
+      "loadError": "Could not load this conversation.",
+      "proposedHere": "Changes proposed in this conversation"
+    },
+    "tools": {
+      "find_truck": "Finding the truck…",
+      "fleet_overview": "Looking at the fleet…",
+      "revenue_breakdown": "Looking at revenue…",
+      "truck_itinerary": "Reading the truck's itinerary…",
+      "trip_audit": "Checking trip audits…",
+      "route_options": "Comparing routes…",
+      "search_service_history": "Searching service history…",
+      "maintenance_status": "Checking maintenance…",
+      "run_sql": "Querying the database…",
+      "propose_change": "Drafting a change…"
+    },
+    "suggestion": {
+      "kinds": {
+        "reassign_car": "Reassign truck",
+        "assign_driver": "Assign driver"
+      },
+      "status": {
+        "pending": "Pending",
+        "applying": "Applying",
+        "applied": "Applied",
+        "failed": "Failed",
+        "rejected": "Rejected"
+      },
+      "field": "Field",
+      "before": "Before",
+      "after": "After",
+      "fields": {
+        "plate_number": "Plate",
+        "car_no_plate": "Plate",
+        "car_id": "Truck ID",
+        "driver_id": "Driver ID",
+        "driver_name": "Driver",
+        "company": "Company",
+        "terminal": "Terminal",
+        "date": "Date"
+      },
+      "approve": "Approve",
+      "reject": "Reject",
+      "approveAndApply": "Approve and apply",
+      "confirmTitle": "Apply this change?",
+      "confirmDescription": "“{{title}}” will be applied in FalconGo now, under your name ({{name}}), and recorded as made via AI.",
+      "you": "you",
+      "appliedAt": "Applied in FalconGo {{date}}",
+      "failedWith": "FalconGo refused it (status {{status}})",
+      "rejectedAt": "Rejected {{date}}"
+    },
+    "pending": {
+      "emptyTitle": "Nothing waiting for approval",
+      "emptyDescription": "Changes the advisor proposes show up here until someone approves or rejects them.",
+      "loadError": "Could not load suggestions.",
+      "recentlyDecided": "Recently decided"
+    },
+    "digests": {
+      "description": "Written summaries of what happened across the fleet.",
+      "writeNow_one": "Write one now (last day)",
+      "writeNow_other": "Write one now (last {{count}} days)",
+      "emptyTitle": "No digests yet",
+      "emptyDescription": "Write one now, or wait for the scheduled one.",
+      "loadError": "Could not load digests."
+    },
+    "toast": {
+      "conversationDeleted": "Conversation deleted",
+      "applied": "Change applied in FalconGo",
+      "applyFailed": "FalconGo refused the change",
+      "rejected": "Suggestion rejected",
+      "alreadyDecided": "Someone already decided this suggestion",
+      "digestQueued": "Writing the digest — it appears here when done"
+    },
+    "errors": {
+      "streamEnded": "The advisor stopped before it answered. Try again."
+    }
   }
 }
