@@ -74,7 +74,7 @@ export default function UsersPage() {
   const onConfirmDelete = async () => {
     if (!deletingUser) return;
     try {
-      await deleteMutation.mutateAsync(deletingUser.ID);
+      await deleteMutation.mutateAsync(deletingUser.id);
       toast({ title: t('common.deleteSuccess') || 'Deleted' });
       setDeletingUser(null);
     } catch {

@@ -114,7 +114,7 @@ export function UsersTable({
           </thead>
           <tbody className="divide-y">
             {users.map((user) => (
-              <tr key={user.ID} className="hover:bg-muted/50 transition-colors">
+              <tr key={user.id} className="hover:bg-muted/50 transition-colors">
                 <td className="px-4 py-3 font-medium">{user.name || '—'}</td>
                 <td className="px-4 py-3 text-muted-foreground">{user.email}</td>
                 <td className="px-4 py-3 text-muted-foreground font-mono tabular-nums">
@@ -139,7 +139,7 @@ export function UsersTable({
       <div className="grid gap-3 md:hidden">
         {users.map((user) => (
           <MobileUserCard
-            key={user.ID}
+            key={user.id}
             user={user}
             onEdit={onEdit}
             onDelete={onDelete}

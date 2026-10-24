@@ -78,8 +78,8 @@ export function UserFormDialog({
   }, [open, user, form]);
 
   const handleSubmit = async (values: any) => {
-    // If editing, we need to pass the ID
-    const payload = isEdit ? { ...values, id: user.ID } : values;
+    // If editing, we need to pass the id
+    const payload = isEdit ? { ...values, id: user.id } : values;
     
     // Clean empty password on update
     if (isEdit && !payload.password) {

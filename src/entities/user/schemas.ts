@@ -4,7 +4,8 @@ import { z } from 'zod';
  * Core User entity schema.
  */
 export const userSchema = z.object({
-  ID: z.number(),
+  // FalconGo's users table has no gorm.Model, so the key is lowercase `id`.
+  id: z.number(),
   name: z.string().nullable().optional(),
   email: z.string().email(),
   phone: z.string().nullable().optional(),
@@ -31,11 +32,13 @@ export type UserCreateInput = z.infer<typeof userCreateSchema>;
  * Payload for updating an existing user.
  */
 export const userUpdateSchema = z.object({
-  id: z.number(),
+  // Added by the dialog after validation, so not required of the form values.
+  id: z.number().optional(),
   name: z.string().trim().optional(),
   email: z.string().trim().email().optional(),
   phone: z.string().trim().optional(),
-  permission: z.number().optional(),
+  // The Select holds a string; UpdateUser binds an int.
+  permission: z.coerce.number().int().min(1).max(4).optional(),
   password: z.string().optional(),
 });
 
