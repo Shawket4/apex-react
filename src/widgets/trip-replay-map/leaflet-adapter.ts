@@ -1,4 +1,5 @@
 import { buildMarkerSvg, markerSize } from '@/shared/lib/maps/marker-svg';
+import { TILE_ATTR, TILE_DARK, TILE_LIGHT, TILE_SATELLITE } from '@/shared/lib/maps/tiles';
 import type { MarkerKind } from '@/shared/lib/maps/types';
 import {
   FOLLOW_THROTTLE_MS,
@@ -14,11 +15,6 @@ type LeafletNamespace = typeof import('leaflet');
 type LeafletMarker = import('leaflet').Marker;
 type LeafletLayer = import('leaflet').Layer;
 
-const TILE_LIGHT =
-  'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
-const TILE_DARK = 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png';
-const TILE_ATTR =
-  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>';
 
 interface DynEntry {
   marker: LeafletMarker;
@@ -66,12 +62,10 @@ export async function createLeafletReplayAdapter(
     attributeFilter: ['class'],
   });
 
-  const SAT_TILE =
-    'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
   let mapType: 'roadmap' | 'hybrid' = 'roadmap';
   const applyTile = () => {
     map.removeLayer(tile);
-    tile = L.tileLayer(mapType === 'hybrid' ? SAT_TILE : isDark() ? TILE_DARK : TILE_LIGHT, {
+    tile = L.tileLayer(mapType === 'hybrid' ? TILE_SATELLITE : isDark() ? TILE_DARK : TILE_LIGHT, {
       attribution: TILE_ATTR,
       maxZoom: 19,
     }).addTo(map);

@@ -119,12 +119,13 @@ export interface MapViewProps {
   onMarkerDoubleClick?: (id: string) => void;
   /** Fired when a draggable marker finishes dragging. */
   onMarkerDragEnd?: MarkerDragHandler;
-  /** Fired when the active provider changes (Google → Leaflet fallback). */
+  /**
+   * Fired with the provider in use, and again if it changes (Google failed:
+   * every map moves to Leaflet — see google-maps-health).
+   */
   onProviderChange?: (provider: MapProvider) => void;
   /** Fired when a snap-to-time button is clicked in a popup. */
   onSnapTimestamp?: (ts: number) => void;
-  /** Override the SDK-load timeout for Google. Defaults to 3000ms. */
-  fallbackTimeoutMs?: number;
   /**
    * Opt-in: switch the providers into "live mode". When true:
    *   - Marker sync becomes id-diffed (existing markers update position

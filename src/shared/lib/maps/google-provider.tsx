@@ -2,43 +2,13 @@ import * as Sentry from '@sentry/react';
 import * as React from 'react';
 import { Locate, Layers } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
-import { importLibrary } from '@googlemaps/js-api-loader';
-import { configureLoader } from './google-maps-config';
+import { darkMapStyle, lightMapStyle } from './google-styles';
+import { loadGoogleMaps, reportGoogleMapsFailure } from './google-maps-health';
 import { Button } from '@/shared/ui/button';
 import { cn } from '@/shared/lib/cn';
 import { buildMarkerSvg, markerSize } from './marker-svg';
 import { getSharedMap, releaseSharedMap } from './map-pool';
 import type { MapMarker, MapViewProps } from './types';
-
-/* -------------------------------------------------------------------------- */
-/* Map styles                                                                  */
-/* -------------------------------------------------------------------------- */
-
-const darkMapStyle: google.maps.MapTypeStyle[] = [
-  { elementType: 'geometry', stylers: [{ color: '#1c2333' }] },
-  { elementType: 'labels.text.stroke', stylers: [{ color: '#1c2333' }] },
-  { elementType: 'labels.text.fill', stylers: [{ color: '#8892a4' }] },
-  { featureType: 'administrative.locality', elementType: 'labels.text.fill', stylers: [{ color: '#c9d1db' }] },
-  { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#283044' }] },
-  { featureType: 'road', elementType: 'geometry.stroke', stylers: [{ color: '#1a2030' }] },
-  { featureType: 'road', elementType: 'labels.text.fill', stylers: [{ color: '#6b7a90' }] },
-  { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#3d4f6e' }] },
-  { featureType: 'road.highway', elementType: 'geometry.stroke', stylers: [{ color: '#1a2030' }] },
-  { featureType: 'road.highway', elementType: 'labels.text.fill', stylers: [{ color: '#a0aec0' }] },
-  { featureType: 'transit', elementType: 'geometry', stylers: [{ color: '#222d40' }] },
-  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#0f1724' }] },
-  { featureType: 'water', elementType: 'labels.text.fill', stylers: [{ color: '#3d5166' }] },
-  { featureType: 'landscape.natural', elementType: 'geometry', stylers: [{ color: '#1a2638' }] },
-];
-
-const lightMapStyle: google.maps.MapTypeStyle[] = [
-  { featureType: 'road', elementType: 'geometry', stylers: [{ color: '#f5f5f5' }] },
-  { featureType: 'road', elementType: 'geometry.stroke', stylers: [{ color: '#e0e0e0' }] },
-  { featureType: 'road.highway', elementType: 'geometry', stylers: [{ color: '#ffffff' }] },
-  { featureType: 'road.highway', elementType: 'geometry.stroke', stylers: [{ color: '#d6d6d6' }] },
-  { featureType: 'water', elementType: 'geometry', stylers: [{ color: '#d4e4f0' }] },
-  { featureType: 'landscape', elementType: 'geometry', stylers: [{ color: '#f8f8f8' }] },
-];
 
 /* -------------------------------------------------------------------------- */
 /* Info-window styles (idempotent)                                             */
@@ -207,16 +177,14 @@ export function GoogleMapView({
     let cancelled = false;
     let claimedMap: google.maps.Map | null = null;
     injectInfoWindowStyles();
-    configureLoader();
 
     const init = async () => {
       try {
         // Guarantee google.maps is loaded before constructing the map options object,
         // which evaluates namespaces like MapTypeId and ControlPosition synchronously.
-        await Promise.all([
-          importLibrary('maps'),
-          importLibrary('marker'),
-        ]);
+        // False: Google is known not to work, and MapView is already switching
+        // this surface to Leaflet.
+        if (!(await loadGoogleMaps())) return;
 
         const isDark = document.documentElement.classList.contains('dark');
         const handle = await getSharedMap(containerRef.current!, {
@@ -278,9 +246,10 @@ export function GoogleMapView({
           // Store for cleanup if needed, though the container itself goes away.
         }
       } catch (err) {
-        // The map simply does not appear. Nothing else notices.
+        if (cancelled) return;
+        // Every map moves to Leaflet rather than this one staying blank.
         Sentry.captureException(err, { tags: { source: 'google-map-init' } });
-        console.error('[GoogleMapView] Failed to init map', err);
+        reportGoogleMapsFailure('error', err);
       }
     };
 

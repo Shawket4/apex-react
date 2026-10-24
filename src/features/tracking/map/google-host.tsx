@@ -1,0 +1,377 @@
+import * as React from 'react';
+import { GoogleMapsOverlay } from '@deck.gl/google-maps';
+import { googleMapId } from '@/shared/lib/maps/google-maps-config';
+import { loadGoogleMaps, watchGoogleMap } from '@/shared/lib/maps/google-maps-health';
+import { buildStaticLayers, buildTailLayer, legId, type HistoryLayerInput } from './layers';
+import type { LegSegment } from '../use-history';
+import { sampleAt } from '../playback';
+import {
+  chipElement,
+  isLegLayer,
+  pickInfoHtml,
+  pickInfoLift,
+  replayElement,
+  vehicleInfoHtml,
+} from './info-html';
+import {
+  FALLBACK_CENTER,
+  type LiveMarkerDatum,
+  type TrackingMapHandle,
+  type TrackingMapProps,
+} from './types';
+
+/* -------------------------------------------------------------------------- */
+/* The Google host: one Google vector map + one deck.gl overlay. Used while    */
+/* Google Maps works (google-maps-health); the Leaflet host takes over when it */
+/* doesn't. Same handle, same layers, same tooltips.                          */
+/* -------------------------------------------------------------------------- */
+
+const GoogleTrackingHost = React.forwardRef<TrackingMapHandle, TrackingMapProps>(
+  function GoogleTrackingHost({ onSelect, onUserPan, onActivateLeg, onMapReady, className }, ref) {
+    const containerRef = React.useRef<HTMLDivElement>(null);
+    const mapRef = React.useRef<google.maps.Map | null>(null);
+    const overlayRef = React.useRef<GoogleMapsOverlay | null>(null);
+    const markersRef = React.useRef<
+      Map<string, { marker: google.maps.marker.AdvancedMarkerElement; fingerprint: string }>
+    >(new Map());
+    const replayMarkerRef = React.useRef<google.maps.marker.AdvancedMarkerElement | null>(null);
+    const historyRef = React.useRef<HistoryLayerInput | null>(null);
+    const cursorRef = React.useRef<number | null>(null);
+    const readyRef = React.useRef(false);
+    const pendingLiveRef = React.useRef<LiveMarkerDatum[] | null>(null);
+    const infoRef = React.useRef<google.maps.InfoWindow | null>(null);
+    /** Vehicle whose tooltip is currently open — its content must track the
+     *  live feed, not the datum frozen into the click that opened it. */
+    const openVehicleRef = React.useRef<string | null>(null);
+    const latestLiveRef = React.useRef<Map<string, LiveMarkerDatum>>(new Map());
+    const followRef = React.useRef(true);
+    const lastPanRef = React.useRef(0);
+    const lastPickRef = React.useRef<{ key: string; at: number }>({ key: '', at: 0 });
+    const pickAtRef = React.useRef(0);
+    const onSelectRef = React.useRef(onSelect);
+    const onUserPanRef = React.useRef(onUserPan);
+    const onActivateLegRef = React.useRef(onActivateLeg);
+    React.useEffect(() => {
+      onSelectRef.current = onSelect;
+      onUserPanRef.current = onUserPan;
+      onActivateLegRef.current = onActivateLeg;
+    });
+
+    const staticLayersRef = React.useRef<ReturnType<typeof buildStaticLayers>>([]);
+
+    /** Recompute the static layers (data/toggles/cursor-day changed). */
+    const rebuildStatic = React.useCallback(() => {
+      const h = historyRef.current;
+      staticLayersRef.current = h ? buildStaticLayers(h) : [];
+    }, []);
+
+    /** Push static + tail. Per replay frame only the tail layer is new —
+     *  the cached statics diff to no-ops inside deck. */
+    const pushLayers = React.useCallback(() => {
+      const overlay = overlayRef.current;
+      if (!overlay) return;
+      const h = historyRef.current;
+      if (!h) {
+        overlay.setProps({ layers: [] });
+        return;
+      }
+      const layers = [...staticLayersRef.current];
+      if (h.track && cursorRef.current !== null) {
+        layers.push(buildTailLayer(h.track, cursorRef.current));
+      }
+      overlay.setProps({ layers });
+    }, []);
+
+    /** Closing always drops the open-tooltip binding. */
+    const closeInfo = React.useCallback(() => {
+      openVehicleRef.current = null;
+      infoRef.current?.close();
+    }, []);
+
+    const applyLive = React.useCallback(
+      (data: LiveMarkerDatum[]) => {
+        const map = mapRef.current;
+        if (!map || !readyRef.current) {
+          pendingLiveRef.current = data;
+          return;
+        }
+        const markers = markersRef.current;
+        const seen = new Set<string>();
+        const latest = latestLiveRef.current;
+        latest.clear();
+        for (const datum of data) latest.set(datum.vehicle.id, datum);
+        for (const datum of data) {
+          const id = datum.vehicle.id;
+          const lat = datum.live?.lat ?? datum.vehicle.lat;
+          const lng = datum.live?.lng ?? datum.vehicle.lng;
+          if (datum.hidden || lat == null || lng == null || (lat === 0 && lng === 0)) continue;
+          seen.add(id);
+          const fingerprint = [
+            lat.toFixed(5),
+            lng.toFixed(5),
+            datum.live?.status ?? datum.vehicle.status,
+            datum.selected ? 's' : '',
+          ].join('|');
+          const existing = markers.get(id);
+          if (existing) {
+            if (existing.fingerprint === fingerprint) {
+              // Position and status are unchanged, but speed or the timestamp
+              // may have moved — the open tooltip still needs the new text.
+              if (openVehicleRef.current === id) {
+                infoRef.current?.setContent(vehicleInfoHtml(datum, lat, lng));
+              }
+              continue;
+            }
+            existing.marker.position = { lat, lng };
+            existing.marker.content = chipElement(datum);
+            existing.fingerprint = fingerprint;
+            if (openVehicleRef.current === id) {
+              infoRef.current?.setContent(vehicleInfoHtml(datum, lat, lng));
+            }
+          } else {
+            const marker = new google.maps.marker.AdvancedMarkerElement({
+              map,
+              position: { lat, lng },
+              content: chipElement(datum),
+              zIndex: datum.selected ? 20 : 10,
+              // Without this the marker neither receives clicks nor shows a
+              // pointer cursor — taps fall through to the map beneath it.
+              gmpClickable: true,
+            });
+            marker.addListener('click', () => {
+              const now = performance.now();
+              const isDouble =
+                lastPickRef.current.key === `v:${id}` && now - lastPickRef.current.at < 350;
+              lastPickRef.current = { key: `v:${id}`, at: now };
+              const pos = marker.position as google.maps.LatLngLiteral | null;
+              if (isDouble && pos) {
+                closeInfo();
+                map.panTo(pos);
+                map.setZoom(Math.max(map.getZoom() ?? 0, 16));
+                return;
+              }
+              onSelectRef.current(id);
+              if (infoRef.current && pos) {
+                // Guard against the map click that follows — it was closing
+                // this tooltip the instant it opened.
+                pickAtRef.current = now;
+                const latN = typeof pos.lat === 'function' ? (pos.lat as () => number)() : pos.lat;
+                const lngN = typeof pos.lng === 'function' ? (pos.lng as () => number)() : pos.lng;
+                openVehicleRef.current = id;
+                // The click closure captures the datum of the frame that
+                // created the marker; render from the newest one instead.
+                const current = latestLiveRef.current.get(id) ?? datum;
+                infoRef.current.setContent(vehicleInfoHtml(current, latN, lngN));
+                infoRef.current.setOptions({ pixelOffset: new google.maps.Size(0, 0) });
+                // Anchoring to the marker aligns the window above the artwork.
+                infoRef.current.open({ map, anchor: marker });
+              }
+            });
+            markers.set(id, { marker, fingerprint });
+          }
+        }
+        for (const [id, entry] of markers) {
+          if (!seen.has(id)) {
+            if (openVehicleRef.current === id) closeInfo();
+            entry.marker.map = null;
+            markers.delete(id);
+          }
+        }
+      },
+      [closeInfo],
+    );
+
+    React.useImperativeHandle(
+      ref,
+      (): TrackingMapHandle => ({
+        setHistory(input) {
+          historyRef.current = input;
+          if (!input?.track) {
+            cursorRef.current = null;
+            if (replayMarkerRef.current) replayMarkerRef.current.map = null;
+            replayMarkerRef.current = null;
+          }
+          rebuildStatic();
+          pushLayers();
+        },
+        setFollow(on) {
+          followRef.current = on;
+        },
+        setMapType(type) {
+          mapRef.current?.setMapTypeId(type);
+        },
+        setCursor(ms) {
+          cursorRef.current = ms;
+          const h = historyRef.current;
+          if (!h?.track || ms === null) return;
+          // One uniform update on the GPU tail…
+          pushLayers();
+          // …and one DOM transform on the marker.
+          const map = mapRef.current;
+          if (!map) return;
+          const sample = sampleAt(h.track, ms);
+          // Auto-follow: keep the runner centred, panning at most ~3×/s so
+          // the camera glides instead of jittering.
+          const now = performance.now();
+          if (followRef.current && now - lastPanRef.current > 350) {
+            lastPanRef.current = now;
+            map.panTo({ lat: sample.lat, lng: sample.lng });
+          }
+          if (!replayMarkerRef.current) {
+            replayMarkerRef.current = new google.maps.marker.AdvancedMarkerElement({
+              map,
+              position: { lat: sample.lat, lng: sample.lng },
+              content: replayElement(),
+              zIndex: 30,
+            });
+          } else {
+            replayMarkerRef.current.position = { lat: sample.lat, lng: sample.lng };
+          }
+          const arrow = (replayMarkerRef.current.content as HTMLElement | null)?.querySelector(
+            '[data-arrow]',
+          ) as HTMLElement | null;
+          if (arrow) arrow.style.transform = `rotate(${sample.heading}deg)`;
+        },
+        setLive: applyLive,
+        fitTo(coords) {
+          const map = mapRef.current;
+          if (!map || coords.length === 0) return;
+          const bounds = new google.maps.LatLngBounds();
+          for (const [lng, lat] of coords) bounds.extend({ lat, lng });
+          map.fitBounds(bounds, 64);
+        },
+        flyTo(lng, lat, zoom = 15) {
+          const map = mapRef.current;
+          if (!map) return;
+          map.panTo({ lat, lng });
+          map.setZoom(zoom);
+        },
+      }),
+      [applyLive, pushLayers, rebuildStatic],
+    );
+
+    React.useEffect(() => {
+      let cancelled = false;
+      // False: Google is known not to work; the shell is already switching
+      // to the Leaflet host.
+      void loadGoogleMaps().then((ok) => {
+        if (!ok || cancelled || !containerRef.current) return;
+        const map = new google.maps.Map(containerRef.current, {
+          center: FALLBACK_CENTER,
+          zoom: 8,
+          mapId: googleMapId(),
+          disableDefaultUI: true,
+          zoomControl: true,
+          gestureHandling: 'greedy',
+          clickableIcons: false,
+          disableDoubleClickZoom: true,
+        });
+        const overlay = new GoogleMapsOverlay({
+          onClick: (info: {
+            object?: unknown;
+            layer?: { id: string } | null;
+            coordinate?: number[];
+          }) => {
+            if (!info.object || !info.layer || !info.coordinate) return;
+            const [lng, lat] = info.coordinate;
+            const key = `${info.layer.id}:${lng.toFixed(6)},${lat.toFixed(6)}`;
+            const now = performance.now();
+            const isDouble = lastPickRef.current.key === key && now - lastPickRef.current.at < 350;
+            lastPickRef.current = { key, at: now };
+            if (isDouble) {
+              closeInfo();
+              map.panTo({ lat, lng });
+              map.setZoom(Math.max(map.getZoom() ?? 0, 16));
+              return;
+            }
+            if (isLegLayer(info.layer.id)) {
+              onActivateLegRef.current?.(legId(info.object as LegSegment));
+            }
+            const html = pickInfoHtml(info.layer.id, info.object, lat, lng);
+            if (html && infoRef.current) {
+              pickAtRef.current = performance.now();
+              openVehicleRef.current = null;
+              infoRef.current.setContent(html);
+              infoRef.current.setPosition({ lat, lng });
+              // Lift the window clear of the icon artwork beneath it.
+              infoRef.current.setOptions({
+                pixelOffset: new google.maps.Size(0, -pickInfoLift(info.layer.id)),
+              });
+              infoRef.current.open({ map });
+            }
+          },
+          onHover: (info: { object?: unknown }) => {
+            // A pointer over a pickable object reads as clickable.
+            mapRef.current?.setOptions({
+              draggableCursor: info.object ? 'pointer' : null,
+            });
+          },
+        });
+        overlay.setMap(map);
+        watchGoogleMap(map, containerRef.current);
+        infoRef.current = new google.maps.InfoWindow({ headerDisabled: true });
+        map.addListener('click', () => {
+          // The map click that accompanies a deck pick must not close the
+          // tooltip the pick just opened.
+          if (performance.now() - pickAtRef.current > 250) closeInfo();
+        });
+        map.addListener('dragstart', () => onUserPanRef.current?.());
+        // Double-press on a picked object flies in (native dblclick zoom is
+        // off, and Google swallows the second click, so we pick manually).
+        map.addListener('dblclick', (e: google.maps.MapMouseEvent) => {
+          const dom = e.domEvent as MouseEvent | undefined;
+          const el = containerRef.current;
+          if (!dom || !el) return;
+          const rect = el.getBoundingClientRect();
+          try {
+            const picked = overlay.pickObject({
+              x: dom.clientX - rect.left,
+              y: dom.clientY - rect.top,
+              radius: 12,
+            }) as { coordinate?: number[] } | null;
+            if (picked?.coordinate) {
+              closeInfo();
+              const [lng, lat] = picked.coordinate;
+              map.panTo({ lat, lng });
+              map.setZoom(Math.max(map.getZoom() ?? 0, 16));
+            }
+          } catch {
+            /* picking unavailable — ignore */
+          }
+        });
+        mapRef.current = map;
+        overlayRef.current = overlay;
+        readyRef.current = true;
+        rebuildStatic();
+        if (pendingLiveRef.current) {
+          applyLive(pendingLiveRef.current);
+          pendingLiveRef.current = null;
+        }
+        pushLayers();
+        onMapReady?.();
+      });
+      // Captured at setup: the cleanup must clear the very map of markers this
+      // effect filled, not whatever `.current` points at when it runs.
+      const markers = markersRef.current;
+      return () => {
+        cancelled = true;
+        openVehicleRef.current = null;
+        infoRef.current?.close();
+        infoRef.current = null;
+        overlayRef.current?.finalize();
+        overlayRef.current = null;
+        for (const { marker } of markers.values()) marker.map = null;
+        markers.clear();
+        if (replayMarkerRef.current) replayMarkerRef.current.map = null;
+        replayMarkerRef.current = null;
+        mapRef.current = null;
+        readyRef.current = false;
+      };
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    return <div ref={containerRef} className={className} />;
+  },
+);
+
+export default GoogleTrackingHost;

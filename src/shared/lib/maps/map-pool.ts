@@ -1,4 +1,4 @@
-import { importLibrary } from '@googlemaps/js-api-loader';
+import { loadGoogleMaps, watchGoogleMap } from './google-maps-health';
 
 /**
  * Singleton Map Pool with reference counting.
@@ -31,7 +31,10 @@ let sharedInfoWindow: google.maps.InfoWindow | null = null;
 let sharedContainer: HTMLDivElement | null = null;
 let claimCount = 0;
 let isInitializing = false;
-const pendingRequests: Array<(handle: MapHandle) => void> = [];
+const pendingRequests: Array<{
+  resolve: (handle: MapHandle) => void;
+  reject: (err: unknown) => void;
+}> = [];
 
 /**
  * Claim the shared map for a parent element. The same parent (or
@@ -58,13 +61,16 @@ export async function getSharedMap(
 
   // Concurrent claim during init: enqueue.
   if (isInitializing) {
-    return new Promise<MapHandle>((resolve) => {
-      pendingRequests.push((handle) => {
-        if (sharedContainer && sharedContainer.parentElement !== parent) {
-          parent.appendChild(sharedContainer);
-        }
-        claimCount += 1;
-        resolve(handle);
+    return new Promise<MapHandle>((resolve, reject) => {
+      pendingRequests.push({
+        resolve: (handle) => {
+          if (sharedContainer && sharedContainer.parentElement !== parent) {
+            parent.appendChild(sharedContainer);
+          }
+          claimCount += 1;
+          resolve(handle);
+        },
+        reject,
       });
     });
   }
@@ -72,10 +78,8 @@ export async function getSharedMap(
   // First claim: build it.
   isInitializing = true;
   try {
-    await Promise.all([
-      importLibrary('maps') as Promise<google.maps.MapsLibrary>,
-      importLibrary('marker'),
-    ]);
+    // Google may already be known not to work (see google-maps-health).
+    if (!(await loadGoogleMaps())) throw new Error('Google Maps is unavailable');
 
     sharedContainer = document.createElement('div');
     sharedContainer.style.width = '100%';
@@ -83,15 +87,24 @@ export async function getSharedMap(
 
     sharedMap = new google.maps.Map(sharedContainer, options);
     sharedInfoWindow = new google.maps.InfoWindow();
+    // The first map of the session is the one that proves (or disproves)
+    // the key for every other.
+    watchGoogleMap(sharedMap, sharedContainer);
 
     parent.appendChild(sharedContainer);
     claimCount = 1;
 
     const handle: MapHandle = { map: sharedMap, infoWindow: sharedInfoWindow };
     while (pendingRequests.length > 0) {
-      pendingRequests.shift()!(handle);
+      pendingRequests.shift()!.resolve(handle);
     }
     return handle;
+  } catch (err) {
+    // Claims that queued behind this one fail with it rather than hang.
+    while (pendingRequests.length > 0) {
+      pendingRequests.shift()!.reject(err);
+    }
+    throw err;
   } finally {
     isInitializing = false;
   }

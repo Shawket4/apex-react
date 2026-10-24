@@ -3,7 +3,8 @@ import { useTranslation } from 'react-i18next';
 import { Loader2 } from 'lucide-react';
 import { cn } from '@/shared/lib/cn';
 import { DEFAULT_MAP_CENTER } from '@/shared/lib/coords';
-import { isGoogleMapsConfigured } from '@/shared/lib/maps/google-maps-config';
+import { reportGoogleMapsFailure } from '@/shared/lib/maps/google-maps-health';
+import { useMapProvider } from '@/shared/lib/maps/use-map-provider';
 import type { DynMarkerId, ReplayMapAdapter, ReplayScene } from './types';
 
 /* -------------------------------------------------------------------------- */
@@ -11,11 +12,13 @@ import type { DynMarkerId, ReplayMapAdapter, ReplayScene } from './types';
 /*                                                                             */
 /* React wrapper around the imperative adapters. React renders the container  */
 /* exactly once; everything that moves goes through the ref handle so the     */
-/* rAF loop never touches React state. Provider cascade mirrors MapView:      */
-/* Google when configured (8s budget), otherwise/on failure Leaflet.          */
+/* rAF loop never touches React state. The provider is the app-wide one        */
+/* (google-maps-health): Google until it fails anywhere, then Leaflet — and   */
+/* a failure while this map is up swaps the adapter and re-applies the scene. */
 /* -------------------------------------------------------------------------- */
 
-const GOOGLE_INIT_TIMEOUT_MS = 8_000;
+/** Long enough for a slow SDK download: running out means Google fails app-wide. */
+const GOOGLE_INIT_TIMEOUT_MS = 15_000;
 
 export interface TripReplayMapHandle {
   moveMarker(id: DynMarkerId, lat: number, lng: number): void;
@@ -51,7 +54,9 @@ export const TripReplayMap = React.forwardRef<TripReplayMapHandle, TripReplayMap
       onReadyRef.current = onReady;
     }, [onReady]);
 
-    /* ---- Init once ---------------------------------------------------- */
+    /* ---- Init once per provider -------------------------------------- */
+
+    const provider = useMapProvider();
 
     React.useEffect(() => {
       const container = containerRef.current;
@@ -60,24 +65,35 @@ export const TripReplayMap = React.forwardRef<TripReplayMapHandle, TripReplayMap
       let adapter: ReplayMapAdapter | null = null;
 
       const init = async () => {
-        if (isGoogleMapsConfigured()) {
+        if (provider === 'google') {
+          let pending: Promise<ReplayMapAdapter> | null = null;
+          let timer = 0;
           try {
             const { createGoogleReplayAdapter } = await import('./google-adapter');
+            pending = createGoogleReplayAdapter(container, DEFAULT_MAP_CENTER);
             adapter = await Promise.race([
-              createGoogleReplayAdapter(container, DEFAULT_MAP_CENTER),
-              new Promise<never>((_, reject) =>
-                window.setTimeout(
+              pending,
+              new Promise<never>((_, reject) => {
+                timer = window.setTimeout(
                   () => reject(new Error('google init timeout')),
                   GOOGLE_INIT_TIMEOUT_MS,
-                ),
-              ),
+                );
+              }),
             ]);
+            window.clearTimeout(timer);
           } catch (err) {
-            console.warn('[TripReplayMap] Google init failed — using Leaflet', err);
-            adapter = null;
+            window.clearTimeout(timer);
+            // A Google adapter that turns up after we gave up must not keep
+            // its claim on the shared map.
+            void pending?.then((late) => late.destroy()).catch(() => {});
+            // Every map moves to Leaflet; this effect runs again with it.
+            if (!cancelled) {
+              const timedOut = err instanceof Error && err.message === 'google init timeout';
+              reportGoogleMapsFailure(timedOut ? 'timeout' : 'error', err);
+            }
+            return;
           }
-        }
-        if (!adapter) {
+        } else {
           const { createLeafletReplayAdapter } = await import('./leaflet-adapter');
           adapter = await createLeafletReplayAdapter(container, DEFAULT_MAP_CENTER);
         }
@@ -99,7 +115,7 @@ export const TripReplayMap = React.forwardRef<TripReplayMapHandle, TripReplayMap
         adapterRef.current = null;
         setReady(false);
       };
-    }, []);
+    }, [provider]);
 
     /* ---- Static scene (built once per scene identity) ------------------ */
 

@@ -1,44 +1,44 @@
-import { setOptions, importLibrary } from '@googlemaps/js-api-loader';
+import { setOptions } from '@googlemaps/js-api-loader';
 
 /* -------------------------------------------------------------------------- */
-/* Loader configuration                                                        */
+/* Google Maps configuration                                                   */
+/*                                                                            */
+/* The key and map id come from the build (VITE_*). Whether the key actually   */
+/* WORKS is a different question, answered once for the whole app by           */
+/* `google-maps-health.ts`; every map asks that module, never this one.        */
 /* -------------------------------------------------------------------------- */
+
+const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY ?? '';
 
 let loaderConfigured = false;
-export function configureLoader() {
+
+/** Configure the JS API loader once per page load. */
+export function configureLoader(): void {
   if (loaderConfigured) return;
-  const key = (import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string | undefined) ?? '';
-  setOptions({ key, v: 'weekly' });
+  setOptions({ key: API_KEY, v: 'weekly' });
   loaderConfigured = true;
 }
 
+/** A key is present in the build. Says nothing about whether it works. */
 export function isGoogleMapsConfigured(): boolean {
-  return !!(import.meta.env.VITE_GOOGLE_MAPS_API_KEY as string | undefined);
+  return API_KEY.length > 0;
 }
 
-/* -------------------------------------------------------------------------- */
-/* EAGER PRELOAD — fixes the Leaflet-fallback-on-slow-network bug             */
-/*                                                                             */
-/* MapView.tsx does a top-level import from this module to get               */
-/* `isGoogleMapsConfigured`, which means this module evaluates the moment   */
-/* MapView mounts — well before `GoogleMapView` is lazy-loaded. Kicking     */
-/* off the SDK load here means by the time `getSharedMap()` awaits          */
-/* `importLibrary`, the libraries are usually cached.                       */
-/*                                                                             */
-/* Without this, on slower connections the SDK download takes longer than   */
-/* MapView's 3s `fallbackTimeoutMs`. MapView sees no `.gm-style` element,   */
-/* assumes Google failed, and switches to Leaflet permanently — even       */
-/* though the API key is valid and Google would have succeeded a moment    */
-/* later. The eager preload moves the network race to a window before     */
-/* the timer is even armed.                                                 */
-/* -------------------------------------------------------------------------- */
+/** The vector map id (advanced markers need one). */
+export function googleMapId(): string {
+  return import.meta.env.VITE_GOOGLE_MAPS_MAP_ID || 'DEMO_MAP_ID';
+}
 
-if (typeof window !== 'undefined' && isGoogleMapsConfigured()) {
-  configureLoader();
-  void Promise.all([
-    importLibrary('maps'),
-    importLibrary('marker'),
-  ]).catch(() => {
-    /* errors are surfaced inside init() when the component actually mounts */
-  });
+/**
+ * A short, non-reversible fingerprint of the key, so a remembered failure
+ * belongs to the key that failed: a rotated key is tried again at once.
+ */
+export function googleKeyFingerprint(): string {
+  // FNV-1a, 32-bit.
+  let h = 0x811c9dc5;
+  for (let i = 0; i < API_KEY.length; i++) {
+    h ^= API_KEY.charCodeAt(i);
+    h = Math.imul(h, 0x01000193) >>> 0;
+  }
+  return h.toString(16).padStart(8, '0');
 }
