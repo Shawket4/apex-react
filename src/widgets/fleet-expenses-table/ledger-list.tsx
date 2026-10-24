@@ -27,16 +27,29 @@ import {
   type Category,
   type PartyKind,
 } from '@/entities/transaction/categories';
-import { useUpdateTransaction } from '@/entities/transaction/queries';
 import {
+  useAcceptSuggestion,
+  useDismissSuggestion,
+  useUpdateTransaction,
+} from '@/entities/transaction/queries';
+import {
+  appliedDecision,
   isSplitChild,
+  openSuggestion,
   splitEligible,
   type ByDate,
+  type Classification,
   type Transaction,
   type TransactionSort,
 } from '@/entities/transaction/schemas';
 import { SmartPartyField, type PartyValue } from './party-picker';
 import { SplitChip, SplitEditor } from './split-editor';
+import {
+  AutoTag,
+  SuggestionButtons,
+  SuggestionChip,
+  SuggestionReason,
+} from './suggestion';
 
 /* -------------------------------------------------------------------------- */
 /* Day grouping                                                                */
@@ -85,7 +98,20 @@ function formatRowWhen(occurredAt: string, language: string): string {
 
 type CategoryFlow =
   | { row: Transaction; step: 'category' }
-  | { row: Transaction; step: 'party'; category: Category };
+  | {
+      row: Transaction;
+      step: 'party';
+      category: Category;
+      /** Taking a suggestion that names a loan FalconGo already has. */
+      linkedLoanId?: number | null;
+    };
+
+/** What a row's suggestion would do on a click: the person it names, if any. */
+function suggestedParty(s: Classification | null): PartyValue | null {
+  if (!s || (!s.driver_id && !s.employee_id)) return null;
+  return { driver_id: s.driver_id ?? null, employee_id: s.driver_id ? null : (s.employee_id ?? null) };
+}
+
 
 /* -------------------------------------------------------------------------- */
 /* Widget                                                                      */
@@ -116,6 +142,8 @@ export function LedgerList({ rows, dayTotals, canEdit, sort = 'date' }: LedgerLi
   const navigate = useNavigate();
   const categories = useCategories();
   const update = useUpdateTransaction();
+  const accept = useAcceptSuggestion();
+  const dismiss = useDismissSuggestion();
 
   const [flow, setFlow] = React.useState<CategoryFlow | null>(null);
   const [party, setParty] = React.useState<PartyValue>({ driver_id: null, employee_id: null });
@@ -169,8 +197,9 @@ export function LedgerList({ rows, dayTotals, canEdit, sort = 'date' }: LedgerLi
     const cat = catByKey.get(key);
     if (!cat) return;
     if (requiresParty(cat) || posts(cat)) {
-      // Two-step: the category needs a person. One PATCH at the end.
-      setParty({ driver_id: null, employee_id: null });
+      // Two-step: the category needs a person. One PATCH at the end. A
+      // person the classifier suggested starts out selected.
+      setParty(suggestedParty(openSuggestion(row)) ?? { driver_id: null, employee_id: null });
       setFlow({ row, step: 'party', category: cat });
       return;
     }
@@ -178,6 +207,44 @@ export function LedgerList({ rows, dayTotals, canEdit, sort = 'date' }: LedgerLi
       { id: row.id, version: row.version, values: { category: key } },
       { onSuccess: () => setFlow(null) },
     );
+  };
+
+  /**
+   * Take a row's suggestion in one click: an ordinary edit with the suggested
+   * values. When it still needs a person (or would register a new loan) the
+   * "to whom?" step opens with what is known already filled in.
+   */
+  const acceptSuggestion = (row: Transaction, s: Classification) => {
+    const cat = s.category ? catByKey.get(s.category) : undefined;
+    if (!cat) return;
+    const named = suggestedParty(s);
+    const hasParty = !!named || !!row.driver_id || !!row.employee_id;
+    if ((requiresParty(cat) && !hasParty) || (posts(cat) && !s.linked_loan_id)) {
+      setParty(named ?? { driver_id: row.driver_id ?? null, employee_id: row.employee_id ?? null });
+      setFlow({ row, step: 'party', category: cat, linkedLoanId: s.linked_loan_id ?? null });
+      return;
+    }
+    accept.mutate({
+      id: row.id,
+      version: row.version,
+      values: {
+        category: cat.key,
+        ...(named ?? {}),
+        ...(s.linked_loan_id ? { linked_loan_id: s.linked_loan_id } : {}),
+      },
+      label: categoryLabel(cat, i18n.language),
+    });
+  };
+
+  const rowActions = (row: Transaction) => {
+    const s = openSuggestion(row);
+    return {
+      suggestion: s,
+      onAccept: s?.category ? () => acceptSuggestion(row, s) : undefined,
+      onDismiss: () => dismiss.mutate(row.id),
+      accepting: accept.isPending && accept.variables?.id === row.id,
+      dismissing: dismiss.isPending && dismiss.variables === row.id,
+    };
   };
 
   const saveWithParty = () => {
@@ -191,6 +258,7 @@ export function LedgerList({ rows, dayTotals, canEdit, sort = 'date' }: LedgerLi
           category: flow.category.key,
           driver_id: party.driver_id,
           employee_id: party.employee_id,
+          ...(flow.linkedLoanId ? { linked_loan_id: flow.linkedLoanId } : {}),
         },
       },
       { onSuccess: () => setFlow(null) },
@@ -235,6 +303,7 @@ export function LedgerList({ rows, dayTotals, canEdit, sort = 'date' }: LedgerLi
                     showDate={flat}
                     splitSiblings={splitSiblings}
                     onOpenSplit={() => openSplit(row)}
+                    actions={rowActions(row)}
                   />
                 </li>
               ))}
@@ -267,6 +336,7 @@ export function LedgerList({ rows, dayTotals, canEdit, sort = 'date' }: LedgerLi
                     showDate={flat}
                     splitSiblings={splitSiblings}
                     onOpenSplit={() => openSplit(row)}
+                    actions={rowActions(row)}
                   />
                 ))}
               </tbody>
@@ -320,7 +390,9 @@ export function LedgerList({ rows, dayTotals, canEdit, sort = 'date' }: LedgerLi
               />
               {posts(flow.category) && (
                 <p className="text-xs text-muted-foreground">
-                  {t('fleetExpenses.party.postsNow')}
+                  {flow.linkedLoanId
+                    ? t('fleetExpenses.suggestion.linksLoan')
+                    : t('fleetExpenses.party.postsNow')}
                 </p>
               )}
               <div className="flex gap-2">
@@ -488,6 +560,15 @@ function RowFlags({ row }: { row: Transaction }) {
   );
 }
 
+/** A row's suggestion and what its two buttons do. */
+interface RowActions {
+  suggestion: Classification | null;
+  onAccept?: () => void;
+  onDismiss: () => void;
+  accepting: boolean;
+  dismissing: boolean;
+}
+
 /* -------------------------------------------------------------------------- */
 /* Mobile card                                                                 */
 /*                                                                            */
@@ -505,6 +586,7 @@ function TxnCard({
   showDate,
   splitSiblings,
   onOpenSplit,
+  actions,
 }: {
   row: Transaction;
   canEdit: boolean;
@@ -514,9 +596,12 @@ function TxnCard({
   showDate: boolean;
   splitSiblings: Map<number, number[]>;
   onOpenSplit: () => void;
+  actions: RowActions;
 }) {
   const { t, i18n } = useTranslation();
   const tappable = canEdit && row.editable;
+  const suggestion = canEdit && row.editable ? actions.suggestion : null;
+  const auto = appliedDecision(row);
 
   return (
     <div
@@ -553,8 +638,11 @@ function TxnCard({
         </span>
         <RowFlags row={row} />
         {row.category ? (
-          <CategoryChip row={row} catByKey={catByKey} />
-        ) : canEdit && row.editable ? (
+          <>
+            <CategoryChip row={row} catByKey={catByKey} />
+            {auto && <AutoTag decision={auto} />}
+          </>
+        ) : canEdit && row.editable && !suggestion?.category ? (
           <button
             type="button"
             onClick={(e) => {
@@ -588,6 +676,28 @@ function TxnCard({
           </button>
         )}
       </div>
+
+      {suggestion && (
+        <div
+          className="col-span-2 mt-1 space-y-2 rounded-md border border-dashed border-primary/40 bg-primary/5 p-2.5"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="flex min-w-0 items-center gap-2">
+            <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wider text-primary">
+              {t('fleetExpenses.suggestion.title')}
+            </span>
+            <SuggestionChip suggestion={suggestion} className="min-w-0" />
+          </div>
+          <SuggestionReason suggestion={suggestion} />
+          <SuggestionButtons
+            size="full"
+            onAccept={actions.onAccept}
+            onDismiss={actions.onDismiss}
+            accepting={actions.accepting}
+            dismissing={actions.dismissing}
+          />
+        </div>
+      )}
     </div>
   );
 }
@@ -607,6 +717,7 @@ function TxnRow({
   showDate,
   splitSiblings,
   onOpenSplit,
+  actions,
 }: {
   row: Transaction;
   canEdit: boolean;
@@ -618,9 +729,12 @@ function TxnRow({
   showDate: boolean;
   splitSiblings: Map<number, number[]>;
   onOpenSplit: () => void;
+  actions: RowActions;
 }) {
   const { t, i18n } = useTranslation();
   const tappable = canEdit && row.editable;
+  const suggestion = canEdit && row.editable ? actions.suggestion : null;
+  const auto = appliedDecision(row);
 
   return (
     <tr
@@ -668,15 +782,46 @@ function TxnRow({
             />
           )}
         </div>
-        {row.counterparty && row.description && (
-          <div className="truncate text-xs text-muted-foreground" dir="auto">
-            {row.description}
+        {suggestion ? (
+          <div className="truncate text-xs text-muted-foreground" dir="auto" title={suggestion.reason}>
+            {suggestion.reason}
           </div>
+        ) : (
+          row.counterparty &&
+          row.description && (
+            <div className="truncate text-xs text-muted-foreground" dir="auto">
+              {row.description}
+            </div>
+          )
         )}
       </td>
-      <td className="w-44 px-3 py-2.5">
+      <td className="w-56 px-3 py-2.5">
         {row.category ? (
-          <CategoryChip row={row} catByKey={catByKey} />
+          <span className="flex min-w-0 items-center gap-1.5">
+            <CategoryChip row={row} catByKey={catByKey} />
+            {auto && <AutoTag decision={auto} />}
+            {suggestion?.category && (
+              <span className="flex min-w-0 items-center" onClick={(e) => e.stopPropagation()}>
+                <SuggestionChip suggestion={suggestion} className="min-w-0" />
+                <SuggestionButtons
+                  onAccept={actions.onAccept}
+                  onDismiss={actions.onDismiss}
+                  accepting={actions.accepting}
+                  dismissing={actions.dismissing}
+                />
+              </span>
+            )}
+          </span>
+        ) : suggestion?.category ? (
+          <span className="flex min-w-0 items-center gap-1" onClick={(e) => e.stopPropagation()}>
+            <SuggestionChip suggestion={suggestion} className="min-w-0" />
+            <SuggestionButtons
+              onAccept={actions.onAccept}
+              onDismiss={actions.onDismiss}
+              accepting={actions.accepting}
+              dismissing={actions.dismissing}
+            />
+          </span>
         ) : canEdit && row.editable ? (
           /* Native select, on purpose — see NativeSelect. Click must not
              bubble into the row navigation. */
@@ -702,7 +847,7 @@ function TxnRow({
           <span className="text-xs text-muted-foreground">—</span>
         )}
       </td>
-      <td className="w-44 truncate px-3 py-2.5 font-mono text-xs text-muted-foreground">
+      <td className="w-36 truncate px-3 py-2.5 font-mono text-xs text-muted-foreground">
         {row.reference || ''}
       </td>
       <td className="w-24 whitespace-nowrap px-3 py-2.5 text-xs tabular-nums text-muted-foreground">

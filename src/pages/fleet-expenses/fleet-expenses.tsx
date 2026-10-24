@@ -15,7 +15,9 @@ import {
   Fuel,
   HandCoins,
   Inbox,
+  Info,
   List,
+  ListChecks,
   Plus,
   Receipt,
   RefreshCw,
@@ -88,8 +90,11 @@ import { useChartMotion } from '@/shared/lib/motion';
 
 const ALL = '__all__';
 
-/** `pending` is the work queue (default); `all` is the full ledger. */
-type LedgerView = 'pending' | 'all';
+/**
+ * `pending` is the work queue (default); `review` is the part of it the
+ * classifier has a suggestion for; `all` is the full ledger.
+ */
+type LedgerView = 'pending' | 'review' | 'all';
 
 /* -------------------------------------------------------------------------- */
 /* Page                                                                        */
@@ -125,12 +130,15 @@ export default function FleetExpensesPage() {
   const [includeLoans, setIncludeLoans] = React.useState(
     () => searchParams.get('include_loans') !== 'false',
   );
-  /** Needs action by default. Only `view=all` rides the URL; old `uncat=1`
-   *  links land on the default, which is what they meant anyway. */
-  const [view, setView] = React.useState<LedgerView>(() =>
-    searchParams.get('view') === 'all' ? 'all' : 'pending',
-  );
-  const pending = view === 'pending';
+  /** Needs action by default. Only `view=all|review` rides the URL; old
+   *  `uncat=1` links land on the default, which is what they meant anyway. */
+  const [view, setView] = React.useState<LedgerView>(() => {
+    const v = searchParams.get('view');
+    return v === 'all' || v === 'review' ? v : 'pending';
+  });
+  /** The queue and its suggestions share one set of rules: every company's
+   *  backlog, no category chips, no source toggles. */
+  const pending = view !== 'all';
   /** Ledger order. Amount is the default, so only `sort=date` rides the URL. */
   const [sort, setSort] = React.useState<TransactionSort>(() => {
     const v = searchParams.get('sort');
@@ -179,7 +187,7 @@ export default function FleetExpensesPage() {
         setOrDelete('q', debouncedSearch || null);
         setOrDelete('include_fuel', includeFuel ? null : 'false');
         setOrDelete('include_loans', includeLoans ? null : 'false');
-        setOrDelete('view', pending ? null : 'all');
+        setOrDelete('view', view === 'pending' ? null : view);
         next.delete('uncat');
         setOrDelete('sort', sort !== DEFAULT_TRANSACTION_SORT ? sort : null);
         next.delete('range');
@@ -190,7 +198,7 @@ export default function FleetExpensesPage() {
     );
   }, [
     category, paymentMethod, source, debouncedSearch,
-    includeFuel, includeLoans, pending, sort, setSearchParams,
+    includeFuel, includeLoans, view, sort, setSearchParams,
   ]);
 
   // The LEDGER is cash-out only; incoming transfers live in the review
@@ -203,9 +211,21 @@ export default function FleetExpensesPage() {
   // other view and a categorized row drops out on the refetch that follows
   // its save. Its statistics are scoped the same way, so day totals and the
   // "showing N of M" count describe the queue, not the whole range.
+  //
+  // The suggestions view is a server filter too (a suggestion waiting), and
+  // its own statistics count the badge on its tab.
+  const reviewFilters = React.useMemo(
+    () => ({ ...filters, review: 'true' }),
+    [filters],
+  );
   const viewFilters = React.useMemo(
-    () => (pending ? { ...filters, category: UNCATEGORIZED_KEY } : filters),
-    [filters, pending],
+    () =>
+      view === 'review'
+        ? reviewFilters
+        : view === 'pending'
+          ? { ...filters, category: UNCATEGORIZED_KEY }
+          : filters,
+    [filters, reviewFilters, view],
   );
   const listFilters = React.useMemo(
     () => ({ ...viewFilters, direction: 'out' as const, sort }),
@@ -214,6 +234,13 @@ export default function FleetExpensesPage() {
 
   const rowsQuery = useTransactionsPaged(listFilters);
   const statsQuery = useTransactionStatistics(viewFilters);
+  const reviewStatsQuery = useTransactionStatistics(reviewFilters);
+  // On the suggestions tab the queue's own counts still label its tab. Same
+  // key as the queue view, so switching between the two costs nothing.
+  const queueStatsQuery = useTransactionStatistics(
+    { ...filters, category: UNCATEGORIZED_KEY },
+    view === 'review',
+  );
   const categories = useCategories();
   const exportMutation = useExportTransactions();
 
@@ -230,14 +257,23 @@ export default function FleetExpensesPage() {
     return map;
   }, [stats]);
 
+  /** The queue's figures: this view's, except on the suggestions tab. */
+  const queueStats = view === 'review' ? queueStatsQuery.data : stats;
+  const queueStatsLoading =
+    view === 'review' ? queueStatsQuery.isLoading : statsQuery.isLoading;
   const uncatCount = React.useMemo(
-    () => (stats?.by_category ?? []).find((b) => b.key === null)?.count ?? 0,
-    [stats],
+    () => (queueStats?.by_category ?? []).find((b) => b.key === null)?.count ?? 0,
+    [queueStats],
   );
 
-  const pendingIn = stats?.pending_in ?? { count: 0, total: '0' };
+  const pendingIn = queueStats?.pending_in ?? { count: 0, total: '0' };
   /** Everything the queue holds: rows to categorize + transfers to review. */
   const actionCount = uncatCount + pendingIn.count;
+  /** Suggestions waiting, counted and not (a refund suggested for a row
+   *  someone already categorised as not spending still waits). */
+  const reviewCount =
+    (reviewStatsQuery.data?.count ?? 0) + (reviewStatsQuery.data?.excluded.count ?? 0);
+  const excluded = stats?.excluded ?? { count: 0, total: '0' };
 
   /** Tile placeholder while /statistics is in flight. */
   const statSkeleton = {
@@ -367,10 +403,19 @@ export default function FleetExpensesPage() {
             <TabsTrigger value="pending" asChild unstyled>
               <Chip
                 icon={<Inbox className="h-3.5 w-3.5" />}
-                count={!statsQuery.isLoading && actionCount > 0 ? actionCount : undefined}
-                active={pending}
+                count={!queueStatsLoading && actionCount > 0 ? actionCount : undefined}
+                active={view === 'pending'}
               >
                 {t('fleetExpenses.views.pending')}
+              </Chip>
+            </TabsTrigger>
+            <TabsTrigger value="review" asChild unstyled>
+              <Chip
+                icon={<ListChecks className="h-3.5 w-3.5" />}
+                count={!reviewStatsQuery.isLoading && reviewCount > 0 ? reviewCount : undefined}
+                active={view === 'review'}
+              >
+                {t('fleetExpenses.views.review')}
               </Chip>
             </TabsTrigger>
             <TabsTrigger value="all" asChild unstyled>
@@ -432,6 +477,17 @@ export default function FleetExpensesPage() {
             />
           </button>
         </div>
+      )}
+      {!pending && !statsQuery.isLoading && excluded.count > 0 && (
+        <p className="-mt-1 flex items-start gap-1.5 text-xs text-muted-foreground">
+          <Info className="mt-px h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+          <span>
+            {t('fleetExpenses.stats.excluded', { count: excluded.count })}{' '}
+            <span className="font-mono tabular-nums" dir="ltr">
+              {formatMoney(excluded.total)} EGP
+            </span>
+          </span>
+        </p>
       )}
 
       {/* ── Cash in — needs review. A quiet amber pocket that only exists
@@ -550,14 +606,17 @@ export default function FleetExpensesPage() {
                     paddingAngle={2}
                     stroke="none"
                   >
-                    {donut.map((slice) => (
-                      <Cell key={slice.name} fill={slice.color} />
+                    {donut.map((slice, i) => (
+                      <Cell key={`${i}-${slice.name}`} fill={slice.color} />
                     ))}
                   </Pie>
                 </PieChart>
                 <ul className="min-w-0 flex-1 space-y-1.5 text-sm">
-                  {donut.map((slice) => (
-                    <li key={slice.name} className="flex items-center justify-between gap-2">
+                  {donut.map((slice, i) => (
+                    <li
+                      key={`${i}-${slice.name}`}
+                      className="flex items-center justify-between gap-2"
+                    >
                       <span className="flex min-w-0 items-center gap-2">
                         <i
                           className="h-2 w-2 shrink-0 rounded-sm"
@@ -617,7 +676,7 @@ export default function FleetExpensesPage() {
               <ul className="divide-y text-sm">
                 {stats.by_party.map((p) => (
                   <li
-                    key={`${p.driver_id ?? 'e'}-${p.employee_id ?? 'd'}-${p.kind ?? ''}`}
+                    key={`${p.driver_id ?? 'e'}-${p.employee_id ?? 'd'}-${p.kind ?? ''}-${p.name}`}
                     className="flex items-center justify-between gap-3 py-1.5"
                   >
                     <span className="flex min-w-0 items-center gap-2">
@@ -763,6 +822,17 @@ export default function FleetExpensesPage() {
             <Skeleton key={i} className="h-14 w-full rounded-none" />
           ))}
         </div>
+      ) : !hasRows && view === 'review' ? (
+        <EmptyState
+          icon={<ListChecks className="h-8 w-8" />}
+          title={t('fleetExpenses.suggestion.noneTitle')}
+          description={t('fleetExpenses.suggestion.noneDescription')}
+          action={
+            <Button variant="outline" onClick={() => setView('pending')}>
+              {t('fleetExpenses.views.pending')}
+            </Button>
+          }
+        />
       ) : !hasRows && pending ? (
         <EmptyState
           icon={<Receipt className="h-8 w-8" />}

@@ -5,6 +5,7 @@ import {
   createTransaction,
   createTransactionSplit,
   deleteTransaction,
+  dismissSuggestion,
   exportTransactions,
   getTransaction,
   getTransactions,
@@ -58,11 +59,12 @@ export function useTransactionsPaged(filters: TransactionFilters, enabled = true
 }
 
 /* ─── Statistics ─── */
-export function useTransactionStatistics(filters: TransactionFilters) {
+export function useTransactionStatistics(filters: TransactionFilters, enabled = true) {
   return useQuery({
     queryKey: QUERY_KEYS.transactionStats(filters),
     queryFn: () => getTransactionStatistics(filters),
     staleTime: 30_000,
+    enabled,
   });
 }
 
@@ -139,6 +141,60 @@ export function useUpdateTransaction() {
           t('fleetExpenses.versionConflict'),
         ),
       );
+    },
+  });
+}
+
+/* ─── Suggestions ─── */
+
+/**
+ * Take the classifier's suggestion: an ordinary If-Match edit with the
+ * suggested values. The server records it as accepted (or corrected, when the
+ * values differ), which is how the classifier learns. `label` is the category
+ * as the person sees it, for the toast.
+ */
+export function useAcceptSuggestion() {
+  const { t } = useTranslation();
+  return useMutation({
+    mutationFn: ({
+      id,
+      version,
+      values,
+    }: {
+      id: number;
+      version: number;
+      values: Partial<TransactionFormValues> & TransactionWriteExtras;
+      label: string;
+    }) => updateTransaction(id, version, values),
+    onSuccess: (_row, { label }) => {
+      invalidateAll();
+      toast.success(t('fleetExpenses.suggestion.accepted', { category: label }));
+    },
+    onError: (error) => {
+      toast.error(
+        conflictMessage(
+          error,
+          t('fleetExpenses.saveFailed'),
+          t('fleetExpenses.versionConflict'),
+        ),
+      );
+    },
+  });
+}
+
+/** "Not this": put the suggestion aside for good; the row stays as it is. */
+export function useDismissSuggestion() {
+  const { t } = useTranslation();
+  return useMutation({
+    mutationFn: (id: number) => dismissSuggestion(id),
+    onSuccess: () => {
+      invalidateAll();
+      toast.success(t('fleetExpenses.suggestion.dismissed'));
+    },
+    // 404: someone settled it meanwhile — the refetch shows that.
+    onError: (error) => {
+      invalidateAll();
+      toast.error(extractErrorMessage(error, t('fleetExpenses.suggestion.dismissFailed')));
     },
   });
 }

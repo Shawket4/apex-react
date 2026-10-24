@@ -10,11 +10,21 @@ import { formatMoney } from '@/shared/lib/money';
 import { formatCairoDateTime } from '@/shared/lib/cairo';
 import { useIsDesktop } from '@/shared/hooks/use-media-query';
 import {
+  useAcceptSuggestion,
   useDeleteTransaction,
+  useDismissSuggestion,
   useTransactionsPaged,
   useUpdateTransaction,
 } from '@/entities/transaction/queries';
-import type { Transaction, TransactionFilters } from '@/entities/transaction/schemas';
+import {
+  UNCATEGORIZED_KEY,
+  openSuggestion,
+  type Transaction,
+  type TransactionFilters,
+} from '@/entities/transaction/schemas';
+import { requiresParty, posts } from '@/entities/transaction/categories';
+import { SuggestionButtons, SuggestionChip, SuggestionReason } from './suggestion';
+import { useSuggestionText } from './use-suggestion-text';
 
 /* -------------------------------------------------------------------------- */
 /* Cash in — needs review                                                      */
@@ -25,6 +35,9 @@ import type { Transaction, TransactionFilters } from '@/entities/transaction/sch
 /* the row then appears in the ledger normally) or "ignore" (soft DELETE with  */
 /* If-Match, behind a small confirm). Both mutations invalidate the            */
 /* transactions key, so the amber badge and the ledger refresh on their own.   */
+/* When the classifier recognises one (money moved between the company's own   */
+/* accounts), its suggestion is a third, one-tap way out. Only undecided rows  */
+/* are listed, as the badge counts them.                                       */
 /*                                                                            */
 /* Presentation: full-width bottom sheet on phones, an inline section on       */
 /* desktop. The list itself only fetches once the pocket is opened.            */
@@ -43,7 +56,7 @@ export function CashInReview({ open, onOpenChange, filters, canEdit }: CashInRev
   const isDesktop = useIsDesktop();
 
   const inFilters = React.useMemo(
-    () => ({ ...filters, direction: 'in' as const }),
+    () => ({ ...filters, direction: 'in' as const, category: UNCATEGORIZED_KEY }),
     [filters],
   );
   const query = useTransactionsPaged(inFilters, open);
@@ -144,9 +157,21 @@ function CashInRow({ row, canEdit }: { row: Transaction; canEdit: boolean }) {
   const { t, i18n } = useTranslation();
   const update = useUpdateTransaction();
   const del = useDeleteTransaction();
+  const accept = useAcceptSuggestion();
+  const dismiss = useDismissSuggestion();
   const [confirmIgnore, setConfirmIgnore] = React.useState(false);
 
-  const busy = update.isPending || del.isPending;
+  const suggestion = canEdit && row.editable ? openSuggestion(row) : null;
+  const { category: suggested, label: suggestedLabel } = useSuggestionText(suggestion);
+  // One tap only when nothing else is needed: no person to pick, no loan to
+  // register. Anything else is a job for the edit form.
+  const oneTap =
+    !!suggestion?.category &&
+    !!suggested &&
+    !posts(suggested) &&
+    (!requiresParty(suggested) || !!suggestion.driver_id || !!suggestion.employee_id);
+
+  const busy = update.isPending || del.isPending || accept.isPending || dismiss.isPending;
   // The verbatim-ish summary: the parsed description, minus a duplicated
   // counterparty line, plus the bank reference when there is one. When there
   // is no counterparty the title line already shows the description.
@@ -184,6 +209,45 @@ function CashInRow({ row, canEdit }: { row: Transaction; canEdit: boolean }) {
           {summary && row.reference ? ' · ' : ''}
           {row.reference && <span className="font-mono">{row.reference}</span>}
         </p>
+      )}
+
+      {suggestion && (
+        <div className="space-y-2 rounded-md border border-dashed border-primary/40 bg-primary/5 p-2.5">
+          <div className="flex min-w-0 items-center gap-2">
+            <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wider text-primary">
+              {t('fleetExpenses.suggestion.title')}
+            </span>
+            <SuggestionChip suggestion={suggestion} className="min-w-0" />
+          </div>
+          <SuggestionReason suggestion={suggestion} />
+          <SuggestionButtons
+            size="full"
+            onAccept={
+              oneTap && suggested
+                ? () =>
+                    accept.mutate({
+                      id: row.id,
+                      version: row.version,
+                      values: {
+                        category: suggested.key,
+                        ...(suggestion.driver_id || suggestion.employee_id
+                          ? {
+                              driver_id: suggestion.driver_id ?? null,
+                              employee_id: suggestion.driver_id
+                                ? null
+                                : (suggestion.employee_id ?? null),
+                            }
+                          : {}),
+                      },
+                      label: suggestedLabel,
+                    })
+                : undefined
+            }
+            onDismiss={() => dismiss.mutate(row.id)}
+            accepting={accept.isPending}
+            dismissing={dismiss.isPending}
+          />
+        </div>
       )}
 
       {canEdit && row.editable && (

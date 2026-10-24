@@ -31,6 +31,12 @@ export const categorySchema = z.object({
   required_party: z.string(),
   sort_order: z.number(),
   enabled: z.boolean(),
+  /**
+   * 'operating' (spending) | 'capital' (trucks, loan repayments) |
+   * 'excluded' (money that moved but was not spent: own-account transfers,
+   * PetroApp top-ups, refunds — listed, never summed).
+   */
+  report_group: z.string().optional().default('operating'),
 });
 
 export type Category = z.infer<typeof categorySchema>;
@@ -57,6 +63,11 @@ export function requiresParty(c: Category | undefined): boolean {
 /** Does categorising into this register a loans row? */
 export function posts(c: Category | undefined): boolean {
   return !!c && c.posting_kind != null;
+}
+
+/** Money in this category is listed but never counted as spending. */
+export function isExcluded(c: Category | undefined): boolean {
+  return c?.report_group === 'excluded';
 }
 
 /** Display label in the active language, falling back to the English label. */

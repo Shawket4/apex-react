@@ -41,6 +41,31 @@ export const loanRefSchema = z.object({
 
 export type LoanRef = z.infer<typeof loanRefSchema>;
 
+/**
+ * What the classifier applied to a row or suggests for it, and why. Present
+ * on bank rows it has looked at. A suggestion waits for a person; an applied
+ * decision was written because it was at least 95% sure.
+ */
+export const classificationSchema = z.object({
+  /** 'applied' | 'suggested' | 'accepted' | 'corrected' | 'dismissed' */
+  status: z.string(),
+  /** Which rule decided: 'payee', 'history', 'internal_pair', … */
+  rule: z.string(),
+  /** 0–1. */
+  confidence: z.number(),
+  /** One sentence a person can check. */
+  reason: z.string(),
+  category: z.string().nullable().optional(),
+  driver_id: z.number().nullable().optional(),
+  employee_id: z.number().nullable().optional(),
+  /** A loan FalconGo already has that this payment is the money for. */
+  linked_loan_id: z.number().nullable().optional(),
+  /** The other side: an internal-transfer partner, or what a refund returns. */
+  pair_id: z.number().nullable().optional(),
+});
+
+export type Classification = z.infer<typeof classificationSchema>;
+
 export const transactionSchema = z.object({
   id: z.number(),
   source: z.string(),
@@ -66,6 +91,13 @@ export const transactionSchema = z.object({
   paid_by: z.string().nullable().optional(),
 
   loan: loanRefSchema.nullable().optional(),
+  /**
+   * A loan FalconGo already has that this payment is the money for. The
+   * ledger shows the payment in the loan's place, so it counts once.
+   */
+  linked_loan_id: z.number().nullable().optional(),
+  /** The classifier's decision or suggestion for this row, if any. */
+  classification: classificationSchema.nullable().optional(),
   /** Present only when the 0.1% IPN fee split derives cleanly; else null. */
   principal: z.string().nullable().optional(),
   fee: z.string().nullable().optional(),
@@ -155,6 +187,18 @@ export function isSplitChild(row: Transaction): boolean {
   return row.source === 'split' || row.parent_id != null;
 }
 
+/** The suggestion waiting on this row, if there is one. */
+export function openSuggestion(row: Transaction): Classification | null {
+  const c = row.classification;
+  return c && c.status === 'suggested' && (c.category || c.driver_id || c.employee_id) ? c : null;
+}
+
+/** The classifier's own decision on this row, when it wrote one. */
+export function appliedDecision(row: Transaction): Classification | null {
+  const c = row.classification;
+  return c && c.status === 'applied' ? c : null;
+}
+
 /* -------------------------------------------------------------------------- */
 /* Statistics — GET /api/v1/transactions/statistics                            */
 /* -------------------------------------------------------------------------- */
@@ -188,6 +232,17 @@ export const byPartySchema = z.object({
 });
 export type ByParty = z.infer<typeof byPartySchema>;
 
+/**
+ * Money out in categories that are not spending (transfers between the
+ * company's own accounts, PetroApp top-ups, refunded transfers): in the
+ * ledger, never in a total.
+ */
+export const excludedSchema = z.object({
+  count: z.number(),
+  total: z.string(),
+});
+export type Excluded = z.infer<typeof excludedSchema>;
+
 /** The cash-in review pocket: incoming transfers awaiting a human verdict. */
 export const pendingInSchema = z.object({
   count: z.number(),
@@ -204,6 +259,7 @@ export const statisticsSchema = z.object({
   count: z.number(),
   total_out: z.string(),
   total_fees: z.string(),
+  excluded: excludedSchema.default({ count: 0, total: '0' }),
   pending_in: pendingInSchema.default({ count: 0, total: '0' }),
   by_date: z.array(byDateSchema).default([]),
   by_category: z.array(byCategorySchema).default([]),
@@ -232,6 +288,8 @@ export interface TransactionFilters {
   include_loans?: string;
   /** List + export only. Omitted means the server's date order. */
   sort?: TransactionSort;
+  /** 'true': only rows with a suggestion waiting for review. */
+  review?: string;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -279,6 +337,8 @@ export interface TransactionWriteExtras {
   driver_id?: number | null;
   employee_id?: number | null;
   raw_message_id?: number;
+  /** Point the payment at a loan FalconGo already has (null unlinks). */
+  linked_loan_id?: number | null;
 }
 
 /* -------------------------------------------------------------------------- */

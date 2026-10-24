@@ -3,7 +3,18 @@ import { useLocation, useNavigate, useParams, useSearchParams } from 'react-rout
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslation } from 'react-i18next';
-import { ArrowLeft, CheckCircle2, Copy, Loader2, Lock, Receipt, Save, Split, Trash2 } from 'lucide-react';
+import {
+  ArrowLeft,
+  CheckCircle2,
+  Copy,
+  Loader2,
+  Lock,
+  Receipt,
+  Save,
+  Split,
+  Trash2,
+  Workflow,
+} from 'lucide-react';
 
 import { PageShell } from '@/shared/ui/page-shell';
 import { Button } from '@/shared/ui/button';
@@ -25,6 +36,7 @@ import {
 } from '@/shared/lib/cairo';
 import { SmartPartyField, type PartyValue } from '@/widgets/fleet-expenses-table/party-picker';
 import { SplitEditor } from '@/widgets/fleet-expenses-table/split-editor';
+import { SuggestionBanner } from '@/widgets/fleet-expenses-table/suggestion';
 import { useDebounce } from '@/shared/hooks/use-debounce';
 import { useIsDesktop } from '@/shared/hooks/use-media-query';
 import { useVehicles } from '@/entities/transaction/vehicles';
@@ -41,13 +53,16 @@ import { useMessage } from '@/entities/raw-message/queries';
 import {
   useCreateTransaction,
   useDeleteTransaction,
+  useDismissSuggestion,
   useTransaction,
   useUpdateTransaction,
 } from '@/entities/transaction/queries';
 import {
   COMPANIES,
   PAYMENT_METHODS,
+  appliedDecision,
   isSplitChild,
+  openSuggestion,
   splitEligible,
   transactionFormSchema,
   type TransactionFormValues,
@@ -89,6 +104,7 @@ export default function FleetExpenseFormPage({ mode }: { mode: 'create' | 'edit'
   const createMutation = useCreateTransaction();
   const updateMutation = useUpdateTransaction();
   const deleteMutation = useDeleteTransaction();
+  const dismissSuggestion = useDismissSuggestion();
 
   // Party and vehicle live outside react-hook-form: ids with rules, not text.
   const [party, setParty] = React.useState<PartyValue>({ driver_id: null, employee_id: null });
@@ -96,6 +112,11 @@ export default function FleetExpenseFormPage({ mode }: { mode: 'create' | 'edit'
   const [partyMissing, setPartyMissing] = React.useState(false);
   const [confirmDelete, setConfirmDelete] = React.useState(false);
   const [splitOpen, setSplitOpen] = React.useState(false);
+  /** Set when a suggestion that names a FalconGo loan is taken: the save
+   *  links that loan instead of registering a new one. Undefined: untouched. */
+  const [linkedLoanId, setLinkedLoanId] = React.useState<number | undefined>(undefined);
+  /** The suggestion was copied into the fields; the banner has done its job. */
+  const [suggestionUsed, setSuggestionUsed] = React.useState(false);
 
   const form = useForm<TransactionFormValues>({
     resolver: zodResolver(transactionFormSchema),
@@ -233,13 +254,39 @@ export default function FleetExpenseFormPage({ mode }: { mode: 'create' | 'edit'
         // The version we loaded is the If-Match token — a concurrent edit is
         // rejected with 409 rather than silently overwritten.
         version: row.version,
-        values: { ...patchValues, car_id: carId, ...partyFields },
+        values: {
+          ...patchValues,
+          car_id: carId,
+          ...partyFields,
+          ...(linkedLoanId !== undefined ? { linked_loan_id: linkedLoanId } : {}),
+        },
       },
       { onSuccess: finish },
     );
   });
 
   const saving = createMutation.isPending || updateMutation.isPending;
+
+  const suggestion =
+    mode === 'edit' && row && !readOnly && !suggestionUsed ? openSuggestion(row) : null;
+  const decided = mode === 'edit' && row ? appliedDecision(row) : null;
+
+  /** Copy the suggestion into the fields. Nothing saves until Save. */
+  const applySuggestion = () => {
+    if (!suggestion) return;
+    const cat = suggestion.category
+      ? categories.data?.find((c) => c.key.toLowerCase() === suggestion.category!.toLowerCase())
+      : undefined;
+    if (cat) form.setValue('category', cat.key, { shouldDirty: true });
+    if (suggestion.driver_id || suggestion.employee_id) {
+      setParty({
+        driver_id: suggestion.driver_id ?? null,
+        employee_id: suggestion.driver_id ? null : (suggestion.employee_id ?? null),
+      });
+    }
+    setLinkedLoanId(suggestion.linked_loan_id ?? undefined);
+    setSuggestionUsed(true);
+  };
 
   const partyName = React.useMemo(() => {
     if (!row) return '';
@@ -338,6 +385,21 @@ export default function FleetExpenseFormPage({ mode }: { mode: 'create' | 'edit'
             </div>
           )}
 
+          {/* Why the row looks the way it does when no one filled it in. */}
+          {decided && (
+            <div className="flex items-start gap-2 rounded-lg border bg-muted/40 px-3 py-2.5 text-xs text-muted-foreground">
+              <Workflow className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+              <div className="min-w-0 space-y-0.5">
+                <p className="font-medium text-foreground">
+                  {t('fleetExpenses.suggestion.autoTitle')}
+                </p>
+                <p dir="auto" className="[overflow-wrap:anywhere]">
+                  {decided.reason}
+                </p>
+              </div>
+            </div>
+          )}
+
           {mode === 'edit' && row?.edited_by && (
             <div className="rounded-lg border border-warning/40 bg-warning/10 px-3 py-2 text-xs font-medium text-warning">
               {t('fleetExpenses.editedBy', {
@@ -361,6 +423,17 @@ export default function FleetExpenseFormPage({ mode }: { mode: 'create' | 'edit'
         <form onSubmit={onSubmit} className="space-y-3 lg:order-1 lg:col-span-2">
           <Card>
             <CardContent className="grid gap-4 px-4 py-5 sm:grid-cols-2 sm:px-6 sm:py-6">
+              {suggestion && (
+                <SuggestionBanner
+                  className="sm:col-span-2"
+                  suggestion={suggestion}
+                  onUse={applySuggestion}
+                  onDismiss={() => dismissSuggestion.mutate(row!.id)}
+                  dismissing={dismissSuggestion.isPending}
+                  disabled={saving}
+                />
+              )}
+
               {/* A split child's money fields belong to the set as a whole. */}
               {splitChild && (
                 <div className="flex flex-wrap items-center gap-2.5 rounded-lg border border-primary/40 bg-primary/10 px-3 py-2.5 text-sm sm:col-span-2">
@@ -472,9 +545,11 @@ export default function FleetExpenseFormPage({ mode }: { mode: 'create' | 'edit'
                     id="fe-category"
                     value={form.watch('category') ?? ''}
                     disabled={readOnly}
-                    onChange={(e) =>
-                      form.setValue('category', e.target.value, { shouldDirty: true })
-                    }
+                    onChange={(e) => {
+                      form.setValue('category', e.target.value, { shouldDirty: true });
+                      // A loan link belongs to the category it came with.
+                      setLinkedLoanId(undefined);
+                    }}
                   >
                     <option value="">{t('common.none')}</option>
                     {(categories.data ?? []).map((c) => (

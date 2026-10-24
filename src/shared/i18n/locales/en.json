@@ -1875,6 +1875,7 @@
     "views": {
       "label": "Ledger view",
       "pending": "Needs action",
+      "review": "Suggested",
       "all": "All expenses",
       "seeAll": "See all expenses"
     },
@@ -1901,7 +1902,9 @@
       "uncategorized": "Uncategorized",
       "records": "{{count}} records",
       "rowsArrow": "{{count}} rows →",
-      "tapToFilter": "Tap to work the backlog"
+      "tapToFilter": "Tap to work the backlog",
+      "excluded_one": "1 transfer not counted as spending (between own accounts, PetroApp top-ups, refunds):",
+      "excluded_other": "{{count}} transfers not counted as spending (between own accounts, PetroApp top-ups, refunds):"
     },
     "charts": {
       "daily": "Daily spend",
@@ -1909,7 +1912,7 @@
       "byCategory": "By category",
       "byCategoryList": "Spend by category",
       "advancesByPerson": "Advances & loans by person",
-      "other": "Other",
+      "other": "Everything else",
       "nothingCategorized": "Nothing categorized in this range yet.",
       "uncategorizedNote": "Categorized spend only — {{count}} rows await a category."
     },
@@ -2025,7 +2028,24 @@
       "childHint": "Amount, direction and date are set by the split — edit the split as a whole.",
       "editSplit": "Edit split"
     },
-    "showingCount": "Showing {{shown}} of {{total}}"
+    "showingCount": "Showing {{shown}} of {{total}}",
+    "suggestion": {
+      "title": "Suggested",
+      "accept": "Accept",
+      "dismiss": "Not this",
+      "use": "Use this",
+      "accepted": "Filed as {{category}}",
+      "dismissed": "Suggestion put aside. It won't be offered again.",
+      "dismissFailed": "Could not put the suggestion aside",
+      "confidence": "{{pct}}% sure",
+      "ariaChip": "Suggested: {{text}}",
+      "auto": "auto",
+      "autoAria": "Filled in automatically: {{reason}}",
+      "autoTitle": "Filled in automatically",
+      "linksLoan": "Saving links this payment to the advance already in the loans list. No new loan is registered.",
+      "noneTitle": "No suggestions waiting",
+      "noneDescription": "Everything the classifier could suggest in this range has been reviewed."
+    }
   },
   "messages": {
     "title": "Messages",

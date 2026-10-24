@@ -124,6 +124,7 @@ function toPayload(
   if (values.driver_id !== undefined) payload.driver_id = values.driver_id;
   if (values.employee_id !== undefined) payload.employee_id = values.employee_id;
   if (values.raw_message_id !== undefined) payload.raw_message_id = values.raw_message_id;
+  if (values.linked_loan_id !== undefined) payload.linked_loan_id = values.linked_loan_id;
 
   return payload;
 }
@@ -146,6 +147,17 @@ export async function updateTransaction(
     headers: { 'If-Match': String(version) },
   });
   return transactionSchema.parse(response.data);
+}
+
+/* ─── Suggestions ─── */
+
+/**
+ * "Not this": the classifier's suggestion for the row is put aside and never
+ * offered again. The row itself is untouched. Accepting needs no endpoint of
+ * its own — it is an ordinary edit with the suggested values.
+ */
+export async function dismissSuggestion(id: number): Promise<void> {
+  await apiClientRust.post(`${BASE}/${id}/suggestion/dismiss`);
 }
 
 /* ─── Soft delete (also soft-deletes a linked unpaid loan) ─── */
