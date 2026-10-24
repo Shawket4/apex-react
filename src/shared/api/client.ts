@@ -38,6 +38,28 @@ function resolveBaseURL(configuredURL: string): string {
   return configuredURL;
 }
 
+/** What a 401 does, wherever it was heard (axios here, the advisor's streaming fetch). */
+export function handleUnauthorized(): void {
+  if (logoutHandler) {
+    logoutHandler();
+    return;
+  }
+  Object.values(STORAGE_KEYS).forEach((k) => {
+    if (k !== STORAGE_KEYS.LANGUAGE && k !== STORAGE_KEYS.THEME) {
+      localStorage.removeItem(k);
+    }
+  });
+  if (!window.location.pathname.includes('/login')) {
+    window.location.href = '/login';
+  }
+}
+
+/** The bearer header every client sends (the `jwt` cookie rides along via credentials). */
+export function authHeader(): Record<string, string> {
+  const token = localStorage.getItem(STORAGE_KEYS.JWT);
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 function createClient(baseURL: string): AxiosInstance {
   const instance = axios.create({
     baseURL: resolveBaseURL(baseURL),
@@ -117,9 +139,9 @@ function createClient(baseURL: string): AxiosInstance {
   });
 
   instance.interceptors.request.use((config) => {
-    const token = localStorage.getItem(STORAGE_KEYS.JWT);
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    const { Authorization } = authHeader();
+    if (Authorization) {
+      config.headers.Authorization = Authorization;
     }
     return config;
   });
@@ -153,20 +175,7 @@ function createClient(baseURL: string): AxiosInstance {
       await unwrapBlobErrorBody(error);
       const apiError = toApiError(error);
 
-      if (apiError.status === 401) {
-        if (logoutHandler) {
-          logoutHandler();
-        } else {
-          Object.values(STORAGE_KEYS).forEach((k) => {
-            if (k !== STORAGE_KEYS.LANGUAGE && k !== STORAGE_KEYS.THEME) {
-              localStorage.removeItem(k);
-            }
-          });
-          if (!window.location.pathname.includes('/login')) {
-            window.location.href = '/login';
-          }
-        }
-      }
+      if (apiError.status === 401) handleUnauthorized();
 
       return Promise.reject(apiError);
     },
@@ -180,6 +189,20 @@ export const apiClient = createClient(env.VITE_API_BASE_URL);
 export const apiClientRust = env.VITE_API_BASE_URL_RUST
   ? createClient(env.VITE_API_BASE_URL_RUST)
   : apiClient;
+
+/**
+ * apex-rust's base for requests axios cannot make — a streamed POST body
+ * (`/api/v1/advisor/chat`). Resolved exactly like `apiClientRust`'s baseURL,
+ * including its fall back to the Go base when the Rust one is unset.
+ */
+export const apiRustBaseURL = resolveBaseURL(
+  env.VITE_API_BASE_URL_RUST || env.VITE_API_BASE_URL,
+).replace(/\/+$/, '');
+
+/** `fetch` as the axios clients send it: Tauri's HTTP plugin in Tauri production builds. */
+export const platformFetch: typeof fetch = isTauriProd
+  ? (input, init) => tauriFetch(input, init)
+  : (input, init) => fetch(input, init);
 
 export const apiClientEtit = env.VITE_API_BASE_URL_ETIT
   ? createClient(env.VITE_API_BASE_URL_ETIT)

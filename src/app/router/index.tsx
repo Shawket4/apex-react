@@ -75,6 +75,7 @@ const ZonesPage = React.lazy(() => import('@/pages/zones/zones'));
 const LocationsPage = React.lazy(() => import('@/pages/locations/locations'));
 const TripAuditPage = React.lazy(() => import('@/pages/trip-audit/trip-audit'));
 const TripReplayPage = React.lazy(() => import('@/pages/trip-replay/trip-replay'));
+const AdvisorPage = React.lazy(() => import('@/pages/advisor/advisor'));
 
 // Named exports — placeholder file. All resolve to the same chunk; the
 // browser fetches it once and React picks the right component per route.
@@ -111,6 +112,16 @@ export const router = createBrowserRouter([
         element: <SuspendedRoute />,
         children: [
           { index: true, element: <DashboardPage /> },
+
+          // AI fleet advisor — admin only, matching apex-rust (permission 4).
+          {
+            path: 'advisor',
+            element: (
+              <ProtectedRoute minPermissionLevel={PERMISSION_LEVELS.ADMIN}>
+                <AdvisorPage />
+              </ProtectedRoute>
+            ),
+          },
 
           // Fuel events — admin only, reads included. Nothing here is exposed
           // below level 4, not even the list or a single event's detail.
