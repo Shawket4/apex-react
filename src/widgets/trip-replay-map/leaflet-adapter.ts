@@ -1,5 +1,5 @@
 import { buildMarkerSvg, markerSize } from '@/shared/lib/maps/marker-svg';
-import { TILE_ATTR, TILE_DARK, TILE_LIGHT, TILE_SATELLITE } from '@/shared/lib/maps/tiles';
+import { basemap, MAX_ZOOM } from '@/shared/lib/maps/tiles';
 import type { MarkerKind } from '@/shared/lib/maps/types';
 import {
   FOLLOW_THROTTLE_MS,
@@ -34,10 +34,10 @@ export async function createLeafletReplayAdapter(
 ): Promise<ReplayMapAdapter> {
   const L: LeafletNamespace = await import('leaflet').then((m) => m.default ?? m);
 
-  const isDark = () => document.documentElement.classList.contains('dark');
   const map = L.map(container, {
     center: centerFallback,
     zoom: 11,
+    maxZoom: MAX_ZOOM,
     zoomControl: false,
     scrollWheelZoom: true,
     attributionControl: true,
@@ -45,31 +45,26 @@ export async function createLeafletReplayAdapter(
   });
   L.control.zoom({ position: 'bottomleft' }).addTo(map);
 
-  let tile = L.tileLayer(isDark() ? TILE_DARK : TILE_LIGHT, {
-    attribution: TILE_ATTR,
-    maxZoom: 19,
-  }).addTo(map);
+  let mapType: 'roadmap' | 'hybrid' = 'roadmap';
+  let tile = basemap(L, 'streets').addTo(map);
+  /** The basemap for the current view and theme (satellite ignores the theme). */
+  const applyTile = () => {
+    tile.remove();
+    tile = basemap(L, mapType === 'hybrid' ? 'satellite' : 'streets').addTo(map);
+  };
 
   const themeObserver = new MutationObserver(() => {
-    map.removeLayer(tile);
-    tile = L.tileLayer(isDark() ? TILE_DARK : TILE_LIGHT, {
-      attribution: TILE_ATTR,
-      maxZoom: 19,
-    }).addTo(map);
+    if (mapType === 'roadmap') applyTile();
   });
   themeObserver.observe(document.documentElement, {
     attributes: true,
     attributeFilter: ['class'],
   });
 
-  let mapType: 'roadmap' | 'hybrid' = 'roadmap';
-  const applyTile = () => {
-    map.removeLayer(tile);
-    tile = L.tileLayer(mapType === 'hybrid' ? TILE_SATELLITE : isDark() ? TILE_DARK : TILE_LIGHT, {
-      attribution: TILE_ATTR,
-      maxZoom: 19,
-    }).addTo(map);
-  };
+  // Leaflet only hears window resizes; the sidebar collapsing resizes the
+  // replay without one.
+  const resizeObserver = new ResizeObserver(() => map.invalidateSize());
+  resizeObserver.observe(container);
 
   const staticLayers: LeafletLayer[] = [];
   const dyn = new Map<DynMarkerId, DynEntry>();
@@ -211,6 +206,7 @@ export async function createLeafletReplayAdapter(
       pulseRafIds.forEach((id) => cancelAnimationFrame(id));
       pulseRafIds.clear();
       themeObserver.disconnect();
+      resizeObserver.disconnect();
       staticLayers.forEach((l) => map.removeLayer(l));
       staticLayers.length = 0;
       dyn.forEach((e) => e.marker.remove());

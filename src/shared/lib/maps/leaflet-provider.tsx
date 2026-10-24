@@ -1,11 +1,11 @@
 import * as React from 'react';
-import { Locate } from 'lucide-react';
+import { Layers, Locate } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/shared/ui/button';
 import { cn } from '@/shared/lib/cn';
 import { DEFAULT_MAP_CENTER } from '@/shared/lib/coords';
 import { buildMarkerSvg, markerSize } from './marker-svg';
-import { TILE_ATTR, TILE_DARK, TILE_LIGHT } from './tiles';
+import { basemap, isDarkTheme, MAX_ZOOM } from './tiles';
 import type { MapMarker, MapViewProps } from './types';
 
 type LeafletNamespace = typeof import('leaflet');
@@ -112,6 +112,23 @@ function buildDivIcon(L: LeafletNamespace, info: MapMarker, filterId: string): L
   });
 }
 
+/** Everything a non-live map draws, so equal data is recognised across renders. */
+function contentSignature(
+  markers: MapMarker[],
+  circles: NonNullable<MapViewProps['circles']>,
+  route: Array<[number, number]>,
+  polylines: NonNullable<MapViewProps['polylines']>,
+  suppressRoute: boolean,
+): string {
+  const m = markers
+    .map((x) => `${x.id}@${x.lat},${x.lng}:${markerSignature(x)}:${x.title ?? ''}:${x.popupHtml ?? ''}`)
+    .join('|');
+  const c = circles.map((x) => `${x.id}@${x.lat},${x.lng},${x.radius_m}`).join('|');
+  const r = route.map((p) => `${p[0]},${p[1]}`).join(';');
+  const p = polylines.map((x) => `${x.id}:${x.path.length}:${x.path[0] ?? ''}`).join('|');
+  return `${m}#${c}#${suppressRoute ? '' : r}#${p}`;
+}
+
 function boundsFingerprint(markers: MapMarker[], route: Array<[number, number]>): string {
   const points: string[] = [];
   for (const m of markers) {
@@ -160,7 +177,7 @@ export function LeafletMapView({
   gpuTrail = [],
   suppressRoute = false,
   centerFallback = DEFAULT_MAP_CENTER,
-  height = 400,
+  height,
   className,
   onMapClick,
   onMarkerClick,
@@ -180,8 +197,15 @@ export function LeafletMapView({
   const polylinesRef = React.useRef<LeafletPolyline[]>([]);
   const extraPolylinesRef = React.useRef<LeafletPolyline[]>([]);
   const themeObserverRef = React.useRef<MutationObserver | null>(null);
+  const resizeObserverRef = React.useRef<ResizeObserver | null>(null);
+  /** The last automatic framing, re-applied when the container resizes before anyone moved the map. */
+  const autoFitRef = React.useRef<(() => void) | null>(null);
   const lastFingerprintRef = React.useRef<string>('');
+  /** Non-live maps: what was last drawn, so a re-render with equal data is a no-op. */
+  const lastContentRef = React.useRef<string>('');
   const [mapReady, setMapReady] = React.useState(false);
+  const [isSatellite, setIsSatellite] = React.useState(false);
+  const [isDark, setIsDark] = React.useState(isDarkTheme);
 
   const onMapClickRef = React.useRef(onMapClick);
   const onMarkerClickRef = React.useRef(onMarkerClick);
@@ -207,11 +231,11 @@ export function LeafletMapView({
       if (cancelled || !containerRef.current) return;
 
       LRef.current = L;
-      const isDark = document.documentElement.classList.contains('dark');
 
       const map = L.map(containerRef.current, {
         center: centerFallback,
         zoom: 11,
+        maxZoom: MAX_ZOOM,
         zoomControl: false,
         scrollWheelZoom: true,
         attributionControl: true,
@@ -219,28 +243,33 @@ export function LeafletMapView({
 
       L.control.zoom({ position: 'bottomleft' }).addTo(map);
 
-      const tile = L.tileLayer(isDark ? TILE_DARK : TILE_LIGHT, {
-        attribution: TILE_ATTR, maxZoom: 19,
-      }).addTo(map);
-      tileLayerRef.current = tile;
-
       map.on('click', (e: import('leaflet').LeafletMouseEvent) => {
         onMapClickRef.current?.(e.latlng.lat, e.latlng.lng);
       });
 
-      const observer = new MutationObserver(() => {
-        if (!mapRef.current || !LRef.current) return;
-        const dark = document.documentElement.classList.contains('dark');
-        if (tileLayerRef.current) mapRef.current.removeLayer(tileLayerRef.current);
-        const next = LRef.current.tileLayer(dark ? TILE_DARK : TILE_LIGHT, {
-          attribution: TILE_ATTR, maxZoom: 19,
-        }).addTo(mapRef.current);
-        tileLayerRef.current = next;
-      });
+      // The basemap follows the theme (see the basemap effect).
+      const observer = new MutationObserver(() => setIsDark(isDarkTheme()));
       observer.observe(document.documentElement, {
         attributes: true, attributeFilter: ['class'],
       });
       themeObserverRef.current = observer;
+
+      // Leaflet only hears window resizes; a dialog opening, the sidebar
+      // collapsing or a panel resizing changes the container without one.
+      // A map that framed its data while its box was still settling (a
+      // dialog laying out) frames it again, unless someone has moved it.
+      const resize = new ResizeObserver(() => {
+        map.invalidateSize();
+        autoFitRef.current?.();
+      });
+      resize.observe(containerRef.current);
+      const userMoved = () => {
+        autoFitRef.current = null;
+      };
+      map.on('dragstart', userMoved);
+      containerRef.current.addEventListener('wheel', userMoved, { passive: true });
+      containerRef.current.addEventListener('pointerdown', userMoved, { passive: true });
+      resizeObserverRef.current = resize;
 
       mapRef.current = map;
 
@@ -273,6 +302,8 @@ export function LeafletMapView({
         themeObserverRef.current.disconnect();
         themeObserverRef.current = null;
       }
+      resizeObserverRef.current?.disconnect();
+      resizeObserverRef.current = null;
       markerEntries.forEach((e) => e.marker.remove());
       markerEntries.clear();
       circleEntries.forEach((c) => c.remove());
@@ -287,6 +318,20 @@ export function LeafletMapView({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  /* ---- Basemap: streets (light/dark) or satellite ---------------------- */
+
+  React.useEffect(() => {
+    const L = LRef.current;
+    const map = mapRef.current;
+    if (!mapReady || !L || !map) return;
+    const layer = basemap(L, isSatellite ? 'satellite' : 'streets', isDark).addTo(map);
+    tileLayerRef.current = layer;
+    return () => {
+      layer.remove();
+      if (tileLayerRef.current === layer) tileLayerRef.current = null;
+    };
+  }, [mapReady, isSatellite, isDark]);
 
   /* ---- Sync polylines (rare changes; teardown + recreate is fine) ---- */
 
@@ -342,6 +387,12 @@ export function LeafletMapView({
     const entries = markerEntriesRef.current;
 
     if (!liveUpdates) {
+      // Callers rebuild their props on every render (fresh arrays from the
+      // same data); redrawing then would close an open popup and snap the
+      // camera back. Only a real change redraws.
+      const content = contentSignature(markers, circles, route, polylines, suppressRoute);
+      if (content === lastContentRef.current) return;
+      lastContentRef.current = content;
       // Legacy path
       entries.forEach((e) => e.marker.remove());
       entries.clear();
@@ -349,10 +400,12 @@ export function LeafletMapView({
 
     const incomingIds = new Set<string>();
     const boundsPoints: Array<[number, number]> = [];
+    const hasRoute = route.length > 0 && !suppressRoute;
 
     markers.forEach((info, idx) => {
       incomingIds.add(info.id);
-      if (info.affectsBounds !== false) boundsPoints.push([info.lat, info.lng]);
+      // Same framing as Google: the route when there is one, else the markers.
+      if (!hasRoute && info.affectsBounds !== false) boundsPoints.push([info.lat, info.lng]);
 
       const filterId = `mf-leaflet-${info.id}-${idx}`;
       const sig = markerSignature(info);
@@ -369,6 +422,9 @@ export function LeafletMapView({
         if (existing.signature !== sig) {
           existing.marker.setIcon(buildDivIcon(L, info, filterId));
           existing.marker.setZIndexOffset(zIndexFor(info.kind));
+          // setIcon re-creates the element; dragging follows the new props.
+          if (info.draggable) existing.marker.dragging?.enable();
+          else existing.marker.dragging?.disable();
           existing.signature = sig;
         }
         if (info.popupHtml !== existing.popupHtml) {
@@ -403,19 +459,19 @@ export function LeafletMapView({
         L.DomEvent.stopPropagation(e);
         onMarkerDoubleClickRef.current?.(info.id);
         map.closePopup();
-        map.flyTo([info.lat, info.lng], 18, {
+        // Where the marker is now (a live marker has moved since it was made).
+        map.flyTo(marker.getLatLng(), 18, {
           duration: 0.75,
           animate: !globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches,
         });
       });
 
-      if (info.draggable) {
-        marker.on('dragend', (e: import('leaflet').LeafletEvent) => {
-          const target = e.target as LeafletMarker;
-          const pos = target.getLatLng();
-          onMarkerDragEndRef.current?.(info.id, pos.lat, pos.lng);
-        });
-      }
+      // Always listening: a live marker can become draggable later.
+      marker.on('dragend', (e: import('leaflet').LeafletEvent) => {
+        const target = e.target as LeafletMarker;
+        const pos = target.getLatLng();
+        onMarkerDragEndRef.current?.(info.id, pos.lat, pos.lng);
+      });
 
       entries.set(info.id, { marker, signature: sig, popupHtml: info.popupHtml });
     });
@@ -457,9 +513,7 @@ export function LeafletMapView({
       }
     }
 
-    if (route.length > 0 && !suppressRoute) {
-      boundsPoints.push(...route);
-    }
+    if (hasRoute) boundsPoints.push(...route);
     polylines.forEach((p) => boundsPoints.push(...p.path));
 
     const cIds = circles.map(c => c.id).sort().join(',');
@@ -479,11 +533,12 @@ export function LeafletMapView({
     const shouldAutoFit = liveUpdates ? fingerprintChanged && boundsPoints.length > 0 : boundsPoints.length > 0;
 
     if (shouldAutoFit) {
-      if (boundsPoints.length === 1) {
-        map.setView(boundsPoints[0], 18);
-      } else {
-        map.fitBounds(L.latLngBounds(boundsPoints), { padding: [40, 40] });
-      }
+      const fit =
+        boundsPoints.length === 1
+          ? () => map.setView(boundsPoints[0], 18)
+          : () => map.fitBounds(L.latLngBounds(boundsPoints), { padding: [60, 80] });
+      fit();
+      autoFitRef.current = fit;
     }
   }, [mapReady, markers, circles, route, polylines, suppressRoute, liveUpdates]);
 
@@ -513,7 +568,13 @@ export function LeafletMapView({
   }, [markers, circles, route, polylines, suppressRoute]);
 
   return (
-    <div className={cn('relative', className)} style={{ height }}>
+    // `isolate`: Leaflet's panes and controls sit at z-index 400-1000; kept
+    // inside the map, so the page's own overlays stay above it (as on Google).
+    // No height given: fill the parent, as the Google map does.
+    <div
+      className={cn('relative isolate', height === undefined && 'h-full w-full', className)}
+      style={height !== undefined ? { height } : undefined}
+    >
       <div ref={containerRef} className="h-full w-full rounded-lg" />
 
       {mapReady && (
@@ -530,6 +591,17 @@ export function LeafletMapView({
             aria-label={t('maps.centerOnMarkers', { defaultValue: 'Center map on markers' })}
           >
             <Locate />
+          </Button>
+          <Button
+            size="icon"
+            variant={isSatellite ? 'default' : 'outline'}
+            className="h-8 w-8 rounded-md backdrop-blur-md"
+            onClick={() => setIsSatellite((v) => !v)}
+            aria-pressed={isSatellite}
+            title={t('maps.toggleSatellite', { defaultValue: 'Toggle satellite view' })}
+            aria-label={t('maps.toggleSatellite', { defaultValue: 'Toggle satellite view' })}
+          >
+            <Layers />
           </Button>
         </div>
       )}

@@ -112,7 +112,8 @@ export function LocationsMapPicker({
   }, [hasPosition, lat, lng, secondary]);
 
   return (
-    <div className={cn('h-[360px] w-full overflow-hidden rounded-lg border', className)}>
+    // shrink-0: in a dialog's flex column the box kept shrinking to ~130 px.
+    <div className={cn('h-[360px] w-full shrink-0 overflow-hidden rounded-lg border', className)}>
       <MapView
         markers={markers}
         circles={circles}

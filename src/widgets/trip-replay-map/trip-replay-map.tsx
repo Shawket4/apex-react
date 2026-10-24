@@ -142,7 +142,9 @@ export const TripReplayMap = React.forwardRef<TripReplayMapHandle, TripReplayMap
     );
 
     return (
-      <div className={cn('relative h-full w-full', className)}>
+      // `isolate`: a Leaflet map's panes (z-index 400+) stay under the page's
+      // overlays, as Google's do.
+      <div className={cn('relative isolate h-full w-full', className)}>
         <div ref={containerRef} className="h-full w-full" />
         {!ready && (
           <div

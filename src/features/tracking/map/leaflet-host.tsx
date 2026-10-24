@@ -2,13 +2,8 @@ import * as React from 'react';
 import { Deck } from '@deck.gl/core';
 import type * as Leaflet from 'leaflet';
 import { markerSize } from '@/shared/lib/maps/marker-svg';
-import {
-  TILE_ATTR,
-  TILE_LABELS,
-  TILE_SATELLITE,
-  TILE_SATELLITE_ATTR,
-  streetTiles,
-} from '@/shared/lib/maps/tiles';
+import { cn } from '@/shared/lib/cn';
+import { basemap, MAX_ZOOM } from '@/shared/lib/maps/tiles';
 import { buildStaticLayers, buildTailLayer, legId, type HistoryLayerInput } from './layers';
 import type { LegSegment } from '../use-history';
 import { sampleAt } from '../playback';
@@ -236,20 +231,16 @@ const LeafletTrackingHost = React.forwardRef<TrackingMapHandle, TrackingMapProps
 
     /* Basemap: streets in the app's theme, or imagery with labels. */
     const mapTypeRef = React.useRef<'roadmap' | 'hybrid'>('roadmap');
-    const baseLayersRef = React.useRef<Leaflet.TileLayer[]>([]);
+    const baseLayerRef = React.useRef<Leaflet.LayerGroup | null>(null);
     const applyBase = React.useCallback(() => {
       const L = LRef.current;
       const map = mapRef.current;
       if (!L || !map) return;
-      for (const layer of baseLayersRef.current) layer.remove();
-      baseLayersRef.current =
-        mapTypeRef.current === 'hybrid'
-          ? [
-              L.tileLayer(TILE_SATELLITE, { attribution: TILE_SATELLITE_ATTR, maxZoom: 19 }),
-              L.tileLayer(TILE_LABELS, { attribution: TILE_ATTR, maxZoom: 19 }),
-            ]
-          : [L.tileLayer(streetTiles(), { attribution: TILE_ATTR, maxZoom: 19 })];
-      for (const layer of baseLayersRef.current) layer.addTo(map);
+      baseLayerRef.current?.remove();
+      baseLayerRef.current = basemap(
+        L,
+        mapTypeRef.current === 'hybrid' ? 'satellite' : 'streets',
+      ).addTo(map);
     }, []);
 
     React.useImperativeHandle(
@@ -324,6 +315,7 @@ const LeafletTrackingHost = React.forwardRef<TrackingMapHandle, TrackingMapProps
       let cancelled = false;
       const container = containerRef.current;
       let themeObserver: MutationObserver | null = null;
+      let resizeObserver: ResizeObserver | null = null;
 
       void import('leaflet')
         .then(
@@ -337,6 +329,7 @@ const LeafletTrackingHost = React.forwardRef<TrackingMapHandle, TrackingMapProps
           const map = L.map(container, {
             center: [FALLBACK_CENTER.lat, FALLBACK_CENTER.lng],
             zoom: 8,
+            maxZoom: MAX_ZOOM,
             zoomControl: false,
             attributionControl: true,
             // Double-press on a picked object flies in instead (see click).
@@ -354,6 +347,12 @@ const LeafletTrackingHost = React.forwardRef<TrackingMapHandle, TrackingMapProps
             attributes: true,
             attributeFilter: ['class'],
           });
+
+          // Leaflet only hears window resizes; the sidebar collapsing resizes
+          // this map without one. invalidateSize fires 'resize', which the
+          // Deck canvas follows (see sync below).
+          resizeObserver = new ResizeObserver(() => map.invalidateSize());
+          resizeObserver.observe(container);
 
           // The Deck canvas: its own pane above the paths Leaflet draws and
           // below the markers, pinned to the viewport.
@@ -476,6 +475,7 @@ const LeafletTrackingHost = React.forwardRef<TrackingMapHandle, TrackingMapProps
       return () => {
         cancelled = true;
         themeObserver?.disconnect();
+        resizeObserver?.disconnect();
         openVehicleRef.current = null;
         for (const { marker } of markers.values()) marker.remove();
         markers.clear();
@@ -486,13 +486,15 @@ const LeafletTrackingHost = React.forwardRef<TrackingMapHandle, TrackingMapProps
         mapRef.current?.remove();
         mapRef.current = null;
         popupRef.current = null;
-        baseLayersRef.current = [];
+        baseLayerRef.current = null;
         readyRef.current = false;
       };
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    return <div ref={containerRef} className={className} />;
+    // `isolate`: Leaflet's panes and controls (z-index 400-1000) stay inside
+    // the map, under the page's own overlays (as on Google).
+    return <div ref={containerRef} className={cn('isolate', className)} />;
   },
 );
 
