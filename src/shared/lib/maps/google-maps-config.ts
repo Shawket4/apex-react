@@ -19,6 +19,22 @@ export function configureLoader(): void {
   loaderConfigured = true;
 }
 
+/**
+ * Which map provider the build asks for (`VITE_MAP_PROVIDER`):
+ *  - `leaflet`: Leaflet everywhere; the Google SDK is never loaded. Production
+ *    sets this while the key's billing is off (see `.env.production`).
+ *  - `google`: Google whenever there is a key, even if it looks refused (to
+ *    debug the key itself).
+ *  - `auto` (also unset or anything else): Google until google-maps-health
+ *    finds it does not work, then Leaflet.
+ */
+export type MapProviderSetting = 'auto' | 'google' | 'leaflet';
+
+export function mapProviderSetting(): MapProviderSetting {
+  const v = (import.meta.env.VITE_MAP_PROVIDER ?? '').trim().toLowerCase();
+  return v === 'google' || v === 'leaflet' ? v : 'auto';
+}
+
 /** A key is present in the build. Says nothing about whether it works. */
 export function isGoogleMapsConfigured(): boolean {
   return API_KEY.length > 0;

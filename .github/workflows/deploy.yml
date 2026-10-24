@@ -24,6 +24,8 @@ jobs:
 
       - name: Type check & build
         run: npm run build
+        # The map provider comes from .env.production (VITE_MAP_PROVIDER=leaflet
+        # while the Google key's billing is off), which vite build reads itself.
         env:
           # Sentry is off unless a DSN reaches the build. Vite inlines VITE_*
           # at build time, so this has to be here — setting it on the server

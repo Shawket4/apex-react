@@ -8,6 +8,8 @@ interface ImportMetaEnv {
   readonly VITE_GOOGLE_MAPS_API_KEY?: string;
   /** Vector map id for live tracking (advanced markers). */
   readonly VITE_GOOGLE_MAPS_MAP_ID?: string;
+  /** `leaflet` | `google` | `auto` (default). See google-maps-config.ts. */
+  readonly VITE_MAP_PROVIDER?: string;
 }
 
 interface ImportMeta {
