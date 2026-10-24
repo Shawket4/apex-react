@@ -17,7 +17,9 @@ import {
   useSearchServiceInvoices, 
   useDeleteServiceInvoice 
 } from '@/entities/service-invoice/queries';
+import { useAdvisorSearch } from '@/entities/advisor/queries';
 import { ServiceInvoicesTable } from '@/widgets/service-invoices-table/service-invoices-table';
+import { AdvisorSearchHits } from '@/widgets/advisor-search-hits/advisor-search-hits';
 import { ServiceCarsTable } from '@/widgets/service-cars-table/service-cars-table';
 import { type Car } from '@/entities/car/schemas';
 import { Button } from '@/shared/ui/button';
@@ -65,10 +67,21 @@ export default function ServiceInvoicesPage() {
     isLoading: invoicesLoading 
   } = useServiceInvoices(selectedCar?.ID, invoicePage, 20);
 
+  // AI search first (apex-rust: query variants + fused hybrid hits). If it
+  // fails for any reason the FalconGo search below runs instead, exactly as
+  // before, so search never gets worse than it was.
+  const aiSearch = useAdvisorSearch(
+    { query: debouncedSearch, car_id: selectedCar?.ID, limit: 50 },
+    isSearching,
+  );
+  const fallingBack = isSearching && aiSearch.isError;
+
   const { 
     data: searchData, 
-    isFetching: searchLoading 
-  } = useSearchServiceInvoices(debouncedSearch, selectedCar?.ID, searchPage, 20);
+    isFetching: fallbackLoading 
+  } = useSearchServiceInvoices(fallingBack ? debouncedSearch : '', selectedCar?.ID, searchPage, 20);
+  const searchLoading = aiSearch.isFetching || fallbackLoading;
+  const variants = !fallingBack ? (aiSearch.data?.variants ?? []) : [];
 
   const deleteMutation = useDeleteServiceInvoice();
 
@@ -154,6 +167,26 @@ export default function ServiceInvoicesPage() {
               )}
             </div>
 
+            {isSearching && variants.length > 0 && (
+              <div className="mt-3 flex flex-wrap items-center gap-1.5 text-[11px]">
+                <span className="text-muted-foreground">{t('serviceInvoices.search.searchedFor')}</span>
+                {variants.map((v) => (
+                  <span
+                    key={v}
+                    dir="auto"
+                    className="rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-primary"
+                  >
+                    {v}
+                  </span>
+                ))}
+              </div>
+            )}
+            {fallingBack && (
+              <p className="mt-3 text-[11px] text-muted-foreground">
+                {t('serviceInvoices.search.aiUnavailable')}
+              </p>
+            )}
+
             <div className="mt-3 flex flex-wrap gap-3 text-[11px] text-muted-foreground">
               <div className="flex items-center gap-1.5">
                 <Sparkles className="h-3 w-3 text-primary" aria-hidden="true" />
@@ -168,7 +201,17 @@ export default function ServiceInvoicesPage() {
         </Card>
 
         {/* Results */}
-        {isSearching ? (
+        {isSearching && !fallingBack ? (
+          <Card>
+            <CardContent className="p-0">
+              <AdvisorSearchHits
+                hits={aiSearch.data?.hits ?? []}
+                loading={aiSearch.isFetching}
+                searchQuery={debouncedSearch}
+              />
+            </CardContent>
+          </Card>
+        ) : isSearching ? (
           <Card>
             <CardContent className="p-0">
               <ServiceInvoicesTable 

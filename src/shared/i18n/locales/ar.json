@@ -115,7 +115,8 @@
     "tripAudit": "تدقيق الرحلات",
     "expensesReview": "قائمة المراجعة",
     "primary": "التنقل الرئيسي",
-    "receiptPiles": "أكوام الإيصالات"
+    "receiptPiles": "أكوام الإيصالات",
+    "advisor": "المستشار"
   },
   "auth": {
     "loginTitle": "مرحباً بعودتك",
@@ -1698,7 +1699,9 @@
       "keyword": "كلمة مفتاحية",
       "hybrid": "هجين",
       "score": "الدرجة",
-      "distance": "مسافة المتجه"
+      "distance": "مسافة المتجه",
+      "searchedFor": "تم البحث عن:",
+      "aiUnavailable": "البحث بالذكاء الاصطناعي غير متاح الآن — يتم عرض البحث العادي."
     },
     "receipt": {
       "title": "إيصال صيانة",
@@ -2589,5 +2592,119 @@
   "maps": {
     "centerOnMarkers": "توسيط الخريطة على العلامات",
     "toggleSatellite": "تبديل عرض القمر الصناعي"
+  },
+  "advisor": {
+    "title": "المستشار",
+    "subtitle": "اسأل عن الأسطول والإيرادات والرحلات والصيانة. التغييرات التي يقترحها تنتظر موافقتك.",
+    "tabs": {
+      "chat": "المحادثة",
+      "pending": "تغييرات بانتظار الموافقة",
+      "digests": "الملخصات"
+    },
+    "status": {
+      "checking": "جارٍ التحقق من توفر المستشار…",
+      "disabled": "لم يتم إعداد المستشار على الخادم بعد.",
+      "enabled": "متصل · {{model}}",
+      "off": "غير مُعد"
+    },
+    "rail": {
+      "title": "المحادثات",
+      "new": "جديدة",
+      "empty": "لا توجد محادثات بعد.",
+      "loadError": "تعذر تحميل المحادثات.",
+      "untitled": "محادثة بدون عنوان",
+      "delete": "حذف المحادثة",
+      "deleteTitle": "حذف هذه المحادثة؟",
+      "deleteDescription": "ستُحذف رسائلها. التغييرات التي اقترحتها تحتفظ بحالتها."
+    },
+    "chat": {
+      "transcript": "المحادثة",
+      "placeholder": "اسأل المستشار… (Enter للإرسال، Shift+Enter لسطر جديد)",
+      "send": "إرسال",
+      "stop": "إيقاف",
+      "hint": "الإجابات من بيانات الأسطول المباشرة. لا يتغير شيء حتى توافق عليه.",
+      "thinking": "يفكر…",
+      "toolFailed": "فشلت هذه الخطوة",
+      "emptyTitle": "ماذا تريد أن تعرف؟",
+      "emptyDescription": "مثلاً: ما الشاحنات التي كانت متوقفة أمس، أو الإيرادات حسب الشركة هذا الشهر، أو متى تمت آخر صيانة لفرامل الشاحنة 1234.",
+      "loadError": "تعذر تحميل هذه المحادثة.",
+      "proposedHere": "تغييرات مقترحة في هذه المحادثة"
+    },
+    "tools": {
+      "find_truck": "البحث عن الشاحنة…",
+      "fleet_overview": "مراجعة الأسطول…",
+      "revenue_breakdown": "مراجعة الإيرادات…",
+      "truck_itinerary": "قراءة خط سير الشاحنة…",
+      "trip_audit": "فحص تدقيق الرحلات…",
+      "route_options": "مقارنة المسارات…",
+      "search_service_history": "البحث في سجل الصيانة…",
+      "maintenance_status": "فحص حالة الصيانة…",
+      "run_sql": "الاستعلام من قاعدة البيانات…",
+      "propose_change": "صياغة تغيير…"
+    },
+    "suggestion": {
+      "kinds": {
+        "reassign_car": "إعادة تعيين شاحنة",
+        "assign_driver": "تعيين سائق"
+      },
+      "status": {
+        "pending": "بانتظار الموافقة",
+        "applying": "جارٍ التطبيق",
+        "applied": "تم التطبيق",
+        "failed": "فشل",
+        "rejected": "مرفوض"
+      },
+      "field": "الحقل",
+      "before": "قبل",
+      "after": "بعد",
+      "fields": {
+        "plate_number": "اللوحة",
+        "car_no_plate": "اللوحة",
+        "car_id": "رقم الشاحنة",
+        "driver_id": "رقم السائق",
+        "driver_name": "السائق",
+        "company": "الشركة",
+        "terminal": "المستودع",
+        "date": "التاريخ"
+      },
+      "approve": "موافقة",
+      "reject": "رفض",
+      "approveAndApply": "موافقة وتطبيق",
+      "confirmTitle": "تطبيق هذا التغيير؟",
+      "confirmDescription": "سيتم تطبيق «{{title}}» في FalconGo الآن باسمك ({{name}})، وسيُسجَّل على أنه تم عبر الذكاء الاصطناعي.",
+      "you": "أنت",
+      "appliedAt": "تم التطبيق في FalconGo {{date}}",
+      "failedWith": "رفض FalconGo التغيير (الحالة {{status}})",
+      "rejectedAt": "رُفض {{date}}"
+    },
+    "pending": {
+      "emptyTitle": "لا شيء بانتظار الموافقة",
+      "emptyDescription": "تظهر هنا التغييرات التي يقترحها المستشار حتى يوافق عليها أحد أو يرفضها.",
+      "loadError": "تعذر تحميل الاقتراحات.",
+      "recentlyDecided": "تم البت فيها مؤخراً"
+    },
+    "digests": {
+      "description": "ملخصات مكتوبة لما حدث في الأسطول.",
+      "writeNow_zero": "اكتب ملخصاً الآن (آخر {{count}} يوم)",
+      "writeNow_one": "اكتب ملخصاً الآن (آخر يوم)",
+      "writeNow_two": "اكتب ملخصاً الآن (آخر يومين)",
+      "writeNow_few": "اكتب ملخصاً الآن (آخر {{count}} أيام)",
+      "writeNow_many": "اكتب ملخصاً الآن (آخر {{count}} يوماً)",
+      "writeNow_other": "اكتب ملخصاً الآن (آخر {{count}} يوم)",
+      "emptyTitle": "لا توجد ملخصات بعد",
+      "emptyDescription": "اكتب واحداً الآن، أو انتظر الملخص المجدول.",
+      "loadError": "تعذر تحميل الملخصات."
+    },
+    "toast": {
+      "conversationDeleted": "تم حذف المحادثة",
+      "applied": "تم تطبيق التغيير في FalconGo",
+      "applyFailed": "رفض FalconGo التغيير",
+      "rejected": "تم رفض الاقتراح",
+      "alreadyDecided": "تم البت في هذا الاقتراح بالفعل",
+      "digestQueued": "جارٍ كتابة الملخص — سيظهر هنا عند الانتهاء"
+    },
+    "errors": {
+      "streamEnded": "توقف المستشار قبل أن يجيب. حاول مرة أخرى."
+    }
   }
 }

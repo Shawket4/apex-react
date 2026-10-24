@@ -19,6 +19,7 @@ import { prefetchTrackingFleet } from '@/features/tracking/use-history';
 import { prefetchZones } from '@/entities/zone/queries';
 import { prefetchDropoffChoices, prefetchLocations } from '@/entities/location/queries';
 import { prefetchTripAudit } from '@/entities/trip-audit/queries';
+import { prefetchAdvisor } from '@/entities/advisor/queries';
 import { preloadChunkForPath } from './chunks';
 
 /* -------------------------------------------------------------------------- */
@@ -39,6 +40,7 @@ import { preloadChunkForPath } from './chunks';
 
 const DATA_WARMERS: Record<string, (qc: QueryClient) => void> = {
   '/': (qc) => prefetchDashboard(qc),
+  '/advisor': prefetchAdvisor,
   '/trips': (qc) => {
     prefetchTrips(qc, defaultTripListParams());
     prefetchCompanies(qc); // the filters bar mounts the company list
