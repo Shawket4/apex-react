@@ -184,6 +184,35 @@ export function formatCairoDateTime(instant: string | Date, language?: string): 
   return `${formatCairoDay(d.toISOString(), language)} · ${formatCairoTime(d, language)}`;
 }
 
+/**
+ * "25 Oct, 10:18" (en) / "٢٥ أكتوبر، ١٠:١٨" (ar) — a fix or event time on the
+ * tracking map: the vehicle card, every map popup, stops, sensors, pins and
+ * legs. ONE formatter so no two surfaces can disagree about the same instant.
+ *
+ * The string carries no direction of its own. When it lands inside a
+ * container whose direction was set by something else — a popup whose
+ * `dir="auto"` resolved RTL off an Arabic plate — an English stamp reorders
+ * to "Oct, 10:18 25". Render it isolated: <bdi> in JSX, or
+ * {@link cairoStampHtml} in an HTML string.
+ */
+export function formatCairoStamp(instant: string | Date, language?: string): string {
+  return getFmt(localeOf(language), {
+    day: 'numeric',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+    // h23, not hour12:false — the latter lets some engines print "24:05".
+    hourCycle: 'h23',
+  }).format(typeof instant === 'string' ? new Date(instant) : instant);
+}
+
+/** {@link formatCairoStamp} as an HTML fragment, bidi-isolated in its locale's
+ *  own direction — for the map popups, which are built as HTML strings. */
+export function cairoStampHtml(instant: string | Date, language?: string): string {
+  const dir = language?.startsWith('ar') ? 'rtl' : 'ltr';
+  return `<bdi dir="${dir}">${formatCairoStamp(instant, language)}</bdi>`;
+}
+
 /** "12 Aug 2026" — dates on chips and notes. */
 export function formatCairoDate(instant: string | Date, language?: string): string {
   return getFmt(localeOf(language), {

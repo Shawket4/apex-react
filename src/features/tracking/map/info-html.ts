@@ -1,10 +1,12 @@
 import i18n from '@/shared/i18n';
+import { cairoStampHtml } from '@/shared/lib/cairo';
 import { buildMarkerSvg, markerSize } from '@/shared/lib/maps/marker-svg';
 import { STATUS_COLOR, statusGroup } from '../schemas';
 import type { SensorEvent, Stop } from '../schemas';
 import type { LegSegment } from '../use-history';
 import type { PinCluster } from './layers';
 import type { LiveMarkerDatum } from './types';
+import { liveDisplay } from '../live-display';
 
 /* -------------------------------------------------------------------------- */
 /* What the tracking map draws in the DOM, whichever map is underneath: the    */
@@ -54,27 +56,15 @@ export function replayElement(): HTMLElement {
   return el;
 }
 
-const infoTimeFmts = new Map<string, Intl.DateTimeFormat>();
-const infoTimeFmt = {
-  format(d: Date): string {
-    const locale = (i18n.language ?? '').startsWith('ar') ? 'ar-EG' : 'en-GB';
-    let f = infoTimeFmts.get(locale);
-    if (!f) {
-      f = new Intl.DateTimeFormat(locale, {
-        timeZone: 'Africa/Cairo',
-        hour12: false,
-        day: 'numeric',
-        month: 'short',
-        hour: '2-digit',
-        minute: '2-digit',
-      });
-      infoTimeFmts.set(locale, f);
-    }
-    return f.format(d);
-  },
-};
+/** Every time a popup shows — one shared, bidi-isolated formatter. */
+const stamp = (d: Date) => cairoStampHtml(d, i18n.language);
 
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+/** The card follows the UI's direction. It used to be `dir="auto"`, which
+ *  resolved RTL off the first strong character — the Arabic letters of a
+ *  plate — and flipped an English card's time to "Oct, 10:18 25". */
+const uiDir = () => ((i18n.language ?? '').startsWith('ar') ? 'rtl' : 'ltr');
 
 /**
  * The one tooltip shell every marker uses: a left-aligned card with the
@@ -85,7 +75,7 @@ function tipShell(title: string, rows: string[], lat: number, lng: number): stri
   const mapsUrl = `https://www.google.com/maps?q=${lat.toFixed(6)},${lng.toFixed(6)}`;
   const body = rows.filter(Boolean).join('');
   return (
-    `<div dir="auto" style="font:12px 'IBM Plex Sans Arabic','IBM Plex Sans',system-ui,sans-serif;display:grid;gap:3px;min-width:150px;max-width:250px;` +
+    `<div dir="${uiDir()}" style="font:12px 'IBM Plex Sans Arabic','IBM Plex Sans',system-ui,sans-serif;display:grid;gap:3px;min-width:150px;max-width:250px;` +
     `user-select:none;text-align:start;padding:2px 2px 0">` +
     `<div style="display:flex;align-items:center;justify-content:space-between;gap:10px">` +
     `<div style="font-weight:600;min-width:0">${title}</div>` +
@@ -109,15 +99,20 @@ const dimRow = (html: string) =>
 
 export function vehicleInfoHtml(datum: LiveMarkerDatum, lat: number, lng: number): string {
   const live = datum.live;
+  const shown = liveDisplay(datum.vehicle, live ?? null);
   return tipShell(
-    `<span style="font:600 14px 'IBM Plex Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums">${esc(datum.vehicle.plate)}</span>`,
+    `<bdi style="font:600 14px 'IBM Plex Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums">${esc(datum.vehicle.plate)}</bdi>`,
     [
-      row(esc(live?.statusLabel ?? datum.vehicle.statusLabel)),
-      live && live.speed > 0
+      row(esc(shown.label)),
+      live && live.speed > 0 && !shown.stale
         ? row(`${Math.round(live.speed)} ${esc(i18n.t('tracking.kmh', 'km/h'))}`)
         : '',
-      live?.timestamp || datum.vehicle.lastLocationAt
-        ? dimRow(infoTimeFmt.format((live?.timestamp ?? datum.vehicle.lastLocationAt)!))
+      shown.at
+        ? dimRow(
+            shown.stale
+              ? `${esc(i18n.t('tracking.lastSeen', 'Last seen'))} ${stamp(shown.at)}`
+              : stamp(shown.at),
+          )
         : '',
     ],
     lat,
@@ -130,7 +125,7 @@ export function stopInfoHtml(stop: Stop): string {
     esc(stop.duration),
     [
       stop.address ? row(esc(stop.address)) : '',
-      dimRow(`${infoTimeFmt.format(stop.from)} → ${infoTimeFmt.format(stop.to)}`),
+      dimRow(`${stamp(stop.from)} → ${stamp(stop.to)}`),
     ],
     stop.lat,
     stop.lng,
@@ -155,8 +150,8 @@ export function pinInfoHtml(cluster: PinCluster): string {
       ...cluster.visits.map((pin) => {
         const bits = [
           pin.parentTripId ? `#${pin.parentTripId}` : '',
-          pin.arrive ? `▾ ${infoTimeFmt.format(pin.arrive)}` : '',
-          pin.depart ? `▴ ${infoTimeFmt.format(pin.depart)}` : '',
+          pin.arrive ? `▾ ${stamp(pin.arrive)}` : '',
+          pin.depart ? `▴ ${stamp(pin.depart)}` : '',
           pin.dwellSecs != null && pin.dwellSecs > 0 ? `<b>${fmtDwell(pin.dwellSecs)}</b>` : '',
         ].filter(Boolean);
         return row(`<span dir="ltr">${bits.join(' · ')}</span>`);
@@ -174,7 +169,7 @@ export function legInfoHtml(seg: LegSegment, lat: number, lng: number): string {
     [
       dimRow(`${esc(l.legType)} · #${l.parentTripId}·${l.seq}`),
       row(
-        `<span dir="ltr">${infoTimeFmt.format(l.depart)} → ${infoTimeFmt.format(l.arrive)}</span>`,
+        `<span dir="ltr">${stamp(l.depart)} → ${stamp(l.arrive)}</span>`,
       ),
       l.actualKm != null
         ? row(`<b>${l.actualKm.toFixed(1)} ${esc(i18n.t('tracking.km', 'km'))}</b>`)
@@ -190,7 +185,7 @@ export function legInfoHtml(seg: LegSegment, lat: number, lng: number): string {
 }
 
 export function sensorInfoHtml(ev: SensorEvent): string {
-  return tipShell(esc(ev.typeName), [dimRow(infoTimeFmt.format(ev.timestamp))], ev.lat, ev.lng);
+  return tipShell(esc(ev.typeName), [dimRow(stamp(ev.timestamp))], ev.lat, ev.lng);
 }
 
 export function endpointInfoHtml(

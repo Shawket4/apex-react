@@ -79,7 +79,8 @@
       "label": "Format",
       "excel": "Excel (.xlsx)",
       "pdf": "PDF"
-    }
+    },
+    "confirmDelete": "Are you sure you want to delete this?"
   },
   "placeholder": {
     "speedViolations": "Speed violations tracking and telemetry radar are currently being compiled.",
@@ -187,6 +188,7 @@
         "moving": "moving",
         "idling": "idling",
         "stopped": "stopped",
+        "geofence": "geofence",
         "offline": "offline",
         "unknown": "no signal"
       },
@@ -1766,7 +1768,12 @@
     "title": "Dead Zones",
     "description": "Manage map zones and run dead-zone scans.",
     "newZone": "New Zone",
-    "scanNow": "Run scan now",
+    "scanNow": "Scan & alert now",
+    "scanNowConfirm": {
+      "title": "Run the scheduled scan now?",
+      "description": "Checks the last few days against every active zone and sends a WhatsApp alert to the zone group for each new violation — the same round the nightly timer runs. To look without alerting anyone, use “Scan a range”.",
+      "confirm": "Scan and send alerts"
+    },
     "scanRange": {
       "action": "Scan a range",
       "title": "Scan a date range",
@@ -2548,7 +2555,9 @@
     "beyondRange": "beyond range",
     "beyondRangeHint": "This leg extends past the loaded range — its missing days were fetched for the locked view.",
     "legsShort": "legs",
-    "lockTrip": "Lock playback to this trip"
+    "lockTrip": "Lock playback to this trip",
+    "noSignal": "No signal",
+    "lastSeen": "Last seen"
   },
   "maps": {
     "centerOnMarkers": "Center map on markers",

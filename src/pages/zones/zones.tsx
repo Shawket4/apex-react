@@ -30,6 +30,9 @@ export default function ZonesPage() {
   const [selectedZone, setSelectedZone] = React.useState<Zone | null>(null);
   const [deletingZone, setDeletingZone] = React.useState<Zone | null>(null);
   const [scanRangeOpen, setScanRangeOpen] = React.useState(false);
+  // The empty-body scan is the scheduled round: it alerts the WhatsApp group.
+  // Never one click away.
+  const [confirmScanOpen, setConfirmScanOpen] = React.useState(false);
 
   const handleCreateNew = () => {
     setSelectedZone(null);
@@ -67,7 +70,11 @@ export default function ZonesPage() {
   };
 
   const handleScanNow = async () => {
-    await scanMutation.mutateAsync();
+    try {
+      await scanMutation.mutateAsync();
+    } finally {
+      setConfirmScanOpen(false);
+    }
   };
 
   // Only pass active zones that are NOT the currently edited zone (if any) as contextual circles
@@ -94,7 +101,7 @@ export default function ZonesPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={handleScanNow}
+            onClick={() => setConfirmScanOpen(true)}
             disabled={scanMutation.isPending}
           >
             {scanMutation.isPending ? (
@@ -102,7 +109,7 @@ export default function ZonesPage() {
             ) : (
               <Radar aria-hidden="true" />
             )}
-            <span className="hidden sm:inline">{t('zones.scanNow', 'Run scan now')}</span>
+            <span className="hidden sm:inline">{t('zones.scanNow', 'Scan & alert now')}</span>
           </Button>
           <Button onClick={handleCreateNew} size="sm">
             <Plus className="h-4 w-4" aria-hidden="true" />
@@ -143,6 +150,17 @@ export default function ZonesPage() {
       />
 
       <ZoneScanDialog open={scanRangeOpen} onOpenChange={setScanRangeOpen} />
+
+      <ConfirmDialog
+        open={confirmScanOpen}
+        onOpenChange={setConfirmScanOpen}
+        title={t('zones.scanNowConfirm.title', 'Run the scheduled scan now?')}
+        description={t('zones.scanNowConfirm.description')}
+        confirmLabel={t('zones.scanNowConfirm.confirm', 'Scan and send alerts')}
+        onConfirm={handleScanNow}
+        loading={scanMutation.isPending}
+        variant="default"
+      />
 
       <ConfirmDialog
         open={!!deletingZone}

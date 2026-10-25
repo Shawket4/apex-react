@@ -775,6 +775,7 @@ const STATUS_STYLES: Record<TileStatus, { tile: string; dot: string; text: strin
   moving: { tile: 'border-success', dot: 'bg-success', text: 'text-success' },
   idling: { tile: '', dot: 'bg-warning', text: 'text-warning' },
   stopped: { tile: '', dot: 'bg-muted-foreground', text: 'text-muted-foreground' },
+  geofence: { tile: 'border-destructive', dot: 'bg-destructive', text: 'text-destructive' },
   offline: { tile: '', dot: 'bg-destructive', text: 'text-destructive' },
   unknown: { tile: '', dot: 'bg-border', text: 'text-muted-foreground' },
   untracked: { tile: 'border-dashed opacity-70', dot: 'hidden', text: 'text-muted-foreground' },
@@ -907,7 +908,7 @@ function FleetGrid({
       )}
 
       <div className="mt-3 flex flex-wrap gap-3 text-[11px] text-muted-foreground">
-        {(['moving', 'idling', 'stopped', 'offline'] as const).map((s) => (
+        {(['moving', 'idling', 'stopped', 'offline', 'unknown'] as const).map((s) => (
           <span key={s} className="flex items-center gap-1.5">
             <i className={cn('h-1.5 w-1.5 rounded-full', STATUS_STYLES[s].dot)} aria-hidden />
             {t(`dashboard.fleet.status.${s}`)}

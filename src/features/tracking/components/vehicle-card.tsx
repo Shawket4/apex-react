@@ -1,24 +1,14 @@
-import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Crosshair, History, X } from 'lucide-react';
+import { formatCairoStamp } from '@/shared/lib/cairo';
 import { Button } from '@/shared/ui/button';
 import { STATUS_COLOR, type LiveStatus, type Vehicle } from '../schemas';
-import { groupOf } from './status-group';
+import { liveDisplay } from '../live-display';
 
 /* -------------------------------------------------------------------------- */
 /* The selected vehicle's floating card (live mode): identity, live status,   */
 /* and the two actions that matter — focus and replay.                        */
 /* -------------------------------------------------------------------------- */
-
-const makeTsFmt = (locale: string) =>
-  new Intl.DateTimeFormat(locale, {
-    timeZone: 'Africa/Cairo',
-    hour12: false,
-    day: 'numeric',
-    month: 'short',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
 
 export function VehicleCard({
   vehicle,
@@ -34,10 +24,9 @@ export function VehicleCard({
   onClose: () => void;
 }) {
   const { t, i18n } = useTranslation();
-  const locale = i18n.language.startsWith('ar') ? 'ar-EG' : 'en-GB';
-  const tsFmt = React.useMemo(() => makeTsFmt(locale), [locale]);
-  const group = groupOf(vehicle, live);
-  const ts = live?.timestamp ?? vehicle.lastLocationAt;
+  const shown = liveDisplay(vehicle, live);
+  const group = shown.group;
+  const ts = shown.at;
 
   return (
     <div className="pointer-events-auto w-[260px] rounded-lg border bg-card/95 p-3 shadow-md backdrop-blur">
@@ -57,14 +46,15 @@ export function VehicleCard({
             </span>
           </div>
           <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
-            {live?.statusLabel ?? vehicle.statusLabel}
-            {(live?.speed ?? 0) > 0 && (
+            {shown.label}
+            {(live?.speed ?? 0) > 0 && !shown.stale && (
               <span className="tabular-nums"> · {live!.speed} {t('tracking.kmh', 'km/h')}</span>
             )}
           </p>
           {ts && (
             <p className="font-mono text-[10.5px] text-muted-foreground tabular-nums">
-              {tsFmt.format(ts)}
+              {shown.stale && <>{t('tracking.lastSeen', 'Last seen')} </>}
+              <bdi>{formatCairoStamp(ts, i18n.language)}</bdi>
             </p>
           )}
         </div>
