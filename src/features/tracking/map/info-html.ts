@@ -6,6 +6,7 @@ import type { SensorEvent, Stop } from '../schemas';
 import type { LegSegment } from '../use-history';
 import type { PinCluster } from './layers';
 import type { LiveMarkerDatum } from './types';
+import { liveDisplay } from '../live-display';
 
 /* -------------------------------------------------------------------------- */
 /* What the tracking map draws in the DOM, whichever map is underneath: the    */
@@ -98,15 +99,20 @@ const dimRow = (html: string) =>
 
 export function vehicleInfoHtml(datum: LiveMarkerDatum, lat: number, lng: number): string {
   const live = datum.live;
+  const shown = liveDisplay(datum.vehicle, live ?? null);
   return tipShell(
     `<bdi style="font:600 14px 'IBM Plex Mono',ui-monospace,monospace;font-variant-numeric:tabular-nums">${esc(datum.vehicle.plate)}</bdi>`,
     [
-      row(esc(live?.statusLabel ?? datum.vehicle.statusLabel)),
-      live && live.speed > 0
+      row(esc(shown.label)),
+      live && live.speed > 0 && !shown.stale
         ? row(`${Math.round(live.speed)} ${esc(i18n.t('tracking.kmh', 'km/h'))}`)
         : '',
-      live?.timestamp || datum.vehicle.lastLocationAt
-        ? dimRow(stamp((live?.timestamp ?? datum.vehicle.lastLocationAt)!))
+      shown.at
+        ? dimRow(
+            shown.stale
+              ? `${esc(i18n.t('tracking.lastSeen', 'Last seen'))} ${stamp(shown.at)}`
+              : stamp(shown.at),
+          )
         : '',
     ],
     lat,

@@ -79,7 +79,8 @@
       "label": "Format",
       "excel": "Excel (.xlsx)",
       "pdf": "PDF"
-    }
+    },
+    "confirmDelete": "Are you sure you want to delete this?"
   },
   "placeholder": {
     "speedViolations": "Speed violations tracking and telemetry radar are currently being compiled.",
@@ -2554,7 +2555,9 @@
     "beyondRange": "beyond range",
     "beyondRangeHint": "This leg extends past the loaded range — its missing days were fetched for the locked view.",
     "legsShort": "legs",
-    "lockTrip": "Lock playback to this trip"
+    "lockTrip": "Lock playback to this trip",
+    "noSignal": "No signal",
+    "lastSeen": "Last seen"
   },
   "maps": {
     "centerOnMarkers": "Center map on markers",

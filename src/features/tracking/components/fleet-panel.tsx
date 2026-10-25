@@ -10,6 +10,7 @@ import {
   type Vehicle,
 } from '../schemas';
 import { groupOf } from './status-group';
+import { liveDisplay } from '../live-display';
 
 /* -------------------------------------------------------------------------- */
 /* The fleet panel — a slide-in list grouped by status. Row tap selects,      */
@@ -153,7 +154,7 @@ export function FleetPanel({
                         </span>
                       </div>
                       <div className="flex items-center gap-1.5 text-[10.5px] text-muted-foreground">
-                        <span className="truncate">{lv?.statusLabel ?? v.statusLabel}</span>
+                        <span className="truncate">{liveDisplay(v, lv).label}</span>
                         {(lv?.speed ?? 0) > 0 && (
                           <span className="shrink-0 tabular-nums">
                             · {lv!.speed} {t('tracking.kmh', 'km/h')}

@@ -3,7 +3,7 @@ import { Crosshair, History, X } from 'lucide-react';
 import { formatCairoStamp } from '@/shared/lib/cairo';
 import { Button } from '@/shared/ui/button';
 import { STATUS_COLOR, type LiveStatus, type Vehicle } from '../schemas';
-import { groupOf } from './status-group';
+import { liveDisplay } from '../live-display';
 
 /* -------------------------------------------------------------------------- */
 /* The selected vehicle's floating card (live mode): identity, live status,   */
@@ -24,8 +24,9 @@ export function VehicleCard({
   onClose: () => void;
 }) {
   const { t, i18n } = useTranslation();
-  const group = groupOf(vehicle, live);
-  const ts = live?.timestamp ?? vehicle.lastLocationAt;
+  const shown = liveDisplay(vehicle, live);
+  const group = shown.group;
+  const ts = shown.at;
 
   return (
     <div className="pointer-events-auto w-[260px] rounded-lg border bg-card/95 p-3 shadow-md backdrop-blur">
@@ -45,13 +46,14 @@ export function VehicleCard({
             </span>
           </div>
           <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
-            {live?.statusLabel ?? vehicle.statusLabel}
-            {(live?.speed ?? 0) > 0 && (
+            {shown.label}
+            {(live?.speed ?? 0) > 0 && !shown.stale && (
               <span className="tabular-nums"> · {live!.speed} {t('tracking.kmh', 'km/h')}</span>
             )}
           </p>
           {ts && (
             <p className="font-mono text-[10.5px] text-muted-foreground tabular-nums">
+              {shown.stale && <>{t('tracking.lastSeen', 'Last seen')} </>}
               <bdi>{formatCairoStamp(ts, i18n.language)}</bdi>
             </p>
           )}
