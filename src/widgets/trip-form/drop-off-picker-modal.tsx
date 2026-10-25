@@ -24,7 +24,8 @@ import { EmptyState } from '@/shared/ui/empty-state';
 import { useDropOffs } from '@/entities/mapping/queries';
 import type { MappingDetail } from '@/entities/mapping/schemas';
 import { normalize } from '@/shared/lib/normalize';
-import { formatNumber, formatCurrency } from '@/shared/lib/format';
+import { formatNumber } from '@/shared/lib/format';
+import { useMappingFeeLabel } from '@/entities/pricing/use-fee-label';
 import { cn } from '@/shared/lib/cn';
 
 const PAGE_SIZE = 15;
@@ -61,6 +62,7 @@ export function DropOffPickerModal({
   onSelect,
 }: DropOffPickerModalProps) {
   const { t } = useTranslation();
+  const labelFee = useMappingFeeLabel(company);
   const { data, isLoading } = useDropOffs(company, terminal, {
     enabled: open && !!company && !!terminal,
   });
@@ -175,7 +177,7 @@ export function DropOffPickerModal({
               <ul className="divide-y">
                 {pageItems.map((dropOff) => {
                   const mapping = mappings[dropOff];
-                  const fee = Number(mapping?.fee ?? 0);
+                  const feeLabel = mapping ? labelFee(mapping.fee) : null;
                   const distance = Number(mapping?.distance ?? 0);
                   const isSelected = dropOff === value;
 
@@ -206,10 +208,8 @@ export function DropOffPickerModal({
                                   {formatNumber(distance, 1)} km
                                 </span>
                               )}
-                              {fee > 0 && (
-                                <span className="font-mono tabular-nums text-money">
-                                  {formatCurrency(fee)}
-                                </span>
+                              {feeLabel && (
+                                <span className="tabular-nums">{feeLabel}</span>
                               )}
                               {mapping.route_name && (
                                 <span className="truncate">

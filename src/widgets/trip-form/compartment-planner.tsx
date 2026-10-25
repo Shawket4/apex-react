@@ -12,6 +12,7 @@ import { dropColor, gasColor } from '@/shared/ui/tanker-diagram/palette';
 import { cn } from '@/shared/lib/cn';
 import { formatNumber } from '@/shared/lib/format';
 import type { MappingDetail } from '@/entities/mapping/schemas';
+import { useMappingFeeLabel } from '@/entities/pricing/use-fee-label';
 
 import { DropOffPickerModal } from './drop-off-picker-modal';
 import { Skeleton } from '@/shared/ui/skeleton';
@@ -119,6 +120,7 @@ export function CompartmentPlanner<C extends PlannerContainer>({
   minReceiptLength,
 }: CompartmentPlannerProps<C>) {
   const { t } = useTranslation();
+  const labelFee = useMappingFeeLabel(company);
   const { slots, containers } = plan;
 
   // A drag hands over several changes inside one pointer event, before React
@@ -255,7 +257,8 @@ export function CompartmentPlanner<C extends PlannerContainer>({
     if (!slot) return null;
     const { own, containers: choices, canNew } = choicesFor(plan, index, maxContainers);
     const container = own !== null ? containers[own] : undefined;
-    const hasMapping = container ? container.fee > 0 || container.distance > 0 : false;
+    const feeLabel = container ? labelFee(container.fee) : null;
+    const hasMapping = container ? feeLabel != null || container.distance > 0 : false;
 
     return (
       <div className="space-y-3" style={{ direction: 'ltr' }}>
@@ -394,7 +397,12 @@ export function CompartmentPlanner<C extends PlannerContainer>({
               </Button>
               {hasMapping && (
                 <p className="text-[10px] tabular-nums text-muted-foreground">
-                  {formatNumber(container.distance, 0)} km · {formatNumber(container.fee, 0)}
+                  {[
+                    container.distance > 0 ? `${formatNumber(container.distance, 0)} km` : null,
+                    feeLabel,
+                  ]
+                    .filter(Boolean)
+                    .join(' · ')}
                 </p>
               )}
             </div>

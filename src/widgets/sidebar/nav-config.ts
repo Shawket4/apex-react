@@ -19,6 +19,7 @@ import {
   Settings,
   ShieldCheck,
   Tablet,
+  Tags,
   Truck,
   Users,
   Wrench,
@@ -118,6 +119,12 @@ export const NAV_SECTIONS: NavSection[] = [
         to: '/fee-mappings',
         labelKey: 'nav.feeMappings',
         icon: Banknote,
+        minPermission: PERMISSION_LEVELS.MANAGER,
+      },
+      {
+        to: '/pricing',
+        labelKey: 'nav.pricing',
+        icon: Tags,
         minPermission: PERMISSION_LEVELS.MANAGER,
       },
       {

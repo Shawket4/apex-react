@@ -24,6 +24,8 @@ import { EmptyState } from '@/shared/ui/empty-state';
 import { ConfirmDialog } from '@/shared/ui/confirm-dialog';
 import { cn } from '@/shared/lib/cn';
 import { useDebounce } from '@/shared/hooks/use-debounce';
+import { usePermissions } from '@/shared/hooks/use-permissions';
+import { PRICING_VIEW_LEVEL } from '@/entities/pricing/masking';
 import { useScope, useScopeCompany } from '@/shared/scope';
 import { toDateOnly } from '@/shared/lib/format';
 import {
@@ -231,6 +233,8 @@ export default function TripsPage() {
   const deleteParent = useDeleteParentTrip();
   const exportTripsAll = useExportTrips();
   const watanyaExport = useExportWatanyaReport();
+  const { level } = usePermissions();
+  const canSeePricing = level >= PRICING_VIEW_LEVEL;
 
   /* ------------------------------------------------------------------------ */
   /* Handlers                                                                  */
@@ -382,12 +386,14 @@ export default function TripsPage() {
           onExport={(format) => void handleExportExcel(format)}
         />
       )}
-      {/* Watanya export — TODO: gate on permission level >= 3 */}
-      <WatanyaExportPanel
-        disabled={!from || !to}
-        pending={watanyaPending}
-        onExport={(request) => void handleExportWatanya(request)}
-      />
+      {/* The Watanya report prices every row, so it is financial: permission 3+. */}
+      {canSeePricing && (
+        <WatanyaExportPanel
+          disabled={!from || !to}
+          pending={watanyaPending}
+          onExport={(request) => void handleExportWatanya(request)}
+        />
+      )}
       <Button
         onClick={() => navigate('/trips/new')}
         size="sm"

@@ -63,6 +63,7 @@ const OilChangeHistoryPage = React.lazy(
   () => import('@/pages/oil-changes/oil-change-history'),
 );
 const FeeMappingsPage = React.lazy(() => import('@/pages/fee-mappings/fee-mappings'));
+const PricingPage = React.lazy(() => import('@/pages/pricing/pricing'));
 const ReceiptPilesPage = React.lazy(() => import('@/pages/receipt-piles/receipt-piles'));
 const UsersPage = React.lazy(() => import('@/pages/users/users'));
 const ServiceInvoicesPage = React.lazy(() => import('@/pages/service-invoices/service-invoices'));
@@ -254,6 +255,16 @@ export const router = createBrowserRouter([
             element: (
               <ProtectedRoute minPermissionLevel={PERMISSION_LEVELS.MANAGER}>
                 <FeeMappingsPage />
+              </ProtectedRoute>
+            ),
+          },
+          // Stored pricing rules and truck-month rental: read at 3 (revenue is
+          // financial data), edited at 4 — matching FalconGo's /api/pricing.
+          {
+            path: 'pricing',
+            element: (
+              <ProtectedRoute minPermissionLevel={PERMISSION_LEVELS.MANAGER}>
+                <PricingPage />
               </ProtectedRoute>
             ),
           },

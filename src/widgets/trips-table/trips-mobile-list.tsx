@@ -11,6 +11,8 @@ import { useQueryClient } from '@tanstack/react-query';
 import { intentProps, warmTripForm } from '@/shared/lib/prefetch';
 import { prefetchParentContainers, prefetchTripDetails } from '@/entities/trip/queries';
 import { Truncate } from '@/shared/ui/truncate';
+import { usePermissions } from '@/shared/hooks/use-permissions';
+import { tripMoneyCell } from '@/entities/pricing/masking';
 import { ReceiptStatusBadge } from './receipt-status-badge';
 import { ContainerRevenue, RevenueBreakdown } from './revenue-breakdown';
 import { DROP_SEPARATOR, groupByDate, type TripRow } from './trip-row';
@@ -121,7 +123,10 @@ function MobileRow({
   const [money, setMoney] = React.useState(false);
 
   const { head, containers, isGroup } = row;
-  const canSeeMoney = showRevenue && row.revenue != null;
+  const { level } = usePermissions();
+  // Revenue at permission 4, nothing below — never the raw fee (tripMoneyCell).
+  const revenue = showRevenue ? tripMoneyCell(level, row.revenue) : null;
+  const canSeeMoney = revenue != null;
   // The only trip edit route is trips/multi-container/:parentId/edit; a
   // standalone trip has nowhere to go, so it gets no edit action at all.
   const editPath =
@@ -203,7 +208,7 @@ function MobileRow({
             {!isGroup && <ReceiptStatusBadge trip={head} compact />}
           </span>
 
-          {canSeeMoney ? (
+          {canSeeMoney && (
             <button
               type="button"
               aria-expanded={money}
@@ -216,12 +221,8 @@ function MobileRow({
                          text-money underline decoration-dotted underline-offset-4
                          focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
-              {formatCurrency(row.revenue!)}
+              {formatCurrency(revenue)}
             </button>
-          ) : (
-            <span className="shrink-0 font-mono text-[13.5px] font-semibold tabular-nums text-money">
-              {formatCurrency(row.fee)}
-            </span>
           )}
         </div>
       </div>
