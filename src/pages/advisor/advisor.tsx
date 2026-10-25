@@ -1,8 +1,9 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
-import { Bot, ListChecks } from 'lucide-react';
+import { Bot, ListChecks, ShieldAlert } from 'lucide-react';
 import {
+  isForbidden,
   useAdvisorStatus,
   useAdvisorSuggestions,
   type Suggestion,
@@ -140,6 +141,16 @@ export default function AdvisorPage() {
             <div className="flex flex-col gap-3">
               <Skeleton className="h-40 w-full rounded-lg" />
               <Skeleton className="h-40 w-full rounded-lg" />
+            </div>
+          ) : all.isError && isForbidden(all.error) ? (
+            // A stale session can show this page to someone below permission 4;
+            // the server says no, and retrying would only keep the skeletons up.
+            <div className="mx-auto w-full max-w-3xl">
+              <EmptyState
+                icon={<ShieldAlert className="h-6 w-6" aria-hidden="true" />}
+                title={t('advisor.pending.forbiddenTitle')}
+                description={t('advisor.pending.forbiddenDescription')}
+              />
             </div>
           ) : all.isError ? (
             <p className="py-6 text-center text-sm text-destructive">

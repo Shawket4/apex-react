@@ -2,6 +2,7 @@ import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Check, Loader2, Sparkles, X } from 'lucide-react';
 import {
+  serviceName,
   useApproveSuggestion,
   useRejectSuggestion,
   type Suggestion,
@@ -12,9 +13,15 @@ import { Badge } from '@/shared/ui/badge';
 import { Button } from '@/shared/ui/button';
 import { ConfirmDialog } from '@/shared/ui/confirm-dialog';
 import { cn } from '@/shared/lib/cn';
-import { formatDateTime } from '@/shared/lib/format';
 import { SuggestionDiffTable } from './suggestion-diff-table';
-import { describeResult, humanizeField } from './suggestion-diff';
+import {
+  describeResult,
+  formatInstant,
+  humanizeField,
+  isSuccessStatus,
+  makeValueFormatter,
+  resetReason,
+} from './suggestion-diff';
 
 const STATUS_VARIANT: Record<SuggestionStatus, 'secondary' | 'warning' | 'success' | 'destructive' | 'outline'> = {
   pending: 'warning',
@@ -31,11 +38,13 @@ interface SuggestionCardProps {
 
 /**
  * One proposed change: what and why, the before → after, and the decision.
- * Approving applies it in FalconGo under the signed-in user's name, marked as
+ * Approving applies it in the system that owns the record (FalconGo,
+ * maintenance, or the bank ledger) under the signed-in user's name, marked as
  * made via AI — the confirm dialog says so before anything is sent.
  */
 export function SuggestionCard({ suggestion, className }: SuggestionCardProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const language = i18n.language ?? 'en';
   const userName = useAuthStore((s) => s.user?.name ?? '');
   const approve = useApproveSuggestion();
   const reject = useRejectSuggestion();
@@ -48,7 +57,13 @@ export function SuggestionCard({ suggestion, className }: SuggestionCardProps) {
       ? reject.data
       : suggestion;
   const busy = approve.isPending || reject.isPending;
-  const result = s.status === 'applied' || s.status === 'failed' ? describeResult(s.result) : null;
+  const service = serviceName(s.target, t);
+  const result = describeResult(s.result, s.status, t('advisor.suggestion.refusedGeneric'));
+  const reset = s.status === 'rejected' ? resetReason(s.result) : null;
+  const formatValue = React.useMemo(
+    () => makeValueFormatter((key, fallback) => t(key, fallback), language),
+    [t, language],
+  );
 
   const onApprove = async () => {
     try {
@@ -65,6 +80,8 @@ export function SuggestionCard({ suggestion, className }: SuggestionCardProps) {
           <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
             <Sparkles className="h-3 w-3 text-primary" aria-hidden="true" />
             {t(`advisor.suggestion.kinds.${s.kind}`, humanizeField(s.kind))}
+            <span aria-hidden="true">·</span>
+            <span className="normal-case tracking-normal">{service}</span>
           </p>
           <h4 dir="auto" className="text-sm font-semibold">
             {s.title}
@@ -92,6 +109,7 @@ export function SuggestionCard({ suggestion, className }: SuggestionCardProps) {
             after: t('advisor.suggestion.after'),
           }}
           fieldLabel={(f) => t(`advisor.suggestion.fields.${f}`, humanizeField(f))}
+          formatValue={formatValue}
         />
       </div>
 
@@ -108,9 +126,14 @@ export function SuggestionCard({ suggestion, className }: SuggestionCardProps) {
           <p className="font-medium">
             {s.status === 'applied'
               ? t('advisor.suggestion.appliedAt', {
-                  date: s.applied_at ? formatDateTime(s.applied_at) : '',
+                  service,
+                  date: s.applied_at ? formatInstant(s.applied_at, language) : '',
                 })
-              : t('advisor.suggestion.failedWith', { status: s.result_status ?? '—' })}
+              : s.result_status == null || isSuccessStatus(s.result_status)
+                ? // A 2xx that failed is one operation refused inside an accepted
+                  // request (maint-rust's per-operation conflict): the code says nothing.
+                  t('advisor.suggestion.failedNoStatus', { service })
+                : t('advisor.suggestion.failedWith', { service, status: s.result_status })}
           </p>
           {result && (
             <p dir="auto" className="mt-1 break-words opacity-90">
@@ -120,10 +143,18 @@ export function SuggestionCard({ suggestion, className }: SuggestionCardProps) {
         </div>
       )}
 
-      {s.status === 'rejected' && s.decided_at && (
-        <p className="mt-3 text-xs text-muted-foreground">
-          {t('advisor.suggestion.rejectedAt', { date: formatDateTime(s.decided_at) })}
-        </p>
+      {s.status === 'rejected' && (s.decided_at || reset) && (
+        <div className="mt-3 space-y-1 text-xs text-muted-foreground">
+          {s.decided_at && (
+            <p>{t('advisor.suggestion.rejectedAt', { date: formatInstant(s.decided_at, language) })}</p>
+          )}
+          {reset && (
+            <p className="break-words">
+              <span className="font-medium">{t('advisor.suggestion.resetLead')}</span>{' '}
+              <span dir="auto">{reset}</span>
+            </p>
+          )}
+        </div>
       )}
 
       {s.status === 'pending' && (
@@ -155,6 +186,7 @@ export function SuggestionCard({ suggestion, className }: SuggestionCardProps) {
         title={t('advisor.suggestion.confirmTitle')}
         description={t('advisor.suggestion.confirmDescription', {
           title: s.title,
+          service,
           name: userName || t('advisor.suggestion.you'),
         })}
         confirmLabel={t('advisor.suggestion.approveAndApply')}

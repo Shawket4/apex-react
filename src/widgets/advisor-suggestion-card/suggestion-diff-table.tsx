@@ -1,6 +1,6 @@
 import { ArrowRight } from 'lucide-react';
 import { cn } from '@/shared/lib/cn';
-import { humanizeField, suggestionDiffRows } from './suggestion-diff';
+import { formatDiffValue, humanizeField, suggestionDiffRows, type ValueFormatter } from './suggestion-diff';
 
 interface SuggestionDiffTableProps {
   before: Record<string, unknown>;
@@ -8,24 +8,38 @@ interface SuggestionDiffTableProps {
   labels: { field: string; before: string; after: string };
   /** Display name for a field key; defaults to the humanized key. */
   fieldLabel?: (field: string) => string;
+  /** Display text for a value, by field; defaults to the plain rendering. */
+  formatValue?: ValueFormatter;
 }
 
 /**
  * Before → after, one row per field. Changed rows are emphasised; unchanged
  * ones stay for context (which truck, which driver) but recede.
+ *
+ * The layout is fixed so long values wrap inside their column instead of
+ * pushing the card sideways on a phone. Each value cell aligns to the page's
+ * start; the value itself is `dir="auto"`, so an Arabic plate in the English
+ * UI reads right-to-left without hugging the far edge.
  */
 export function SuggestionDiffTable({
   before,
   after,
   labels,
   fieldLabel = humanizeField,
+  formatValue = formatDiffValue,
 }: SuggestionDiffTableProps) {
-  const rows = suggestionDiffRows(before, after);
+  const rows = suggestionDiffRows(before, after, formatValue);
   if (rows.length === 0) return null;
 
   return (
-    <div className="overflow-x-auto rounded-md border">
-      <table className="w-full border-collapse text-xs">
+    <div className="rounded-md border">
+      <table className="w-full table-fixed border-collapse text-xs">
+        <colgroup>
+          <col className="w-[30%]" />
+          <col />
+          <col className="w-4" />
+          <col />
+        </colgroup>
         <thead>
           <tr className="bg-muted/50 text-muted-foreground">
             <th scope="col" className="px-2 py-1.5 text-start font-medium">
@@ -34,7 +48,7 @@ export function SuggestionDiffTable({
             <th scope="col" className="px-2 py-1.5 text-start font-medium">
               {labels.before}
             </th>
-            <th scope="col" className="w-4 px-0 py-1.5" aria-hidden="true" />
+            <th scope="col" className="px-0 py-1.5" aria-hidden="true" />
             <th scope="col" className="px-2 py-1.5 text-start font-medium">
               {labels.after}
             </th>
@@ -45,19 +59,29 @@ export function SuggestionDiffTable({
             <tr
               key={row.field}
               data-changed={row.changed || undefined}
-              className={cn('border-t', !row.changed && 'text-muted-foreground')}
+              className={cn('border-t align-top', !row.changed && 'text-muted-foreground')}
             >
-              <th scope="row" className="px-2 py-1.5 text-start font-medium">
+              <th scope="row" className="break-words px-2 py-1.5 text-start font-medium">
                 {fieldLabel(row.field)}
               </th>
-              <td dir="auto" className={cn('px-2 py-1.5', row.changed && 'text-destructive line-through decoration-destructive/50')}>
-                {row.before}
+              <td
+                className={cn(
+                  'px-2 py-1.5 text-start [overflow-wrap:anywhere]',
+                  row.changed && 'text-destructive line-through decoration-destructive/50',
+                )}
+              >
+                <span dir="auto">{row.before}</span>
               </td>
               <td className="px-0 py-1.5 text-muted-foreground" aria-hidden="true">
-                <ArrowRight className="h-3 w-3 rtl:rotate-180" />
+                <ArrowRight className="mt-0.5 h-3 w-3 rtl:rotate-180" />
               </td>
-              <td dir="auto" className={cn('px-2 py-1.5', row.changed && 'font-semibold text-success')}>
-                {row.after}
+              <td
+                className={cn(
+                  'px-2 py-1.5 text-start [overflow-wrap:anywhere]',
+                  row.changed && 'font-semibold text-success',
+                )}
+              >
+                <span dir="auto">{row.after}</span>
               </td>
             </tr>
           ))}
