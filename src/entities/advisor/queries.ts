@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { toast } from 'sonner';
 import { extractErrorMessage } from '@/shared/api/errors';
 import { advisorApi, type SuggestionFilters } from './api';
+import { decisionErrorText, decisionToast } from './decision-text';
 import type { AdvisorSearchRequest } from './schemas';
 
 export const advisorKeys = {
@@ -20,12 +21,22 @@ export const advisorKeys = {
 /* Queries                                                                     */
 /* -------------------------------------------------------------------------- */
 
+/** The advisor needs permission 4. A 403 will not change on retry; say so at once. */
+export function isForbidden(error: unknown): boolean {
+  return (error as { status?: number } | null)?.status === 403;
+}
+
+function retryUnlessForbidden(failureCount: number, error: unknown): boolean {
+  if (isForbidden(error) || (error as { status?: number } | null)?.status === 401) return false;
+  return failureCount < 2;
+}
+
 export function useAdvisorStatus() {
   return useQuery({
     queryKey: advisorKeys.status(),
     queryFn: advisorApi.getStatus,
     staleTime: 5 * 60_000,
-    retry: 1,
+    retry: (n, err) => !isForbidden(err) && n < 1,
   });
 }
 
@@ -33,6 +44,7 @@ export function useAdvisorConversations() {
   return useQuery({
     queryKey: advisorKeys.conversations(),
     queryFn: advisorApi.listConversations,
+    retry: retryUnlessForbidden,
   });
 }
 
@@ -42,6 +54,7 @@ export function useAdvisorConversation(id: string | null) {
     queryFn: () => advisorApi.getConversation(id as string),
     enabled: !!id,
     staleTime: Infinity,
+    retry: retryUnlessForbidden,
   });
 }
 
@@ -50,6 +63,7 @@ export function useAdvisorSuggestions(filters: SuggestionFilters = {}, enabled =
     queryKey: advisorKeys.suggestionList(filters),
     queryFn: () => advisorApi.listSuggestions(filters),
     enabled,
+    retry: retryUnlessForbidden,
   });
 }
 
@@ -57,6 +71,7 @@ export function useAdvisorDigests() {
   return useQuery({
     queryKey: advisorKeys.digests(),
     queryFn: advisorApi.listDigests,
+    retry: retryUnlessForbidden,
   });
 }
 
@@ -105,22 +120,13 @@ function useDecideSuggestion(decision: 'approve' | 'reject') {
       decision === 'approve' ? advisorApi.approveSuggestion(id) : advisorApi.rejectSuggestion(id),
     onSuccess: (s) => {
       queryClient.invalidateQueries({ queryKey: advisorKeys.suggestions() });
-      if (s.status === 'applied') {
-        toast.success(t('advisor.toast.applied', 'Change applied in FalconGo'));
-      } else if (s.status === 'failed') {
-        toast.error(t('advisor.toast.applyFailed', 'FalconGo refused the change'));
-      } else if (s.status === 'rejected') {
-        toast.success(t('advisor.toast.rejected', 'Suggestion rejected'));
-      }
+      const shown = decisionToast(s, t);
+      if (shown?.kind === 'success') toast.success(shown.text);
+      else if (shown?.kind === 'error') toast.error(shown.text);
     },
     onError: (err) => {
       queryClient.invalidateQueries({ queryKey: advisorKeys.suggestions() });
-      const status = (err as { status?: number }).status;
-      toast.error(
-        status === 409
-          ? t('advisor.toast.alreadyDecided', 'Someone already decided this suggestion')
-          : extractErrorMessage(err),
-      );
+      toast.error(decisionErrorText(err, t, extractErrorMessage(err)));
     },
   });
 }
