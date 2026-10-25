@@ -294,21 +294,47 @@ export function formatDrawerDuration(secs: number): string {
 /* -------------------------------------------------------------------------- */
 
 /** Tile state, in the order the legend shows it. `untracked` is the two
- *  service vehicles; `unknown` is a tracked truck the feed said nothing about. */
+ *  service vehicles; `unknown` ("no signal") is a tracked truck the feed said
+ *  nothing current about — absent from it, an unrecognised status, or a fix
+ *  older than {@link STALE_FIX_MS}. */
 export type TileStatus =
   | 'moving'
   | 'idling'
   | 'stopped'
+  | 'geofence'
   | 'offline'
   | 'unknown'
   | 'untracked';
 
-export function tileStatus(entry: FleetEntry, live: LiveVehicle | undefined): TileStatus {
+/** A fix older than this says nothing about what the truck is doing now. */
+export const STALE_FIX_MS = 30 * 60 * 1000;
+
+/**
+ * ETIT status codes (etit-proxy `status_label`, API.md §3). Classified by the
+ * number, never the label: "Stopped (Ignition Off)" contains "off", which a
+ * label match read as offline.
+ */
+const STATUS_BY_CODE: Record<number, TileStatus> = {
+  1: 'moving',
+  4: 'moving',
+  3: 'stopped',
+  12: 'offline',
+  13: 'idling',
+  17: 'geofence',
+  18: 'geofence',
+};
+
+export function tileStatus(
+  entry: FleetEntry,
+  live: LiveVehicle | undefined,
+  now: number = Date.now(),
+): TileStatus {
   if (entry.etit_id === null) return 'untracked';
   if (!live) return 'unknown';
-  const label = (live.statusLabel || '').toLowerCase();
-  if (label.includes('mov') || live.speed > 3) return 'moving';
-  if (label.includes('idl')) return 'idling';
-  if (label.includes('off')) return 'offline';
-  return 'stopped';
+  const status = STATUS_BY_CODE[live.status] ?? 'unknown';
+  // Offline is ETIT's own verdict and already says "no current data".
+  if (status === 'offline') return status;
+  const fixAt = live.timestamp ? Date.parse(live.timestamp) : NaN;
+  if (Number.isFinite(fixAt) && now - fixAt > STALE_FIX_MS) return 'unknown';
+  return status;
 }

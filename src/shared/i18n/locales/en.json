@@ -187,6 +187,7 @@
         "moving": "moving",
         "idling": "idling",
         "stopped": "stopped",
+        "geofence": "geofence",
         "offline": "offline",
         "unknown": "no signal"
       },
@@ -1766,7 +1767,12 @@
     "title": "Dead Zones",
     "description": "Manage map zones and run dead-zone scans.",
     "newZone": "New Zone",
-    "scanNow": "Run scan now",
+    "scanNow": "Scan & alert now",
+    "scanNowConfirm": {
+      "title": "Run the scheduled scan now?",
+      "description": "Checks the last few days against every active zone and sends a WhatsApp alert to the zone group for each new violation — the same round the nightly timer runs. To look without alerting anyone, use “Scan a range”.",
+      "confirm": "Scan and send alerts"
+    },
     "scanRange": {
       "action": "Scan a range",
       "title": "Scan a date range",

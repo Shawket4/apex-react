@@ -1,6 +1,6 @@
-import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import { Crosshair, History, X } from 'lucide-react';
+import { formatCairoStamp } from '@/shared/lib/cairo';
 import { Button } from '@/shared/ui/button';
 import { STATUS_COLOR, type LiveStatus, type Vehicle } from '../schemas';
 import { groupOf } from './status-group';
@@ -9,16 +9,6 @@ import { groupOf } from './status-group';
 /* The selected vehicle's floating card (live mode): identity, live status,   */
 /* and the two actions that matter — focus and replay.                        */
 /* -------------------------------------------------------------------------- */
-
-const makeTsFmt = (locale: string) =>
-  new Intl.DateTimeFormat(locale, {
-    timeZone: 'Africa/Cairo',
-    hour12: false,
-    day: 'numeric',
-    month: 'short',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
 
 export function VehicleCard({
   vehicle,
@@ -34,8 +24,6 @@ export function VehicleCard({
   onClose: () => void;
 }) {
   const { t, i18n } = useTranslation();
-  const locale = i18n.language.startsWith('ar') ? 'ar-EG' : 'en-GB';
-  const tsFmt = React.useMemo(() => makeTsFmt(locale), [locale]);
   const group = groupOf(vehicle, live);
   const ts = live?.timestamp ?? vehicle.lastLocationAt;
 
@@ -64,7 +52,7 @@ export function VehicleCard({
           </p>
           {ts && (
             <p className="font-mono text-[10.5px] text-muted-foreground tabular-nums">
-              {tsFmt.format(ts)}
+              <bdi>{formatCairoStamp(ts, i18n.language)}</bdi>
             </p>
           )}
         </div>

@@ -36,9 +36,13 @@ async function updateZone(id: number, payload: UpdateZonePayload): Promise<Zone>
   return zoneSchema.parse(res.data);
 }
 
-async function deleteZone(id: number): Promise<Zone> {
+/** The proxy answers a delete with `{"success": true}`, not the zone. Parsing
+ *  that as a zone threw, so every successful delete toasted an error. */
+export const deleteZoneResponseSchema = z.object({ success: z.literal(true) });
+
+async function deleteZone(id: number): Promise<void> {
   const res = await apiClientEtit.delete(`${PREFIX}/zones/${encodeURIComponent(id)}`);
-  return zoneSchema.parse(res.data);
+  deleteZoneResponseSchema.parse(res.data);
 }
 
 /**
