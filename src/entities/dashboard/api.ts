@@ -67,8 +67,10 @@ export const dashboardApi = {
   async trips(scope?: DashboardScope): Promise<TripsDrawer> {
     return tripsDrawerSchema.parse(await getPacked('/api/v1/dashboard/trips', scope));
   },
-  async advances(): Promise<AdvancesDrawer> {
-    return advancesDrawerSchema.parse(await getPacked('/api/v1/dashboard/advances'));
+  /** The window's advances — the same window as the Owed card, so the drawer
+   *  lists exactly the people behind its figure. */
+  async advances(scope?: DashboardScope): Promise<AdvancesDrawer> {
+    return advancesDrawerSchema.parse(await getPacked('/api/v1/dashboard/advances', scope));
   },
   async fuel(scope?: DashboardScope): Promise<FuelDrawer> {
     return fuelDrawerSchema.parse(await getPacked('/api/v1/dashboard/fuel', scope));
