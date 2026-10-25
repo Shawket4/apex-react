@@ -5,6 +5,7 @@ import { prefetchDrivers, prefetchDriversList } from '@/entities/driver/queries'
 import { prefetchCars } from '@/entities/car/queries';
 import { prefetchOilChanges } from '@/entities/oil-change/queries';
 import { prefetchFeeMappings } from '@/entities/fee-mapping/queries';
+import { prefetchPricingRules } from '@/entities/pricing/queries';
 import { prefetchUsers } from '@/entities/user/queries';
 import { prefetchServiceInvoices } from '@/entities/service-invoice/queries';
 import { prefetchTrips } from '@/entities/trip/queries';
@@ -62,6 +63,7 @@ const DATA_WARMERS: Record<string, (qc: QueryClient) => void> = {
     prefetchFeeMappings(qc);
     prefetchDropoffChoices(qc); // the inline add/edit form mounts its picker
   },
+  '/pricing': prefetchPricingRules,
   '/users': prefetchUsers,
   '/etit': prefetchTrackingFleet,
   '/zones': prefetchZones,

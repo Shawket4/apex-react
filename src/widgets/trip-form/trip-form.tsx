@@ -50,7 +50,8 @@ import type {
 import type { ApproveBatchNavState } from '@/entities/receipt-batch/schemas';
 import type { MappingDetail } from '@/entities/mapping/schemas';
 import { extractErrorMessage } from '@/shared/api/errors';
-import { today, formatNumber, formatCurrency } from '@/shared/lib/format';
+import { today, formatNumber } from '@/shared/lib/format';
+import { useMappingFeeLabel } from '@/entities/pricing/use-fee-label';
 import { cn } from '@/shared/lib/cn';
 import { normalize } from '@/shared/lib/normalize';
 import { decodeUrlState, encodeUrlState } from '@/shared/lib/url-state';
@@ -1330,6 +1331,7 @@ export function TripForm({ parentId }: TripFormProps) {
               <ContainerCard
                 key={container.id ?? `new-${idx}`}
                 idx={idx}
+                company={company}
                 container={container}
                 canRemove={containers.length > 1}
                 terminalChosen={!!terminal}
@@ -1572,6 +1574,8 @@ function CapacityBanner({
 
 interface ContainerCardProps {
   idx: number;
+  /** Decides what the route's fee means (a band, a rate, or nothing). */
+  company: string;
   container: ContainerForm;
   canRemove: boolean;
   terminalChosen: boolean;
@@ -1591,6 +1595,7 @@ interface ContainerCardProps {
 
 function ContainerCard({
   idx,
+  company,
   container,
   canRemove,
   terminalChosen,
@@ -1605,9 +1610,11 @@ function ContainerCard({
   onReceiptBlur,
 }: ContainerCardProps) {
   const { t } = useTranslation();
-  const fee = container._fee ?? 0;
+  // The fee is a band (Watanya), a per-1,000 L rate (Petrol Arrows) or unused
+  // (per-km companies) — never EGP — and only shown from permission 3.
+  const feeLabel = useMappingFeeLabel(company)(container._fee);
   const distance = container._distance ?? 0;
-  const hasMapping = fee > 0 || distance > 0;
+  const hasMapping = feeLabel != null || distance > 0;
 
   // Parse + serialize gas types between the comma-separated string the
   // backend wants and the array our MultiSelect uses
@@ -1817,9 +1824,9 @@ function ContainerCard({
               {formatNumber(distance, 1)} km
             </span>
           )}
-          {fee > 0 && (
-            <span className="inline-flex items-center gap-1 font-mono tabular-nums text-money">
-              {formatCurrency(fee)}
+          {feeLabel && (
+            <span className="inline-flex items-center gap-1 tabular-nums text-muted-foreground">
+              {feeLabel}
             </span>
           )}
         </div>

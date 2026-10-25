@@ -116,7 +116,8 @@
     "expensesReview": "Review queue",
     "primary": "Main navigation",
     "receiptPiles": "Receipt piles",
-    "advisor": "Advisor"
+    "advisor": "Advisor",
+    "pricing": "Pricing"
   },
   "auth": {
     "loginTitle": "Welcome back",
@@ -673,7 +674,8 @@
       "tank": "Tank",
       "terminal": "Terminal",
       "vehicleDriver": "Vehicle / Driver",
-      "revenue": "Revenue"
+      "revenue": "Revenue",
+      "distanceRevenue": "Distance / Revenue"
     },
     "fields": {
       "company": "Company",
@@ -2662,6 +2664,188 @@
     },
     "errors": {
       "streamEnded": "The advisor stopped before it answered. Try again."
+    }
+  },
+  "pricing": {
+    "title": "Pricing",
+    "subtitle": "The rates trip revenue and car rental are worked out from, by company and by the date each version starts.",
+    "loadFailed": "Could not load the pricing rules",
+    "empty": "No pricing rules yet",
+    "emptyHint": "Once a company has a rule, its trips are priced as they are saved.",
+    "tabs": {
+      "rules": "Rules",
+      "rental": "Truck rental"
+    },
+    "actions": {
+      "reprice": "Re-price trips",
+      "newVersion": "New version",
+      "deleteVersion": "Delete this scheduled version"
+    },
+    "fee": {
+      "band": "Band {{band}}",
+      "rate": "Rate {{rate}} EGP per 1,000 L"
+    },
+    "method": {
+      "per_1000l_fee": "Per 1,000 L at the route's rate",
+      "band_per_1000l": "Per 1,000 L by band",
+      "per_km": "Per km"
+    },
+    "methodHint": {
+      "per_1000l_fee": "Each route's fee in Fee Mappings is its rate per 1,000 L. Revenue = litres × rate ÷ 1,000.",
+      "band_per_1000l": "Each route's fee in Fee Mappings is its band number. Revenue = litres × the band's rate ÷ 1,000.",
+      "per_km": "Revenue = the rate × the trip's furthest drop, counted once per trip."
+    },
+    "rentalMode": {
+      "none": "No car rental",
+      "monthly_taper": "Monthly per car, tapered by days worked",
+      "per_car_day": "Per car per day worked"
+    },
+    "status": {
+      "current": "In force",
+      "scheduled": "Scheduled",
+      "past": "Superseded"
+    },
+    "rule": {
+      "method": "Pricing method",
+      "perKmRate": "Rate per km",
+      "perKmValue": "{{rate}} / km",
+      "rate": "Rate",
+      "routeFeeHint": "Set per route in Fee Mappings",
+      "vat": "VAT",
+      "vatValue": "VAT {{vat}}",
+      "rental": "Car rental",
+      "bandTable": "Band rates",
+      "bandUnit": "EGP per 1,000 L",
+      "bandsValue_one": "{{count}} band",
+      "bandsValue_other": "{{count}} bands",
+      "routeFeeValue": "Route rate per 1,000 L",
+      "rentalTaperValue": "{{amount}} per car-month, in full from {{days}} days",
+      "rentalPerDayValue": "{{amount}} per car-day",
+      "rentalNone": "No rental"
+    },
+    "card": {
+      "inForceSince": "In force since {{date}}",
+      "noCurrent": "No version in force yet",
+      "noCurrentHint": "Every version of this company starts in the future.",
+      "scheduled": "A new version starts on {{date}}",
+      "history_one": "History · {{count}} version",
+      "history_other": "History · {{count}} versions"
+    },
+    "form": {
+      "title": "New version · {{company}}",
+      "description": "A new version applies to trips dated on or after its start. Trips already priced keep their figures until you re-price them.",
+      "savedTitle": "Version saved",
+      "effectiveFrom": "Starts on",
+      "rentalMonthHint": "Rental is a monthly contract: a version that starts mid-month changes rental only from the next month. Start rental changes on the 1st.",
+      "pastDateHint": "This date is today or earlier. Trips from then on keep their current figures until you re-price them — you will be offered that after saving.",
+      "tripPricing": "Trip pricing",
+      "perKmRate": "Rate per km",
+      "perKmUnit": "EGP / km",
+      "vatPercent": "VAT",
+      "rentalMode": "Rental mode",
+      "rentalPerMonth": "Rental per car-month",
+      "rentalPerDay": "Rental per car-day",
+      "fullDays": "Days for a full month",
+      "fullDaysHint": "A car that works fewer days than this is charged in proportion.",
+      "notes": "Notes",
+      "notesPlaceholder": "Why the rate changed, the contract reference…",
+      "fixErrors": "Fix the highlighted fields to save.",
+      "save": "Save version from {{date}}",
+      "saveFailed": "Could not save the version",
+      "savedBody": "{{company}}'s new version starts on {{date}}.",
+      "unrepriced_one": "{{n}} trip dated from {{date}} is still priced under an older version. It keeps its figures until you re-price it.",
+      "unrepriced_other": "{{n}} trips dated from {{date}} are still priced under an older version. They keep their figures until you re-price them.",
+      "nothingToReprice": "No trips are dated on or after then yet. New trips will be priced under this version as they are saved.",
+      "repriceFrom": "Re-price trips from {{date}}",
+      "bandColumn": "Band",
+      "bandRateColumn": "Rate per 1,000 L",
+      "bandNumberLabel": "Band number, row {{n}}",
+      "bandRateLabel": "Rate for band {{band}}",
+      "removeBand": "Remove band {{band}}",
+      "addBand": "Add band",
+      "errors": {
+        "company": "Choose a company.",
+        "date": "Pick the date this version starts.",
+        "duplicateDate": "This company already has a version starting on this date.",
+        "vat": "Enter VAT as a percentage from 0 to under 100.",
+        "positive": "Enter an amount above zero.",
+        "bandNumber": "Band numbers are whole numbers from 1.",
+        "bandDuplicate": "This band number is already in the table.",
+        "bandRate": "Enter this band's rate, above zero.",
+        "bandsRequired": "Add at least one band.",
+        "bandsInvalid": "Fix the highlighted bands.",
+        "fullDays": "Enter a whole number of days from 1 to 31."
+      }
+    },
+    "reprice": {
+      "title": "Re-price trips",
+      "doneTitle": "Trips re-priced",
+      "description": "Work out the revenue of every trip dated in the range again, under the version in force on its date, and recompute the car rental of the months it touches.",
+      "failed": "Could not re-price",
+      "badRange": "The end date is before the start date.",
+      "company": "Company",
+      "allCompanies": "All companies",
+      "review": "Review",
+      "confirmLead": "You are about to re-price:",
+      "range": "Dates",
+      "rangeValue": "{{from}} – {{to}}",
+      "confirmBody": "Stored revenue and rental in this range will be replaced by figures from the current rules. It runs as one step: everything changes, or nothing does.",
+      "includesFrozen": "This includes frozen months. Their rental will be recomputed and frozen again.",
+      "running": "Re-pricing…",
+      "confirm": "Re-price now",
+      "frozenTitle_one": "The range includes {{count}} frozen month",
+      "frozenTitle_other": "The range includes {{count}} frozen months",
+      "frozenBody": "A frozen month is closed and may already be invoiced. Nothing was changed.",
+      "includeFrozen": "Include frozen months",
+      "includeFrozenWarning": "Their figures may no longer match invoices already sent. Only do this to correct a mistake.",
+      "changeRange": "Change the range",
+      "continueWithFrozen": "Continue with frozen months",
+      "doneBody_one": "{{n}} trip re-priced, {{changed}} changed.",
+      "doneBody_other": "{{n}} trips re-priced, {{changed}} changed.",
+      "monthsRecomputed_one": "{{n}} month's rental recomputed",
+      "monthsRecomputed_other": "{{n}} months' rental recomputed",
+      "pricingErrors_one": "{{n}} trip could not be priced (unknown band, route or rule) and has no revenue until its data is fixed.",
+      "pricingErrors_other": "{{n}} trips could not be priced (unknown band, route or rule) and have no revenue until their data is fixed.",
+      "figure": "Figure",
+      "before": "Before",
+      "after": "After",
+      "change": "Change"
+    },
+    "totals": {
+      "trips": "Trips",
+      "unpriced": "Unpriced trips",
+      "base_revenue": "Trip revenue",
+      "revenue_vat": "VAT on trips",
+      "rental": "Car rental",
+      "rental_vat": "VAT on rental",
+      "total": "Total"
+    },
+    "truckMonths": {
+      "month": "Month",
+      "company": "Company",
+      "loadFailed": "Could not load truck rental",
+      "empty": "No truck rental for {{month}}",
+      "emptyHint": "Rental is charged only for companies that rent the cars (TAQA, Petromin), once trucks have trips that month.",
+      "frozen": "Frozen",
+      "open": "Open",
+      "cars": "Trucks",
+      "carDays": "Truck-days",
+      "rental": "Rental",
+      "vat": "VAT",
+      "total": "Total with VAT",
+      "plate": "Truck",
+      "terminal": "Terminal",
+      "daysWorked": "Days worked",
+      "chargeableDays": "Chargeable days",
+      "ofMonth": "of {{n}}",
+      "vatShort": "VAT {{amount}}",
+      "daysLine": "{{worked}} days worked · {{chargeable}} chargeable"
+    },
+    "delete": {
+      "title": "Delete this scheduled version?",
+      "body": "{{company}}'s version starting on {{date}} will be removed. The version before it stays in force.",
+      "success": "Version deleted",
+      "failed": "Could not delete the version"
     }
   }
 }

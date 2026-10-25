@@ -66,8 +66,6 @@ export interface TripRow {
 
   /** Undefined below permission 4 — never zero, which would read as "earned nothing". */
   revenue?: number;
-  /** The fee mapping value, summed. A rate, or a band number, depending on company. */
-  fee: number;
 }
 
 /** Arabic comma — these are Arabic place names, and the ASCII one reads wrong. */
@@ -97,7 +95,6 @@ export function toRow(item: TripListItem): TripRow | null {
     kmIsMax: containers.length > 1,
 
     revenue: sumRevenue(containers, 'allocated_total'),
-    fee: containers.reduce((sum, c) => sum + (c.fee || 0), 0),
   };
 }
 

@@ -24,6 +24,8 @@ import { useQueryClient } from '@tanstack/react-query';
 import { intentProps, warmTripForm } from '@/shared/lib/prefetch';
 import { prefetchParentContainers, prefetchTripDetails } from '@/entities/trip/queries';
 import { Truncate } from '@/shared/ui/truncate';
+import { usePermissions } from '@/shared/hooks/use-permissions';
+import { tripMoneyCell } from '@/entities/pricing/masking';
 import { ReceiptStatusBadge } from './receipt-status-badge';
 import { ContainerRevenue, RevenueBreakdown } from './revenue-breakdown';
 import { DROP_SEPARATOR, type TripRow } from './trip-row';
@@ -37,10 +39,10 @@ import { DROP_SEPARATOR, type TripRow } from './trip-row';
 /* mixed four padding scales between the header and the body.                  */
 /*                                                                            */
 /* Nine columns, and no tenth: at permission 4 the Distance cell's second line */
-/* becomes REVENUE and the fee moves into its popover. An extra column crushed */
-/* the route and vehicle cells on a laptop, and revenue is the number people   */
-/* come to this page for while `fee` is only an input to it — for Watanya not  */
-/* even money, but a band from 1 to 15.                                        */
+/* is REVENUE, with the fee inside its popover. An extra column crushed the    */
+/* route and vehicle cells on a laptop. Below 4 the second line is empty: the  */
+/* raw fee used to sit there as EGP, but it is only an input to revenue — for  */
+/* Watanya a band from 1 to 15, for Petrol Arrows a per-1,000 L rate.          */
 /* -------------------------------------------------------------------------- */
 
 export interface TripsDesktopTableProps {
@@ -94,7 +96,7 @@ export function TripsDesktopTable({
                 {t('trips.columns.tank')}
               </Th>
               <Th align="end" className="hidden lg:table-cell">
-                {t('trips.columns.distanceFee')}
+                {showRevenue ? t('trips.columns.distanceRevenue') : t('trips.fields.distance')}
               </Th>
               <Th align="center" className="hidden md:table-cell">
                 {t('trips.columns.status')}
@@ -361,12 +363,13 @@ function VehicleDriver({ trip }: { trip: Trip }) {
 /**
  * Distance over money.
  *
- * Below permission 4 the second line is the fee, exactly as it always was.
- * At permission 4 it is revenue, pressable, with the fee inside the breakdown.
+ * At permission 4 the second line is revenue, pressable, with the fee inside
+ * the breakdown. Below 4 there is no second line (see tripMoneyCell).
  */
 function DistanceMoney({ row, showRevenue }: { row: TripRow; showRevenue: boolean }) {
   const { t } = useTranslation();
-  const canSee = showRevenue && row.revenue != null;
+  const { level } = usePermissions();
+  const revenue = showRevenue ? tripMoneyCell(level, row.revenue) : null;
 
   return (
     <div className="space-y-0.5">
@@ -380,7 +383,7 @@ function DistanceMoney({ row, showRevenue }: { row: TripRow; showRevenue: boolea
           ? t('trips.mobile.maxDistance', { km: formatNumber(row.km, 0) })
           : `${formatNumber(row.km, 0)} km`}
       </div>
-      {canSee ? (
+      {revenue != null && (
         <Popover>
           <PopoverTrigger asChild>
             <button
@@ -392,7 +395,7 @@ function DistanceMoney({ row, showRevenue }: { row: TripRow; showRevenue: boolea
                          underline-offset-4 hover:bg-money/10 focus-visible:outline-none
                          focus-visible:ring-2 focus-visible:ring-ring"
             >
-              {formatCurrency(row.revenue!)}
+              {formatCurrency(revenue)}
             </button>
           </PopoverTrigger>
           <PopoverContent
@@ -403,10 +406,6 @@ function DistanceMoney({ row, showRevenue }: { row: TripRow; showRevenue: boolea
             <RevenueBreakdown containers={row.containers} />
           </PopoverContent>
         </Popover>
-      ) : (
-        <div className="whitespace-nowrap font-mono text-[12.5px] font-semibold tabular-nums text-money">
-          {formatCurrency(row.fee)}
-        </div>
       )}
     </div>
   );
