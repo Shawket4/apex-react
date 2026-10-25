@@ -5,6 +5,12 @@ on:
     branches: [main, master]
   workflow_dispatch:
 
+# One deploy at a time. Each run clears the folder on the VPS before copying,
+# so two overlapping runs delete each other's files mid-upload.
+concurrency:
+  group: deploy-dashboard
+  cancel-in-progress: false
+
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
