@@ -63,7 +63,7 @@ const DRAWER_FETCHERS: Record<string, (scope?: DashboardScope) => Promise<Drawer
   revenue: (scope?: DashboardScope) => dashboardApi.revenue(scope),
   'cash-out': (scope?: DashboardScope) => dashboardApi.cashOut(scope),
   trips: (scope?: DashboardScope) => dashboardApi.trips(scope),
-  advances: () => dashboardApi.advances(),
+  advances: (scope?: DashboardScope) => dashboardApi.advances(scope),
   fuel: (scope?: DashboardScope) => dashboardApi.fuel(scope),
 };
 export type DrawerKind = 'revenue' | 'cash-out' | 'trips' | 'advances' | 'fuel';
