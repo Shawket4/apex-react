@@ -31,7 +31,8 @@ interface SuggestionCardProps {
 
 /**
  * One proposed change: what and why, the before → after, and the decision.
- * Approving applies it in FalconGo under the signed-in user's name, marked as
+ * Approving applies it in the system that owns the record (FalconGo,
+ * maintenance, or the bank ledger) under the signed-in user's name, marked as
  * made via AI — the confirm dialog says so before anything is sent.
  */
 export function SuggestionCard({ suggestion, className }: SuggestionCardProps) {
@@ -48,6 +49,7 @@ export function SuggestionCard({ suggestion, className }: SuggestionCardProps) {
       ? reject.data
       : suggestion;
   const busy = approve.isPending || reject.isPending;
+  const service = t(`advisor.suggestion.services.${s.target ?? 'falcon'}`, s.target ?? 'FalconGo');
   const result = s.status === 'applied' || s.status === 'failed' ? describeResult(s.result) : null;
 
   const onApprove = async () => {
@@ -65,6 +67,8 @@ export function SuggestionCard({ suggestion, className }: SuggestionCardProps) {
           <p className="flex items-center gap-1.5 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
             <Sparkles className="h-3 w-3 text-primary" aria-hidden="true" />
             {t(`advisor.suggestion.kinds.${s.kind}`, humanizeField(s.kind))}
+            <span aria-hidden="true">·</span>
+            <span className="normal-case tracking-normal">{service}</span>
           </p>
           <h4 dir="auto" className="text-sm font-semibold">
             {s.title}
@@ -108,9 +112,10 @@ export function SuggestionCard({ suggestion, className }: SuggestionCardProps) {
           <p className="font-medium">
             {s.status === 'applied'
               ? t('advisor.suggestion.appliedAt', {
+                  service,
                   date: s.applied_at ? formatDateTime(s.applied_at) : '',
                 })
-              : t('advisor.suggestion.failedWith', { status: s.result_status ?? '—' })}
+              : t('advisor.suggestion.failedWith', { service, status: s.result_status ?? '—' })}
           </p>
           {result && (
             <p dir="auto" className="mt-1 break-words opacity-90">
@@ -155,6 +160,7 @@ export function SuggestionCard({ suggestion, className }: SuggestionCardProps) {
         title={t('advisor.suggestion.confirmTitle')}
         description={t('advisor.suggestion.confirmDescription', {
           title: s.title,
+          service,
           name: userName || t('advisor.suggestion.you'),
         })}
         confirmLabel={t('advisor.suggestion.approveAndApply')}
