@@ -21,7 +21,9 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
     "forceConsistentCasingInFileNames": true,
-    "baseUrl": ".",
+    "types": [
+      "google.maps"
+    ],
     "paths": {
       "@/*": [
         "./src/*"
