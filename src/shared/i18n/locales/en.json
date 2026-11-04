@@ -1115,6 +1115,11 @@
         "rent": "Rent",
         "total": "Total"
       },
+      "driverTable": {
+        "title": "All drivers",
+        "subtitle": "{{count}} drivers · click any column to sort",
+        "noDriver": "No driver recorded"
+      },
       "excel": {
         "metric": "Metric",
         "value": "Value",
@@ -1124,7 +1129,8 @@
           "groups": "Groups",
           "routes": "Routes",
           "cars": "Vehicles",
-          "daily": "Daily"
+          "daily": "Daily",
+          "drivers": "Drivers"
         },
         "cols": {
           "trips": "Trips",
@@ -1152,7 +1158,8 @@
       "subtabs": {
         "overview": "Overview",
         "cars": "Vehicles",
-        "routes": "Routes"
+        "routes": "Routes",
+        "drivers": "Drivers"
       },
       "multiRouteHint": "{{count}} trip delivered to more than one route, so it is counted by each route it served. The company total counts it once.",
       "multiRouteHint_other": "{{count}} trips delivered to more than one route, so each is counted by every route it served. The company total counts each once."

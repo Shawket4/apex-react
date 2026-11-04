@@ -74,6 +74,26 @@ export const carTotalsRowSchema = z
 export type CarTotalsRow = z.infer<typeof carTotalsRowSchema>;
 
 // -----------------------------------------------------------------------------
+// Top-level per-driver aggregate (`driverTotals` array)
+//
+// The same stored rows as `carTotals`, grouped by the driver name on the trip
+// instead of the plate, so the two lists add up to the same figures. An empty
+// `driver_name` is the rows that recorded no driver.
+// -----------------------------------------------------------------------------
+
+export const driverTotalsRowSchema = z
+  .object({
+    driver_name: z.string().default(''),
+    liters: z.number().default(0),
+    distance: z.number().default(0),
+    base_revenue: z.number().default(0),
+    vat: z.number().default(0),
+    rent: z.number().default(0),
+  })
+  .passthrough();
+export type DriverTotalsRow = z.infer<typeof driverTotalsRowSchema>;
+
+// -----------------------------------------------------------------------------
 // Route aggregate
 // -----------------------------------------------------------------------------
 
@@ -254,6 +274,7 @@ function normalizeEnvelope(raw: unknown): unknown {
     hasFinancialAccess:
       r.hasFinancialAccess ?? r.has_financial_access ?? false,
     carTotals: r.carTotals ?? r.car_totals ?? [],
+    driverTotals: r.driverTotals ?? r.driver_totals ?? [],
   };
 }
 
@@ -264,6 +285,7 @@ export const tripStatisticsResponseSchema = z.preprocess(
     statsByDate: z.array(dailyStatSchema),
     hasFinancialAccess: z.boolean(),
     carTotals: z.array(carTotalsRowSchema).default([]),
+    driverTotals: z.array(driverTotalsRowSchema).default([]),
   }),
 );
 export type TripStatisticsResponse = z.infer<typeof tripStatisticsResponseSchema>;
