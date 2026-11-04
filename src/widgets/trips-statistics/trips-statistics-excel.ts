@@ -296,16 +296,16 @@ function routeColumns(t: TFunction, hasFinancialAccess: boolean) {
  * The Vehicles and Drivers sheets use the top-level `carTotals` /
  * `driverTotals` arrays from the response — the backend already grouped them
  * by plate or by driver and pre-summed across every nesting layer, so this is
- * more accurate than walking the trees ourselves. `first` is the plate or the
- * driver column.
+ * more accurate than walking the trees ourselves. `lead` is what each row
+ * totals: the plate, or the driver and their other names.
  */
 function totalsColumns<T extends TotalsRow>(
   t: TFunction,
   hasFinancialAccess: boolean,
-  first: { key: string; header: string; accessor: (r: T) => string; width: number },
+  lead: { key: string; header: string; accessor: (r: T) => string; width: number }[],
 ) {
   const base = [
-    first,
+    ...lead,
     {
       key: 'liters',
       header: t('trips.statistics.excel.cols.volume'),
@@ -588,12 +588,14 @@ export async function exportTripStatistics({
             {
               name: t('trips.statistics.excel.sheets.cars'),
               title: t('trips.statistics.excel.sheets.cars'),
-              columns: totalsColumns<CarTotalsRow>(t, hasFinancialAccess, {
-                key: 'plate',
-                header: t('trips.fields.vehicle'),
-                accessor: (r) => r.car_no_plate,
-                width: 14,
-              }),
+              columns: totalsColumns<CarTotalsRow>(t, hasFinancialAccess, [
+                {
+                  key: 'plate',
+                  header: t('trips.fields.vehicle'),
+                  accessor: (r) => r.car_no_plate,
+                  width: 14,
+                },
+              ]),
               rows: sortedCarTotals,
               totals: true,
             },
@@ -604,12 +606,20 @@ export async function exportTripStatistics({
             {
               name: t('trips.statistics.excel.sheets.drivers'),
               title: t('trips.statistics.excel.sheets.drivers'),
-              columns: totalsColumns<DriverTotalsRow>(t, hasFinancialAccess, {
-                key: 'driver',
-                header: t('trips.fields.driver'),
-                accessor: (r) => r.driver_name || t('trips.statistics.driverTable.noDriver'),
-                width: 24,
-              }),
+              columns: totalsColumns<DriverTotalsRow>(t, hasFinancialAccess, [
+                {
+                  key: 'driver',
+                  header: t('trips.fields.driver'),
+                  accessor: (r) => r.driver_name || t('trips.statistics.driverTable.noDriver'),
+                  width: 24,
+                },
+                {
+                  key: 'other_names',
+                  header: t('trips.statistics.driverTable.otherNames'),
+                  accessor: (r) => r.other_names.join(', '),
+                  width: 24,
+                },
+              ]),
               rows: sortedDriverTotals,
               totals: true,
             },

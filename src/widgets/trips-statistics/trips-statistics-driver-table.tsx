@@ -10,9 +10,10 @@ interface TripsStatisticsDriverTableProps {
 }
 
 /**
- * Drivers sub-tab — the Vehicles table grouped by the driver on the trip
- * instead of the plate, from `driverTotals`. Both add up to the same totals;
- * trips that recorded no driver share one row.
+ * Drivers sub-tab — the Vehicles table grouped by driver instead of plate,
+ * from `driverTotals`. Both add up to the same totals. A renamed driver is one
+ * row under their current name, the names their trips recorded before listed
+ * beneath it; trips that recorded no driver share one row.
  */
 export function TripsStatisticsDriverTable({
   driverTotals,
@@ -24,16 +25,29 @@ export function TripsStatisticsDriverTable({
     () => ({
       accessorKey: 'driver_name',
       header: () => t('trips.fields.driver'),
-      cell: ({ row }) =>
-        row.original.driver_name ? (
-          <span className="font-medium" dir="auto">
-            {row.original.driver_name}
-          </span>
-        ) : (
-          <span className="italic text-muted-foreground">
-            {t('trips.statistics.driverTable.noDriver')}
-          </span>
-        ),
+      cell: ({ row }) => {
+        const { driver_name, other_names } = row.original;
+        return (
+          <div>
+            {driver_name ? (
+              <span className="font-medium" dir="auto">
+                {driver_name}
+              </span>
+            ) : (
+              <span className="italic text-muted-foreground">
+                {t('trips.statistics.driverTable.noDriver')}
+              </span>
+            )}
+            {other_names.length > 0 && (
+              <div className="text-xs text-muted-foreground" dir="auto">
+                {t('trips.statistics.driverTable.alsoRecordedAs', {
+                  names: other_names,
+                })}
+              </div>
+            )}
+          </div>
+        );
+      },
     }),
     [t],
   );

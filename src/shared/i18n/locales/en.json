@@ -1118,7 +1118,9 @@
       "driverTable": {
         "title": "All drivers",
         "subtitle": "{{count}} drivers · click any column to sort",
-        "noDriver": "No driver recorded"
+        "noDriver": "No driver recorded",
+        "alsoRecordedAs": "Also recorded as {{names, list}}",
+        "otherNames": "Other names"
       },
       "excel": {
         "metric": "Metric",
