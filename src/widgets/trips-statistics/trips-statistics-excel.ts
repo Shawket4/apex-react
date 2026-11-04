@@ -5,10 +5,12 @@ import type {
   CarTotalsRow,
   CompanyStat,
   DailyStat,
+  DriverTotalsRow,
   GroupStat,
   RouteStat,
   TripStatisticsResponse,
 } from '@/entities/trip-statistics/schemas';
+import type { TotalsRow } from './trips-statistics-totals-table';
 
 interface ExportStatisticsArgs {
   data: TripStatisticsResponse;
@@ -291,22 +293,23 @@ function routeColumns(t: TFunction, hasFinancialAccess: boolean) {
 }
 
 /**
- * Cars sheet uses the top-level `carTotals` array from the response — the
- * backend already deduplicated by plate and pre-summed across every nesting
- * layer, so this is more accurate than walking the trees ourselves.
+ * The Vehicles and Drivers sheets use the top-level `carTotals` /
+ * `driverTotals` arrays from the response — the backend already grouped them
+ * by plate or by driver and pre-summed across every nesting layer, so this is
+ * more accurate than walking the trees ourselves. `first` is the plate or the
+ * driver column.
  */
-function carTotalsColumns(t: TFunction, hasFinancialAccess: boolean) {
+function totalsColumns<T extends TotalsRow>(
+  t: TFunction,
+  hasFinancialAccess: boolean,
+  first: { key: string; header: string; accessor: (r: T) => string; width: number },
+) {
   const base = [
-    {
-      key: 'plate',
-      header: t('trips.fields.vehicle'),
-      accessor: (r: CarTotalsRow) => r.car_no_plate,
-      width: 14,
-    },
+    first,
     {
       key: 'liters',
       header: t('trips.statistics.excel.cols.volume'),
-      accessor: (r: CarTotalsRow) => r.liters,
+      accessor: (r: T) => r.liters,
       type: 'number' as const,
       width: 16,
       total: true,
@@ -314,7 +317,7 @@ function carTotalsColumns(t: TFunction, hasFinancialAccess: boolean) {
     {
       key: 'distance',
       header: t('trips.statistics.excel.cols.distance'),
-      accessor: (r: CarTotalsRow) => r.distance,
+      accessor: (r: T) => r.distance,
       type: 'number' as const,
       width: 14,
       total: true,
@@ -328,7 +331,7 @@ function carTotalsColumns(t: TFunction, hasFinancialAccess: boolean) {
     {
       key: 'base_revenue',
       header: t('trips.statistics.excel.cols.revenue'),
-      accessor: (r: CarTotalsRow) => r.base_revenue,
+      accessor: (r: T) => r.base_revenue,
       type: 'moneyRaw' as const,
       width: 16,
       total: true,
@@ -336,7 +339,7 @@ function carTotalsColumns(t: TFunction, hasFinancialAccess: boolean) {
     {
       key: 'vat',
       header: t('trips.statistics.excel.cols.vat'),
-      accessor: (r: CarTotalsRow) => r.vat,
+      accessor: (r: T) => r.vat,
       type: 'moneyRaw' as const,
       width: 14,
       total: true,
@@ -344,7 +347,7 @@ function carTotalsColumns(t: TFunction, hasFinancialAccess: boolean) {
     {
       key: 'rent',
       header: t('trips.statistics.excel.cols.carRent'),
-      accessor: (r: CarTotalsRow) => r.rent,
+      accessor: (r: T) => r.rent,
       type: 'moneyRaw' as const,
       width: 14,
       total: true,
@@ -352,7 +355,7 @@ function carTotalsColumns(t: TFunction, hasFinancialAccess: boolean) {
     {
       key: 'total',
       header: t('trips.statistics.excel.cols.totalWithVat'),
-      accessor: (r: CarTotalsRow) => r.base_revenue + r.vat,
+      accessor: (r: T) => r.base_revenue + r.vat,
       type: 'moneyRaw' as const,
       width: 16,
       total: true,
@@ -422,14 +425,16 @@ function dailyColumns(t: TFunction, hasFinancialAccess: boolean) {
  *   3. Groups        — group-level aggregates flattened across companies
  *   4. Routes        — every route flattened (with route_type + cars count)
  *   5. Cars          — uses top-level `carTotals` (pre-aggregated by backend)
- *   6. Daily         — full daily timeline
+ *   6. Drivers       — uses top-level `driverTotals`, the same per driver
+ *   7. Daily         — full daily timeline
  */
 export async function exportTripStatistics({
   data,
   t,
   meta,
 }: ExportStatisticsArgs): Promise<void> {
-  const { data: companies, statsByDate, hasFinancialAccess, carTotals } = data;
+  const { data: companies, statsByDate, hasFinancialAccess, carTotals, driverTotals } =
+    data;
   if (
     companies.length === 0 &&
     statsByDate.length === 0 &&
@@ -528,6 +533,11 @@ export async function exportTripStatistics({
       ? (b.base_revenue || 0) - (a.base_revenue || 0)
       : (b.liters || 0) - (a.liters || 0),
   );
+  const sortedDriverTotals = [...driverTotals].sort((a, b) =>
+    hasFinancialAccess
+      ? (b.base_revenue || 0) - (a.base_revenue || 0)
+      : (b.liters || 0) - (a.liters || 0),
+  );
   const sortedDaily = [...statsByDate].sort((a, b) =>
     (a.date || '').localeCompare(b.date || ''),
   );
@@ -578,8 +588,29 @@ export async function exportTripStatistics({
             {
               name: t('trips.statistics.excel.sheets.cars'),
               title: t('trips.statistics.excel.sheets.cars'),
-              columns: carTotalsColumns(t, hasFinancialAccess),
+              columns: totalsColumns<CarTotalsRow>(t, hasFinancialAccess, {
+                key: 'plate',
+                header: t('trips.fields.vehicle'),
+                accessor: (r) => r.car_no_plate,
+                width: 14,
+              }),
               rows: sortedCarTotals,
+              totals: true,
+            },
+          ]
+        : []),
+      ...(sortedDriverTotals.length > 0
+        ? [
+            {
+              name: t('trips.statistics.excel.sheets.drivers'),
+              title: t('trips.statistics.excel.sheets.drivers'),
+              columns: totalsColumns<DriverTotalsRow>(t, hasFinancialAccess, {
+                key: 'driver',
+                header: t('trips.fields.driver'),
+                accessor: (r) => r.driver_name || t('trips.statistics.driverTable.noDriver'),
+                width: 24,
+              }),
+              rows: sortedDriverTotals,
               totals: true,
             },
           ]

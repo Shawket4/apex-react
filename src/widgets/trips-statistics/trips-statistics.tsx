@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   Loader2,
   Route as RouteIcon,
+  UserRound,
 } from 'lucide-react';
 import {
   Tabs,
@@ -28,23 +29,25 @@ import { TripsStatisticsTimeline } from './trips-statistics-timeline';
 import { TripsStatisticsCompanies } from './trips-statistics-companies';
 import { TripsStatisticsRoutes } from './trips-statistics-routes';
 import { TripsStatisticsCarTable } from './trips-statistics-car-table';
+import { TripsStatisticsDriverTable } from './trips-statistics-driver-table';
 import { exportTripStatistics } from './trips-statistics-excel';
 
 interface TripsStatisticsProps {
   filters: TripStatisticsParams;
 }
 
-type SubTab = 'overview' | 'routes' | 'cars';
+type SubTab = 'overview' | 'routes' | 'cars' | 'drivers';
 
 /**
- * Statistics view with three sub-tabs:
+ * Statistics view with four sub-tabs:
  *
  *   - Overview — summary KPIs, daily timeline, per-company breakdown (the
  *     long-scroll layout from earlier iterations)
  *   - Routes   — company selector + route-level metrics table
  *   - Cars     — fleet-wide per-vehicle metrics table
+ *   - Drivers  — the same table per driver
  *
- * All three tabs share the same date / company filters from the parent page.
+ * All four tabs share the same date / company filters from the parent page.
  */
 export function TripsStatistics({ filters }: TripsStatisticsProps) {
   const { t } = useTranslation();
@@ -180,19 +183,24 @@ export function TripsStatistics({ filters }: TripsStatisticsProps) {
         </Button>
       </div>
 
+      {/* Four tabs fit a phone only without their icons. */}
       <Tabs value={subTab} onValueChange={(v) => setSubTab(v as SubTab)}>
         <TabsList>
           <TabsTrigger value="overview" className="gap-1.5">
-            <LayoutDashboard className="h-3.5 w-3.5" />
+            <LayoutDashboard className="hidden h-3.5 w-3.5 sm:block" />
             {t('trips.statistics.subtabs.overview')}
           </TabsTrigger>
           <TabsTrigger value="routes" className="gap-1.5">
-            <RouteIcon className="h-3.5 w-3.5" />
+            <RouteIcon className="hidden h-3.5 w-3.5 sm:block" />
             {t('trips.statistics.subtabs.routes')}
           </TabsTrigger>
           <TabsTrigger value="cars" className="gap-1.5">
-            <CarIcon className="h-3.5 w-3.5" />
+            <CarIcon className="hidden h-3.5 w-3.5 sm:block" />
             {t('trips.statistics.subtabs.cars')}
+          </TabsTrigger>
+          <TabsTrigger value="drivers" className="gap-1.5">
+            <UserRound className="hidden h-3.5 w-3.5 sm:block" />
+            {t('trips.statistics.subtabs.drivers')}
           </TabsTrigger>
         </TabsList>
 
@@ -228,6 +236,13 @@ export function TripsStatistics({ filters }: TripsStatisticsProps) {
         <TabsContent value="cars" className="mt-3 md:mt-4">
           <TripsStatisticsCarTable
             carTotals={data.carTotals}
+            hasFinancialAccess={data.hasFinancialAccess}
+          />
+        </TabsContent>
+
+        <TabsContent value="drivers" className="mt-3 md:mt-4">
+          <TripsStatisticsDriverTable
+            driverTotals={data.driverTotals}
             hasFinancialAccess={data.hasFinancialAccess}
           />
         </TabsContent>
