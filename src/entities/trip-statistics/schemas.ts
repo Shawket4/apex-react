@@ -76,14 +76,19 @@ export type CarTotalsRow = z.infer<typeof carTotalsRowSchema>;
 // -----------------------------------------------------------------------------
 // Top-level per-driver aggregate (`driverTotals` array)
 //
-// The same stored rows as `carTotals`, grouped by the driver name on the trip
-// instead of the plate, so the two lists add up to the same figures. An empty
-// `driver_name` is the rows that recorded no driver.
+// The same stored rows as `carTotals`, grouped by driver instead of plate, so
+// the two lists add up to the same figures. A driver is their ID: a renamed
+// driver is one row under their current name, with the names their trips
+// recorded before in `other_names`. An empty `driver_name` is the rows that
+// recorded no driver.
 // -----------------------------------------------------------------------------
 
 export const driverTotalsRowSchema = z
   .object({
+    /** Null for trips that recorded no driver ID and matched no driver by name. */
+    driver_id: z.number().nullable().optional(),
     driver_name: z.string().default(''),
+    other_names: z.array(z.string()).default([]),
     liters: z.number().default(0),
     distance: z.number().default(0),
     base_revenue: z.number().default(0),
