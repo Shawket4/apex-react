@@ -2,6 +2,7 @@ import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import type { ColumnDef } from '@tanstack/react-table';
 import type { DriverTotalsRow } from '@/entities/trip-statistics/schemas';
+import { matches } from '@/shared/lib/normalize';
 import { TripsStatisticsTotalsTable } from './trips-statistics-totals-table';
 
 interface TripsStatisticsDriverTableProps {
@@ -52,15 +53,29 @@ export function TripsStatisticsDriverTable({
     [t],
   );
 
+  // A renamed driver answers to their old names too, and the row of trips
+  // with no driver to its label.
+  const noDriver = t('trips.statistics.driverTable.noDriver');
+  const driverMatches = React.useCallback(
+    (row: DriverTotalsRow, query: string) =>
+      matches(row.driver_name || noDriver, query) ||
+      row.other_names.some((name) => matches(name, query)),
+    [noDriver],
+  );
+
   return (
     <TripsStatisticsTotalsTable
       rows={driverTotals}
       hasFinancialAccess={hasFinancialAccess}
       keyColumn={keyColumn}
       title={t('trips.statistics.driverTable.title')}
-      subtitle={t('trips.statistics.driverTable.subtitle', {
-        count: driverTotals.length,
-      })}
+      subtitle={(shown, total) =>
+        shown === total
+          ? t('trips.statistics.driverTable.subtitle', { count: total })
+          : t('trips.statistics.driverTable.subtitleFiltered', { shown, count: total })
+      }
+      searchPlaceholder={t('trips.statistics.driverTable.searchPlaceholder')}
+      matchesSearch={driverMatches}
     />
   );
 }

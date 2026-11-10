@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import type { ColumnDef } from '@tanstack/react-table';
 import { Card, CardContent } from '@/shared/ui/card';
 import { DataTable } from '@/shared/ui/data-table';
+import { SearchInput } from '@/shared/ui/search-input';
 import { formatNumber, formatCurrency } from '@/shared/lib/format';
 
 /** The figures a `carTotals` or `driverTotals` row carries. */
@@ -20,7 +21,11 @@ interface TripsStatisticsTotalsTableProps<T extends TotalsRow> {
   /** The first column: what each row totals (a vehicle, a driver). Memoise it. */
   keyColumn: ColumnDef<T>;
   title: string;
-  subtitle: string;
+  /** The line under the title, given the rows the search leaves and all rows. */
+  subtitle: (shown: number, total: number) => string;
+  searchPlaceholder: string;
+  /** Whether a row answers the search; only called with a non-blank query. */
+  matchesSearch: (row: T, query: string) => boolean;
 }
 
 /**
@@ -29,7 +34,8 @@ interface TripsStatisticsTotalsTableProps<T extends TotalsRow> {
  *
  * Backed by the response's pre-aggregated `carTotals` / `driverTotals`.
  * Sortable columns; uses the shared `DataTable` with the `footer` slot to
- * render a totals row at the bottom.
+ * render a totals row at the bottom. A search box narrows the rows, and the
+ * totals row then adds up the rows it left.
  *
  * The "Total" column is the sum of base revenue + VAT + rent — matches the
  * old dashboard's sort key for "Cars by Total" and the order rows appear in
@@ -41,19 +47,22 @@ export function TripsStatisticsTotalsTable<T extends TotalsRow>({
   keyColumn,
   title,
   subtitle,
+  searchPlaceholder,
+  matchesSearch,
 }: TripsStatisticsTotalsTableProps<T>) {
   const { t } = useTranslation();
+  const [search, setSearch] = React.useState('');
 
-  /* ---- Default sort: by total (rev + vat + rent) descending ---- */
+  /* ---- Search, then default sort: by total (rev + vat + rent) descending ---- */
 
-  const sorted = React.useMemo(
-    () =>
-      [...rows].sort(
-        (a, b) =>
-          b.base_revenue + b.vat + b.rent - (a.base_revenue + a.vat + a.rent),
-      ),
-    [rows],
-  );
+  const sorted = React.useMemo(() => {
+    const query = search.trim();
+    const shown = query ? rows.filter((r) => matchesSearch(r, query)) : rows;
+    return [...shown].sort(
+      (a, b) =>
+        b.base_revenue + b.vat + b.rent - (a.base_revenue + a.vat + a.rent),
+    );
+  }, [rows, search, matchesSearch]);
 
   const columns = React.useMemo<ColumnDef<T>[]>(() => {
     const base: ColumnDef<T>[] = [
@@ -227,9 +236,19 @@ export function TripsStatisticsTotalsTable<T extends TotalsRow>({
   return (
     <Card>
       <CardContent className="p-4 md:p-5">
-        <div className="mb-3">
-          <h3 className="text-base font-semibold">{title}</h3>
-          <p className="text-xs text-muted-foreground">{subtitle}</p>
+        <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h3 className="text-base font-semibold">{title}</h3>
+            <p className="text-xs text-muted-foreground">
+              {subtitle(sorted.length, rows.length)}
+            </p>
+          </div>
+          <SearchInput
+            value={search}
+            onChange={setSearch}
+            placeholder={searchPlaceholder}
+            className="sm:max-w-xs"
+          />
         </div>
         <DataTable
           columns={columns}

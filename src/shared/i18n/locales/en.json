@@ -1087,14 +1087,18 @@
         "baseRevenue": "Base revenue",
         "vat": "VAT",
         "rent": "Rent",
-        "total": "Total"
+        "total": "Total",
+        "subtitleFiltered": "{{shown}} of {{count}} vehicles · click any column to sort",
+        "searchPlaceholder": "Search by plate…"
       },
       "driverTable": {
         "title": "All drivers",
         "subtitle": "{{count}} drivers · click any column to sort",
         "noDriver": "No driver recorded",
         "alsoRecordedAs": "Also recorded as {{names, list}}",
-        "otherNames": "Other names"
+        "otherNames": "Other names",
+        "subtitleFiltered": "{{shown}} of {{count}} drivers · click any column to sort",
+        "searchPlaceholder": "Search by driver name…"
       },
       "excel": {
         "metric": "Metric",
