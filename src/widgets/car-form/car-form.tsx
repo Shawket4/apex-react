@@ -175,6 +175,12 @@ export function CarForm({ car, submitting, onSubmit, onCancel }: CarFormProps) {
           />
           <TextField
             control={control}
+            name="weight_tons"
+            label={t('cars.fields.weight')}
+            unit={t('cars.units.ton')}
+          />
+          <TextField
+            control={control}
             name="payload_tons"
             label={t('cars.fields.payload')}
             unit={t('cars.units.ton')}
@@ -194,6 +200,12 @@ export function CarForm({ car, submitting, onSubmit, onCancel }: CarFormProps) {
               control={control}
               name="trailer_chassis_no"
               label={t('cars.fields.chassisNumber')}
+            />
+            <TextField
+              control={control}
+              name="trailer_weight_tons"
+              label={t('cars.fields.weight')}
+              unit={t('cars.units.ton')}
             />
             <TextField
               control={control}
