@@ -14,10 +14,12 @@ const blank: CarFormValues = {
   engine_no: '',
   engine_cc: '',
   engine_cylinders: '',
+  weight_tons: '',
   payload_tons: '',
   color: '',
   trailer_no_plate: '',
   trailer_chassis_no: '',
+  trailer_weight_tons: '',
   trailer_payload_tons: '',
   trailer_color: '',
 };
@@ -32,6 +34,11 @@ describe('carFormSchema', () => {
     expect(carFormSchema.safeParse({ ...blank, payload_tons: 'heavy' }).success).toBe(false);
     expect(carFormSchema.safeParse({ ...blank, payload_tons: '-1' }).success).toBe(false);
     expect(carFormSchema.safeParse({ ...blank, payload_tons: '32.5' }).success).toBe(true);
+    expect(
+      carFormSchema.safeParse({ ...blank, weight_tons: '9.3', trailer_weight_tons: '15.8' })
+        .success,
+    ).toBe(true);
+    expect(carFormSchema.safeParse({ ...blank, trailer_weight_tons: '-2' }).success).toBe(false);
     expect(carFormSchema.safeParse({ ...blank, engine_cc: '12.5' }).success).toBe(false);
     expect(carFormSchema.safeParse({ ...blank, engine_cc: '12800' }).success).toBe(true);
     expect(carFormSchema.safeParse({ ...blank, engine_cylinders: '6.5' }).success).toBe(false);
@@ -46,11 +53,13 @@ describe('carPayload', () => {
       chassis_no: ' WDB123 ',
       engine_cc: '12800',
       engine_cylinders: '6',
+      weight_tons: '9.3',
     });
     expect(payload.car_no_plate).toBe('أ ب ج 1234');
     expect(payload.chassis_no).toBe('WDB123');
     expect(payload.engine_cc).toBe(12800);
     expect(payload.engine_cylinders).toBe(6);
+    expect(payload.weight_tons).toBe(9.3);
     expect(payload.payload_tons).toBe(0);
   });
 
@@ -67,11 +76,17 @@ describe('carPayload', () => {
   });
 
   it('sends the trailer only for a vehicle that pulls one', () => {
-    const trailer = { trailer_no_plate: ' ق ط 99 ', trailer_payload_tons: '30' };
+    const trailer = {
+      trailer_no_plate: ' ق ط 99 ',
+      trailer_weight_tons: '15.8',
+      trailer_payload_tons: '30',
+    };
     const truck = carPayload({ ...blank, ...trailer, car_type: 'Truck' });
     expect('trailer_no_plate' in truck).toBe(false);
+    expect('trailer_weight_tons' in truck).toBe(false);
     const articulated = carPayload({ ...blank, ...trailer, car_type: 'Trailer' });
     expect(articulated.trailer_no_plate).toBe('ق ط 99');
+    expect(articulated.trailer_weight_tons).toBe(15.8);
     expect(articulated.trailer_payload_tons).toBe(30);
     expect(articulated.trailer_color).toBe('');
   });
@@ -94,12 +109,15 @@ describe('carFormDefaults', () => {
       json_compartments: [7000, 8000],
       engine_cc: 12800,
       engine_cylinders: 6,
+      weight_tons: 9.3,
       payload_tons: 0,
       trailer_no_plate: null,
     });
     expect(values.compartments).toEqual(litres('7000', '8000'));
     expect(values.engine_cc).toBe('12800');
     expect(values.engine_cylinders).toBe('6');
+    expect(values.weight_tons).toBe('9.3');
+    expect(values.trailer_weight_tons).toBe('');
     expect(values.payload_tons).toBe('');
     expect(values.trailer_no_plate).toBe('');
     expect(carFormSchema.safeParse(values).success).toBe(true);

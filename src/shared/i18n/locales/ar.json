@@ -1739,6 +1739,7 @@
       "engineNumber": "رقم الموتور",
       "engineSize": "سعة الموتور",
       "cylinders": "عدد السلندرات",
+      "weight": "الوزن",
       "payload": "الحمولة",
       "color": "اللون",
       "trailerPlateNumber": "رقم لوحة المقطورة"

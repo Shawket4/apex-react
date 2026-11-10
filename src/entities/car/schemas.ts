@@ -44,12 +44,14 @@ export const carSchema = z.object({
   engine_no: z.string().optional().nullable(),
   engine_cc: z.number().optional().nullable(),
   engine_cylinders: z.number().optional().nullable(),
+  weight_tons: z.number().optional().nullable(),
   payload_tons: z.number().optional().nullable(),
   color: z.string().optional().nullable(),
   // A trailer stays with its truck, so its own plate, chassis, payload and
   // colour are fields of the car. Only meaningful when car_type is "Trailer".
   trailer_no_plate: z.string().optional().nullable(),
   trailer_chassis_no: z.string().optional().nullable(),
+  trailer_weight_tons: z.number().optional().nullable(),
   trailer_payload_tons: z.number().optional().nullable(),
   trailer_color: z.string().optional().nullable(),
 });
@@ -95,10 +97,12 @@ export const carFormSchema = z.object({
   engine_no: z.string(),
   engine_cc: optionalAmount(true),
   engine_cylinders: optionalAmount(true),
+  weight_tons: optionalAmount(false),
   payload_tons: optionalAmount(false),
   color: z.string(),
   trailer_no_plate: z.string(),
   trailer_chassis_no: z.string(),
+  trailer_weight_tons: optionalAmount(false),
   trailer_payload_tons: optionalAmount(false),
   trailer_color: z.string(),
 });
@@ -137,10 +141,12 @@ export function carFormDefaults(car?: Car | null): CarFormValues {
     engine_no: text(car?.engine_no),
     engine_cc: amountText(car?.engine_cc),
     engine_cylinders: amountText(car?.engine_cylinders),
+    weight_tons: amountText(car?.weight_tons),
     payload_tons: amountText(car?.payload_tons),
     color: text(car?.color),
     trailer_no_plate: text(car?.trailer_no_plate),
     trailer_chassis_no: text(car?.trailer_chassis_no),
+    trailer_weight_tons: amountText(car?.trailer_weight_tons),
     trailer_payload_tons: amountText(car?.trailer_payload_tons),
     trailer_color: text(car?.trailer_color),
   };
@@ -157,10 +163,12 @@ export interface CarPayload {
   engine_no: string;
   engine_cc: number;
   engine_cylinders: number;
+  weight_tons: number;
   payload_tons: number;
   color: string;
   trailer_no_plate?: string;
   trailer_chassis_no?: string;
+  trailer_weight_tons?: number;
   trailer_payload_tons?: number;
   trailer_color?: string;
 }
@@ -192,6 +200,7 @@ export function carPayload(values: CarFormValues): CarPayload {
     engine_no: values.engine_no.trim(),
     engine_cc: amount(values.engine_cc),
     engine_cylinders: amount(values.engine_cylinders),
+    weight_tons: amount(values.weight_tons),
     payload_tons: amount(values.payload_tons),
     color: values.color.trim(),
   };
@@ -201,6 +210,7 @@ export function carPayload(values: CarFormValues): CarPayload {
   if (values.car_type === TRAILER_CAR_TYPE) {
     payload.trailer_no_plate = values.trailer_no_plate.trim();
     payload.trailer_chassis_no = values.trailer_chassis_no.trim();
+    payload.trailer_weight_tons = amount(values.trailer_weight_tons);
     payload.trailer_payload_tons = amount(values.trailer_payload_tons);
     payload.trailer_color = values.trailer_color.trim();
   }
