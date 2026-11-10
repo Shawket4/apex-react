@@ -97,6 +97,7 @@ export const NAV_SECTIONS: NavSection[] = [
     items: [
       { to: '/trucks', labelKey: 'nav.trucks', icon: Truck },
       { to: '/cars', labelKey: 'nav.cars', icon: Car },
+      { to: '/documents', labelKey: 'nav.documents', icon: FileText },
       { to: '/tires', labelKey: 'nav.tires', icon: CircleDot },
       {
         to: '/tablets',

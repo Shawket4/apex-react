@@ -118,7 +118,8 @@
     "primary": "التنقل الرئيسي",
     "receiptPiles": "أكوام الإيصالات",
     "advisor": "المستشار",
-    "pricing": "التسعير"
+    "pricing": "التسعير",
+    "documents": "المستندات"
   },
   "auth": {
     "loginTitle": "مرحباً بعودتك",
@@ -461,8 +462,6 @@
     "registeredSuccessfully": "تم تسجيل السائق بنجاح",
     "updatedSuccessfully": "تم تحديث السائق بنجاح",
     "deletedSuccessfully": "تم حذف السائق بنجاح",
-    "documentsUpdated": "تم تحديث المستندات بنجاح",
-    "documentsFailed": "فشل تحديث المستندات",
     "saveFailed": "فشل حفظ السائق",
     "deleteFailed": "فشل حذف السائق",
     "approvedSuccessfully": "تم اعتماد السائق",
@@ -489,25 +488,11 @@
       "phonePlaceholder": "أدخل رقم الهاتف",
       "transporter": "الناقل",
       "expiryDate": "تاريخ الانتهاء",
-      "driverLicenseExpiry": "انتهاء رخصة القيادة",
-      "idExpiry": "انتهاء الهوية",
-      "safetyExpiry": "انتهاء شهادة السلامة",
-      "drugTestExpiry": "انتهاء فحص المخدرات",
       "socialSecurity": "الرقم القومي"
     },
     "status": {
       "approved": "معتمد",
       "pending": "بانتظار الاعتماد"
-    },
-    "expiry": {
-      "valid": "ساري",
-      "expired": "منتهي",
-      "notSet": "غير محدد",
-      "expiresInDays": "ينتهي خلال {{days}} يوم",
-      "inDays": "خلال {{days}} يوم",
-      "expiredDaysAgo": "منتهي منذ {{days}} يوم",
-      "summaryExpired": "{{count}} منتهي",
-      "summaryExpiring": "{{count}} على وشك الانتهاء"
     },
     "stats": {
       "total": "إجمالي السائقين",
@@ -515,24 +500,7 @@
       "pending": "بانتظار الاعتماد"
     },
     "sections": {
-      "personalInfo": "المعلومات الشخصية",
-      "licenses": "الرخص والشهادات"
-    },
-    "docs": {
-      "driverLicense": "رخصة القيادة",
-      "idLicense": "بطاقة الهوية",
-      "safetyLicense": "شهادة السلامة",
-      "drugTest": "فحص المخدرات",
-      "front": "الوجه",
-      "back": "الخلف",
-      "noImage": "لم يتم رفع صورة",
-      "upload": "رفع",
-      "replace": "استبدال",
-      "zoomOut": "تصغير",
-      "zoomIn": "تكبير",
-      "rotate": "تدوير",
-      "filesReadyToUpload": "{{count}} ملف جاهز للرفع",
-      "filesReadyToUpload_other": "{{count}} ملفات جاهزة للرفع"
+      "personalInfo": "المعلومات الشخصية"
     },
     "pin": {
       "title": "إدارة الرقم السري",
@@ -552,6 +520,12 @@
       "loansDescription": "صرفيات السائق — سلف وقروض",
       "salaries": "الرواتب",
       "salariesDescription": "عرض سجلات الرواتب وإنشاء كشوف المرتبات"
+    },
+    "validation": {
+      "nameRequired": "أدخل اسم السائق"
+    },
+    "form": {
+      "onlyNameRequired": "الاسم فقط مطلوب. كل شيء آخر يمكن إضافته لاحقاً."
     }
   },
   "driverExpenses": {
@@ -1756,7 +1730,13 @@
       "calibrationExpiry": "انتهاء المعايرة",
       "tankLicenseExpiry": "انتهاء رخصة التنك",
       "carType": "النوع",
-      "transporter": "الناقل"
+      "transporter": "الناقل",
+      "chassisNumber": "رقم الشاسيه",
+      "engineNumber": "رقم الموتور",
+      "engineSize": "سعة الموتور",
+      "payload": "الحمولة",
+      "color": "اللون",
+      "trailerPlateNumber": "رقم لوحة المقطورة"
     },
     "sections": {
       "vehicleInfo": "معلومات المركبة",
@@ -1765,7 +1745,8 @@
       "addCompartment": "إضافة عين",
       "compartmentIndex": "عين {{index}}",
       "licenses": "الرخص والتواريخ",
-      "removeCompartment": "إزالة العين"
+      "removeCompartment": "إزالة العين",
+      "trailer": "المقطورة"
     },
     "types": {
       "noTrailer": "بدون مقطورة",
@@ -1773,7 +1754,9 @@
       "truck": "شاحنة"
     },
     "units": {
-      "litre": "لتر"
+      "litre": "لتر",
+      "cc": "سي سي",
+      "ton": "طن"
     },
     "status": {
       "expired": "مستندات منتهية",
@@ -1800,6 +1783,21 @@
       "totals": "الإجمالي",
       "empty": "لا توجد مركبات للتصدير.",
       "failed": "تعذر إنشاء ملف الإكسل."
+    },
+    "validation": {
+      "plateRequired": "أدخل رقم اللوحة"
+    },
+    "form": {
+      "onlyPlateRequired": "رقم اللوحة فقط مطلوب. كل شيء آخر يمكن إضافته لاحقاً."
+    },
+    "saveFailed": "تعذّر حفظ السيارة",
+    "driverNotAssigned": "تم حفظ السيارة، لكن تعذّر تعيين السائق",
+    "detail": {
+      "open": "فتح"
+    },
+    "tabs": {
+      "overview": "نظرة عامة",
+      "documents": "المستندات"
     }
   },
   "zones": {
@@ -3131,6 +3129,219 @@
       "body": "ستُحذف نسخة {{company}} التي تبدأ في {{date}}، وتبقى النسخة السابقة لها سارية.",
       "success": "تم حذف النسخة",
       "failed": "تعذّر حذف النسخة"
+    }
+  },
+  "documents": {
+    "title": "المستندات",
+    "loadFailed": "تعذّر تحميل المستندات",
+    "file": "ملف",
+    "restricted": "هذا المستند يفتحه المديرون فقط",
+    "types": {
+      "national_id": "بطاقة الرقم القومي",
+      "driving_licence": "رخصة القيادة",
+      "safety_certificate": "شهادة السلامة",
+      "drug_test": "تحليل المخدرات",
+      "criminal_record": "صحيفة الحالة الجنائية",
+      "trust_receipt": "وصل أمانة",
+      "site_access_pass": "تصريح دخول موقع",
+      "driver_photo": "صورة السائق",
+      "vehicle_licence": "رخصة السيارة",
+      "calibration_certificate": "شهادة المعايرة",
+      "tank_licence": "رخصة التنك",
+      "vehicle_photos": "صور السيارة"
+    },
+    "slots": {
+      "front": "الوجه",
+      "back": "الظهر",
+      "page": "صفحة",
+      "photo": "صورة"
+    },
+    "status": {
+      "valid": "ساري",
+      "expiring": "ينتهي قريباً",
+      "expired": "منتهي",
+      "undated": "بدون تاريخ انتهاء",
+      "notAdded": "لم يُضف بعد",
+      "expiresToday": "ينتهي اليوم",
+      "expiredAgo_zero": "انتهى اليوم",
+      "expiredAgo_one": "انتهى أمس",
+      "expiredAgo_two": "انتهى منذ يومين",
+      "expiredAgo_few": "انتهى منذ {{count}} أيام",
+      "expiredAgo_many": "انتهى منذ {{count}} يوماً",
+      "expiredAgo_other": "انتهى منذ {{count}} يوم",
+      "daysLeft_zero": "ينتهي اليوم",
+      "daysLeft_one": "باقي يوم واحد",
+      "daysLeft_two": "باقي يومان",
+      "daysLeft_few": "باقي {{count}} أيام",
+      "daysLeft_many": "باقي {{count}} يوماً",
+      "daysLeft_other": "باقي {{count}} يوم"
+    },
+    "card": {
+      "allHidden": "كل النسخ مخفية",
+      "expires": "ينتهي {{date}}",
+      "noExpiry": "بدون تاريخ انتهاء",
+      "moreFiles_zero": "لا صور أخرى",
+      "moreFiles_one": "صورة أخرى",
+      "moreFiles_two": "صورتان أخريان",
+      "moreFiles_few": "{{count}} صور أخرى",
+      "moreFiles_many": "{{count}} صورة أخرى",
+      "moreFiles_other": "{{count}} صورة أخرى",
+      "noFiles": "لا توجد ملفات مرفقة",
+      "photos_zero": "لا توجد صور",
+      "photos_one": "صورة واحدة",
+      "photos_two": "صورتان",
+      "photos_few": "{{count}} صور",
+      "photos_many": "{{count}} صورة",
+      "photos_other": "{{count}} صورة"
+    },
+    "history": {
+      "description_zero": "لا توجد نسخ",
+      "description_one": "نسخة واحدة",
+      "description_two": "نسختان، الأحدث أولاً",
+      "description_few": "{{count}} نسخ، الأحدث أولاً",
+      "description_many": "{{count}} نسخة، الأحدث أولاً",
+      "description_other": "{{count}} نسخة، الأحدث أولاً",
+      "current": "الحالية",
+      "hidden": "مخفية",
+      "hideTitle": "إخفاء هذه النسخة؟",
+      "hideDescription": "تبقى في السجل ويستطيع أي مدير إرجاعها. أحدث نسخة غير مخفية تصبح هي الحالية.",
+      "by": "بواسطة {{name}}، {{when}}",
+      "editedBy": "عدّلها {{name}}، {{when}}",
+      "hiddenBy": "أخفاها {{name}}، {{when}}",
+      "source": {
+        "upload": "أُضيفت",
+        "profile": "تاريخ مُسجَّل من الملف",
+        "legacy": "منقولة من السجلات القديمة"
+      }
+    },
+    "summary": {
+      "expired_zero": "لا مستندات منتهية",
+      "expired_one": "مستند منتهٍ",
+      "expired_two": "مستندان منتهيان",
+      "expired_few": "{{count}} مستندات منتهية",
+      "expired_many": "{{count}} مستنداً منتهياً",
+      "expired_other": "{{count}} مستند منتهٍ",
+      "expiring_zero": "لا مستندات تنتهي قريباً",
+      "expiring_one": "مستند ينتهي قريباً",
+      "expiring_two": "مستندان ينتهيان قريباً",
+      "expiring_few": "{{count}} مستندات تنتهي قريباً",
+      "expiring_many": "{{count}} مستنداً ينتهي قريباً",
+      "expiring_other": "{{count}} مستند ينتهي قريباً",
+      "missing_zero": "كل المستندات مضافة",
+      "missing_one": "مستند لم يُضف بعد",
+      "missing_two": "مستندان لم يُضافا بعد",
+      "missing_few": "{{count}} مستندات لم تُضف بعد",
+      "missing_many": "{{count}} مستنداً لم يُضف بعد",
+      "missing_other": "{{count}} مستند لم يُضف بعد"
+    },
+    "actions": {
+      "add": "إضافة",
+      "addAnother": "إضافة {{type}} آخر",
+      "renew": "تجديد",
+      "replace": "استبدال",
+      "history": "السجل",
+      "hide": "إخفاء",
+      "restore": "إرجاع",
+      "open": "فتح {{name}}",
+      "download": "تنزيل",
+      "zoomIn": "تكبير",
+      "zoomOut": "تصغير",
+      "rotate": "تدوير",
+      "resetView": "إعادة العرض",
+      "addPhotos": "إضافة صور"
+    },
+    "editor": {
+      "addTitle": "إضافة {{type}}",
+      "editTitle": "تعديل {{type}}",
+      "renewTitle": "تجديد {{type}}",
+      "replaceTitle": "استبدال {{type}}",
+      "addDescription": "كل شيء هنا اختياري. أضف المتاح الآن والباقي لاحقاً.",
+      "renewDescription": "تصبح هذه النسخة هي الحالية، وتبقى القديمة في السجل.",
+      "editDescription": "صحّح هذه النسخة. لتسجيل تجديد استخدم «تجديد».",
+      "files": "الملفات",
+      "add": {
+        "front": "أضف الوجه",
+        "back": "أضف الظهر",
+        "page": "أضف صفحة",
+        "photo": "أضف صورة",
+        "file": "أضف ملفاً"
+      },
+      "acceptImages": "صور فقط (JPG أو PNG أو WebP)، حتى {{size}} ميجابايت للصورة.",
+      "acceptAll": "صور (JPG، PNG، WebP) أو PDF، حتى {{size}} ميجابايت للملف.",
+      "waitUploading": "انتظر حتى ينتهي الرفع",
+      "removeFailed": "احذف أولاً الملفات التي فشل رفعها",
+      "nothingYet": "أضف ملفاً أو تاريخاً أو ملاحظة للحفظ",
+      "takePhotoOf": "التقط صورة: {{slot}}",
+      "takePhoto": "التقط صورة",
+      "uploadingPercent": "جارٍ الرفع {{percent}}٪",
+      "removeFile": "حذف {{name}}"
+    },
+    "fields": {
+      "label": "الاسم",
+      "labelPlaceholder": "مثال: الشركة أو الموقع الخاص به",
+      "labelHint": "يميّز هذا المستند عن غيره من نفس النوع.",
+      "issueDate": "تاريخ الإصدار",
+      "expiryDate": "تاريخ الانتهاء",
+      "noDate": "بدون تاريخ",
+      "note": "ملاحظة",
+      "notePlaceholder": "أي شيء يستحق التذكّر عن هذا المستند"
+    },
+    "viewer": {
+      "position": "{{index}} من {{count}}",
+      "failed": "تعذّر تحميل هذا الملف",
+      "noPreview": "لا يمكن عرض هذا الملف هنا"
+    },
+    "errors": {
+      "generic": "حدث خطأ. حاول مرة أخرى.",
+      "unknown_owner_kind": "المستندات تُحفظ للسيارات والسائقين فقط.",
+      "unknown_type": "نوع المستند غير معروف. أعد تحميل الصفحة وحاول مرة أخرى.",
+      "not_applicable": "هذا النوع من المستندات لا ينطبق هنا.",
+      "empty": "أضف ملفاً أو تاريخاً أو ملاحظة قبل الحفظ.",
+      "label_taken": "يوجد مستند آخر بهذا الاسم.",
+      "label_too_long": "الاسم طويل جداً.",
+      "note_too_long": "الملاحظة طويلة جداً.",
+      "invalid_date": "أحد التواريخ غير صحيح.",
+      "expiry_before_issue": "تاريخ الانتهاء قبل تاريخ الإصدار.",
+      "unknown_slot": "هذا المستند لا يقبل ملفاً في هذا المكان.",
+      "too_many_files": "عدد الملفات أكثر مما يقبله هذا المستند.",
+      "duplicate_file": "تمت إضافة الملف نفسه مرتين.",
+      "file_in_use": "أحد الملفات يخص مستنداً آخر.",
+      "images_only": "هنا تُضاف الصور فقط.",
+      "empty_file": "الملف فارغ.",
+      "file_too_large": "الملف كبير جداً.",
+      "unsupported_type": "تُقبل الصور (JPG، PNG، WebP) وملفات PDF فقط.",
+      "unreadable_image": "تعذّرت قراءة الصورة. جرّب صورة أخرى.",
+      "not_found": "هذا المستند لم يعد موجوداً. أعد تحميل الصفحة.",
+      "forbidden": "غير مسموح لك بهذا الإجراء.",
+      "invalid_body": "تعذّرت قراءة الطلب. حاول مرة أخرى."
+    },
+    "toast": {
+      "saved": "تم حفظ المستند",
+      "hidden": "تم إخفاء النسخة",
+      "restored": "تم إرجاع النسخة"
+    },
+    "fleet": {
+      "subtitle": "كل مستندات السيارات والسائقين، الأكثر إلحاحاً أولاً",
+      "columns": {
+        "document": "المستند",
+        "owner": "يخص",
+        "files": "الملفات"
+      },
+      "empty": "لا توجد مستندات بعد",
+      "emptyDescription": "افتح سيارة أو سائقاً وأضف مستنداته؛ ستظهر هنا.",
+      "stats": {
+        "total": "المستندات"
+      },
+      "searchPlaceholder": "ابحث باللوحة أو السائق أو المستند...",
+      "typeFilter": "نوع المستند",
+      "allTypes": "كل الأنواع",
+      "kindFilter": "يخص",
+      "kinds": {
+        "all": "الكل",
+        "car": "السيارات",
+        "driver": "السائقون"
+      },
+      "allStatuses": "الكل"
     }
   }
 }

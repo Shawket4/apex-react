@@ -41,6 +41,8 @@ const FuelEventDetailsPage = React.lazy(
 );
 const DriversListPage = React.lazy(() => import('@/pages/drivers/drivers'));
 const CarsPage = React.lazy(() => import('@/pages/cars/cars'));
+const CarDetailPage = React.lazy(() => import('@/pages/car-detail/car-detail'));
+const DocumentsPage = React.lazy(() => import('@/pages/documents/documents'));
 const DriverDetailPage = React.lazy(() => import('@/pages/driver-detail/driver-detail'));
 const DriverExpensesPage = React.lazy(
   () => import('@/pages/driver-expenses/driver-expenses'),
@@ -180,6 +182,8 @@ export const router = createBrowserRouter([
           // Placeholder domains
           { path: 'trucks', element: <TrucksPage /> },
           { path: 'cars', element: <CarsPage /> },
+          { path: 'cars/:id', element: <CarDetailPage /> },
+          { path: 'documents', element: <DocumentsPage /> },
           {
             path: 'tires',
             element: (

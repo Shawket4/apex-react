@@ -38,6 +38,8 @@ const CHUNKS = {
   'driver-loan-new': () => import('@/pages/driver-loans/driver-loan-new'),
 
   cars: () => import('@/pages/cars/cars'),
+  'car-detail': () => import('@/pages/car-detail/car-detail'),
+  documents: () => import('@/pages/documents/documents'),
   // Placeholder-backed routes share one module; warming any of them warms all.
   trucks: () => import('@/pages/placeholder/placeholder'),
   tires: () => import('@/pages/tires/tires'),
@@ -119,7 +121,9 @@ const PATH_RULES: [RegExp, ChunkKey][] = [
   [/^\/service-invoices\/[^/]+/, 'service-invoice-details'],
   [/^\/service-invoices/, 'service-invoices'],
 
+  [/^\/cars\/[^/]+/, 'car-detail'],
   [/^\/cars/, 'cars'],
+  [/^\/documents/, 'documents'],
   [/^\/trucks/, 'trucks'],
   [/^\/tires/, 'tires'],
   [/^\/tablets/, 'tablets'],

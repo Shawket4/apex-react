@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { getCars, createCar, updateCar, setCarDriver } from './api';
 import { QUERY_KEYS } from '@/shared/config/constants';
 import type { QueryClient } from '@tanstack/react-query';
+import type { CarPayload } from './schemas';
 
 export function useCars() {
   return useQuery({
@@ -24,7 +25,7 @@ export function useRegisterCar() {
 export function useUpdateCar() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: number; data: any }) => updateCar(id, data),
+    mutationFn: ({ id, data }: { id: number; data: Partial<CarPayload> }) => updateCar(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.cars });
     },

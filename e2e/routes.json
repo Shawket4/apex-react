@@ -177,6 +177,23 @@
       "minPermission": 1
     },
     {
+      "name": "car-detail",
+      "path": "/cars/1",
+      "template": "/cars/:id",
+      "unresolved": [
+        "id (car ID)"
+      ],
+      "auth": true,
+      "minPermission": 1,
+      "resolved_from": "not resolved against prod; added with the documents feature, 2026-11-10"
+    },
+    {
+      "name": "documents",
+      "path": "/documents",
+      "auth": true,
+      "minPermission": 1
+    },
+    {
       "name": "tires",
       "path": "/tires",
       "auth": true,

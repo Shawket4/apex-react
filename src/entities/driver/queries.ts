@@ -6,17 +6,12 @@ import {
   getDriver,
   registerDriver,
   updateDriver,
-  updateDriverDocuments,
   deleteDriver,
   approveDriver,
   rejectDriver,
   regeneratePin,
 } from './api';
-import type {
-  RegisterDriverPayload,
-  UpdateDriverPayload,
-  UpdateDriverDocumentsPayload,
-} from './schemas';
+import type { DriverPayload } from './schemas';
 import { QUERY_KEYS } from '@/shared/config/constants';
 import { queryClient } from '@/shared/api/query';
 import { toast } from '@/shared/ui/toast';
@@ -55,13 +50,13 @@ export function useDriver(id: number | string | undefined) {
 export function useRegisterDriver() {
   const { t } = useTranslation();
   return useMutation({
-    mutationFn: (payload: RegisterDriverPayload) => registerDriver(payload),
+    mutationFn: (payload: DriverPayload) => registerDriver(payload),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.drivers });
       toast.success(t('drivers.registeredSuccessfully'));
     },
-    onError: (error) => {
-      toast.error(extractErrorMessage(error, t('drivers.saveFailed')));
+    onError: () => {
+      toast.error(t('drivers.saveFailed'));
     },
   });
 }
@@ -70,38 +65,15 @@ export function useRegisterDriver() {
 export function useUpdateDriver() {
   const { t } = useTranslation();
   return useMutation({
-    mutationFn: (payload: UpdateDriverPayload) => updateDriver(payload),
-    onSuccess: (_data, variables) => {
+    mutationFn: ({ id, data }: { id: number; data: Partial<DriverPayload> }) =>
+      updateDriver(id, data),
+    onSuccess: () => {
+      // QUERY_KEYS.driver(id) sits under the drivers key, so this covers it.
       void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.drivers });
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.driver(variables.id) });
       toast.success(t('drivers.updatedSuccessfully'));
     },
-    onError: (error) => {
-      toast.error(extractErrorMessage(error, t('drivers.saveFailed')));
-    },
-  });
-}
-
-/* ─── Update documents ─── */
-export function useUpdateDriverDocuments() {
-  const { t } = useTranslation();
-  return useMutation({
-    mutationFn: ({
-      id,
-      payload,
-      files,
-    }: {
-      id: number;
-      payload: UpdateDriverDocumentsPayload;
-      files: Record<string, File>;
-    }) => updateDriverDocuments(id, payload, files),
-    onSuccess: (_data, variables) => {
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.drivers });
-      void queryClient.invalidateQueries({ queryKey: QUERY_KEYS.driver(variables.id) });
-      toast.success(t('drivers.documentsUpdated'));
-    },
-    onError: (error) => {
-      toast.error(extractErrorMessage(error, t('drivers.documentsFailed')));
+    onError: () => {
+      toast.error(t('drivers.saveFailed'));
     },
   });
 }

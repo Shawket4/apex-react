@@ -3,6 +3,7 @@ import type { QueryClient } from '@tanstack/react-query';
 import { prefetchDashboard } from '@/entities/dashboard/queries';
 import { prefetchDrivers, prefetchDriversList } from '@/entities/driver/queries';
 import { prefetchCars } from '@/entities/car/queries';
+import { prefetchDocumentCatalogue, prefetchDocumentsOverview } from '@/entities/document/queries';
 import { prefetchOilChanges } from '@/entities/oil-change/queries';
 import { prefetchFeeMappings } from '@/entities/fee-mapping/queries';
 import { prefetchPricingRules } from '@/entities/pricing/queries';
@@ -55,6 +56,12 @@ const DATA_WARMERS: Record<string, (qc: QueryClient) => void> = {
   '/cars': (qc) => {
     prefetchCars(qc);
     prefetchDriversList(qc); // the table joins assignments on the driver list
+  },
+  '/documents': (qc) => {
+    prefetchDocumentsOverview(qc);
+    prefetchDocumentCatalogue(qc); // the type filter
+    prefetchCars(qc); // rows are named by plate and by driver
+    prefetchDriversList(qc);
   },
   '/tires': prefetchMaintStock,
   '/oil-changes': prefetchOilChanges,

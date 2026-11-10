@@ -1,4 +1,6 @@
 import * as React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { type ColumnDef } from '@tanstack/react-table';
 import {
@@ -13,6 +15,9 @@ import {
   User,
 } from 'lucide-react';
 import type { Car } from '@/entities/car/schemas';
+import { carTypeName } from '@/entities/car/labels';
+import { prefetchOwnerDocuments } from '@/entities/document/queries';
+import { preloadChunk } from '@/shared/lib/prefetch';
 import { useCars } from '@/entities/car/queries';
 import { DataTable } from '@/shared/ui/data-table';
 import { StatCard } from '@/shared/ui/stat-card';
@@ -60,6 +65,8 @@ export function CarsTable({ onAddCar, onEditCar }: CarsTableProps) {
   const { atLeast } = usePermissions();
   const isMobile = useIsMobile();
   const canManage = atLeast(PERMISSION_LEVELS.MANAGER);
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const [search, setSearch] = React.useState('');
   const [exporting, setExporting] = React.useState(false);
@@ -134,9 +141,11 @@ export function CarsTable({ onAddCar, onEditCar }: CarsTableProps) {
       (c) =>
         matches(c.car_no_plate, search) ||
         matches(c.car_type, search) ||
+        matches(carTypeName(t, c.car_type), search) ||
+        matches(c.trailer_no_plate, search) ||
         matches(getDriverName(c), search)
     );
-  }, [cars, search, getDriverName]);
+  }, [cars, search, getDriverName, t]);
 
   const stats = React.useMemo(() => {
     const total = cars.length;
@@ -160,7 +169,7 @@ export function CarsTable({ onAddCar, onEditCar }: CarsTableProps) {
               <p className="font-medium tabular-nums" dir="auto">{row.original.car_no_plate}</p>
               <p className="flex items-center gap-1 text-xs text-muted-foreground">
                 <Truck className="h-3 w-3" />
-                {row.original.car_type}
+                {carTypeName(t, row.original.car_type)}
               </p>
             </div>
           </div>
@@ -239,6 +248,7 @@ export function CarsTable({ onAddCar, onEditCar }: CarsTableProps) {
         id: 'actions',
         cell: ({ row }) => (
           <div className="flex justify-end">
+            {canManage && onEditCar ? (
             <Button
               variant="ghost"
               size="icon"
@@ -251,11 +261,12 @@ export function CarsTable({ onAddCar, onEditCar }: CarsTableProps) {
             >
               <Edit />
             </Button>
+            ) : null}
           </div>
         ),
       },
     ],
-    [t, getDriverName, onEditCar]
+    [t, getDriverName, onEditCar, canManage]
   );
 
   return (
@@ -342,6 +353,13 @@ export function CarsTable({ onAddCar, onEditCar }: CarsTableProps) {
           columns={columns}
           data={filtered}
           loading={isLoading}
+          onRowClick={(car) => navigate(`/cars/${car.ID}`)}
+          // Intent: the car's page is its details and its papers, so warm the
+          // chunk and the papers the moment the cursor reaches the row.
+          onRowIntent={(car) => {
+            preloadChunk('car-detail');
+            prefetchOwnerDocuments(queryClient, 'car', car.ID);
+          }}
           emptyState={
             <EmptyState
               lottieSrc="/animations/no_results.json"

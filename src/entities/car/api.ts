@@ -3,7 +3,7 @@ import {
   carsResponseSchema,
   paginatedCarsResponseSchema,
   type Car,
-  type CarFormValues
+  type CarPayload,
 } from './schemas';
 
 export async function getCars(): Promise<Car[]>;
@@ -25,20 +25,15 @@ export async function getCars(page?: number, limit?: number): Promise<any> {
   return carsResponseSchema.parse(array ?? []);
 }
 
-export async function createCar(data: CarFormValues): Promise<Car> {
-  return apiPost<Car>('/api/cars/', data);
+/** Adds a car and answers its id. Only the plate is required. */
+export async function createCar(payload: CarPayload): Promise<number> {
+  const data = await apiPost<{ car_id: number }>('/api/cars', payload);
+  return data.car_id;
 }
 
-export async function updateCar(id: number, data: Partial<CarFormValues>): Promise<Car> {
-  const formData = new FormData();
-  formData.append('request', JSON.stringify({ ID: id, ...data }));
-
-  const response = await apiClient.put<Car>(`/api/cars/${id}`, formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
-  });
-  return response.data;
+/** Changes the fields sent and leaves every other one as it is. */
+export async function updateCar(id: number, payload: Partial<CarPayload>): Promise<void> {
+  await apiClient.put(`/api/cars/${id}`, payload);
 }
 
 export async function setCarDriver(carId: number, driverId: number): Promise<void> {

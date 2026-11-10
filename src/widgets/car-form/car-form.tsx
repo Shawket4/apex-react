@@ -1,331 +1,294 @@
 import * as React from 'react';
-import { useForm, useFieldArray } from 'react-hook-form';
+import { useFieldArray, useForm, useWatch, type Control } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslation } from 'react-i18next';
-import { Loader2, Save, Truck, Calendar, Gauge, Plus, Trash2, User } from 'lucide-react';
+import type { TFunction } from 'i18next';
+import { Container, Gauge, Loader2, Plus, Save, Trash2, Truck, User } from 'lucide-react';
 import {
+  CAR_TYPES,
+  TRAILER_CAR_TYPE,
+  carFormDefaults,
   carFormSchema,
-  type CarFormValues,
   type Car,
+  type CarFormValues,
 } from '@/entities/car/schemas';
+import { carTypeName } from '@/entities/car/labels';
+import { useDrivers } from '@/entities/driver/queries';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
-import { DatePicker } from '@/shared/ui/date-picker';
-import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/shared/ui/form';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/shared/ui/select';
-import { useDrivers } from '@/entities/driver/queries';
+import { FormSection } from '@/shared/ui/form-section';
 import { SearchableSelect } from '@/shared/ui/searchable-select';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/shared/ui/form';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select';
 
 interface CarFormProps {
-  mode: 'create' | 'edit';
+  /** The car being edited. Leave out to add a new one. */
   car?: Car | null;
   submitting: boolean;
   onSubmit: (values: CarFormValues) => void | Promise<void>;
-  onCancel?: () => void;
+  onCancel: () => void;
 }
 
-function getDefaults(car?: Car | null): any {
-  const comps = car?.json_compartments?.length ? car.json_compartments : (car?.compartments?.length ? car.compartments : [0, 0, 0, 0]);
-  return {
-    car_no_plate: car?.car_no_plate ?? '',
-    car_type: car?.car_type ?? 'No Trailer',
-    tank_capacity: car?.tank_capacity ?? 0,
-    license_expiration_date: car?.license_expiration_date ?? '',
-    calibration_expiration_date: car?.calibration_expiration_date ?? '',
-    tank_license_expiration_date: car?.tank_license_expiration_date ?? '',
-    compartments: comps,
-    transporter: car?.transporter ?? 'Apex',
-    driver_id: car?.driver_id ?? null,
-  };
+/** The fields that take typed text: everything but the type, the driver and the tank. */
+type TextFieldName = Exclude<
+  { [K in keyof CarFormValues]: CarFormValues[K] extends string ? K : never }[keyof CarFormValues],
+  'car_type'
+>;
+
+interface TextFieldProps {
+  control: Control<CarFormValues>;
+  name: TextFieldName;
+  label: string;
+  placeholder?: string;
+  /** A unit shown inside the field's end. Makes the field numeric. */
+  unit?: string;
+  /** Whole numbers only (litres, cc) rather than decimals (tons). */
+  whole?: boolean;
 }
 
-export function CarForm({
-  mode,
-  car,
-  submitting,
-  onSubmit,
-  onCancel,
-}: CarFormProps) {
+function TextField({ control, name, label, placeholder, unit, whole }: TextFieldProps) {
+  return (
+    <FormField
+      control={control}
+      name={name}
+      render={({ field }) => (
+        <FormItem>
+          <FormLabel>{label}</FormLabel>
+          <div className="relative">
+            <FormControl>
+              <Input
+                {...field}
+                placeholder={placeholder}
+                autoComplete="off"
+                inputMode={unit ? (whole ? 'numeric' : 'decimal') : undefined}
+                className={unit ? 'pe-12 tabular-nums' : undefined}
+              />
+            </FormControl>
+            {unit ? (
+              <span className="pointer-events-none absolute end-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+                {unit}
+              </span>
+            ) : null}
+          </div>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+  );
+}
+
+/** The kinds to choose from, plus the car's own if it is one FalconGo no longer offers. */
+function typeChoices(current: string): string[] {
+  const known: readonly string[] = CAR_TYPES;
+  return known.includes(current) ? [...known] : [...known, current];
+}
+
+function litresTotal(rows: CarFormValues['compartments']): number {
+  return rows.reduce((sum, row) => {
+    const litres = Number(row.litres);
+    return Number.isFinite(litres) && litres > 0 ? sum + litres : sum;
+  }, 0);
+}
+
+function capacityLine(t: TFunction, litres: number): string {
+  return `${litres.toLocaleString()} ${t('cars.units.litre')}`;
+}
+
+export function CarForm({ car, submitting, onSubmit, onCancel }: CarFormProps) {
   const { t } = useTranslation();
   const { data: drivers = [] } = useDrivers();
 
-  const form = useForm<any>({
+  const form = useForm<CarFormValues>({
     resolver: zodResolver(carFormSchema),
-    defaultValues: getDefaults(car),
+    defaultValues: carFormDefaults(car),
     mode: 'onTouched',
   });
+  const { control } = form;
+  const compartments = useFieldArray({ control, name: 'compartments' });
+  const carType = useWatch({ control, name: 'car_type' });
+  const tankRows = useWatch({ control, name: 'compartments' });
 
-  const { fields, append, remove } = useFieldArray({
-    control: form.control,
-    name: 'compartments',
-  });
+  const driverOptions = React.useMemo(
+    () => [
+      { value: 0, label: t('cars.noDriver') },
+      ...drivers.map((driver) => ({ value: driver.ID, label: driver.name })),
+    ],
+    [drivers, t],
+  );
 
-  const driverOptions = React.useMemo(() => {
-    return drivers.map((d) => ({
-      value: d.ID,
-      label: d.name,
-    }));
-  }, [drivers]);
-
-  React.useEffect(() => {
-    if (car) {
-      form.reset(getDefaults(car));
-    }
-    // Keyed on the car's identity, not the car object: the query refetches in
-    // the background, and depending on `car` would reset the form under someone
-    // mid-edit every time it did.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [car?.ID, form]);
-
-  const carType = form.watch('car_type');
-  const compartments = form.watch('compartments') || [];
-  const totalCapacity = compartments.reduce((sum: number, val: any) => sum + (Number(val) || 0), 0);
-
-  // Sync tank_capacity with compartments total
-  React.useEffect(() => {
-    form.setValue('tank_capacity', totalCapacity);
-  }, [totalCapacity, form]);
+  // A car recorded with a capacity and no layout keeps showing that capacity
+  // until sections are typed in: it is what a save would leave in place.
+  const typedTotal = litresTotal(tankRows);
+  const capacity = typedTotal > 0 ? typedTotal : (car?.tank_capacity ?? 0);
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider">
-              <Truck className="h-4 w-4 text-muted-foreground" />
-              {t('cars.sections.vehicleInfo')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <FormField
-              control={form.control}
-              name="car_no_plate"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('cars.fields.plateNumber')}</FormLabel>
-                  <FormControl>
-                    <Input placeholder={t('cars.fields.plateNumberPlaceholder')} {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="car_type"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('cars.fields.type')}</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder={t('common.select')} />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="No Trailer">{t('cars.types.noTrailer', 'No Trailer')}</SelectItem>
-                      <SelectItem value="Trailer">{t('cars.types.trailer', 'Trailer')}</SelectItem>
-                      <SelectItem value="Truck">{t('cars.types.truck', 'Truck')}</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </CardContent>
-        </Card>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3" noValidate>
+        <p className="text-sm text-muted-foreground">{t('cars.form.onlyPlateRequired')}</p>
 
-        {/* Driver Assignment Card */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider">
-              <User className="h-4 w-4 text-muted-foreground" />
-              {t('cars.sections.driverAssignment')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <FormField
-              control={form.control}
-              name="driver_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('cars.fields.driver')}</FormLabel>
+        <FormSection icon={Truck} title={t('cars.sections.vehicleInfo')}>
+          <TextField
+            control={control}
+            name="car_no_plate"
+            label={t('cars.fields.plateNumber')}
+            placeholder={t('cars.fields.plateNumberPlaceholder')}
+          />
+          <FormField
+            control={control}
+            name="car_type"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('cars.fields.carType')}</FormLabel>
+                <Select value={field.value} onValueChange={field.onChange}>
                   <FormControl>
-                    <SearchableSelect
-                      options={driverOptions}
-                      value={field.value}
-                      onChange={field.onChange}
-                      placeholder={t('cars.fields.selectDriver')}
-                    />
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
                   </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-3 flex flex-row items-center justify-between">
-            <CardTitle className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider">
-              <Gauge className="h-4 w-4 text-muted-foreground" />
-              {t('cars.sections.compartments')}
-            </CardTitle>
-            <div className="flex items-center gap-2 text-sm font-medium">
-              <span className="text-muted-foreground">{t('common.total')}:</span>
-              <span className="font-mono tabular-nums">{totalCapacity.toLocaleString()} {t('cars.units.litre', 'L')}</span>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              {fields.map((item, index) => (
-                <FormField
-                  key={item.id}
-                  control={form.control}
-                  name={`compartments.${index}`}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="text-xs">{t('cars.sections.compartmentIndex', { index: index + 1 })}</FormLabel>
-                      <div className="flex gap-1">
-                        <FormControl>
-                          <div className="relative">
-                            <Input
-                              type="number"
-                              className="pe-8"
-                              {...field}
-                              onChange={(e) => field.onChange(Number(e.target.value))}
-                            />
-                            <span className="absolute end-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">{t('cars.units.litre', 'L')}</span>
-                          </div>
-                        </FormControl>
-                        {fields.length > 1 && (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="h-9 w-9 shrink-0"
-                            aria-label={t('cars.sections.removeCompartment', 'Remove compartment')}
-                            onClick={() => remove(index)}
-                          >
-                            <Trash2 className="text-destructive" />
-                          </Button>
-                        )}
-                      </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              ))}
-            </div>
-            {fields.length < 8 && (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="w-full border-dashed"
-                onClick={() => append(0)}
-              >
-                <Plus />
-                {t('cars.sections.addCompartment', 'Add Compartment')}
-              </Button>
+                  <SelectContent>
+                    {typeChoices(field.value).map((type) => (
+                      <SelectItem key={type} value={type}>
+                        {carTypeName(t, type)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
             )}
-          </CardContent>
-        </Card>
+          />
+          <TextField control={control} name="chassis_no" label={t('cars.fields.chassisNumber')} />
+          <TextField control={control} name="engine_no" label={t('cars.fields.engineNumber')} />
+          <TextField
+            control={control}
+            name="engine_cc"
+            label={t('cars.fields.engineSize')}
+            unit={t('cars.units.cc')}
+            whole
+          />
+          <TextField
+            control={control}
+            name="payload_tons"
+            label={t('cars.fields.payload')}
+            unit={t('cars.units.ton')}
+          />
+          <TextField control={control} name="color" label={t('cars.fields.color')} />
+        </FormSection>
 
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider">
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-              {t('cars.sections.licenses')}
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <FormField
-              control={form.control}
-              name="license_expiration_date"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('cars.fields.licenseExpiry')}</FormLabel>
-                  <FormControl>
-                    <DatePicker 
-                      value={field.value} 
-                      onChange={field.onChange} 
-                      max="2099-12-31" 
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+        {carType === TRAILER_CAR_TYPE ? (
+          <FormSection icon={Container} title={t('cars.sections.trailer')}>
+            <TextField
+              control={control}
+              name="trailer_no_plate"
+              label={t('cars.fields.trailerPlateNumber')}
+              placeholder={t('cars.fields.plateNumberPlaceholder')}
             />
-            <FormField
-              control={form.control}
-              name="calibration_expiration_date"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>{t('cars.fields.calibrationExpiry')}</FormLabel>
-                  <FormControl>
-                    <DatePicker 
-                      value={field.value} 
-                      onChange={field.onChange} 
-                      max="2099-12-31" 
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+            <TextField
+              control={control}
+              name="trailer_chassis_no"
+              label={t('cars.fields.chassisNumber')}
             />
-            {(carType === 'Trailer' || carType === 'Truck') && (
-              <FormField
-                control={form.control}
-                name="tank_license_expiration_date"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{t('cars.fields.tankLicenseExpiry')}</FormLabel>
-                    <FormControl>
-                      <DatePicker 
-                      value={field.value} 
-                      onChange={field.onChange} 
-                      max="2099-12-31" 
-                    />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            <TextField
+              control={control}
+              name="trailer_payload_tons"
+              label={t('cars.fields.payload')}
+              unit={t('cars.units.ton')}
+            />
+            <TextField control={control} name="trailer_color" label={t('cars.fields.color')} />
+          </FormSection>
+        ) : null}
+
+        <FormSection icon={User} title={t('cars.sections.driverAssignment')} className="sm:grid-cols-1">
+          <FormField
+            control={control}
+            name="driver_id"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('cars.fields.driver')}</FormLabel>
+                <FormControl>
+                  <SearchableSelect
+                    options={driverOptions}
+                    value={field.value}
+                    onChange={field.onChange}
+                    placeholder={t('cars.fields.selectDriver')}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
             )}
-          </CardContent>
-        </Card>
+          />
+        </FormSection>
 
-        <div className="flex flex-col gap-2 sm:flex-row sm:justify-end sm:gap-3">
-          {onCancel && (
-            <Button type="button" variant="outline" onClick={onCancel} disabled={submitting}>
-              {t('common.cancel')}
+        <FormSection
+          icon={Gauge}
+          title={t('cars.sections.compartments')}
+          aside={
+            capacity > 0 ? (
+              <span className="font-mono tabular-nums">{capacityLine(t, capacity)}</span>
+            ) : null
+          }
+          className="grid-cols-2 sm:grid-cols-4"
+        >
+          {compartments.fields.map((row, index) => (
+            <FormField
+              key={row.id}
+              control={control}
+              name={`compartments.${index}.litres`}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-xs">
+                    {t('cars.sections.compartmentIndex', { index: index + 1 })}
+                  </FormLabel>
+                  <div className="flex items-center gap-1">
+                    <div className="relative min-w-0 flex-1">
+                      <FormControl>
+                        <Input
+                          {...field}
+                          inputMode="numeric"
+                          autoComplete="off"
+                          className="pe-7 tabular-nums"
+                        />
+                      </FormControl>
+                      <span className="pointer-events-none absolute end-2.5 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
+                        {t('cars.units.litre')}
+                      </span>
+                    </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-9 w-7 shrink-0 text-muted-foreground hover:text-destructive"
+                      onClick={() => compartments.remove(index)}
+                      aria-label={t('cars.sections.removeCompartment')}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          ))}
+          <div className="col-span-full">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => compartments.append({ litres: '' })}
+            >
+              <Plus />
+              {t('cars.sections.addCompartment')}
             </Button>
-          )}
-          <Button
-            type="submit"
-            disabled={submitting || (mode === 'edit' && !form.formState.isDirty)}
-          >
-            {submitting ? (
-              <Loader2 className="animate-spin" />
-            ) : (
-              <Save />
-            )}
-            {mode === 'create' ? t('cars.addCar') : t('common.save')}
+          </div>
+        </FormSection>
+
+        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end sm:gap-3">
+          <Button type="button" variant="outline" onClick={onCancel} disabled={submitting}>
+            {t('common.cancel')}
+          </Button>
+          <Button type="submit" disabled={submitting || (!!car && !form.formState.isDirty)}>
+            {submitting ? <Loader2 className="animate-spin" /> : <Save />}
+            {car ? t('common.save') : t('cars.addCar')}
           </Button>
         </div>
       </form>

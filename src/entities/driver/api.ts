@@ -3,9 +3,7 @@ import {
   driversResponseSchema,
   driverSchema,
   type Driver,
-  type RegisterDriverPayload,
-  type UpdateDriverPayload,
-  type UpdateDriverDocumentsPayload,
+  type DriverPayload,
 } from './schemas';
 
 /* ─── List all drivers (simple — used by fuel-event form dropdown too) ─── */
@@ -29,37 +27,15 @@ export async function getDriver(id: number | string): Promise<Driver> {
 }
 
 /* ─── Register (create) driver ─── */
-export async function registerDriver(payload: RegisterDriverPayload): Promise<void> {
-  const fd = new FormData();
-  fd.append('request', JSON.stringify(payload));
-  await apiClient.post('/api/protected/RegisterDriver', fd, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  });
+export async function registerDriver(payload: DriverPayload): Promise<void> {
+  // Drivers this dashboard adds work for Apex; the field exists for the
+  // contractors' drivers other clients register.
+  await apiPost<unknown>('/api/drivers', { ...payload, transporter: 'Apex' });
 }
 
 /* ─── Update driver basic info ─── */
-export async function updateDriver(payload: UpdateDriverPayload): Promise<void> {
-  const fd = new FormData();
-  fd.append('request', JSON.stringify(payload));
-  await apiClient.post('/api/protected/UpdateDriver', fd, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  });
-}
-
-/* ─── Update driver documents (dates + images) ─── */
-export async function updateDriverDocuments(
-  id: number,
-  payload: UpdateDriverDocumentsPayload,
-  files: Record<string, File>,
-): Promise<void> {
-  const fd = new FormData();
-  fd.append('request', JSON.stringify(payload));
-  Object.entries(files).forEach(([key, file]) => {
-    if (file) fd.append(key, file);
-  });
-  await apiClient.put(`/api/drivers/${id}`, fd, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  });
+export async function updateDriver(id: number, payload: Partial<DriverPayload>): Promise<void> {
+  await apiClient.put(`/api/drivers/${id}`, payload);
 }
 
 /* ─── Delete driver ─── */
@@ -95,10 +71,4 @@ export interface RegeneratePinResponse {
 export async function regeneratePin(id: number): Promise<RegeneratePinResponse> {
   const res = await apiClient.put(`/api/drivers/${id}/regenerate-pin`);
   return res.data as RegeneratePinResponse;
-}
-
-/* ─── Download document image (blob) ─── */
-export async function getDocumentImage(path: string): Promise<string> {
-  const res = await apiClient.get(path, { responseType: 'blob' });
-  return URL.createObjectURL(res.data as Blob);
 }
