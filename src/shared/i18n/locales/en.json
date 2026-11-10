@@ -1711,6 +1711,7 @@
       "chassisNumber": "Chassis number",
       "engineNumber": "Engine number",
       "engineSize": "Engine size",
+      "cylinders": "Cylinders",
       "payload": "Payload",
       "color": "Colour",
       "trailerPlateNumber": "Trailer plate number"

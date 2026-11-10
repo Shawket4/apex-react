@@ -83,6 +83,7 @@ export function CarOverviewTab({ car, onOpenDocuments }: CarOverviewTabProps) {
           <Fact label={t('cars.fields.chassisNumber')} value={car.chassis_no} code />
           <Fact label={t('cars.fields.engineNumber')} value={car.engine_no} code />
           <Fact label={t('cars.fields.engineSize')} value={measured(car.engine_cc, t('cars.units.cc'))} />
+          <Fact label={t('cars.fields.cylinders')} value={car.engine_cylinders || undefined} />
           <Fact label={t('cars.fields.payload')} value={measured(car.payload_tons, ton)} />
         </dl>
       </Section>

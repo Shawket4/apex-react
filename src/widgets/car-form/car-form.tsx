@@ -14,6 +14,7 @@ import {
 } from '@/entities/car/schemas';
 import { carTypeName } from '@/entities/car/labels';
 import { useDrivers } from '@/entities/driver/queries';
+import { cn } from '@/shared/lib/cn';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { FormSection } from '@/shared/ui/form-section';
@@ -40,9 +41,9 @@ interface TextFieldProps {
   name: TextFieldName;
   label: string;
   placeholder?: string;
-  /** A unit shown inside the field's end. Makes the field numeric. */
+  /** A unit shown inside the field's end. Makes the field a number. */
   unit?: string;
-  /** Whole numbers only (litres, cc) rather than decimals (tons). */
+  /** A whole number (litres, cc, cylinders) rather than a decimal (tons). */
   whole?: boolean;
 }
 
@@ -60,8 +61,8 @@ function TextField({ control, name, label, placeholder, unit, whole }: TextField
                 {...field}
                 placeholder={placeholder}
                 autoComplete="off"
-                inputMode={unit ? (whole ? 'numeric' : 'decimal') : undefined}
-                className={unit ? 'pe-12 tabular-nums' : undefined}
+                inputMode={whole ? 'numeric' : unit ? 'decimal' : undefined}
+                className={cn((unit || whole) && 'tabular-nums', unit && 'pe-12')}
               />
             </FormControl>
             {unit ? (
@@ -164,6 +165,12 @@ export function CarForm({ car, submitting, onSubmit, onCancel }: CarFormProps) {
             name="engine_cc"
             label={t('cars.fields.engineSize')}
             unit={t('cars.units.cc')}
+            whole
+          />
+          <TextField
+            control={control}
+            name="engine_cylinders"
+            label={t('cars.fields.cylinders')}
             whole
           />
           <TextField

@@ -13,6 +13,7 @@ const blank: CarFormValues = {
   chassis_no: '',
   engine_no: '',
   engine_cc: '',
+  engine_cylinders: '',
   payload_tons: '',
   color: '',
   trailer_no_plate: '',
@@ -27,21 +28,29 @@ describe('carFormSchema', () => {
     expect(carFormSchema.safeParse({ ...blank, car_no_plate: '   ' }).success).toBe(false);
   });
 
-  it('refuses an amount that is not a number, negative, or a fraction of a cc', () => {
+  it('refuses an amount that is not a number, negative, or a fraction of a cc or a cylinder', () => {
     expect(carFormSchema.safeParse({ ...blank, payload_tons: 'heavy' }).success).toBe(false);
     expect(carFormSchema.safeParse({ ...blank, payload_tons: '-1' }).success).toBe(false);
     expect(carFormSchema.safeParse({ ...blank, payload_tons: '32.5' }).success).toBe(true);
     expect(carFormSchema.safeParse({ ...blank, engine_cc: '12.5' }).success).toBe(false);
     expect(carFormSchema.safeParse({ ...blank, engine_cc: '12800' }).success).toBe(true);
+    expect(carFormSchema.safeParse({ ...blank, engine_cylinders: '6.5' }).success).toBe(false);
+    expect(carFormSchema.safeParse({ ...blank, engine_cylinders: '6' }).success).toBe(true);
   });
 });
 
 describe('carPayload', () => {
   it('trims text and reads empty amounts as zero', () => {
-    const payload = carPayload({ ...blank, chassis_no: ' WDB123 ', engine_cc: '12800' });
+    const payload = carPayload({
+      ...blank,
+      chassis_no: ' WDB123 ',
+      engine_cc: '12800',
+      engine_cylinders: '6',
+    });
     expect(payload.car_no_plate).toBe('أ ب ج 1234');
     expect(payload.chassis_no).toBe('WDB123');
     expect(payload.engine_cc).toBe(12800);
+    expect(payload.engine_cylinders).toBe(6);
     expect(payload.payload_tons).toBe(0);
   });
 
@@ -84,11 +93,13 @@ describe('carFormDefaults', () => {
       driver_id: 3,
       json_compartments: [7000, 8000],
       engine_cc: 12800,
+      engine_cylinders: 6,
       payload_tons: 0,
       trailer_no_plate: null,
     });
     expect(values.compartments).toEqual(litres('7000', '8000'));
     expect(values.engine_cc).toBe('12800');
+    expect(values.engine_cylinders).toBe('6');
     expect(values.payload_tons).toBe('');
     expect(values.trailer_no_plate).toBe('');
     expect(carFormSchema.safeParse(values).success).toBe(true);
