@@ -19,6 +19,11 @@ interface Props {
   placeholder?: string;
   className?: string;
   id?: string;
+  /**
+   * For a date that may be left empty: adds a "Clear" action beside "Today",
+   * which calls `onChange('')`.
+   */
+  clearable?: boolean;
 }
 
 function partsFromDateString(s?: string): LocalParts | undefined {
@@ -53,6 +58,7 @@ export function DatePicker({
   placeholder,
   className,
   id,
+  clearable,
 }: Props) {
   const { t, i18n } = useTranslation();
   const locale = i18n.language.startsWith('ar') ? 'ar-EG' : 'en-GB';
@@ -185,9 +191,31 @@ export function DatePicker({
           >
             {t('datePicker.today')}
           </button>
-          <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => setOpen(false)}>
-            {t('common.cancel')}
-          </Button>
+          <div className="flex items-center gap-1">
+            {clearable && value ? (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-7 text-xs"
+                onClick={() => {
+                  onChange('');
+                  setOpen(false);
+                }}
+              >
+                {t('common.clear')}
+              </Button>
+            ) : null}
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-7 text-xs"
+              onClick={() => setOpen(false)}
+            >
+              {t('common.cancel')}
+            </Button>
+          </div>
         </div>
       </PopoverContent>
     </Popover>

@@ -86,11 +86,17 @@ function createClient(baseURL: string): AxiosInstance {
           });
         }
 
+        // An upload goes as it is: a FormData body stringified to JSON is
+        // `{}`, and a multipart Content-Type without the boundary the runtime
+        // writes is one the server cannot split.
+        const isForm = config.data instanceof FormData;
+        if (isForm) headers.delete('Content-Type');
+
         const requestInit: RequestInit = {
           method: config.method?.toUpperCase() || 'GET',
           headers,
           body: config.data
-            ? typeof config.data === 'string'
+            ? isForm || typeof config.data === 'string'
               ? config.data
               : JSON.stringify(config.data)
             : undefined,

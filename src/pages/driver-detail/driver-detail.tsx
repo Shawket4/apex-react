@@ -19,7 +19,7 @@ import {
   useApproveDriver,
   useRejectDriver,
 } from '@/entities/driver/queries';
-import type { DriverFormValues } from '@/entities/driver/schemas';
+import { driverPayload, type DriverFormValues } from '@/entities/driver/schemas';
 import { PageShell } from '@/shared/ui/page-shell';
 import { Button } from '@/shared/ui/button';
 import { Skeleton } from '@/shared/ui/skeleton';
@@ -35,16 +35,19 @@ import {
 } from '@/shared/ui/dialog';
 import { DriverForm } from '@/widgets/driver-form/driver-form';
 import { OverviewTab } from '@/widgets/driver-detail/overview-tab';
-import { DocumentsTab } from '@/widgets/driver-detail/documents-tab';
+import { DocumentsPanel } from '@/widgets/documents/documents-panel';
 import { PinTab } from '@/widgets/driver-detail/pin-tab';
 import { FinancialTab } from '@/widgets/driver-detail/financial-tab';
 import { usePermissions } from '@/shared/hooks/use-permissions';
 import { PERMISSION_LEVELS } from '@/shared/config/constants';
+import { useTabParam } from '@/shared/hooks/use-tab-param';
+
+const TABS = ['overview', 'documents', 'pin', 'financial'] as const;
 
 export default function DriverDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { atLeast } = usePermissions();
   const canManage = atLeast(PERMISSION_LEVELS.MANAGER);
 
@@ -54,22 +57,15 @@ export default function DriverDetailPage() {
   const approveMutation = useApproveDriver();
   const rejectMutation = useRejectDriver();
 
+  const [tab, setTab] = useTabParam(TABS);
   const [showEditDialog, setShowEditDialog] = React.useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = React.useState(false);
 
   const handleUpdate = (values: DriverFormValues) => {
     if (!driver) return;
     updateMutation.mutate(
-      {
-        id: driver.ID,
-        ...values,
-        mobile_number: values.mobile_number ?? '',
-        id_license_expiration_date: values.id_license_expiration_date ?? '',
-        transporter: 'Apex',
-      },
-      {
-        onSuccess: () => setShowEditDialog(false),
-      },
+      { id: driver.ID, data: driverPayload(values) },
+      { onSuccess: () => setShowEditDialog(false) },
     );
   };
 
@@ -210,7 +206,7 @@ export default function DriverDetailPage() {
         )}
 
         {/* Tabs — Overview is the primary read, Financial is a hub so it goes last */}
-        <Tabs defaultValue="overview">
+        <Tabs value={tab} onValueChange={setTab} dir={i18n.dir()}>
           <TabsList>
             <TabsTrigger value="overview">{t('drivers.tabs.overview')}</TabsTrigger>
             <TabsTrigger value="documents">{t('drivers.tabs.documents')}</TabsTrigger>
@@ -218,10 +214,10 @@ export default function DriverDetailPage() {
             <TabsTrigger value="financial">{t('drivers.tabs.financial')}</TabsTrigger>
           </TabsList>
           <TabsContent value="overview">
-            <OverviewTab driver={driver} />
+            <OverviewTab driver={driver} onOpenDocuments={() => setTab('documents')} />
           </TabsContent>
           <TabsContent value="documents">
-            <DocumentsTab driver={driver} />
+            <DocumentsPanel ownerKind="driver" ownerId={driver.ID} />
           </TabsContent>
           <TabsContent value="pin">
             <PinTab driverId={driver.ID} driverName={driver.name} />
@@ -239,7 +235,6 @@ export default function DriverDetailPage() {
             <DialogTitle>{t('drivers.editDriver')}</DialogTitle>
           </DialogHeader>
           <DriverForm
-            mode="edit"
             driver={driver}
             submitting={updateMutation.isPending}
             onSubmit={handleUpdate}

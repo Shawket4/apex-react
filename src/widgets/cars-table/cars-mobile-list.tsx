@@ -1,11 +1,12 @@
+import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Car as CarIcon, Edit, Gauge, Truck, User } from 'lucide-react';
+import { Car as CarIcon, ChevronRight, Edit, Gauge, Truck, User } from 'lucide-react';
 
 import { Badge } from '@/shared/ui/badge';
 import { Button } from '@/shared/ui/button';
 import { Skeleton } from '@/shared/ui/skeleton';
-import { cn } from '@/shared/lib/cn';
 import type { Car } from '@/entities/car/schemas';
+import { carTypeName } from '@/entities/car/labels';
 import { carDocuments, carDocumentState } from '@/entities/car/expiry';
 import { CarDocumentCell } from './car-document-cell';
 
@@ -53,7 +54,10 @@ export function CarsMobileList({
         return (
           <article key={car.ID} className="rounded-lg border bg-card p-3">
             <div className="flex items-start justify-between gap-3">
-              <div className="flex min-w-0 items-center gap-2">
+              <Link
+                to={`/cars/${car.ID}`}
+                className="flex min-w-0 items-center gap-2 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
                 <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
                   <CarIcon className="h-4 w-4" aria-hidden="true" />
                 </span>
@@ -63,10 +67,10 @@ export function CarsMobileList({
                   </span>
                   <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
                     <Truck className="h-3 w-3 shrink-0" aria-hidden="true" />
-                    {car.car_type || '—'}
+                    {carTypeName(t, car.car_type) || '—'}
                   </span>
                 </span>
-              </div>
+              </Link>
               <Badge
                 variant={
                   state === 'expired'
@@ -122,8 +126,8 @@ export function CarsMobileList({
               )}
             </div>
 
-            {onEditCar && (
-              <div className={cn('mt-2 flex justify-end')}>
+            <div className="mt-2 flex items-center justify-end gap-1">
+              {onEditCar && (
                 <Button
                   type="button"
                   variant="ghost"
@@ -134,8 +138,14 @@ export function CarsMobileList({
                   <Edit className="h-3.5 w-3.5" aria-hidden="true" />
                   {t('cars.editCar')}
                 </Button>
-              </div>
-            )}
+              )}
+              <Button asChild variant="ghost" size="sm" className="h-8 gap-1 text-[11px]">
+                <Link to={`/cars/${car.ID}`}>
+                  {t('cars.detail.open')}
+                  <ChevronRight className="h-3.5 w-3.5 rtl:rotate-180" aria-hidden="true" />
+                </Link>
+              </Button>
+            </div>
           </article>
         );
       })}

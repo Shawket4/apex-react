@@ -30,7 +30,7 @@ export function PageShell({
           <div className="min-w-0 space-y-1">
             <h1 className="truncate text-2xl font-semibold tracking-tight md:text-3xl">{title}</h1>
             {description && (
-              <p className="text-sm text-muted-foreground">{description}</p>
+              <div className="text-sm text-muted-foreground">{description}</div>
             )}
           </div>
         </div>

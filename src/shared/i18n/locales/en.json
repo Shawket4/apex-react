@@ -118,7 +118,8 @@
     "primary": "Main navigation",
     "receiptPiles": "Receipt piles",
     "advisor": "Advisor",
-    "pricing": "Pricing"
+    "pricing": "Pricing",
+    "documents": "Documents"
   },
   "auth": {
     "loginTitle": "Welcome back",
@@ -461,8 +462,6 @@
     "registeredSuccessfully": "Driver registered successfully",
     "updatedSuccessfully": "Driver updated successfully",
     "deletedSuccessfully": "Driver deleted successfully",
-    "documentsUpdated": "Documents updated successfully",
-    "documentsFailed": "Failed to update documents",
     "saveFailed": "Failed to save driver",
     "deleteFailed": "Failed to delete driver",
     "approvedSuccessfully": "Driver approved",
@@ -489,25 +488,11 @@
       "phonePlaceholder": "Enter phone number",
       "transporter": "Transporter",
       "expiryDate": "Expiry date",
-      "driverLicenseExpiry": "Driving license expiry",
-      "idExpiry": "ID expiry",
-      "safetyExpiry": "Safety certificate expiry",
-      "drugTestExpiry": "Drug test expiry",
       "socialSecurity": "Social security number"
     },
     "status": {
       "approved": "Approved",
       "pending": "Pending"
-    },
-    "expiry": {
-      "valid": "Valid",
-      "expired": "Expired",
-      "notSet": "Not set",
-      "expiresInDays": "Expires in {{days}}d",
-      "inDays": "In {{days}} days",
-      "expiredDaysAgo": "Expired {{days}} days ago",
-      "summaryExpired": "{{count}} expired",
-      "summaryExpiring": "{{count}} expiring soon"
     },
     "stats": {
       "total": "Total drivers",
@@ -515,24 +500,7 @@
       "pending": "Pending"
     },
     "sections": {
-      "personalInfo": "Personal information",
-      "licenses": "Licenses & certifications"
-    },
-    "docs": {
-      "driverLicense": "Driving license",
-      "idLicense": "ID license",
-      "safetyLicense": "Safety certificate",
-      "drugTest": "Drug test",
-      "front": "Front",
-      "back": "Back",
-      "noImage": "No image uploaded",
-      "upload": "Upload",
-      "replace": "Replace",
-      "zoomOut": "Zoom out",
-      "zoomIn": "Zoom in",
-      "rotate": "Rotate",
-      "filesReadyToUpload": "{{count}} file ready to upload",
-      "filesReadyToUpload_other": "{{count}} files ready to upload"
+      "personalInfo": "Personal information"
     },
     "pin": {
       "title": "PIN management",
@@ -552,6 +520,12 @@
       "loansDescription": "Driver payouts — loans and advances",
       "salaries": "Salaries",
       "salariesDescription": "View salary records and create payroll"
+    },
+    "validation": {
+      "nameRequired": "Enter the driver's name"
+    },
+    "form": {
+      "onlyNameRequired": "Only the name is needed. Everything else can be added later."
     }
   },
   "driverExpenses": {
@@ -1729,7 +1703,13 @@
       "calibrationExpiry": "Calibration Expiry",
       "tankLicenseExpiry": "Tank License Expiry",
       "carType": "Type",
-      "transporter": "Transporter"
+      "transporter": "Transporter",
+      "chassisNumber": "Chassis number",
+      "engineNumber": "Engine number",
+      "engineSize": "Engine size",
+      "payload": "Payload",
+      "color": "Colour",
+      "trailerPlateNumber": "Trailer plate number"
     },
     "sections": {
       "vehicleInfo": "Vehicle Information",
@@ -1738,7 +1718,8 @@
       "addCompartment": "Add Compartment",
       "compartmentIndex": "Comp {{index}}",
       "licenses": "Licenses & Dates",
-      "removeCompartment": "Remove compartment"
+      "removeCompartment": "Remove compartment",
+      "trailer": "Trailer"
     },
     "types": {
       "noTrailer": "No Trailer",
@@ -1746,7 +1727,9 @@
       "truck": "Truck"
     },
     "units": {
-      "litre": "L"
+      "litre": "L",
+      "cc": "cc",
+      "ton": "t"
     },
     "status": {
       "expired": "Expired Docs",
@@ -1773,6 +1756,21 @@
       "totals": "TOTALS",
       "empty": "There are no vehicles to export.",
       "failed": "Could not build the spreadsheet."
+    },
+    "validation": {
+      "plateRequired": "Enter the plate number"
+    },
+    "form": {
+      "onlyPlateRequired": "Only the plate number is needed. Everything else can be added later."
+    },
+    "saveFailed": "Could not save the car",
+    "driverNotAssigned": "The car was saved, but the driver could not be assigned",
+    "detail": {
+      "open": "Open"
+    },
+    "tabs": {
+      "overview": "Overview",
+      "documents": "Documents"
     }
   },
   "zones": {
@@ -3060,6 +3058,187 @@
       "body": "{{company}}'s version starting on {{date}} will be removed. The version before it stays in force.",
       "success": "Version deleted",
       "failed": "Could not delete the version"
+    }
+  },
+  "documents": {
+    "title": "Documents",
+    "loadFailed": "Could not load the documents",
+    "file": "File",
+    "restricted": "Only managers can open this document",
+    "types": {
+      "national_id": "National ID",
+      "driving_licence": "Driving licence",
+      "safety_certificate": "Safety certificate",
+      "drug_test": "Drug test",
+      "criminal_record": "Criminal record certificate",
+      "trust_receipt": "Trust receipt",
+      "site_access_pass": "Site access pass",
+      "driver_photo": "Driver photo",
+      "vehicle_licence": "Vehicle licence",
+      "calibration_certificate": "Calibration certificate",
+      "tank_licence": "Tank licence",
+      "vehicle_photos": "Vehicle photos"
+    },
+    "slots": {
+      "front": "Front",
+      "back": "Back",
+      "page": "Page",
+      "photo": "Photo"
+    },
+    "status": {
+      "valid": "Valid",
+      "expiring": "Expiring soon",
+      "expired": "Expired",
+      "undated": "No expiry date",
+      "notAdded": "Not added yet",
+      "expiresToday": "Expires today",
+      "expiredAgo_one": "Expired yesterday",
+      "expiredAgo_other": "Expired {{count}} days ago",
+      "daysLeft_one": "1 day left",
+      "daysLeft_other": "{{count}} days left"
+    },
+    "card": {
+      "allHidden": "Every version is hidden",
+      "expires": "Expires {{date}}",
+      "noExpiry": "No expiry date",
+      "moreFiles_one": "1 more photo",
+      "moreFiles_other": "{{count}} more photos",
+      "noFiles": "No files attached",
+      "photos_one": "{{count}} photo",
+      "photos_other": "{{count}} photos"
+    },
+    "history": {
+      "description_one": "1 version, newest first",
+      "description_other": "{{count}} versions, newest first",
+      "current": "Current",
+      "hidden": "Hidden",
+      "hideTitle": "Hide this version?",
+      "hideDescription": "It stays in the history and a manager can bring it back. The newest version that is not hidden becomes the current one.",
+      "by": "by {{name}}, {{when}}",
+      "editedBy": "Edited by {{name}}, {{when}}",
+      "hiddenBy": "Hidden by {{name}}, {{when}}",
+      "source": {
+        "upload": "Added",
+        "profile": "Date set on the profile",
+        "legacy": "Carried over from the old records"
+      }
+    },
+    "summary": {
+      "expired_one": "1 expired",
+      "expired_other": "{{count}} expired",
+      "expiring_one": "1 expiring soon",
+      "expiring_other": "{{count}} expiring soon",
+      "missing_one": "1 not added yet",
+      "missing_other": "{{count}} not added yet"
+    },
+    "actions": {
+      "add": "Add",
+      "addAnother": "Add another {{type}}",
+      "renew": "Renew",
+      "replace": "Replace",
+      "history": "History",
+      "hide": "Hide",
+      "restore": "Restore",
+      "open": "Open {{name}}",
+      "download": "Download",
+      "zoomIn": "Zoom in",
+      "zoomOut": "Zoom out",
+      "rotate": "Rotate",
+      "resetView": "Reset view",
+      "addPhotos": "Add photos"
+    },
+    "editor": {
+      "addTitle": "Add {{type}}",
+      "editTitle": "Edit {{type}}",
+      "renewTitle": "Renew {{type}}",
+      "replaceTitle": "Replace {{type}}",
+      "addDescription": "Everything here is optional. Add what you have now and the rest later.",
+      "renewDescription": "This becomes the current version. The old one stays in the history.",
+      "editDescription": "Correct this version. To record a renewal, use Renew instead.",
+      "files": "Files",
+      "add": {
+        "front": "Add the front",
+        "back": "Add the back",
+        "page": "Add a page",
+        "photo": "Add a photo",
+        "file": "Add a file"
+      },
+      "acceptImages": "Photos only (JPG, PNG or WebP), up to {{size}} MB each.",
+      "acceptAll": "Photos (JPG, PNG, WebP) or PDF, up to {{size}} MB each.",
+      "waitUploading": "Wait for the uploads to finish",
+      "removeFailed": "Remove the files that failed to upload first",
+      "nothingYet": "Add a file, a date or a note to save",
+      "takePhotoOf": "Take a photo: {{slot}}",
+      "takePhoto": "Take a photo",
+      "uploadingPercent": "Uploading {{percent}}%",
+      "removeFile": "Remove {{name}}"
+    },
+    "fields": {
+      "label": "Name",
+      "labelPlaceholder": "e.g. the company or site it is for",
+      "labelHint": "Tells this one apart from the others of its kind.",
+      "issueDate": "Issue date",
+      "expiryDate": "Expiry date",
+      "noDate": "No date",
+      "note": "Note",
+      "notePlaceholder": "Anything worth remembering about this document"
+    },
+    "viewer": {
+      "position": "{{index}} of {{count}}",
+      "failed": "Could not load this file",
+      "noPreview": "This file cannot be previewed here"
+    },
+    "errors": {
+      "generic": "Something went wrong. Try again.",
+      "unknown_owner_kind": "Documents are kept for cars and drivers only.",
+      "unknown_type": "This kind of document is not known. Reload the page and try again.",
+      "not_applicable": "This kind of document does not apply here.",
+      "empty": "Add a file, a date or a note before saving.",
+      "label_taken": "Another document already has this name.",
+      "label_too_long": "The name is too long.",
+      "note_too_long": "The note is too long.",
+      "invalid_date": "One of the dates is not valid.",
+      "expiry_before_issue": "The expiry date is before the issue date.",
+      "unknown_slot": "This document does not take a file there.",
+      "too_many_files": "That is more files than this document takes.",
+      "duplicate_file": "The same file was added twice.",
+      "file_in_use": "One of the files already belongs to another document.",
+      "images_only": "Only photos can be added here.",
+      "empty_file": "The file is empty.",
+      "file_too_large": "The file is too large.",
+      "unsupported_type": "Only photos (JPG, PNG, WebP) and PDF files can be added.",
+      "unreadable_image": "The photo could not be read. Try another one.",
+      "not_found": "This document no longer exists. Reload the page.",
+      "forbidden": "You are not allowed to do this.",
+      "invalid_body": "The request could not be read. Try again."
+    },
+    "toast": {
+      "saved": "Document saved",
+      "hidden": "Version hidden",
+      "restored": "Version restored"
+    },
+    "fleet": {
+      "subtitle": "Every document of every car and driver, the most urgent first",
+      "columns": {
+        "document": "Document",
+        "owner": "Belongs to",
+        "files": "Files"
+      },
+      "empty": "No documents yet",
+      "emptyDescription": "Open a car or a driver and add their documents; they show up here.",
+      "stats": {
+        "total": "Documents"
+      },
+      "searchPlaceholder": "Search by plate, driver or document...",
+      "typeFilter": "Kind of document",
+      "allTypes": "All kinds",
+      "kindFilter": "Belongs to",
+      "kinds": {
+        "all": "All",
+        "car": "Cars",
+        "driver": "Drivers"
+      },
+      "allStatuses": "All"
     }
   }
 }

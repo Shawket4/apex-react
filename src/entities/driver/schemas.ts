@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import i18n from '@/shared/i18n';
 
 /* ──────────────────────────────────────────────────────────────────────────
    Wire schema — matches exactly what the Go backend returns.
@@ -13,19 +14,13 @@ export const driverSchema = z.object({
   social_security_number: z.string().optional().nullable(),
   is_approved: z.coerce.boolean().optional().nullable(),
 
-  // License / cert expiration dates (YYYY-MM-DD strings)
+  // The expiry dates of the driver's dated papers (YYYY-MM-DD). The papers
+  // themselves, their files and their history are documents; the server
+  // keeps these four in step with them so lists can sort and flag by date.
   id_license_expiration_date: z.string().optional().nullable(),
   driver_license_expiration_date: z.string().optional().nullable(),
   safety_license_expiration_date: z.string().optional().nullable(),
   drug_test_expiration_date: z.string().optional().nullable(),
-
-  // Document image filenames
-  id_license_image_name: z.string().optional().nullable(),
-  id_license_image_name_back: z.string().optional().nullable(),
-  driver_license_image_name: z.string().optional().nullable(),
-  driver_license_image_name_back: z.string().optional().nullable(),
-  safety_license_image_name: z.string().optional().nullable(),
-  drug_test_image_name: z.string().optional().nullable(),
 });
 
 export type Driver = z.infer<typeof driverSchema>;
@@ -41,63 +36,25 @@ export const UNREGISTERED_DRIVER_ID = 0;
 export const UNREGISTERED_DRIVER_NAME = 'غير مسجل';
 
 /* ──────────────────────────────────────────────────────────────────────────
-   Form schema — for Add / Edit driver dialog.
+   Form schema — for the Add / Edit driver dialog. Only the name is required.
+   A driver's papers and their dates are added as documents, not here.
    ────────────────────────────────────────────────────────────────────────── */
 
 export const driverFormSchema = z.object({
-  name: z.string().min(1, 'Please enter the driver name'),
-  mobile_number: z.string().optional(),
-  id_license_expiration_date: z.string().optional(),
-  driver_license_expiration_date: z
-    .string({ required_error: 'Please select a license expiry date' })
-    .min(1, 'Please select a license expiry date'),
-  safety_license_expiration_date: z
-    .string({ required_error: 'Please select a safety certificate expiry' })
-    .min(1, 'Please select a safety certificate expiry'),
-  drug_test_expiration_date: z
-    .string({ required_error: 'Please select a drug test expiry' })
-    .min(1, 'Please select a drug test expiry'),
+  name: z.string().refine((value) => value.trim().length > 0, () => ({
+    message: i18n.t('drivers.validation.nameRequired'),
+  })),
+  mobile_number: z.string(),
 });
 
 export type DriverFormValues = z.infer<typeof driverFormSchema>;
 
-/* ──────────────────────────────────────────────────────────────────────────
-   Payload types — what the API expects in the request body.
-   ────────────────────────────────────────────────────────────────────────── */
-
-export interface RegisterDriverPayload {
+/** What a driver save sends. A field left out is left as it is on the server. */
+export interface DriverPayload {
   name: string;
   mobile_number: string;
-  id_license_expiration_date: string;
-  driver_license_expiration_date: string;
-  safety_license_expiration_date: string;
-  drug_test_expiration_date: string;
-  transporter: string;
 }
 
-export interface UpdateDriverPayload extends RegisterDriverPayload {
-  id: number;
-}
-
-export interface UpdateDriverDocumentsPayload {
-  ID: number;
-  name: string;
-  mobile_number: string;
-  transporter: string;
-  social_security_number: string;
-  id_license_expiration_date: string;
-  driver_license_expiration_date: string;
-  safety_license_expiration_date: string;
-  drug_test_expiration_date: string;
-}
-
-/* ──────────────────────────────────────────────────────────────────────────
-   Expiration status helper type
-   ────────────────────────────────────────────────────────────────────────── */
-
-export type ExpirationStatus = 'valid' | 'warning' | 'expired' | 'unknown';
-
-export interface ExpirationInfo {
-  status: ExpirationStatus;
-  daysLeft: number | null;
+export function driverPayload(values: DriverFormValues): DriverPayload {
+  return { name: values.name.trim(), mobile_number: values.mobile_number.trim() };
 }

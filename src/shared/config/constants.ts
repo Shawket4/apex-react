@@ -23,6 +23,16 @@ export const STORAGE_KEYS = {
 export const QUERY_KEYS = {
   auth: ['auth'] as const,
   cars: ['cars'] as const,
+  /** The document catalogue: which papers exist and what each one holds. */
+  documentTypes: ['documents', 'types'] as const,
+  /** Every document (with its history) one car or one driver holds. */
+  documents: (ownerKind: string, ownerId: number | string) =>
+    ['documents', 'owner', ownerKind, String(ownerId)] as const,
+  /** The current version of every document of one owner kind, fleet-wide. */
+  documentsOverview: (ownerKind: string) => ['documents', 'overview', ownerKind] as const,
+  /** One stored file (or its thumbnail) as an object URL. */
+  documentFile: (fileId: number, thumb: boolean) =>
+    ['document-file', fileId, thumb ? 'thumb' : 'full'] as const,
   drivers: ['drivers'] as const,
   driver: (id: number | string) => ['drivers', String(id)] as const,
   driverExpenses: (id: number | string) => ['drivers', String(id), 'expenses'] as const,
