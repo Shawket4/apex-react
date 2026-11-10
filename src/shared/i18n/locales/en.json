@@ -250,7 +250,7 @@
       "kind": {
         "license": "Licence",
         "calibration": "Calibration",
-        "tank_license": "Tank licence"
+        "tank_license": "Trailer licence"
       },
       "expiredAgo": "expired {{count}}d ago",
       "daysLeft": "{{count}}d left",
@@ -1705,7 +1705,7 @@
       "selectDriver": "Select a driver...",
       "licenseExpiry": "Car License Expiry",
       "calibrationExpiry": "Calibration Expiry",
-      "tankLicenseExpiry": "Tank License Expiry",
+      "tankLicenseExpiry": "Trailer Licence Expiry",
       "carType": "Type",
       "transporter": "Transporter",
       "chassisNumber": "Chassis number",
@@ -1752,7 +1752,7 @@
       "daysLeft": "{{count}}d left",
       "license": "Licence",
       "calibration": "Calibration",
-      "tank_license": "Tank licence",
+      "tank_license": "Trailer licence",
       "none": "No documents recorded",
       "daysLeftHeader": "Days left"
     },
@@ -2797,7 +2797,7 @@
         "superseded_km": "Replaces reading (km)",
         "sync_version": "Version",
         "tank_capacity": "Tank capacity",
-        "tank_license_expiration_date": "Tank licence expiry",
+        "tank_license_expiration_date": "Trailer licence expiry",
         "tasks": "Services done",
         "terminal": "Terminal",
         "terminal_id": "Terminal ID",
@@ -3080,7 +3080,7 @@
       "driver_photo": "Driver photo",
       "vehicle_licence": "Vehicle licence",
       "calibration_certificate": "Calibration certificate",
-      "tank_licence": "Tank licence",
+      "tank_licence": "Trailer licence",
       "vehicle_photos": "Vehicle photos"
     },
     "slots": {

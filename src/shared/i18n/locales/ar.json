@@ -250,7 +250,7 @@
       "kind": {
         "license": "رخصة السيارة",
         "calibration": "المعايرة",
-        "tank_license": "رخصة التانك"
+        "tank_license": "رخصة المقطورة"
       },
       "expiredAgo": "انتهت منذ {{count}} يوم",
       "daysLeft": "باقي {{count}} يوم",
@@ -1732,7 +1732,7 @@
       "selectDriver": "اختر سائقاً...",
       "licenseExpiry": "انتهاء رخصة السيارة",
       "calibrationExpiry": "انتهاء المعايرة",
-      "tankLicenseExpiry": "انتهاء رخصة التنك",
+      "tankLicenseExpiry": "انتهاء رخصة المقطورة",
       "carType": "النوع",
       "transporter": "الناقل",
       "chassisNumber": "رقم الشاسيه",
@@ -1779,7 +1779,7 @@
       "daysLeft": "{{count}} يوم متبقي",
       "license": "الرخصة",
       "calibration": "المعايرة",
-      "tank_license": "رخصة التانك",
+      "tank_license": "رخصة المقطورة",
       "none": "لا توجد مستندات مسجلة",
       "daysLeftHeader": "الأيام المتبقية"
     },
@@ -2836,7 +2836,7 @@
         "superseded_km": "القراءة السابقة (كم)",
         "sync_version": "الإصدار",
         "tank_capacity": "سعة التنك",
-        "tank_license_expiration_date": "انتهاء رخصة التنك",
+        "tank_license_expiration_date": "انتهاء رخصة المقطورة",
         "tasks": "البنود المنفذة",
         "terminal": "المستودع",
         "terminal_id": "رقم المستودع",
@@ -3151,7 +3151,7 @@
       "driver_photo": "صورة السائق",
       "vehicle_licence": "رخصة السيارة",
       "calibration_certificate": "شهادة المعايرة",
-      "tank_licence": "رخصة التنك",
+      "tank_licence": "رخصة المقطورة",
       "vehicle_photos": "صور السيارة"
     },
     "slots": {
