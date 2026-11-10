@@ -1738,6 +1738,7 @@
       "chassisNumber": "رقم الشاسيه",
       "engineNumber": "رقم الموتور",
       "engineSize": "سعة الموتور",
+      "cylinders": "عدد السلندرات",
       "payload": "الحمولة",
       "color": "اللون",
       "trailerPlateNumber": "رقم لوحة المقطورة"

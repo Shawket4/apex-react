@@ -43,6 +43,7 @@ export const carSchema = z.object({
   chassis_no: z.string().optional().nullable(),
   engine_no: z.string().optional().nullable(),
   engine_cc: z.number().optional().nullable(),
+  engine_cylinders: z.number().optional().nullable(),
   payload_tons: z.number().optional().nullable(),
   color: z.string().optional().nullable(),
   // A trailer stays with its truck, so its own plate, chassis, payload and
@@ -93,6 +94,7 @@ export const carFormSchema = z.object({
   chassis_no: z.string(),
   engine_no: z.string(),
   engine_cc: optionalAmount(true),
+  engine_cylinders: optionalAmount(true),
   payload_tons: optionalAmount(false),
   color: z.string(),
   trailer_no_plate: z.string(),
@@ -134,6 +136,7 @@ export function carFormDefaults(car?: Car | null): CarFormValues {
     chassis_no: text(car?.chassis_no),
     engine_no: text(car?.engine_no),
     engine_cc: amountText(car?.engine_cc),
+    engine_cylinders: amountText(car?.engine_cylinders),
     payload_tons: amountText(car?.payload_tons),
     color: text(car?.color),
     trailer_no_plate: text(car?.trailer_no_plate),
@@ -153,6 +156,7 @@ export interface CarPayload {
   chassis_no: string;
   engine_no: string;
   engine_cc: number;
+  engine_cylinders: number;
   payload_tons: number;
   color: string;
   trailer_no_plate?: string;
@@ -187,6 +191,7 @@ export function carPayload(values: CarFormValues): CarPayload {
     chassis_no: values.chassis_no.trim(),
     engine_no: values.engine_no.trim(),
     engine_cc: amount(values.engine_cc),
+    engine_cylinders: amount(values.engine_cylinders),
     payload_tons: amount(values.payload_tons),
     color: values.color.trim(),
   };
