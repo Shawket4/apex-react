@@ -40,11 +40,15 @@ src/
 ```bash
 npm install
 npm run dev        # dev server on :5173
-npm run build      # typecheck + production bundle
+npm run build      # typecheck (TypeScript 7's tsc) + production bundle
 npm run preview    # preview build
 npm run lint
 npm run format
 ```
+
+`tsc` is TypeScript 7, the native compiler (`@typescript/native` in package.json). The
+`typescript` package stays the 6.0 API (`@typescript/typescript6`, with `tsc6`) because
+ESLint's parser loads it as a library and 7.0 ships no API.
 
 ## Backend contract
 
