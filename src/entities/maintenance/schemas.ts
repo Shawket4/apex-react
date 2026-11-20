@@ -33,6 +33,16 @@ const flag = z
   .nullish()
   .transform((value) => value ?? false);
 
+/** Counts by status. Absent (an older server) is an empty record. */
+const statusCounts = z
+  .record(num)
+  .nullish()
+  .transform((value): Record<string, number> => {
+    const out: Record<string, number> = {};
+    for (const [status, n] of Object.entries(value ?? {})) out[status] = n ?? 0;
+    return out;
+  });
+
 function list<T extends z.ZodTypeAny>(item: T) {
   return z
     .array(item)
@@ -60,6 +70,10 @@ export const workOrderRowSchema = z
     tire_ops: count,
     /** Task names joined with "، ". */
     summary: text,
+    /** The same in English, where the garage has English names. */
+    summary_en: text,
+    /** Name of whoever opened the order. */
+    opened_by: text,
   })
   .passthrough();
 export type WorkOrderRow = z.infer<typeof workOrderRowSchema>;
@@ -70,6 +84,8 @@ export const workOrdersPageSchema = z
     total: count,
     limit: count,
     offset: count,
+    /** Under the current filters, ignoring the status filter itself. */
+    status_counts: statusCounts,
   })
   .passthrough();
 export type WorkOrdersPage = z.infer<typeof workOrdersPageSchema>;
@@ -78,11 +94,14 @@ export const workOrderTaskSchema = z
   .object({
     id: z.string(),
     description: text,
+    description_en: text,
     category_id: text,
     category_ar: text,
     category_en: text,
     is_done: flag,
     done_at: text,
+    /** Name of whoever ticked the task; only on a done task. */
+    done_by: text,
   })
   .passthrough();
 export type WorkOrderTask = z.infer<typeof workOrderTaskSchema>;
@@ -161,10 +180,13 @@ export const tirePositionSchema = z
     position_code: text,
     is_spare: flag,
     spare_index: num,
+    /** 'left' | 'right' | null. */
     side: text,
+    /** 'outer' | 'inner' | 'single' | null (maint-rust `position_depth`). */
     depth: text,
     /** 'tractor' | 'trailer' | null. */
     section: text,
+    /** 1-based within its section. */
     axle_index: num,
     is_steering: z
       .boolean()
@@ -231,14 +253,7 @@ export const maintTiresPageSchema = z
   .object({
     rows: list(maintTireSchema),
     total: count,
-    status_counts: z
-      .record(num)
-      .nullish()
-      .transform((value): Record<string, number> => {
-        const out: Record<string, number> = {};
-        for (const [status, n] of Object.entries(value ?? {})) out[status] = n ?? 0;
-        return out;
-      }),
+    status_counts: statusCounts,
   })
   .passthrough();
 export type MaintTiresPage = z.infer<typeof maintTiresPageSchema>;

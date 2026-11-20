@@ -10,6 +10,7 @@ import {
   ClipboardList,
   Droplets,
   ListChecks,
+  Printer,
   type LucideIcon,
 } from 'lucide-react';
 import { isMaintConfigured } from '@/entities/maintenance/api';
@@ -34,7 +35,7 @@ import { MaintError, MaintNotConfigured } from '@/widgets/maintenance/maint-stat
 import {
   WorkOrderProgress,
   WorkOrderStatusBadge,
-  } from '@/widgets/maintenance/work-order-bits';
+} from '@/widgets/maintenance/work-order-bits';
 
 function BackToList() {
   const { t } = useTranslation();
@@ -94,6 +95,9 @@ function Tasks({ tasks }: { tasks: WorkOrderTask[] }) {
     <ul className="divide-y">
       {tasks.map((task) => {
         const type = localName(task.category_ar, task.category_en, i18n.language);
+        // English when the garage has it, otherwise the Arabic it wrote.
+        const description = localName(task.description, task.description_en, i18n.language);
+        const doneBy = task.is_done ? task.done_by?.trim() : null;
         return (
           <li key={task.id} className="flex items-start gap-3 py-2.5 first:pt-0 last:pb-0">
             {task.is_done ? (
@@ -103,7 +107,7 @@ function Tasks({ tasks }: { tasks: WorkOrderTask[] }) {
             )}
             <div className="min-w-0 flex-1 space-y-1">
               <p className="text-sm font-medium" dir="auto">
-                {task.description?.trim() || type || t('workOrders.detail.unnamedTask')}
+                {description || type || t('workOrders.detail.unnamedTask')}
               </p>
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
                 <span>
@@ -113,6 +117,11 @@ function Tasks({ tasks }: { tasks: WorkOrderTask[] }) {
                       : t('workOrders.detail.done')
                     : t('workOrders.detail.notDone')}
                 </span>
+                {doneBy && (
+                  <span>
+                    {t('workOrders.detail.doneBy')} <bdi>{doneBy}</bdi>
+                  </span>
+                )}
                 {type ? (
                   <span>{t('workOrders.detail.countsToward', { type })}</span>
                 ) : (
@@ -188,7 +197,7 @@ function TireWork({ work }: { work: WorkOrderTireWork[] }) {
             </div>
             <dl className="grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-4">
               <Fact label={t('maintenance.tires.position')}>
-                {item.position_code ? <span dir="ltr">{item.position_code}</span> : DASH}
+                {item.position_code ? <bdi dir="ltr">{item.position_code}</bdi> : DASH}
               </Fact>
               {item.fitted_here && (
                 <>
@@ -244,7 +253,7 @@ function Body({ detail }: { detail: WorkOrderDetail }) {
     <div className="flex flex-col gap-3">
       <Card>
         <CardContent className="space-y-4 p-4">
-          <dl className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3 lg:grid-cols-6">
+          <dl className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3 lg:grid-cols-4">
             <Fact label={t('workOrders.fields.plate')}>
               {order.vehicle_id !== null ? (
                 <Link
@@ -267,6 +276,11 @@ function Body({ detail }: { detail: WorkOrderDetail }) {
             <Fact label={t('workOrders.fields.closed')}>
               {order.closed_at ? maintDate(order.closed_at, i18n.language) : DASH}
             </Fact>
+            {order.opened_by?.trim() && (
+              <Fact label={t('workOrders.fields.openedBy')}>
+                <bdi>{order.opened_by.trim()}</bdi>
+              </Fact>
+            )}
             <Fact label={t('workOrders.fields.odometer')}>{km(order.odometer, unit)}</Fact>
             <Fact label={t('workOrders.fields.progress')}>
               <WorkOrderProgress row={order} />
@@ -329,9 +343,21 @@ export default function WorkOrderDetailsPage() {
   return (
     <PageShell
       title={title}
-      description={t('workOrders.detail.subtitle')}
+      // The sheet of paper has no use for "view only" or for buttons.
+      description={<span className="print:hidden">{t('workOrders.detail.subtitle')}</span>}
       icon={icon}
-      actions={<BackToList />}
+      className="print-sheet"
+      actions={
+        <div className="flex flex-wrap items-center gap-2 print:hidden">
+          <BackToList />
+          {data && (
+            <Button variant="outline" size="sm" onClick={() => window.print()}>
+              <Printer aria-hidden="true" />
+              {t('common.print')}
+            </Button>
+          )}
+        </div>
+      }
     >
       {!isMaintConfigured ? (
         <MaintNotConfigured />

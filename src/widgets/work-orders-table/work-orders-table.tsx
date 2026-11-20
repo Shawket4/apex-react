@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
 import type { ColumnDef } from '@tanstack/react-table';
+import { workOrderSummary } from '@/entities/maintenance/lib';
 import { prefetchWorkOrder } from '@/entities/maintenance/queries';
 import type { WorkOrderRow } from '@/entities/maintenance/schemas';
 import { formatNumber } from '@/shared/lib/format';
@@ -14,9 +15,10 @@ import { Pager } from '@/widgets/maintenance/pager';
 import {
   WorkOrderExtras,
   WorkOrderLinkCard,
+  WorkOrderOpenedBy,
   WorkOrderProgress,
   WorkOrderStatusBadge,
-  } from '@/widgets/maintenance/work-order-bits';
+} from '@/widgets/maintenance/work-order-bits';
 
 interface WorkOrdersTableProps {
   data: WorkOrderRow[];
@@ -65,6 +67,7 @@ export function WorkOrdersTable({ data, loading, pagination }: WorkOrdersTablePr
                 {t('workOrders.closedOn', { date: maintDate(row.original.closed_at, language) })}
               </div>
             )}
+            <WorkOrderOpenedBy row={row.original} className="block text-muted-foreground" />
           </div>
         ),
       },
@@ -93,7 +96,8 @@ export function WorkOrdersTable({ data, loading, pagination }: WorkOrdersTablePr
         accessorKey: 'summary',
         header: t('workOrders.fields.work'),
         cell: ({ row }) => {
-          const { title, summary } = row.original;
+          const { title } = row.original;
+          const summary = workOrderSummary(row.original, language);
           if (!title && !summary) return <span className="opacity-40">—</span>;
           return (
             <div className="min-w-40 max-w-md space-y-0.5" dir="auto">

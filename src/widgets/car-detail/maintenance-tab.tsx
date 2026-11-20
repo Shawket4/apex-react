@@ -16,6 +16,7 @@ import {
   dueTone,
   groupTirePositions,
   localName,
+  wheelLabel,
   type Remaining,
 } from '@/entities/maintenance/lib';
 import { useVehicleMaintenance } from '@/entities/maintenance/queries';
@@ -32,7 +33,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card';
 import { Skeleton } from '@/shared/ui/skeleton';
 import { maintDate } from '@/widgets/maintenance/maint-date';
 import { MaintError, MaintNotConfigured } from '@/widgets/maintenance/maint-states';
-import { WorkOrderLinkCard, } from '@/widgets/maintenance/work-order-bits';
+import { WorkOrderLinkCard } from '@/widgets/maintenance/work-order-bits';
 
 interface SectionProps {
   icon: LucideIcon;
@@ -149,8 +150,12 @@ function DueItem({ row }: { row: DueRow }) {
 }
 
 function TireTile({ position }: { position: TirePosition }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const empty = position.tire_id === null;
+  // Words first ("Tractor axle 2 · right inner"); the garage's code stays as
+  // the small print, and stands alone when the server sent nothing to name.
+  const label = wheelLabel(position, (key, vars) => t(key, vars ?? {}), i18n.language);
+  const code = position.position_code;
   const tire = [position.brand, position.model].filter(Boolean).join(' ');
   return (
     <div
@@ -159,19 +164,21 @@ function TireTile({ position }: { position: TirePosition }) {
         empty ? 'border-dashed bg-muted/20' : 'bg-card',
       )}
     >
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-xs font-semibold" dir="ltr">
-          {position.position_code ??
-            (position.is_spare && position.spare_index !== null
-              ? t('maintenance.tires.spareNumber', { n: position.spare_index })
-              : '—')}
+      <div className="flex items-start justify-between gap-2">
+        <span className="min-w-0 text-xs font-semibold">
+          {label ?? (code ? <bdi dir="ltr">{code}</bdi> : '—')}
         </span>
         {position.is_steering && (
-          <span className="text-[10px] text-muted-foreground">
+          <span className="shrink-0 text-[10px] text-muted-foreground">
             {t('maintenance.tires.steering')}
           </span>
         )}
       </div>
+      {label && code && (
+        <bdi dir="ltr" className="text-[10px] text-muted-foreground">
+          {code}
+        </bdi>
+      )}
       {empty ? (
         <span className="text-xs text-muted-foreground">{t('maintenance.tires.emptyPosition')}</span>
       ) : (

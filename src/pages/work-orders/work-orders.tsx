@@ -3,7 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { ClipboardList, Search } from 'lucide-react';
 import { isMaintConfigured } from '@/entities/maintenance/api';
-import { pageCount } from '@/entities/maintenance/lib';
+import { pageCount, totalOf } from '@/entities/maintenance/lib';
 import { WORK_ORDERS_PAGE_SIZE, useWorkOrders } from '@/entities/maintenance/queries';
 import type { WorkOrdersParams } from '@/entities/maintenance/schemas';
 import { useDebounce } from '@/shared/hooks/use-debounce';
@@ -82,6 +82,11 @@ export default function WorkOrdersPage() {
   };
 
   const rows = data?.rows ?? [];
+  // Counts under the other filters. An older server sends none: no figures
+  // then, rather than a row of zeros.
+  const counts = data?.status_counts ?? {};
+  const hasCounts = Object.keys(counts).length > 0;
+  const countOf = (key: 'open' | 'closed') => (hasCounts ? (counts[key] ?? 0) : undefined);
   const totalPages = pageCount(data?.total ?? 0, WORK_ORDERS_PAGE_SIZE);
 
   return (
@@ -102,9 +107,17 @@ export default function WorkOrdersPage() {
                 onChange={(value) => patch({ status: value === 'all' ? undefined : value })}
                 edgeBleed={false}
                 options={[
-                  { value: 'all', label: t('workOrders.filters.all') },
-                  { value: 'open', label: t('workOrders.status.open') },
-                  { value: 'closed', label: t('workOrders.status.closed') },
+                  {
+                    value: 'all',
+                    label: t('workOrders.filters.all'),
+                    count: hasCounts ? totalOf(counts) : undefined,
+                  },
+                  { value: 'open', label: t('workOrders.status.open'), count: countOf('open') },
+                  {
+                    value: 'closed',
+                    label: t('workOrders.status.closed'),
+                    count: countOf('closed'),
+                  },
                 ]}
               />
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center">

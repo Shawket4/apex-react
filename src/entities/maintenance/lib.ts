@@ -1,4 +1,4 @@
-import type { DueRow, TirePosition } from './schemas';
+import type { DueRow, TirePosition, WorkOrderRow } from './schemas';
 
 /* -------------------------------------------------------------------------- */
 /* Pure reading of maintenance rows: no React, no i18n                         */
@@ -106,7 +106,85 @@ export function localName(
   return first?.trim() || second?.trim() || null;
 }
 
+/**
+ * The task names of an order in the reader's language. English falls back to
+ * the Arabic the garage wrote, so render it inside `dir="auto"`.
+ */
+export function workOrderSummary(
+  row: Pick<WorkOrderRow, 'summary' | 'summary_en'>,
+  language: string | undefined,
+): string | null {
+  return localName(row.summary, row.summary_en, language);
+}
+
 /** True for a string `new Date` can read. */
 export function isReadableInstant(value: string | null | undefined): value is string {
   return !!value && Number.isFinite(new Date(value).getTime());
+}
+
+/* ----------------------------- Wheel positions ----------------------------- */
+
+/** What the label needs to know about a wheel position. */
+export type WheelWhere = Pick<
+  TirePosition,
+  'section' | 'axle_index' | 'is_steering' | 'side' | 'depth' | 'is_spare' | 'spare_index'
+>;
+
+/** A translator: `maintenance.wheel.*` keys in, words out. */
+export type Translate = (key: string, vars?: Record<string, string>) => string;
+
+/** Digits the way the reader writes them: ١ ٢ ٣ in Arabic, 1 2 3 otherwise. */
+function digits(value: number, language: string | undefined): string {
+  return new Intl.NumberFormat(language?.startsWith('ar') ? 'ar-EG' : 'en', {
+    useGrouping: false,
+    maximumFractionDigits: 0,
+  }).format(value);
+}
+
+/**
+ * A wheel position in words: "Front left", "Tractor axle 2 · right inner",
+ * "Spare 1". Built only from what the server sent; a part it did not send (or
+ * a value this build has never heard of) is left out rather than guessed, and
+ * null means there is nothing to say, so the caller shows the code alone.
+ */
+export function wheelLabel(
+  position: WheelWhere,
+  tr: Translate,
+  language: string | undefined,
+): string | null {
+  const K = 'maintenance.wheel';
+
+  if (position.is_spare) {
+    return position.spare_index !== null
+      ? tr(`${K}.spareNumber`, { n: digits(position.spare_index, language) })
+      : tr(`${K}.spare`);
+  }
+
+  const side =
+    position.side === 'left' || position.side === 'right' ? tr(`${K}.side.${position.side}`) : null;
+  const depth =
+    position.depth === 'inner' || position.depth === 'outer'
+      ? tr(`${K}.depth.${position.depth}`)
+      : null;
+  const section =
+    position.section === 'tractor' || position.section === 'trailer' ? position.section : null;
+  const axle = position.axle_index !== null && position.axle_index > 0 ? position.axle_index : null;
+
+  // The steering axle is "the front" to everyone in the yard. A second
+  // steering axle is named by its number like any other.
+  if (position.is_steering && (axle === null || axle === 1) && depth === null) {
+    return side ? tr(`${K}.frontSide`, { side }) : tr(`${K}.front`);
+  }
+
+  const where =
+    axle !== null
+      ? tr(`${K}.axle.${section ?? 'any'}`, { n: digits(axle, language) })
+      : section
+        ? tr(`${K}.section.${section}`)
+        : null;
+  const which =
+    side && depth ? tr(`${K}.sideDepth`, { side, depth }) : (side ?? depth);
+
+  const parts = [where, which].filter((part): part is string => !!part);
+  return parts.length > 0 ? parts.join(' · ') : null;
 }

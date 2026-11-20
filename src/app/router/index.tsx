@@ -74,6 +74,7 @@ const WorkOrderDetailsPage = React.lazy(
   () => import('@/pages/work-orders/work-order-details'),
 );
 const ServiceInvoicesPage = React.lazy(() => import('@/pages/service-invoices/service-invoices'));
+const MatchOldLinesPage = React.lazy(() => import('@/pages/service-invoices/match-old-lines'));
 const ServiceInvoiceDetailsPage = React.lazy(() => import('@/pages/service-invoices/service-invoice-details'));
 
 const TrackingPage = React.lazy(() => import('@/features/tracking/tracking-page'));
@@ -185,6 +186,16 @@ export const router = createBrowserRouter([
           // them any more; the old form addresses land somewhere that exists.
           { path: 'service-invoices', element: <ServiceInvoicesPage /> },
           { path: 'service-invoices/new', element: <Navigate to="/work-orders" replace /> },
+          // Old invoice wording the garage system could not match to a
+          // maintenance type; the server asks for level 3 to decide one.
+          {
+            path: 'service-invoices/match',
+            element: (
+              <ProtectedRoute minPermissionLevel={PERMISSION_LEVELS.MANAGER}>
+                <MatchOldLinesPage />
+              </ProtectedRoute>
+            ),
+          },
           { path: 'service-invoices/:id', element: <ServiceInvoiceDetailsPage /> },
           { path: 'service-invoices/:id/edit', element: <RedirectToInvoice /> },
 

@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
 import { ChevronRight, CircleDot, Droplets } from 'lucide-react';
+import { workOrderSummary } from '@/entities/maintenance/lib';
 import { prefetchWorkOrder } from '@/entities/maintenance/queries';
 import type { WorkOrderRow } from '@/entities/maintenance/schemas';
 import { cn } from '@/shared/lib/cn';
@@ -55,6 +56,18 @@ export function WorkOrderExtras({ row, className }: { row: WorkOrderRow; classNa
   );
 }
 
+/** "Opened by Ahmed"; nothing when the server did not say who. */
+export function WorkOrderOpenedBy({ row, className }: { row: WorkOrderRow; className?: string }) {
+  const { t } = useTranslation();
+  const name = row.opened_by?.trim();
+  if (!name) return null;
+  return (
+    <span className={className}>
+      {t('workOrders.fields.openedBy')} <bdi>{name}</bdi>
+    </span>
+  );
+}
+
 interface WorkOrderLinkCardProps {
   row: WorkOrderRow;
   /** Off on a truck's own page, where every row is the same plate. */
@@ -65,10 +78,10 @@ interface WorkOrderLinkCardProps {
 export function WorkOrderLinkCard({ row, showPlate = true }: WorkOrderLinkCardProps) {
   const { t, i18n } = useTranslation();
   const queryClient = useQueryClient();
-  const work =
-    row.title && row.summary ? `${row.title} — ${row.summary}` : (row.title ?? row.summary);
-  const heading = showPlate ? row.plate : (row.title ?? row.summary);
-  const detail = showPlate ? work : row.title ? row.summary : null;
+  const summary = workOrderSummary(row, i18n.language);
+  const work = row.title && summary ? `${row.title} — ${summary}` : (row.title ?? summary);
+  const heading = showPlate ? row.plate : (row.title ?? summary);
+  const detail = showPlate ? work : row.title ? summary : null;
   return (
     <Link
       to={`/work-orders/${row.id}`}
@@ -105,6 +118,7 @@ export function WorkOrderLinkCard({ row, showPlate = true }: WorkOrderLinkCardPr
             </span>
           )}
           {row.task_count > 0 && <WorkOrderProgress row={row} />}
+          <WorkOrderOpenedBy row={row} />
         </div>
         <WorkOrderExtras row={row} />
       </div>

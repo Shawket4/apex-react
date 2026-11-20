@@ -203,6 +203,85 @@
   footer, nav { display: none !important; }
 }
 
+/* ------------------------------------------------------------------------
+   A printed sheet (`.print-sheet` on the page: the work order).
+
+   Scoped to pages that ask for it, so nothing else prints differently. The
+   sheet is A4, black on white whatever the theme, and keeps the document's
+   direction: Arabic prints right-to-left because nothing here touches `dir`.
+   ------------------------------------------------------------------------ */
+@page sheet {
+  size: A4 portrait;
+  margin: 12mm;
+}
+
+@media print {
+  /* The light palette, in ink: a dark-theme screen must not print grey. */
+  :root:has(.print-sheet) {
+    color-scheme: light;
+    --background: 0 0% 100%;
+    --foreground: 0 0% 0%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 0%;
+    --muted: 0 0% 100%;
+    --muted-foreground: 0 0% 0%;
+    --border: 0 0% 55%;
+  }
+
+  /* The app shell is a viewport-high flex row whose main column scrolls.
+     Left alone, paper gets one clipped page: let every box around the sheet
+     grow to its content instead. */
+  :root:has(.print-sheet) :is(div, main):has(.print-sheet) {
+    display: block !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+  }
+
+  /* Toasts and anything else floating over the page stay off the paper. */
+  :root:has(.print-sheet) [data-sonner-toaster] {
+    display: none !important;
+  }
+
+  .print-sheet {
+    page: sheet;
+    padding: 0 !important;
+    background: #fff !important;
+  }
+
+  .print-sheet,
+  .print-sheet * {
+    color: #000 !important;
+    background-color: transparent !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  .print-sheet a {
+    text-decoration: none !important;
+  }
+
+  /* A task, an oil change or a tire job is never cut across two pages, and a
+     section heading is never left alone at the foot of one. */
+  .print-sheet li {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .print-sheet h1,
+  .print-sheet h3 {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
+  /* The title is cut with an ellipsis on screen; paper has the room. */
+  .print-sheet h1 {
+    overflow: visible !important;
+    white-space: normal !important;
+    text-overflow: clip !important;
+  }
+}
+
 /* Prevent iOS auto-zoom on input focus by ensuring font-size is at least 16px on mobile viewports */
 @media screen and (max-width: 768px) {
   input,

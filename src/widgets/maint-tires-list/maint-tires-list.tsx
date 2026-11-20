@@ -63,9 +63,9 @@ function Where({ tire }: { tire: MaintTire }) {
         <span dir="auto">{tire.plate}</span>
       )}
       {tire.position_code && (
-        <span className="text-xs text-muted-foreground" dir="ltr">
+        <bdi dir="ltr" className="text-xs text-muted-foreground">
           {tire.position_code}
-        </span>
+        </bdi>
       )}
     </span>
   );

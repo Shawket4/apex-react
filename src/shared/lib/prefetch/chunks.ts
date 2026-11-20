@@ -56,6 +56,7 @@ const CHUNKS = {
 
   'service-invoices': () => import('@/pages/service-invoices/service-invoices'),
   'service-invoice-details': () => import('@/pages/service-invoices/service-invoice-details'),
+  'service-invoice-match': () => import('@/pages/service-invoices/match-old-lines'),
 
   'fee-mappings': () => import('@/pages/fee-mappings/fee-mappings'),
   pricing: () => import('@/pages/pricing/pricing'),
@@ -120,6 +121,7 @@ const PATH_RULES: [RegExp, ChunkKey][] = [
   [/^\/work-orders\/[^/]+/, 'work-order-details'],
   [/^\/work-orders/, 'work-orders'],
 
+  [/^\/service-invoices\/match/, 'service-invoice-match'],
   [/^\/service-invoices\/[^/]+/, 'service-invoice-details'],
   [/^\/service-invoices/, 'service-invoices'],
 

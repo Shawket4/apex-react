@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { History } from 'lucide-react';
+import { usePermissions } from '@/shared/hooks/use-permissions';
+import { intentProps, preloadChunk } from '@/shared/lib/prefetch';
 import { cn } from '@/shared/lib/cn';
 
 /**
@@ -9,6 +11,7 @@ import { cn } from '@/shared/lib/cn';
  */
 export function OldInvoicesBanner({ className }: { className?: string }) {
   const { t } = useTranslation();
+  const { isManager } = usePermissions();
   return (
     <div
       role="note"
@@ -26,6 +29,19 @@ export function OldInvoicesBanner({ className }: { className?: string }) {
         >
           {t('serviceInvoices.history.openWorkOrders')}
         </Link>
+        {/* Deciding a wording needs a manager; nobody else is shown the door. */}
+        {isManager && (
+          <>
+            {' · '}
+            <Link
+              to="/service-invoices/match"
+              className="font-medium text-primary underline-offset-4 hover:underline"
+              {...intentProps(() => preloadChunk('service-invoice-match'))}
+            >
+              {t('serviceInvoices.history.matchLines')}
+            </Link>
+          </>
+        )}
       </p>
     </div>
   );

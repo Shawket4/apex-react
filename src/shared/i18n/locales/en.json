@@ -1681,7 +1681,8 @@
     },
     "history": {
       "banner": "These are old invoices, kept as history. New work is recorded as work orders.",
-      "openWorkOrders": "Open work orders"
+      "openWorkOrders": "Open work orders",
+      "matchLines": "Match old invoice lines"
     }
   },
   "cars": {
@@ -1873,6 +1874,39 @@
     "tabs": {
       "stock": "Stock",
       "all": "All tires"
+    },
+    "count": {
+      "action": "Stock count",
+      "title": "Stock count",
+      "purpose": "A count fixes a difference between the book and what is really on the shelf. It is not for receiving a delivery: add a delivery as a shipment.",
+      "book": "The book says",
+      "countedTires": "How many are actually there?",
+      "countedOil": "How many liters are actually there?",
+      "liters": "{{n}} L",
+      "invalidTires": "Enter a whole number, 0 or more",
+      "invalidOil": "Enter a number of liters, 0 or more",
+      "note": "Note (optional)",
+      "notePlaceholder": "Why it differs, if you know",
+      "readback": {
+        "remove": "Book says {{book}}, counted {{counted}}: {{amount}} will be taken off.",
+        "add": "Book says {{book}}, counted {{counted}}: {{amount}} will be added.",
+        "same": "Book says {{book}}, counted {{counted}}: same, nothing changes."
+      },
+      "submit": "Record the count",
+      "result": {
+        "title": "Count recorded",
+        "remove": "The garage system had {{before}} on its books. {{amount}} taken off; it now holds {{after}}.",
+        "add": "The garage system had {{before}} on its books. {{amount}} added; it now holds {{after}}.",
+        "same": "The garage system already had {{after}} on its books. Nothing changed.",
+        "bookDiffered": "That is not the {{book}} this page showed: the two systems had not caught up with each other.",
+        "lag": "The table on this page reads the fleet ledger, which follows a moment later."
+      },
+      "errors": {
+        "forbidden": "A stock count needs level 4 in the garage system.",
+        "failed": "The count was not recorded.",
+        "retryHint": "Trying again is safe: the same count is never recorded twice."
+      },
+      "notConfigured": "Stock counts go to the garage system, and this copy of the dashboard has no address for it."
     }
   },
   "fleetExpenses": {
@@ -3275,7 +3309,8 @@
       "progress": "Tasks done",
       "work": "Work",
       "extras": "Oil / tires",
-      "notes": "Notes"
+      "notes": "Notes",
+      "openedBy": "Opened by"
     },
     "filters": {
       "all": "All",
@@ -3309,7 +3344,8 @@
       "removeReason": "Why removed",
       "openTruck": "Open the truck",
       "notFound": "Work order not found",
-      "notFoundDescription": "It may have been deleted in the garage app, or the link is wrong."
+      "notFoundDescription": "It may have been deleted in the garage app, or the link is wrong.",
+      "doneBy": "Done by"
     }
   },
   "maintenance": {
@@ -3370,7 +3406,6 @@
       "noLayout": "No wheel layout recorded for this truck yet.",
       "emptyPosition": "Empty",
       "steering": "Steering",
-      "spareNumber": "Spare {{n}}",
       "unnamed": "Tire",
       "position": "Position",
       "tire": "Tire",
@@ -3412,6 +3447,83 @@
       "puncture": "Puncture",
       "retread": "Sent for retreading",
       "other": "Other"
+    },
+    "wheel": {
+      "front": "Front",
+      "frontSide": "Front {{side}}",
+      "spare": "Spare",
+      "spareNumber": "Spare {{n}}",
+      "axle": {
+        "tractor": "Tractor axle {{n}}",
+        "trailer": "Trailer axle {{n}}",
+        "any": "Axle {{n}}"
+      },
+      "section": {
+        "tractor": "Tractor",
+        "trailer": "Trailer"
+      },
+      "side": {
+        "left": "left",
+        "right": "right"
+      },
+      "depth": {
+        "inner": "inner",
+        "outer": "outer"
+      },
+      "sideDepth": "{{side}} {{depth}}"
+    }
+  },
+  "legacyMatch": {
+    "title": "Match old invoice lines",
+    "subtitle": "Say what each unrecognised wording on the old invoices was, so that work counts toward scheduled maintenance.",
+    "backToInvoices": "Old invoices",
+    "why": {
+      "title": "Why this matters",
+      "body": "Before work orders, maintenance was written as lines on service invoices. The garage system reads those lines so that a truck whose oil was changed on an old invoice does not show \"never done\".",
+      "how": "It recognises most wording by itself. What it could not recognise is listed here, most common first. Pick the maintenance type it was, or mark it as not maintenance. Your answer applies to every line with the same wording."
+    },
+    "stats": {
+      "lines": "Old lines read",
+      "recognised": "Recognised",
+      "ignored": "Ignored, not maintenance"
+    },
+    "import": {
+      "button": "Read invoices again",
+      "reading": "Reading invoices…",
+      "hint": "The server reads the old invoices by itself every hour. Read them now if invoices were just corrected.",
+      "done": "Read {{lines}} lines: {{recognised}} recognised, {{unrecognised}} not recognised.",
+      "failed": "The invoices could not be read.",
+      "notSetUpTitle": "Not set up on the server yet",
+      "notSetUpBody": "The garage server has no access to the invoice database, so it cannot read the old invoices. This has to be set up on the server; trying again will not help."
+    },
+    "list": {
+      "title": "Wording nobody recognised: {{n}}",
+      "capped": "These are the {{n}} most common. More appear as you clear them.",
+      "search": "Search the wording…",
+      "typesFailed": "The maintenance types could not be loaded. You can still mark wording as not maintenance."
+    },
+    "row": {
+      "lines": "Lines: {{n}}",
+      "trucks": "Trucks: {{n}}",
+      "last": "Last on {{date}}",
+      "typeLabel": "Maintenance type",
+      "choose": "Choose the type…",
+      "match": "Match",
+      "ignore": "Ignore: not maintenance"
+    },
+    "errors": {
+      "forbidden": "You do not have permission for this in the garage system.",
+      "unknownType": "The garage system does not know that maintenance type. Reload the page and choose again.",
+      "gone": "No old line has that wording any more.",
+      "generic": "The decision was not saved."
+    },
+    "empty": {
+      "allDoneTitle": "All done",
+      "allDoneDescription": "Every old invoice line is either recognised or marked as not maintenance.",
+      "noLinesTitle": "No old invoice lines read yet",
+      "noLinesDescription": "Use \"Read invoices again\" to read them now.",
+      "searchTitle": "No wording matches",
+      "searchDescription": "Try another word."
     }
   }
 }
