@@ -1,24 +1,12 @@
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from '@tanstack/react-query';
-import { intentProps, warmServiceInvoiceForm } from '@/shared/lib/prefetch';
+import { intentProps, preloadChunk } from '@/shared/lib/prefetch';
 import { prefetchServiceInvoice } from '@/entities/service-invoice/queries';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Eye, 
-  Edit, 
-  Trash2, 
-  Sparkles,
-  MoreHorizontal
-} from 'lucide-react';
+import { Eye, Sparkles } from 'lucide-react';
 import type { ServiceInvoice } from '@/entities/service-invoice/schemas';
 import { DataTable } from '@/shared/ui/data-table';
 import { Button } from '@/shared/ui/button';
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger 
-} from '@/shared/ui/dropdown-menu';
 import { Badge } from '@/shared/ui/badge';
 import { formatNumber } from '@/shared/lib/format';
 import { format } from 'date-fns';
@@ -26,7 +14,6 @@ import { format } from 'date-fns';
 interface ServiceInvoicesTableProps {
   data: ServiceInvoice[];
   loading?: boolean;
-  onDelete?: (id: number) => void;
   isSearchResults?: boolean;
   pagination?: {
     page: number;
@@ -39,7 +26,6 @@ interface ServiceInvoicesTableProps {
 export function ServiceInvoicesTable({
   data,
   loading,
-  onDelete,
   isSearchResults = false,
   pagination,
   searchQuery,
@@ -47,6 +33,14 @@ export function ServiceInvoicesTable({
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+
+  // Old invoices are history: a row can only be opened.
+  const openInvoice = (invoice: ServiceInvoice) => {
+    const url = searchQuery
+      ? `/service-invoices/${invoice.ID}?query=${encodeURIComponent(searchQuery)}`
+      : `/service-invoices/${invoice.ID}`;
+    navigate(url, { state: { invoice } });
+  };
 
   const columns = [
     {
@@ -96,43 +90,18 @@ export function ServiceInvoicesTable({
         const invoice = row.original as ServiceInvoice;
         return (
           <div className="text-end">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="h-8 w-8 p-0" aria-label={t('common.actions')}>
-                  <MoreHorizontal aria-hidden="true" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => {
-                  const url = searchQuery 
-                    ? `/service-invoices/${invoice.ID}?query=${encodeURIComponent(searchQuery)}`
-                    : `/service-invoices/${invoice.ID}`;
-                  navigate(url, { state: { invoice } });
-                }}>
-                  <Eye className="me-2 h-4 w-4" aria-hidden="true" />
-                  {t('common.view')}
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => navigate(`/service-invoices/${invoice.ID}/edit`)}
-                  {...intentProps(() => {
-                    warmServiceInvoiceForm(queryClient, 'service-invoice-edit');
-                    prefetchServiceInvoice(queryClient, invoice.ID);
-                  })}
-                >
-                  <Edit className="me-2 h-4 w-4" aria-hidden="true" />
-                  {t('common.edit')}
-                </DropdownMenuItem>
-                {onDelete && (
-                  <DropdownMenuItem 
-                    className="text-destructive focus:text-destructive"
-                    onClick={() => onDelete(invoice.ID)}
-                  >
-                    <Trash2 className="me-2 h-4 w-4" aria-hidden="true" />
-                    {t('common.delete')}
-                  </DropdownMenuItem>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <Button
+              variant="ghost"
+              className="h-8 w-8 p-0"
+              aria-label={t('common.view')}
+              onClick={() => openInvoice(invoice)}
+              {...intentProps(() => {
+                preloadChunk('service-invoice-details');
+                prefetchServiceInvoice(queryClient, invoice.ID);
+              })}
+            >
+              <Eye aria-hidden="true" />
+            </Button>
           </div>
         );
       },
@@ -144,6 +113,7 @@ export function ServiceInvoicesTable({
       columns={columns}
       data={data}
       loading={loading}
+      onRowClick={openInvoice}
       emptyState={t('common.noResults')}
       pagination={pagination}
     />

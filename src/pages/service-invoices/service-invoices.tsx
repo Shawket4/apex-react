@@ -1,10 +1,7 @@
 import * as React from 'react';
-import { useQueryClient } from '@tanstack/react-query';
-import { intentProps, warmServiceInvoiceForm } from '@/shared/lib/prefetch';
 import { useTranslation } from 'react-i18next';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { 
-  Plus, 
   Search, 
   Sparkles, 
   Loader2,
@@ -14,8 +11,7 @@ import {
 import { 
   useServiceInvoices, 
   useServiceCars,
-  useSearchServiceInvoices, 
-  useDeleteServiceInvoice 
+  useSearchServiceInvoices 
 } from '@/entities/service-invoice/queries';
 import { useAdvisorSearch } from '@/entities/advisor/queries';
 import { ServiceInvoicesTable } from '@/widgets/service-invoices-table/service-invoices-table';
@@ -27,13 +23,10 @@ import { Input } from '@/shared/ui/input';
 import { Card, CardContent } from '@/shared/ui/card';
 import { PageShell } from '@/shared/ui/page-shell';
 import { useDebounce } from '@/shared/hooks/use-debounce';
-import { toast } from '@/shared/ui/toast';
-import { ConfirmDialog } from '@/shared/ui/confirm-dialog';
+import { OldInvoicesBanner } from '@/widgets/service-invoice-details/old-invoices-banner';
 
 export default function ServiceInvoicesPage() {
   const { t } = useTranslation();
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
   
   // States
   const [selectedCar, setSelectedCar] = React.useState<Car | null>(null);
@@ -51,7 +44,6 @@ export default function ServiceInvoicesPage() {
   const [carPage, setCarPage] = React.useState(1);
   const [invoicePage, setInvoicePage] = React.useState(1);
   const [searchPage, setSearchPage] = React.useState(1);
-  const [deleteId, setDeleteId] = React.useState<number | null>(null);
 
   const debouncedSearch = useDebounce(searchQuery, 500);
   const isSearching = debouncedSearch.length > 0;
@@ -83,8 +75,6 @@ export default function ServiceInvoicesPage() {
   const searchLoading = aiSearch.isFetching || fallbackLoading;
   const variants = !fallingBack ? (aiSearch.data?.variants ?? []) : [];
 
-  const deleteMutation = useDeleteServiceInvoice();
-
   // Reset pages when context changes
   React.useEffect(() => {
     setInvoicePage(1);
@@ -96,42 +86,22 @@ export default function ServiceInvoicesPage() {
   }, [debouncedSearch]);
 
 
-  const handleDelete = (id: number) => {
-    setDeleteId(id);
-  };
-
-  const confirmDelete = async () => {
-    if (!deleteId) return;
-    try {
-      await deleteMutation.mutateAsync(deleteId);
-      toast({ title: t('common.deleteSuccess') });
-    } catch {
-      toast({ title: t('errors.generic'), variant: 'destructive' });
-    } finally {
-      setDeleteId(null);
-    }
-  };
-
   return (
     <PageShell
       title={selectedCar ? selectedCar.car_no_plate : t('serviceInvoices.title')}
-      description={selectedCar ? t('serviceInvoices.subtitle') : t('serviceInvoices.subtitle')}
+      description={t('serviceInvoices.subtitle')}
       actions={
-        <div className="flex items-center gap-2">
-          {selectedCar && (
-            <Button variant="outline" onClick={() => setSelectedCar(null)}>
-              <ArrowLeft className="rtl:rotate-180" aria-hidden="true" />
-              {t('common.back')}
-            </Button>
-          )}
-          <Button onClick={() => navigate('/service-invoices/new')} {...intentProps(() => warmServiceInvoiceForm(queryClient))}>
-            <Plus aria-hidden="true" />
-            {t('serviceInvoices.newInvoice')}
+        selectedCar ? (
+          <Button variant="outline" onClick={() => setSelectedCar(null)}>
+            <ArrowLeft className="rtl:rotate-180" aria-hidden="true" />
+            {t('common.back')}
           </Button>
-        </div>
+        ) : undefined
       }
     >
       <div className="flex flex-col gap-3">
+        <OldInvoicesBanner />
+
         {/* Smart Search Bar */}
         <Card className="overflow-hidden">
           <CardContent className="p-3">
@@ -217,7 +187,6 @@ export default function ServiceInvoicesPage() {
               <ServiceInvoicesTable 
                 data={searchData?.results || []} 
                 loading={searchLoading}
-                onDelete={handleDelete}
                 isSearchResults={true}
                 pagination={searchData?.pagination ? {
                   page: searchData.pagination.page,
@@ -234,7 +203,6 @@ export default function ServiceInvoicesPage() {
               <ServiceInvoicesTable 
                 data={invoicesData?.data || []} 
                 loading={invoicesLoading}
-                onDelete={handleDelete}
                 pagination={invoicesData?.pagination ? {
                   page: invoicesData.pagination.page,
                   totalPages: invoicesData.pagination.totalPages,
@@ -260,14 +228,6 @@ export default function ServiceInvoicesPage() {
           </Card>
         )}
       </div>
-
-      <ConfirmDialog
-        open={deleteId !== null}
-        onOpenChange={(open) => !open && setDeleteId(null)}
-        title={t('common.confirm')}
-        onConfirm={confirmDelete}
-        loading={deleteMutation.isPending}
-      />
     </PageShell>
   );
 }

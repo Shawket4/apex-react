@@ -17,6 +17,7 @@ import { prefetchLedgerMount } from '@/entities/transaction/queries';
 import { prefetchCategories } from '@/entities/transaction/categories';
 import { prefetchCompanies } from '@/entities/mapping/queries';
 import { prefetchMaintStock } from '@/entities/maint-stock/queries';
+import { prefetchWorkOrders } from '@/entities/maintenance/queries';
 import { prefetchTrackingFleet } from '@/features/tracking/use-history';
 import { prefetchZones } from '@/entities/zone/queries';
 import { prefetchDropoffChoices, prefetchLocations } from '@/entities/location/queries';
@@ -65,6 +66,7 @@ const DATA_WARMERS: Record<string, (qc: QueryClient) => void> = {
   },
   '/tires': prefetchMaintStock,
   '/oil-changes': prefetchOilChanges,
+  '/work-orders': prefetchWorkOrders,
   '/service-invoices': prefetchServiceInvoices,
   '/fee-mappings': (qc) => {
     prefetchFeeMappings(qc);

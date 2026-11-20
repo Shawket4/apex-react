@@ -166,6 +166,11 @@ export default defineConfig({
         changeOrigin: true,
         secure: true,
       },
+      '/api/maint': {
+        target: 'https://apextransport.ddns.net',
+        changeOrigin: true,
+        secure: true,
+      },
     },
   },
 

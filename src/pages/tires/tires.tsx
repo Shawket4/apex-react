@@ -10,6 +10,9 @@ import { Input } from '@/shared/ui/input';
 import { Label } from '@/shared/ui/label';
 import { PageShell } from '@/shared/ui/page-shell';
 import { Skeleton } from '@/shared/ui/skeleton';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/tabs';
+import { useTabParam } from '@/shared/hooks/use-tab-param';
+import { MaintTiresList } from '@/widgets/maint-tires-list/maint-tires-list';
 import { extractErrorMessage } from '@/shared/api/errors';
 import {
   oilCreditInputSchema,
@@ -31,19 +34,36 @@ import {
  * down for the garage and pushes consumption debits back up idempotently.
  * Tires are fungible counts — individual tire identity (DOT, km, history)
  * is captured in the maintenance app at mount time, never here.
+ *
+ * The second tab is the other half: every individual tire as the garage
+ * system holds it, read-only.
  */
+const TABS = ['stock', 'all'] as const;
+
 export function TiresPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const [tab, setTab] = useTabParam(TABS);
   return (
     <PageShell
       title={t('tiresStock.title')}
       description={t('tiresStock.subtitle')}
       icon={<CircleDot className="h-6 w-6" />}
     >
-      <div className="grid gap-3 lg:grid-cols-2">
-        <TireStockCard />
-        <OilStockCard />
-      </div>
+      <Tabs value={tab} onValueChange={setTab} dir={i18n.dir()}>
+        <TabsList>
+          <TabsTrigger value="stock">{t('tiresStock.tabs.stock')}</TabsTrigger>
+          <TabsTrigger value="all">{t('tiresStock.tabs.all')}</TabsTrigger>
+        </TabsList>
+        <TabsContent value="stock">
+          <div className="grid gap-3 lg:grid-cols-2">
+            <TireStockCard />
+            <OilStockCard />
+          </div>
+        </TabsContent>
+        <TabsContent value="all">
+          <MaintTiresList />
+        </TabsContent>
+      </Tabs>
     </PageShell>
   );
 }

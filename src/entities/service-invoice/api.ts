@@ -1,11 +1,13 @@
-import { apiGet, apiPost, apiPut, apiDelete } from '@/shared/api/client';
+import { apiGet } from '@/shared/api/client';
 import {
   serviceInvoiceSchema,
   serviceInvoicesResponseSchema,
   searchResponseSchema,
   type ServiceInvoice,
-  type ServiceInvoiceRequest,
 } from './schemas';
+
+/* Old service invoices are history: read and search only. New work is a work
+ * order in the garage system (see entities/maintenance). */
 
 export async function getServiceInvoices(carId?: number | string, page = 1, limit = 10) {
   const params = new URLSearchParams({ 
@@ -22,23 +24,6 @@ export async function getServiceInvoices(carId?: number | string, page = 1, limi
 export async function getServiceInvoice(id: number | string): Promise<ServiceInvoice> {
   const response = await apiGet<{ data: unknown }>(`/api/service-invoices/${id}`);
   return serviceInvoiceSchema.parse(response.data);
-}
-
-export async function createServiceInvoice(invoice: ServiceInvoiceRequest): Promise<ServiceInvoice> {
-  const response = await apiPost<{ data: unknown }>('/api/service-invoices', invoice);
-  return serviceInvoiceSchema.parse(response.data);
-}
-
-export async function updateServiceInvoice(
-  id: number | string,
-  invoice: ServiceInvoiceRequest,
-): Promise<ServiceInvoice> {
-  const response = await apiPut<{ data: unknown }>(`/api/service-invoices/${id}`, invoice);
-  return serviceInvoiceSchema.parse(response.data);
-}
-
-export async function deleteServiceInvoice(id: number | string): Promise<void> {
-  await apiDelete(`/api/service-invoices/${id}`);
 }
 
 export async function searchServiceInvoices(query: string, carId?: number | string, page = 1, limit = 10) {

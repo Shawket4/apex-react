@@ -110,7 +110,7 @@
     "tablets": "Tablets",
     "feeMappings": "Fee Mappings",
     "etit": "Live tracking",
-    "serviceInvoices": "Service Invoices",
+    "serviceInvoices": "Old invoices",
     "zones": "Dead Zones",
     "locations": "Locations",
     "tripAudit": "Trip Audit",
@@ -119,7 +119,8 @@
     "receiptPiles": "Receipt piles",
     "advisor": "Advisor",
     "pricing": "Pricing",
-    "documents": "Documents"
+    "documents": "Documents",
+    "workOrders": "Work orders"
   },
   "auth": {
     "loginTitle": "Welcome back",
@@ -1637,7 +1638,6 @@
   "serviceInvoices": {
     "title": "Service Invoices",
     "subtitle": "Track vehicle maintenance and inspection records",
-    "newInvoice": "New Invoice",
     "searchPlaceholder": "Search service items (AI Hybrid)...",
     "fields": {
       "date": "Date",
@@ -1677,11 +1677,11 @@
     },
     "form": {
       "checklistTitle": "Service Inspection Checklist",
-      "truckSubtitle": "Truck",
-      "clearItem": "Clear this item",
-      "addLines": "Add more lines",
-      "placeholderService": "Service item {{n}}",
-      "placeholderNotes": "Notes..."
+      "truckSubtitle": "Truck"
+    },
+    "history": {
+      "banner": "These are old invoices, kept as history. New work is recorded as work orders.",
+      "openWorkOrders": "Open work orders"
     }
   },
   "cars": {
@@ -1776,7 +1776,8 @@
     },
     "tabs": {
       "overview": "Overview",
-      "documents": "Documents"
+      "documents": "Documents",
+      "maintenance": "Maintenance"
     }
   },
   "zones": {
@@ -1868,7 +1869,11 @@
     "addOil": "Add oil",
     "added": "Recorded — balance updated",
     "empty": "No stock recorded yet",
-    "validation": "Enter a brand/type and a quantity above zero"
+    "validation": "Enter a brand/type and a quantity above zero",
+    "tabs": {
+      "stock": "Stock",
+      "all": "All tires"
+    }
   },
   "fleetExpenses": {
     "title": "Fleet Expenses",
@@ -3245,6 +3250,168 @@
         "driver": "Drivers"
       },
       "allStatuses": "All"
+    }
+  },
+  "workOrders": {
+    "title": "Work orders",
+    "subtitle": "What the garage is working on and what it has finished. View only: work orders are written in the garage app.",
+    "untitled": "Work order",
+    "status": {
+      "open": "Open",
+      "closed": "Closed"
+    },
+    "progress": "{{done}} of {{total}} done",
+    "oilLiters": "{{liters}} L oil",
+    "tireOps": "Tire work: {{n}}",
+    "openedOn": "Opened {{date}}",
+    "closedOn": "Closed {{date}}",
+    "fields": {
+      "plate": "Plate",
+      "status": "Status",
+      "dates": "Opened / closed",
+      "opened": "Opened",
+      "closed": "Closed",
+      "odometer": "Odometer",
+      "progress": "Tasks done",
+      "work": "Work",
+      "extras": "Oil / tires",
+      "notes": "Notes"
+    },
+    "filters": {
+      "all": "All",
+      "searchPlate": "Search by plate…"
+    },
+    "empty": {
+      "title": "No work orders yet",
+      "description": "When the garage opens a work order it shows up here.",
+      "filteredTitle": "No work orders match",
+      "filteredDescription": "Try another plate, status or date range."
+    },
+    "detail": {
+      "title": "Work order",
+      "subtitle": "View only. Changes are made in the garage app.",
+      "tasks": "Tasks",
+      "noTasks": "No tasks were written on this work order.",
+      "unnamedTask": "Task",
+      "done": "Done",
+      "doneOn": "Done {{date}}",
+      "notDone": "Not done yet",
+      "countsToward": "Counts toward: {{type}}",
+      "countsTowardNothing": "Does not count toward any scheduled maintenance",
+      "oilChanges": "Oil changes",
+      "oilTypeUnknown": "Oil",
+      "flagged": "Needs a look",
+      "flaggedHint": "The garage flagged this oil change for review.",
+      "tireWork": "Tire work",
+      "fitted": "Fitted",
+      "removed": "Removed",
+      "fitReason": "Why fitted",
+      "removeReason": "Why removed",
+      "openTruck": "Open the truck",
+      "notFound": "Work order not found",
+      "notFoundDescription": "It may have been deleted in the garage app, or the link is wrong."
+    }
+  },
+  "maintenance": {
+    "notConfigured": {
+      "title": "Maintenance is not configured",
+      "description": "This copy of the dashboard has no address for the garage maintenance system."
+    },
+    "error": {
+      "title": "Couldn't reach the garage system",
+      "description": "Nothing here was loaded. The rest of the page is not affected."
+    },
+    "odometer": {
+      "title": "Odometer",
+      "none": "No odometer reading yet",
+      "sources": {
+        "falcon_mileage": "From the fleet record",
+        "falcon_fuel": "From a fuel fill",
+        "oil_change": "From an oil change",
+        "work_order": "From a work order",
+        "manual_override": "Corrected by hand"
+      }
+    },
+    "class": {
+      "title": "Maintenance class",
+      "notTrackedTitle": "Not tracked",
+      "notTrackedDescription": "This truck has no maintenance class, so nothing is scheduled or checked for it. The garage sets the class in its app."
+    },
+    "openWorkOrders": "Open work orders",
+    "noOpenWorkOrders": "No open work orders",
+    "recentWorkOrders": "Recent work",
+    "noRecentWorkOrders": "No finished work orders yet",
+    "due": {
+      "title": "Scheduled maintenance",
+      "noPlans": "This truck's class has no maintenance plans yet.",
+      "kmLeft": "{{amount}} km left",
+      "kmLate": "Late by {{amount}} km",
+      "daysLeft": "{{amount}} days left",
+      "daysLate": "Late by {{amount}} days",
+      "everyKm": "Every {{amount}} km",
+      "everyDays": "Every {{amount}} days",
+      "lastDone": "Last done {{date}}",
+      "noOdometer": "Can't tell: the truck has no odometer reading",
+      "neverDoneHint": "No record of this ever being done",
+      "status": {
+        "overdue": "Overdue",
+        "never_done": "Never done",
+        "due_soon": "Due soon",
+        "unknown": "Unknown",
+        "ok": "OK"
+      }
+    },
+    "tires": {
+      "title": "Tires",
+      "tractor": "Tractor",
+      "trailer": "Trailer",
+      "spares": "Spares",
+      "other": "Other positions",
+      "noLayout": "No wheel layout recorded for this truck yet.",
+      "emptyPosition": "Empty",
+      "steering": "Steering",
+      "spareNumber": "Spare {{n}}",
+      "unnamed": "Tire",
+      "position": "Position",
+      "tire": "Tire",
+      "size": "Size",
+      "dot": "DOT",
+      "status": "Status",
+      "where": "Truck / position",
+      "fitted": "Fitted",
+      "fittedOn": "Fitted {{date}}",
+      "km": "Distance run",
+      "retreadCount": "Retreads",
+      "retreads": "Retreads: {{n}}",
+      "listHint": "View only. Tires are fitted, moved and scrapped in the garage app.",
+      "searchPlaceholder": "Search brand, size, DOT or plate…",
+      "emptyTitle": "No tires recorded yet",
+      "emptyDescription": "Tires appear here once the garage records them.",
+      "emptyFilteredTitle": "No tires match",
+      "emptyFilteredDescription": "Try another status or search."
+    },
+    "tireStatus": {
+      "all": "All",
+      "mounted": "On a truck",
+      "in_stock_used": "Used, in stock",
+      "in_repair": "In repair",
+      "retreading": "Retreading",
+      "scrapped": "Scrapped"
+    },
+    "mountReason": {
+      "new": "New tire",
+      "rotation": "Rotation",
+      "replacement": "Replacement",
+      "repair_return": "Back from repair",
+      "onboard": "Already on the truck"
+    },
+    "dismountReason": {
+      "worn": "Worn out",
+      "damaged": "Damaged",
+      "rotation": "Rotation",
+      "puncture": "Puncture",
+      "retread": "Sent for retreading",
+      "other": "Other"
     }
   }
 }

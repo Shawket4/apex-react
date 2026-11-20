@@ -3,6 +3,7 @@ import { env } from '@/shared/config/env';
 import { STORAGE_KEYS } from '@/shared/config/constants';
 import { ApiError, toApiError } from './errors';
 import { isJsonBlob, readJsonBlob, unwrapBlobErrorBody } from './blob-error';
+import { deriveMaintBaseURL } from './maint-base';
 
 type LogoutHandler = () => void;
 
@@ -60,7 +61,15 @@ export function authHeader(): Record<string, string> {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
-function createClient(baseURL: string): AxiosInstance {
+interface ClientOptions {
+  /**
+   * Off for a side system whose 401 says nothing about the office session:
+   * its refusal must not sign the user out of the whole app.
+   */
+  logoutOn401?: boolean;
+}
+
+function createClient(baseURL: string, { logoutOn401 = true }: ClientOptions = {}): AxiosInstance {
   const instance = axios.create({
     baseURL: resolveBaseURL(baseURL),
     withCredentials: true,
@@ -181,7 +190,7 @@ function createClient(baseURL: string): AxiosInstance {
       await unwrapBlobErrorBody(error);
       const apiError = toApiError(error);
 
-      if (apiError.status === 401) handleUnauthorized();
+      if (apiError.status === 401 && logoutOn401) handleUnauthorized();
 
       return Promise.reject(apiError);
     },
@@ -213,6 +222,16 @@ export const platformFetch: typeof fetch = isTauriProd
 export const apiClientEtit = env.VITE_API_BASE_URL_ETIT
   ? createClient(env.VITE_API_BASE_URL_ETIT)
   : apiClient;
+
+/**
+ * The garage maintenance system (maint-rust), read-only from the office.
+ * `null` when no base can be worked out: maintenance screens then say
+ * "not configured" instead of calling the wrong server.
+ */
+const maintBaseURL = deriveMaintBaseURL(env.VITE_API_BASE_URL_MAINT, env.VITE_API_BASE_URL);
+export const apiClientMaint = maintBaseURL
+  ? createClient(maintBaseURL, { logoutOn401: false })
+  : null;
 
 /** Typed helper — axios instance returns unknown response data by default in strict TS */
 export async function apiGet<T>(url: string, config?: AxiosRequestConfig): Promise<T> {

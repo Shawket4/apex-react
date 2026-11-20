@@ -2,6 +2,7 @@ import * as React from 'react';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { ProtectedRoute } from './protected-route';
 import { SuspendedRoute } from './suspended-route';
+import { RedirectToInvoice } from './redirect-to-invoice';
 import { Layout } from '@/widgets/layout/layout';
 import LoginPage from '@/pages/auth/login';
 import { PERMISSION_LEVELS } from '@/shared/config/constants';
@@ -68,9 +69,11 @@ const FeeMappingsPage = React.lazy(() => import('@/pages/fee-mappings/fee-mappin
 const PricingPage = React.lazy(() => import('@/pages/pricing/pricing'));
 const ReceiptPilesPage = React.lazy(() => import('@/pages/receipt-piles/receipt-piles'));
 const UsersPage = React.lazy(() => import('@/pages/users/users'));
+const WorkOrdersPage = React.lazy(() => import('@/pages/work-orders/work-orders'));
+const WorkOrderDetailsPage = React.lazy(
+  () => import('@/pages/work-orders/work-order-details'),
+);
 const ServiceInvoicesPage = React.lazy(() => import('@/pages/service-invoices/service-invoices'));
-const ServiceInvoiceNewPage = React.lazy(() => import('@/pages/service-invoices/service-invoice-new'));
-const ServiceInvoiceEditPage = React.lazy(() => import('@/pages/service-invoices/service-invoice-edit'));
 const ServiceInvoiceDetailsPage = React.lazy(() => import('@/pages/service-invoices/service-invoice-details'));
 
 const TrackingPage = React.lazy(() => import('@/features/tracking/tracking-page'));
@@ -173,11 +176,17 @@ export const router = createBrowserRouter([
           { path: 'oil-changes/:id/edit', element: <OilChangeEditPage /> },
           { path: 'oil-changes/car/:carId', element: <OilChangeHistoryPage /> },
 
-          // Service Invoices
+          // Work orders — the garage system's, view only. Same access as the
+          // service invoices they replace.
+          { path: 'work-orders', element: <WorkOrdersPage /> },
+          { path: 'work-orders/:id', element: <WorkOrderDetailsPage /> },
+
+          // Service invoices — history, read-only. Nothing creates or edits
+          // them any more; the old form addresses land somewhere that exists.
           { path: 'service-invoices', element: <ServiceInvoicesPage /> },
-          { path: 'service-invoices/new', element: <ServiceInvoiceNewPage /> },
+          { path: 'service-invoices/new', element: <Navigate to="/work-orders" replace /> },
           { path: 'service-invoices/:id', element: <ServiceInvoiceDetailsPage /> },
-          { path: 'service-invoices/:id/edit', element: <ServiceInvoiceEditPage /> },
+          { path: 'service-invoices/:id/edit', element: <RedirectToInvoice /> },
 
           // Placeholder domains
           { path: 'trucks', element: <TrucksPage /> },
