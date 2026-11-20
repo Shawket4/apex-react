@@ -210,6 +210,7 @@
    sheet is A4, black on white whatever the theme, and keeps the document's
    direction: Arabic prints right-to-left because nothing here touches `dir`.
    ------------------------------------------------------------------------ */
+
 @page sheet {
   size: A4 portrait;
   margin: 12mm;
@@ -233,9 +234,21 @@
      grow to its content instead. */
   :root:has(.print-sheet) :is(div, main):has(.print-sheet) {
     display: block !important;
+    position: static !important;
+    width: auto !important;
+    max-width: none !important;
     height: auto !important;
     min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
     overflow: visible !important;
+    transform: none !important;
+  }
+
+  /* Whatever shares the page with the sheet (the sidebar, the header, the
+     route's own chrome) is not part of the printout. */
+  :root:has(.print-sheet) :is(div, main):has(.print-sheet) > :not(:has(.print-sheet)):not(.print-sheet) {
+    display: none !important;
   }
 
   /* Toasts and anything else floating over the page stay off the paper. */
@@ -243,9 +256,20 @@
     display: none !important;
   }
 
+  /* The named page goes on the root too: a page name that changes part-way
+     down forces a break, which printed a second, blank sheet. */
+  :root:has(.print-sheet),
   .print-sheet {
     page: sheet;
-    padding: 0 !important;
+  }
+
+  .print-sheet {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    /* A hair of room, or the boxes' outer border falls off the page edge. */
+    padding: 0 1mm !important;
+    box-sizing: border-box !important;
     background: #fff !important;
   }
 
