@@ -47,16 +47,6 @@ export function warmOilForm(qc: QueryClient, chunk: ChunkKey = 'oil-change-new')
   prefetchDriversList(qc);
 }
 
-/** Service invoice create/edit: cars + drivers. */
-export function warmServiceInvoiceForm(
-  qc: QueryClient,
-  chunk: ChunkKey = 'service-invoice-new',
-): void {
-  preloadChunk(chunk);
-  prefetchCars(qc);
-  prefetchDriversList(qc);
-}
-
 /** The fee-mappings dialog pulls the full drop-off list for its picker. */
 export function warmFeeMappingDialog(qc: QueryClient): void {
   prefetchDropoffChoices(qc);

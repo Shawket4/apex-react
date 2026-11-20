@@ -51,10 +51,12 @@ const CHUNKS = {
   'oil-change-edit': () => import('@/pages/oil-changes/oil-change-edit'),
   'oil-change-history': () => import('@/pages/oil-changes/oil-change-history'),
 
+  'work-orders': () => import('@/pages/work-orders/work-orders'),
+  'work-order-details': () => import('@/pages/work-orders/work-order-details'),
+
   'service-invoices': () => import('@/pages/service-invoices/service-invoices'),
-  'service-invoice-new': () => import('@/pages/service-invoices/service-invoice-new'),
-  'service-invoice-edit': () => import('@/pages/service-invoices/service-invoice-edit'),
   'service-invoice-details': () => import('@/pages/service-invoices/service-invoice-details'),
+  'service-invoice-match': () => import('@/pages/service-invoices/match-old-lines'),
 
   'fee-mappings': () => import('@/pages/fee-mappings/fee-mappings'),
   pricing: () => import('@/pages/pricing/pricing'),
@@ -116,8 +118,10 @@ const PATH_RULES: [RegExp, ChunkKey][] = [
   [/^\/oil-changes\/[^/]+\/edit/, 'oil-change-edit'],
   [/^\/oil-changes/, 'oil-changes'],
 
-  [/^\/service-invoices\/new/, 'service-invoice-new'],
-  [/^\/service-invoices\/[^/]+\/edit/, 'service-invoice-edit'],
+  [/^\/work-orders\/[^/]+/, 'work-order-details'],
+  [/^\/work-orders/, 'work-orders'],
+
+  [/^\/service-invoices\/match/, 'service-invoice-match'],
   [/^\/service-invoices\/[^/]+/, 'service-invoice-details'],
   [/^\/service-invoices/, 'service-invoices'],
 

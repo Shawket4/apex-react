@@ -57,28 +57,6 @@ export const serviceInvoiceSchema = z.preprocess((val: any) => {
 
 export type ServiceInvoice = z.infer<typeof serviceInvoiceSchema>;
 
-export const serviceInvoiceRequestSchema = z.object({
-  car_id: z.number(),
-  driver_id: z.number().optional().nullable(),
-  driver_name: z.string().min(1, 'Driver name is required'),
-  date: z.string().min(1, 'Date is required'),
-  meter_reading: z.number().min(0, 'Meter reading must be positive'),
-  plate_number: z.string().min(1, 'Plate number is required'),
-  supervisor: z.string().min(1, 'Supervisor is required'),
-  operating_region: z.string().min(1, 'Operating region is required'),
-  inspection_items: z.array(
-    z.object({
-      service: z.string(),
-      notes: z.string().optional().default(''),
-    }),
-  ),
-});
-
-export type ServiceInvoiceRequest = z.infer<typeof serviceInvoiceRequestSchema>;
-
-export const serviceInvoiceFormSchema = serviceInvoiceRequestSchema;
-export type ServiceInvoiceFormValues = z.infer<typeof serviceInvoiceFormSchema>;
-
 export const serviceInvoicesResponseSchema = z.object({
   data: z.array(serviceInvoiceSchema),
   pagination: paginationSchema,

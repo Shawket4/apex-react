@@ -26,14 +26,12 @@ import { format as fmtDate, formatNumber } from '@/shared/lib/format';
 interface ServiceInvoiceDetailsProps {
   invoice: ServiceInvoice;
   onBack: () => void;
-  onEdit?: () => void;
   highlightMatches?: boolean;
 }
 
 export function ServiceInvoiceDetails({
   invoice: propInvoice,
   onBack,
-  onEdit,
   highlightMatches = true,
 }: ServiceInvoiceDetailsProps) {
   const { t } = useTranslation();
@@ -72,11 +70,6 @@ export function ServiceInvoiceDetails({
           </div>
         </div>
         <div className="flex items-center gap-2">
-          {onEdit && (
-            <Button variant="outline" onClick={onEdit}>
-              {t('common.edit')}
-            </Button>
-          )}
           <Button onClick={handlePrint}>
             <Printer aria-hidden="true" />
             {t('common.print')}

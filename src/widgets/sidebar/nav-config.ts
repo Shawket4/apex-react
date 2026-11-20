@@ -10,6 +10,7 @@ import {
   FileText,
   Fuel,
   Gauge,
+  History,
   LayoutDashboard,
   MapPin,
   MapPinned,
@@ -89,7 +90,8 @@ export const NAV_SECTIONS: NavSection[] = [
       },
       { to: '/receipt-piles', labelKey: 'nav.receiptPiles', icon: Boxes },
       { to: '/oil-changes', labelKey: 'nav.oilChanges', icon: Droplets },
-      { to: '/service-invoices', labelKey: 'nav.serviceInvoices', icon: Wrench },
+      { to: '/work-orders', labelKey: 'nav.workOrders', icon: Wrench },
+      { to: '/service-invoices', labelKey: 'nav.serviceInvoices', icon: History },
     ],
   },
   {

@@ -1,8 +1,7 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { QUERY_KEYS } from '@/shared/config/constants';
 import * as api from './api';
 import { getCars } from '@/entities/car/api';
-import type { ServiceInvoiceRequest } from './schemas';
 import type { QueryClient } from '@tanstack/react-query';
 
 export function useServiceInvoices(carId?: number | string, page = 1, limit = 10) {
@@ -24,37 +23,6 @@ export function useServiceInvoice(id: number | string | undefined) {
     queryKey: QUERY_KEYS.serviceInvoice(id!),
     queryFn: () => api.getServiceInvoice(id!),
     enabled: !!id,
-  });
-}
-
-export function useCreateServiceInvoice() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: api.createServiceInvoice,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.serviceInvoices });
-    },
-  });
-}
-
-export function useUpdateServiceInvoice(id: number | string) {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (invoice: ServiceInvoiceRequest) => api.updateServiceInvoice(id, invoice),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.serviceInvoices });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.serviceInvoice(id) });
-    },
-  });
-}
-
-export function useDeleteServiceInvoice() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: api.deleteServiceInvoice,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.serviceInvoices });
-    },
   });
 }
 

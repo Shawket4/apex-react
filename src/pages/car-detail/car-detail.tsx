@@ -13,11 +13,12 @@ import { EmptyState } from '@/shared/ui/empty-state';
 import { PageShell } from '@/shared/ui/page-shell';
 import { Skeleton } from '@/shared/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/tabs';
+import { CarMaintenanceTab } from '@/widgets/car-detail/maintenance-tab';
 import { CarOverviewTab } from '@/widgets/car-detail/overview-tab';
 import { CarFormDialog } from '@/widgets/car-form/car-form-dialog';
 import { DocumentsPanel } from '@/widgets/documents/documents-panel';
 
-const TABS = ['overview', 'documents'] as const;
+const TABS = ['overview', 'maintenance', 'documents'] as const;
 
 function BackToCars() {
   const { t } = useTranslation();
@@ -31,7 +32,7 @@ function BackToCars() {
   );
 }
 
-/** One car: what is recorded about it, and its papers and photos. */
+/** One car: what is recorded about it, its upkeep in the garage, and its papers and photos. */
 export default function CarDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { t, i18n } = useTranslation();
@@ -102,10 +103,14 @@ export default function CarDetailPage() {
         <Tabs value={tab} onValueChange={setTab} dir={i18n.dir()}>
           <TabsList>
             <TabsTrigger value="overview">{t('cars.tabs.overview')}</TabsTrigger>
+            <TabsTrigger value="maintenance">{t('cars.tabs.maintenance')}</TabsTrigger>
             <TabsTrigger value="documents">{t('cars.tabs.documents')}</TabsTrigger>
           </TabsList>
           <TabsContent value="overview">
             <CarOverviewTab car={car} onOpenDocuments={() => setTab('documents')} />
+          </TabsContent>
+          <TabsContent value="maintenance">
+            <CarMaintenanceTab carId={car.ID} />
           </TabsContent>
           <TabsContent value="documents">
             <DocumentsPanel ownerKind="car" ownerId={car.ID} carType={car.car_type} />

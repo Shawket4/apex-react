@@ -2,6 +2,7 @@ import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useServiceInvoice } from '@/entities/service-invoice/queries';
 import { ServiceInvoiceDetails } from '@/widgets/service-invoice-details/service-invoice-details';
+import { OldInvoicesBanner } from '@/widgets/service-invoice-details/old-invoices-banner';
 import { Skeleton } from '@/shared/ui/skeleton';
 
 export default function ServiceInvoiceDetailsPage() {
@@ -26,10 +27,10 @@ export default function ServiceInvoiceDetailsPage() {
 
   return (
     <div className="mx-auto flex w-full max-w-6xl flex-col gap-6 p-4 md:p-6 lg:p-8">
+      <OldInvoicesBanner className="print:hidden" />
       <ServiceInvoiceDetails
         invoice={invoice}
         onBack={() => navigate('/service-invoices')}
-        onEdit={() => navigate(`/service-invoices/${id}/edit`)}
         highlightMatches={!!query}
       />
     </div>

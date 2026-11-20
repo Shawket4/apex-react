@@ -1,7 +1,8 @@
+import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { CircleDot, Droplets, Loader2, Plus } from 'lucide-react';
+import { CircleDot, ClipboardCheck, Droplets, Loader2, Plus } from 'lucide-react';
 
 import { toast } from '@/shared/ui/toast';
 import { Button } from '@/shared/ui/button';
@@ -10,6 +11,12 @@ import { Input } from '@/shared/ui/input';
 import { Label } from '@/shared/ui/label';
 import { PageShell } from '@/shared/ui/page-shell';
 import { Skeleton } from '@/shared/ui/skeleton';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/tabs';
+import { useTabParam } from '@/shared/hooks/use-tab-param';
+import { MaintTiresList } from '@/widgets/maint-tires-list/maint-tires-list';
+import { StockCountDialog } from '@/widgets/stock-count/stock-count-dialog';
+import { useStockCount } from '@/widgets/stock-count/use-stock-count';
+import { canCountStock } from '@/entities/maint-stock/api';
 import { extractErrorMessage } from '@/shared/api/errors';
 import {
   oilCreditInputSchema,
@@ -31,20 +38,70 @@ import {
  * down for the garage and pushes consumption debits back up idempotently.
  * Tires are fungible counts — individual tire identity (DOT, km, history)
  * is captured in the maintenance app at mount time, never here.
+ *
+ * The second tab is the other half: every individual tire as the garage
+ * system holds it, read-only.
+ *
+ * A stock count ("we counted N") is the one thing here that goes the other
+ * way: it is posted to the garage system, which corrects its book figure and
+ * mirrors the movement up to Falcon. The figures in these tables are still
+ * Falcon's, so they follow a count a moment later.
  */
+const TABS = ['stock', 'all'] as const;
+
 export function TiresPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const [tab, setTab] = useTabParam(TABS);
   return (
     <PageShell
       title={t('tiresStock.title')}
       description={t('tiresStock.subtitle')}
       icon={<CircleDot className="h-6 w-6" />}
     >
-      <div className="grid gap-3 lg:grid-cols-2">
-        <TireStockCard />
-        <OilStockCard />
-      </div>
+      <Tabs value={tab} onValueChange={setTab} dir={i18n.dir()}>
+        <TabsList>
+          <TabsTrigger value="stock">{t('tiresStock.tabs.stock')}</TabsTrigger>
+          <TabsTrigger value="all">{t('tiresStock.tabs.all')}</TabsTrigger>
+        </TabsList>
+        <TabsContent value="stock">
+          <div className="grid gap-3 lg:grid-cols-2">
+            <TireStockCard />
+            <OilStockCard />
+          </div>
+          {!canCountStock && (
+            <p className="pt-3 text-xs text-muted-foreground">
+              {t('tiresStock.count.notConfigured')}
+            </p>
+          )}
+        </TabsContent>
+        <TabsContent value="all">
+          <MaintTiresList />
+        </TabsContent>
+      </Tabs>
     </PageShell>
+  );
+}
+
+/* ── stock count ────────────────────────────────────────────────────────── */
+
+function CountHeader() {
+  const { t } = useTranslation();
+  return (
+    <th className="w-px px-3 py-2">
+      <span className="sr-only">{t('tiresStock.count.action')}</span>
+    </th>
+  );
+}
+
+function CountCell({ onClick }: { onClick: () => void }) {
+  const { t } = useTranslation();
+  return (
+    <td className="w-px whitespace-nowrap px-2 py-1 text-end">
+      <Button type="button" variant="ghost" size="sm" onClick={onClick}>
+        <ClipboardCheck aria-hidden="true" />
+        {t('tiresStock.count.action')}
+      </Button>
+    </td>
   );
 }
 
@@ -54,14 +111,19 @@ function TireStockCard() {
   const { t } = useTranslation();
   const stock = useTireStock();
   const credit = useCreditTires();
+  const refId = useRef<string | null>(null);
+  const counting = useStockCount();
   const form = useForm<TireCreditInput>({
     resolver: zodResolver(tireCreditInputSchema),
     defaultValues: { brand: '', model: '', size: '', on_hand_qty: 0 },
   });
 
   const submit = form.handleSubmit((values) => {
-    credit.mutate(values, {
+    // One id per shipment: a retry after a failure adds it once, not twice.
+    refId.current ??= crypto.randomUUID();
+    credit.mutate({ input: values, refId: refId.current }, {
       onSuccess: () => {
+        refId.current = null;
         toast.success(t('tiresStock.added'));
         form.reset();
       },
@@ -91,11 +153,12 @@ function TireStockCard() {
                   <th className="px-3 py-2 text-start">{t('tiresStock.model')}</th>
                   <th className="px-3 py-2 text-start">{t('tiresStock.size')}</th>
                   <th className="px-3 py-2 text-end">{t('tiresStock.qty')}</th>
+                  {canCountStock && <CountHeader />}
                 </tr>
               </thead>
               <tbody>
                 {(stock.data ?? []).map((row) => (
-                  <tr key={row.ID} className="border-t">
+                  <tr key={`${row.brand}|${row.model ?? ''}|${row.size ?? ''}`} className="border-t">
                     <td className="px-3 py-2" dir="ltr">
                       {row.brand}
                     </td>
@@ -108,6 +171,19 @@ function TireStockCard() {
                     <td className="px-3 py-2 text-end font-mono tabular-nums">
                       {row.on_hand_qty}
                     </td>
+                    {canCountStock && (
+                      <CountCell
+                        onClick={() =>
+                          counting.count({
+                            kind: 'tires',
+                            brand: row.brand,
+                            model: row.model ?? '',
+                            size: row.size ?? '',
+                            book: row.on_hand_qty,
+                          })
+                        }
+                      />
+                    )}
                   </tr>
                 ))}
               </tbody>
@@ -156,6 +232,7 @@ function TireStockCard() {
           </Button>
         </form>
       </CardContent>
+      <StockCountDialog {...counting.dialog} />
     </Card>
   );
 }
@@ -166,14 +243,19 @@ function OilStockCard() {
   const { t } = useTranslation();
   const stock = useOilStock();
   const credit = useCreditOil();
+  const refId = useRef<string | null>(null);
+  const counting = useStockCount();
   const form = useForm<OilCreditInput>({
     resolver: zodResolver(oilCreditInputSchema),
     defaultValues: { oil_type: '', liters_on_hand: 0 },
   });
 
   const submit = form.handleSubmit((values) => {
-    credit.mutate(values, {
+    // One id per shipment: a retry after a failure adds it once, not twice.
+    refId.current ??= crypto.randomUUID();
+    credit.mutate({ input: values, refId: refId.current }, {
       onSuccess: () => {
+        refId.current = null;
         toast.success(t('tiresStock.added'));
         form.reset();
       },
@@ -201,17 +283,29 @@ function OilStockCard() {
                 <tr>
                   <th className="px-3 py-2 text-start">{t('tiresStock.oilType')}</th>
                   <th className="px-3 py-2 text-end">{t('tiresStock.liters')}</th>
+                  {canCountStock && <CountHeader />}
                 </tr>
               </thead>
               <tbody>
                 {(stock.data ?? []).map((row) => (
-                  <tr key={row.ID} className="border-t">
+                  <tr key={row.oil_type} className="border-t">
                     <td className="px-3 py-2" dir="ltr">
                       {row.oil_type}
                     </td>
                     <td className="px-3 py-2 text-end font-mono tabular-nums">
                       {row.liters_on_hand}
                     </td>
+                    {canCountStock && (
+                      <CountCell
+                        onClick={() =>
+                          counting.count({
+                            kind: 'oil',
+                            oilType: row.oil_type,
+                            book: row.liters_on_hand,
+                          })
+                        }
+                      />
+                    )}
                   </tr>
                 ))}
               </tbody>
@@ -253,6 +347,7 @@ function OilStockCard() {
           </Button>
         </form>
       </CardContent>
+      <StockCountDialog {...counting.dialog} />
     </Card>
   );
 }
