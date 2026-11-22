@@ -40,7 +40,9 @@ interface DocumentsPanelProps {
 export function DocumentsPanel({ ownerKind, ownerId, carType }: DocumentsPanelProps) {
   const { t } = useTranslation();
   const { atLeast } = usePermissions();
-  const canManage = atLeast(PERMISSION_LEVELS.MANAGER);
+  // Every member of staff adds, renews, hides and restores papers (owner's
+  // decision, 2026-11-22; the server's gate is permission 1 too).
+  const canManage = atLeast(PERMISSION_LEVELS.VIEWER);
 
   const catalogue = useDocumentCatalogue();
   const owned = useOwnerDocuments(ownerKind, ownerId);
