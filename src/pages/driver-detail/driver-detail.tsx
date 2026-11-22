@@ -9,7 +9,6 @@ import {
   ShieldCheck,
   ShieldX,
   Loader2,
-  AlertTriangle,
   Info,
 } from 'lucide-react';
 import {
@@ -144,23 +143,18 @@ export default function DriverDetailPage() {
                 <span className="hidden sm:inline">{t('common.back')}</span>
               </Link>
             </Button>
+            {/* Editing is open to every member of staff, as it is on the
+                server; deleting a driver stays with managers. */}
+            <Button variant="outline" size="sm" onClick={() => setShowEditDialog(true)} aria-label={t('common.edit')}>
+              <Edit aria-hidden="true" />
+              <span className="hidden sm:inline">{t('common.edit')}</span>
+            </Button>
             {canManage ? (
-              <>
-                <Button variant="outline" size="sm" onClick={() => setShowEditDialog(true)} aria-label={t('common.edit')}>
-                  <Edit aria-hidden="true" />
-                  <span className="hidden sm:inline">{t('common.edit')}</span>
-                </Button>
-                <Button variant="destructive" size="sm" onClick={() => setShowDeleteDialog(true)} aria-label={t('common.delete')}>
-                  <Trash2 aria-hidden="true" />
-                  <span className="hidden sm:inline">{t('common.delete')}</span>
-                </Button>
-              </>
-            ) : (
-              <Badge variant="warning">
-                <AlertTriangle className="h-3 w-3" aria-hidden="true" />
-                {t('common.viewOnly')}
-              </Badge>
-            )}
+              <Button variant="destructive" size="sm" onClick={() => setShowDeleteDialog(true)} aria-label={t('common.delete')}>
+                <Trash2 aria-hidden="true" />
+                <span className="hidden sm:inline">{t('common.delete')}</span>
+              </Button>
+            ) : null}
           </>
         }
       >

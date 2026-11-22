@@ -37,7 +37,8 @@ export default function CarDetailPage() {
   const { id } = useParams<{ id: string }>();
   const { t, i18n } = useTranslation();
   const { atLeast } = usePermissions();
-  const canManage = atLeast(PERMISSION_LEVELS.MANAGER);
+  // Editing a truck is open to every member of staff, as it is on the server.
+  const canManage = atLeast(PERMISSION_LEVELS.VIEWER);
   const { data: cars, isLoading } = useCars();
   const [tab, setTab] = useTabParam(TABS);
   const [editing, setEditing] = React.useState(false);
