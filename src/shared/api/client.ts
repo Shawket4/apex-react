@@ -4,6 +4,7 @@ import { STORAGE_KEYS } from '@/shared/config/constants';
 import { ApiError, toApiError } from './errors';
 import { isJsonBlob, readJsonBlob, unwrapBlobErrorBody } from './blob-error';
 import { deriveMaintBaseURL } from './maint-base';
+import { deriveFeesBaseURL } from './fees-base';
 
 type LogoutHandler = () => void;
 
@@ -232,6 +233,15 @@ const maintBaseURL = deriveMaintBaseURL(env.VITE_API_BASE_URL_MAINT, env.VITE_AP
 export const apiClientMaint = maintBaseURL
   ? createClient(maintBaseURL, { logoutOn401: false })
   : null;
+
+/**
+ * The route fee lookup service (falcon-fees), for the fee finder, which makes
+ * its own requests (`platformFetch` + the JWT as a bearer). Resolved like the
+ * axios clients' bases, so Tauri dev goes through the Vite proxy. `null` when
+ * no base can be worked out: the page then says "not configured".
+ */
+const feesBase = deriveFeesBaseURL(env.VITE_API_BASE_URL_FEES, env.VITE_API_BASE_URL);
+export const feesBaseURL = feesBase ? resolveBaseURL(feesBase) : null;
 
 /** Typed helper — axios instance returns unknown response data by default in strict TS */
 export async function apiGet<T>(url: string, config?: AxiosRequestConfig): Promise<T> {

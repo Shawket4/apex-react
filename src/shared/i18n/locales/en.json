@@ -109,6 +109,7 @@
     "speedViolations": "Speed Violations",
     "tablets": "Tablets",
     "feeMappings": "Fee Mappings",
+    "feeLookup": "Fee lookup",
     "etit": "Live tracking",
     "serviceInvoices": "Old invoices",
     "zones": "Dead Zones",
@@ -1309,6 +1310,14 @@
     "actionsFor": "Actions for {{name}}...",
     "searchCompanies": "Search companies...",
     "searchTerminals": "Search terminals in {{company}}..."
+  },
+  "feeLookup": {
+    "title": "Fee lookup",
+    "subtitle": "Pick a company, a terminal and a drop-off to see the route, its distance and its fee.",
+    "notConfigured": {
+      "title": "Fee lookup is not configured",
+      "description": "This copy of the dashboard has no address for the fee service."
+    }
   },
   "feeMappings": {
     "pageTitle": "Fee Mappings",

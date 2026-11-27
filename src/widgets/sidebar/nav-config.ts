@@ -3,6 +3,7 @@ import {
   Bot,
   Boxes,
   Building2,
+  Calculator,
   Car,
   CircleDot,
   ClipboardCheck,
@@ -126,6 +127,8 @@ export const NAV_SECTIONS: NavSection[] = [
         icon: Banknote,
         minPermission: PERMISSION_LEVELS.MANAGER,
       },
+      // Everyone: the fee service withholds fees below permission 3.
+      { to: '/fee-lookup', labelKey: 'nav.feeLookup', icon: Calculator },
       {
         to: '/pricing',
         labelKey: 'nav.pricing',
