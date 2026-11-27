@@ -70,6 +70,7 @@ const PricingPage = React.lazy(() => import('@/pages/pricing/pricing'));
 const ReceiptPilesPage = React.lazy(() => import('@/pages/receipt-piles/receipt-piles'));
 const UsersPage = React.lazy(() => import('@/pages/users/users'));
 const WorkOrdersPage = React.lazy(() => import('@/pages/work-orders/work-orders'));
+const AttendancePage = React.lazy(() => import('@/pages/attendance/attendance'));
 const WorkOrderDetailsPage = React.lazy(
   () => import('@/pages/work-orders/work-order-details'),
 );
@@ -181,6 +182,9 @@ export const router = createBrowserRouter([
           // service invoices they replace.
           { path: 'work-orders', element: <WorkOrdersPage /> },
           { path: 'work-orders/:id', element: <WorkOrderDetailsPage /> },
+
+          // Garage attendance — marked in the garage app, view only here.
+          { path: 'attendance', element: <AttendancePage /> },
 
           // Service invoices — history, read-only. Nothing creates or edits
           // them any more; the old form addresses land somewhere that exists.

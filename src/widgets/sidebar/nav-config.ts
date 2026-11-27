@@ -23,6 +23,7 @@ import {
   Tags,
   Truck,
   Users,
+  UserCheck,
   Wrench,
   type LucideIcon,
 } from 'lucide-react';
@@ -91,6 +92,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { to: '/receipt-piles', labelKey: 'nav.receiptPiles', icon: Boxes },
       { to: '/oil-changes', labelKey: 'nav.oilChanges', icon: Droplets },
       { to: '/work-orders', labelKey: 'nav.workOrders', icon: Wrench },
+      { to: '/attendance', labelKey: 'nav.attendance', icon: UserCheck },
       { to: '/service-invoices', labelKey: 'nav.serviceInvoices', icon: History },
     ],
   },

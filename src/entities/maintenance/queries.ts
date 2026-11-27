@@ -1,6 +1,7 @@
 import { keepPreviousData, useQuery, type QueryClient } from '@tanstack/react-query';
 import { NotFoundError } from '@/shared/api/errors';
 import {
+  getAttendanceMonth,
   getMaintTires,
   getVehicleMaintenance,
   getWorkOrder,
@@ -20,6 +21,7 @@ export const MAINTENANCE_KEYS = {
   workOrder: (id: string) => ['maintenance', 'work-order', id] as const,
   vehicle: (carId: number | string) => ['maintenance', 'vehicle', String(carId)] as const,
   tires: (params: MaintTiresParams) => ['maintenance', 'tires', params] as const,
+  attendance: (month: string) => ['maintenance', 'attendance', month] as const,
 } as const;
 
 /** The mount state of `/work-orders`: everything, newest page, 20 a page. */
@@ -89,5 +91,15 @@ export function prefetchWorkOrder(qc: QueryClient, id: string): void {
   void qc.prefetchQuery({
     queryKey: MAINTENANCE_KEYS.workOrder(id),
     queryFn: () => getWorkOrder(id),
+  });
+}
+
+/** One month of garage attendance; the previous month stays on screen while the next loads. */
+export function useAttendanceMonth(month: string) {
+  return useQuery({
+    queryKey: MAINTENANCE_KEYS.attendance(month),
+    queryFn: () => getAttendanceMonth(month),
+    enabled: isMaintConfigured,
+    placeholderData: keepPreviousData,
   });
 }

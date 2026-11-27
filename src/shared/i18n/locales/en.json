@@ -120,7 +120,8 @@
     "advisor": "Advisor",
     "pricing": "Pricing",
     "documents": "Documents",
-    "workOrders": "Work orders"
+    "workOrders": "Work orders",
+    "attendance": "Garage attendance"
   },
   "auth": {
     "loginTitle": "Welcome back",
@@ -3524,6 +3525,80 @@
       "noLinesDescription": "Use \"Read invoices again\" to read them now.",
       "searchTitle": "No wording matches",
       "searchDescription": "Try another word."
+    }
+  },
+  "attendance": {
+    "title": "Garage attendance",
+    "subtitle": "Who was in at the garage, day by day. View only: days are marked in the garage app.",
+    "prevMonth": "Previous month",
+    "nextMonth": "Next month",
+    "thisMonth": "This month",
+    "export": "Excel",
+    "exportFile": "garage-attendance",
+    "exportTitle": "Garage attendance — {{month}}",
+    "sheetGrid": "Sheet",
+    "sheetTotals": "Totals",
+    "hours": "Hours {{start}}–{{end}}, {{grace}} minutes' grace",
+    "worker": "Worker",
+    "job": "Job",
+    "total": "Total",
+    "legend": "Key",
+    "unmarkedDays": "{{n}} days not marked",
+    "inAt": "In {{time}}",
+    "outAt": "Out {{time}}",
+    "lateBy": "Late {{d}}",
+    "markedBy": "Marked by {{name}}",
+    "empty": {
+      "title": "No workers this month",
+      "description": "Workers are added in the garage app, under Attendance."
+    },
+    "totals": {
+      "present": "Present",
+      "late": "Late",
+      "lateMinutes": "Late minutes",
+      "absent": "Absent",
+      "leave": "Leave",
+      "sick": "Sick",
+      "off": "Off",
+      "unmarked": "Not marked",
+      "hours": "Hours worked",
+      "extra": "Extra hours"
+    },
+    "status": {
+      "present": "Present",
+      "late": "Late",
+      "absent": "Absent",
+      "leave": "Leave",
+      "sick": "Sick",
+      "off": "Off",
+      "weekly_off": "Weekly day off",
+      "unmarked": "Not marked",
+      "outside": "Not on the list",
+      "future": "Not yet"
+    },
+    "code": {
+      "present": "P",
+      "late": "L",
+      "absent": "A",
+      "leave": "V",
+      "sick": "S",
+      "off": "O",
+      "weekly_off": "·",
+      "unmarked": "?"
+    },
+    "weekdayShort": {
+      "1": "M",
+      "2": "T",
+      "3": "W",
+      "4": "T",
+      "5": "F",
+      "6": "S",
+      "7": "S"
+    },
+    "duration": {
+      "hm": "{{h}}h {{m}}m",
+      "h": "{{h}}h",
+      "m": "{{m}}m"
     }
   }
 }
