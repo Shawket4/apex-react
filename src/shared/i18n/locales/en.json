@@ -1359,18 +1359,18 @@
       "accurate": "Accurate",
       "conservative": "Conservative",
       "overestimate": "Overestimate",
-      "unknown": "No OSRM"
+      "unknown": "No truck route"
     },
     "accuracy": {
       "accurate": "Accurate",
       "conservative": "Conservative",
       "overestimate": "Overestimate",
-      "unknown": "No OSRM"
+      "unknown": "No truck route"
     },
     "actions": {
       "setLocation": "Set location",
       "updateLocation": "Update location",
-      "bulkEnrich": "Bulk OSRM enrich",
+      "bulkEnrich": "Recalculate truck routes",
       "export": "Export",
       "viewRoute": "View route on map",
       "noPin": "No pin yet — set it on the Locations screen"
@@ -1380,13 +1380,13 @@
       "latitude": "Latitude",
       "longitude": "Longitude",
       "hint": "Click anywhere on the map or drag the pin to set the position",
-      "saveAndEnrich": "Save & calculate OSRM",
-      "saveSuccess": "Location saved and OSRM data updated",
+      "saveAndEnrich": "Save & calculate truck route",
+      "saveSuccess": "Location saved and truck route updated",
       "saveFailed": "Failed to save location",
       "invalidCoords": "Please enter or select valid coordinates"
     },
     "bulkEnrich": {
-      "title": "Bulk OSRM enrichment",
+      "title": "Recalculate truck routes",
       "processed": "Processed",
       "succeeded": "Succeeded",
       "failed": "Failed",
@@ -2285,7 +2285,7 @@
   },
   "tripAudit": {
     "title": "Trip Audit",
-    "description": "Review GPS-audited trips — actual routes vs the OSRM optimal — and the flags raised.",
+    "description": "Review GPS-audited trips — actual routes vs the best legal truck route — and the flags raised.",
     "filters": {
       "status": "Status",
       "allStatuses": "All statuses",
@@ -2331,7 +2331,7 @@
       "driver": "Driver",
       "deliveries": "Deliveries",
       "actualKm": "Actual km",
-      "osrmKm": "OSRM km",
+      "osrmKm": "Truck route km",
       "distanceRatio": "Dist. ratio",
       "durationRatio": "Dur. ratio",
       "flags": "Flags",
@@ -2342,11 +2342,11 @@
     },
     "detail": {
       "title": "Trip audit",
-      "description": "Actual route vs OSRM optimal and raised flags.",
+      "description": "Actual route vs the best legal truck route, and the flags raised.",
       "loadError": "Failed to load trip details.",
-      "kmActualVsOsrm": "km (actual / OSRM)",
+      "kmActualVsOsrm": "km (actual / truck route)",
       "actualRoute": "Actual route",
-      "osrmRoute": "OSRM optimal",
+      "osrmRoute": "Best truck route",
       "unplannedStops": "Unplanned stops",
       "legs": "Legs",
       "noLegs": "No legs recorded for this trip.",
@@ -2370,9 +2370,9 @@
       "fromTo": "From → To",
       "depart": "Depart",
       "arrive": "Arrive",
-      "km": "km (actual / OSRM)",
+      "km": "km (actual / truck route)",
       "ratio": "Ratio",
-      "duration": "Duration (actual / OSRM)",
+      "duration": "Duration (actual / truck route)",
       "maxDeviation": "Max dev.",
       "night": "Night window",
       "sentence": "Left {{from}} at {{depart}} → arrived {{to}} at {{arrive}} — {{actual}} km actual vs {{osrm}} km optimal",
@@ -2396,7 +2396,8 @@
       "suboptimal_order": "Drop-offs visited in a longer order than optimal",
       "allowed_stop": "Stop at an allowed point (garage)",
       "return_pending": "Trip still open — awaiting terminal return",
-      "ineffective_bundling": "Drop-offs in different directions"
+      "ineffective_bundling": "Drop-offs in different directions",
+      "banned_road": "Drove a road closed to our trucks"
     },
     "severity": {
       "info": "Info",
@@ -2423,7 +2424,11 @@
       "bundlingTitle": "These drop-offs point in different directions",
       "bundlingBody": "Bundled",
       "bundlingSplit": "As separate trips",
-      "bundlingSaves": "bundling saves only"
+      "bundlingSaves": "bundling saves only",
+      "bannedTitle": "On {{road}} during its banned hours",
+      "bannedHours": "banned {{hours}}",
+      "bannedAlwaysTitle": "On {{road}}, closed to our trucks",
+      "bannedAlways": "closed at all hours"
     },
     "toast": {
       "reviewSuccess": "Marked as reviewed",

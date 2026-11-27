@@ -197,7 +197,7 @@ export default function TripAuditPage() {
       title={t('tripAudit.title', 'Trip Audit')}
       description={t(
         'tripAudit.description',
-        'Review GPS-audited trips — actual routes vs the OSRM optimal — and the flags raised.',
+        'Review GPS-audited trips — actual routes vs the best legal truck route — and the flags raised.',
       )}
       icon={<SearchCheck className="h-5 w-5" />}
       actions={

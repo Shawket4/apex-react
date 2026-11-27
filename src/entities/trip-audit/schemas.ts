@@ -25,6 +25,11 @@ export const KNOWN_FLAG_TYPES = [
   'skipped_delivery',
   'no_return_data',
   'no_terminal_departure',
+  'suboptimal_order',
+  'ineffective_bundling',
+  'allowed_stop',
+  'return_pending',
+  'banned_road',
 ] as const;
 
 /** Unmatched-reason codes mapped to readable i18n strings. */
