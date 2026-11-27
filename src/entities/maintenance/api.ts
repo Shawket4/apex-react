@@ -1,10 +1,12 @@
 import type { AxiosInstance } from 'axios';
 import { apiClientMaint } from '@/shared/api/client';
 import {
+  attendanceMonthSchema,
   maintTiresPageSchema,
   vehicleMaintenanceSchema,
   workOrderDetailSchema,
   workOrdersPageSchema,
+  type AttendanceMonth,
   type MaintTiresPage,
   type MaintTiresParams,
   type VehicleMaintenance,
@@ -75,4 +77,10 @@ export async function getMaintTires(params: MaintTiresParams): Promise<MaintTire
     }),
   });
   return maintTiresPageSchema.parse(res.data);
+}
+
+/** The garage's attendance for one month (YYYY-MM, Cairo calendar). */
+export async function getAttendanceMonth(month: string): Promise<AttendanceMonth> {
+  const res = await client().get('/office/attendance', { params: cleanParams({ month }) });
+  return attendanceMonthSchema.parse(res.data);
 }

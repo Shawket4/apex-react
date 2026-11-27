@@ -120,7 +120,8 @@
     "advisor": "المستشار",
     "pricing": "التسعير",
     "documents": "المستندات",
-    "workOrders": "أوامر الشغل"
+    "workOrders": "أوامر الشغل",
+    "attendance": "حضور الورشة"
   },
   "auth": {
     "loginTitle": "مرحباً بعودتك",
@@ -3627,6 +3628,80 @@
       "noLinesDescription": "دوس «اقرا الفواتير تاني» عشان تتقرا دلوقتي.",
       "searchTitle": "مفيش كلام بالشكل ده",
       "searchDescription": "جرّب كلمة تانية."
+    }
+  },
+  "attendance": {
+    "title": "حضور الورشة",
+    "subtitle": "مين كان في الورشة يوم بيوم. للعرض بس: الأيام بتتسجل من برنامج الورشة.",
+    "prevMonth": "الشهر اللي قبله",
+    "nextMonth": "الشهر اللي بعده",
+    "thisMonth": "الشهر ده",
+    "export": "Excel",
+    "exportFile": "حضور-الورشة",
+    "exportTitle": "حضور عمال الورشة — {{month}}",
+    "sheetGrid": "الكشف",
+    "sheetTotals": "الإجمالي",
+    "hours": "المواعيد {{start}} – {{end}}، سماح {{grace}} دقيقة",
+    "worker": "العامل",
+    "job": "الشغلانة",
+    "total": "الإجمالي",
+    "legend": "المفتاح",
+    "unmarkedDays": "أيام مش متسجلة: {{n}}",
+    "inAt": "حضر {{time}}",
+    "outAt": "انصرف {{time}}",
+    "lateBy": "متأخر {{d}}",
+    "markedBy": "سجّله {{name}}",
+    "empty": {
+      "title": "مفيش عمال في الشهر ده",
+      "description": "العمال بيتضافوا من برنامج الورشة، من صفحة الحضور."
+    },
+    "totals": {
+      "present": "حضور",
+      "late": "تأخير",
+      "lateMinutes": "دقايق التأخير",
+      "absent": "غياب",
+      "leave": "إجازة",
+      "sick": "مرضي",
+      "off": "راحة",
+      "unmarked": "مش متسجل",
+      "hours": "ساعات الشغل",
+      "extra": "ساعات زيادة"
+    },
+    "status": {
+      "present": "حاضر",
+      "late": "متأخر",
+      "absent": "غايب",
+      "leave": "إجازة",
+      "sick": "مرضي",
+      "off": "راحة",
+      "weekly_off": "راحة أسبوعية",
+      "unmarked": "مش متسجل",
+      "outside": "مش في الكشف",
+      "future": "لسه مجاش"
+    },
+    "code": {
+      "present": "ح",
+      "late": "ت",
+      "absent": "غ",
+      "leave": "إ",
+      "sick": "م",
+      "off": "ر",
+      "weekly_off": "·",
+      "unmarked": "؟"
+    },
+    "weekdayShort": {
+      "1": "ن",
+      "2": "ث",
+      "3": "ر",
+      "4": "خ",
+      "5": "ج",
+      "6": "س",
+      "7": "ح"
+    },
+    "duration": {
+      "hm": "{{h}} س {{m}} د",
+      "h": "{{h}} س",
+      "m": "{{m}} د"
     }
   }
 }
