@@ -16,10 +16,10 @@ const axleKey = (section: string, index: number) => `${section}-${index}`;
  * the shared wheel diagram's axles and positions.
  *
  * The office endpoint sends each position with its axle flattened in
- * (`section`, `axle_index`, `is_steering`) and no axle id, so the axles are
- * rebuilt from the positions: one per (section, index). It does not send
- * whether an axle is lifted, so every axle is drawn on the road. Nothing here
- * is ever "pending": that is the garage's own not-yet-sent state.
+ * (`section`, `axle_index`, `is_steering`, `is_lifted`, `axle_id`), so the
+ * axles are rebuilt from the positions: one per (section, index), under the
+ * garage's axle id when it is sent. A lifted axle is drawn raised. Nothing
+ * here is ever "pending": that is the garage's own not-yet-sent state.
  */
 export function toTireDiagram(tires: TirePosition[]): TireDiagramData {
   const axles = new Map<string, DiagramAxle & { dual: boolean }>();
@@ -30,9 +30,9 @@ export function toTireDiagram(tires: TirePosition[]): TireDiagramData {
       (row.section === 'tractor' || row.section === 'trailer') &&
       row.axle_index !== null
     ) {
-      axleId = axleKey(row.section, row.axle_index);
-      const axle = axles.get(axleId) ?? {
-        id: axleId,
+      const key = axleKey(row.section, row.axle_index);
+      const axle = axles.get(key) ?? {
+        id: row.axle_id ?? key,
         section: row.section,
         section_index: row.axle_index,
         axle_type: 'single',
@@ -41,8 +41,10 @@ export function toTireDiagram(tires: TirePosition[]): TireDiagramData {
         dual: false,
       };
       axle.is_steering ||= row.is_steering === true;
+      axle.is_lifted ||= row.is_lifted;
       axle.dual ||= row.depth === 'inner' || row.depth === 'outer';
-      axles.set(axleId, axle);
+      axles.set(key, axle);
+      axleId = axle.id;
     }
     return {
       id: row.position_id,

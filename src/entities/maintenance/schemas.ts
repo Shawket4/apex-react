@@ -174,6 +174,39 @@ export const dueRowSchema = z
   .passthrough();
 export type DueRow = z.infer<typeof dueRowSchema>;
 
+/** An earlier fitting of the tire (dismounted). */
+export const tirePastMountSchema = z
+  .object({
+    vehicle_id: num,
+    plate: text,
+    position_code: text,
+    mounted_at: text,
+    mounted_odometer: num,
+    /** maint-rust `mount_reason`. */
+    mount_reason: text,
+    dismounted_at: text,
+    dismounted_odometer: num,
+    /** maint-rust `dismount_reason`. */
+    dismount_reason: text,
+    /** Km between fitting and removal on a road wheel; null when unknown. */
+    km_run: num,
+  })
+  .passthrough();
+export type TirePastMount = z.infer<typeof tirePastMountSchema>;
+
+/** A status change of the tire (repair, retread, scrap…). */
+export const tireEventSchema = z
+  .object({
+    /** maint-rust `tire_event_type`. */
+    event_type: text,
+    from_status: text,
+    to_status: text,
+    notes: text,
+    occurred_at: text,
+  })
+  .passthrough();
+export type TireEvent = z.infer<typeof tireEventSchema>;
+
 export const tirePositionSchema = z
   .object({
     position_id: z.string(),
@@ -188,18 +221,43 @@ export const tirePositionSchema = z
     section: text,
     /** 1-based within its section. */
     axle_index: num,
+    /** The garage's axle id (an older server sends none). */
+    axle_id: text,
     is_steering: z
       .boolean()
       .nullish()
       .transform((value) => value ?? null),
+    /** A lifted (raised) axle; absent from an older server = on the road. */
+    is_lifted: flag,
     /** null: nothing is fitted here. */
     tire_id: text,
     brand: text,
     model: text,
     size: text,
     dot_code: text,
+    /** Lifetime km: before registration + every road fitting, this one so far. */
     total_km: num,
     mounted_at: text,
+    /** maint-rust `tire_status`. */
+    status: text,
+    /** 'shipment' (new from stock) | 'legacy' (registered already in use). */
+    origin: text,
+    retread_count: num,
+    /** Km the tire had before the garage registered it. */
+    base_km: num,
+    notes: text,
+    registered_at: text,
+    /** This fitting. */
+    mounted_odometer: num,
+    mount_reason: text,
+    mount_notes: text,
+    mounted_work_order_id: text,
+    /** Km since this fitting (road wheels with a known odometer). */
+    km_this_mount: num,
+    /** Some road fitting has no odometer, so total_km is short of the truth. */
+    km_incomplete: flag,
+    past_mounts: list(tirePastMountSchema),
+    events: list(tireEventSchema),
   })
   .passthrough();
 export type TirePosition = z.infer<typeof tirePositionSchema>;

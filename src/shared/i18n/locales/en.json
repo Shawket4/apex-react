@@ -3432,7 +3432,25 @@
       "emptyTitle": "No tires recorded yet",
       "emptyDescription": "Tires appear here once the garage records them.",
       "emptyFilteredTitle": "No tires match",
-      "emptyFilteredDescription": "Try another status or search."
+      "emptyFilteredDescription": "Try another status or search.",
+      "lifted": "Lifted axle",
+      "origin": "Came as",
+      "baseKm": "Km before it was registered",
+      "registered": "Registered",
+      "notes": "Notes",
+      "kmIncomplete": "A fitting has no odometer reading, so the real distance run is higher than this.",
+      "thisFitting": "This fitting",
+      "fittedAtKm": "Odometer at fitting",
+      "kmThisMount": "Run on this truck",
+      "fitReason": "Why it was fitted",
+      "workOrder": "Work order",
+      "openWorkOrder": "Open the work order",
+      "fitNotes": "Fitting notes",
+      "pastMounts": "Earlier fittings ({{n}})",
+      "removedOn": "Removed {{date}}",
+      "kmRun": "Run",
+      "events": "Status changes",
+      "statusChange": "{{from}} → {{to}}"
     },
     "tireStatus": {
       "all": "All",
@@ -3441,6 +3459,18 @@
       "in_repair": "In repair",
       "retreading": "Retreading",
       "scrapped": "Scrapped"
+    },
+    "tireOrigin": {
+      "shipment": "New, from stock",
+      "legacy": "Registered already in use"
+    },
+    "tireEvent": {
+      "intake": "Registered",
+      "scrap": "Scrapped",
+      "retread": "Sent for retreading",
+      "repair_out": "Sent for repair",
+      "repair_in": "Back from repair",
+      "restock": "Back in stock"
     },
     "mountReason": {
       "new": "New tire",
