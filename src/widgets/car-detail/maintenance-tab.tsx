@@ -20,16 +20,19 @@ import {
   type Remaining,
 } from '@/entities/maintenance/lib';
 import { useVehicleMaintenance } from '@/entities/maintenance/queries';
+import { toTireDiagram } from '@/entities/maintenance/tire-diagram';
 import type {
   DueRow,
   TirePosition,
   VehicleMaintenance,
   WorkOrderRow,
 } from '@/entities/maintenance/schemas';
+import { WheelDiagram } from 'apex-tire-diagram';
 import { cn } from '@/shared/lib/cn';
 import { formatNumber } from '@/shared/lib/format';
 import { Badge } from '@/shared/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/ui/card';
+import { CollapsibleSection } from '@/shared/ui/collapsible-section';
 import { Skeleton } from '@/shared/ui/skeleton';
 import { maintDate } from '@/widgets/maintenance/maint-date';
 import { MaintError, MaintNotConfigured } from '@/widgets/maintenance/maint-states';
@@ -216,9 +219,55 @@ function TireGroup({ title, positions }: { title: string; positions: TirePositio
   );
 }
 
+/**
+ * The truck's wheels drawn by the garage's own diagram (2D map, optional 3D),
+ * shared with the garage app through `apex-tire-diagram`. Pressing a wheel
+ * shows its tire; the office only looks, so nothing here changes anything.
+ */
+function Tires({ tires }: { tires: TirePosition[] }) {
+  const { t, i18n } = useTranslation();
+  const diagram = React.useMemo(() => toTireDiagram(tires), [tires]);
+  const groups = groupTirePositions(tires);
+  const [selectedId, setSelectedId] = React.useState<string | null>(null);
+  const selected = diagram.positions.find((p) => p.id === selectedId) ?? null;
+
+  return (
+    <div className="space-y-4">
+      <WheelDiagram
+        axles={diagram.axles}
+        positions={diagram.positions}
+        lang={i18n.language}
+        selectedId={selected?.id ?? null}
+        onSelect={(p) => setSelectedId(p.id)}
+      />
+      <div aria-live="polite" className="space-y-2">
+        {selected ? (
+          <>
+            <h4 className="text-xs font-semibold text-muted-foreground">
+              {t('maintenance.tires.selected')}
+            </h4>
+            <div className="max-w-xs">
+              <TireTile position={selected.row} />
+            </div>
+          </>
+        ) : (
+          <Quiet>{t('maintenance.tires.pickHint')}</Quiet>
+        )}
+      </div>
+      <CollapsibleSection title={t('maintenance.tires.allPositions')} defaultOpen={false}>
+        <div className="space-y-4 p-3">
+          <TireGroup title={t('maintenance.tires.tractor')} positions={groups.tractor} />
+          <TireGroup title={t('maintenance.tires.trailer')} positions={groups.trailer} />
+          <TireGroup title={t('maintenance.tires.other')} positions={groups.other} />
+          <TireGroup title={t('maintenance.tires.spares')} positions={groups.spares} />
+        </div>
+      </CollapsibleSection>
+    </div>
+  );
+}
+
 function Loaded({ data }: { data: VehicleMaintenance }) {
   const { t, i18n } = useTranslation();
-  const tires = groupTirePositions(data.tires);
   const className = data.class
     ? (localName(data.class.name_ar, data.class.name_en, i18n.language) ?? data.class.id)
     : null;
@@ -289,12 +338,7 @@ function Loaded({ data }: { data: VehicleMaintenance }) {
         {data.tires.length === 0 ? (
           <Quiet>{t('maintenance.tires.noLayout')}</Quiet>
         ) : (
-          <div className="space-y-4">
-            <TireGroup title={t('maintenance.tires.tractor')} positions={tires.tractor} />
-            <TireGroup title={t('maintenance.tires.trailer')} positions={tires.trailer} />
-            <TireGroup title={t('maintenance.tires.other')} positions={tires.other} />
-            <TireGroup title={t('maintenance.tires.spares')} positions={tires.spares} />
-          </div>
+          <Tires tires={data.tires} />
         )}
       </Section>
 

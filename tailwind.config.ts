@@ -1,8 +1,14 @@
 import type { Config } from 'tailwindcss';
+import plugin from 'tailwindcss/plugin';
 
 const config: Config = {
   darkMode: ['class'],
-  content: ['./index.html', './src/**/*.{ts,tsx}'],
+  content: [
+    './index.html',
+    './src/**/*.{ts,tsx}',
+    // The shared wheel diagram (garage + office) is styled with this app's classes.
+    './node_modules/apex-tire-diagram/dist/**/*.js',
+  ],
 
   future: {
     // Wrap every `hover:` utility in `@media (hover: hover)`.
@@ -74,6 +80,20 @@ const config: Config = {
           DEFAULT: 'hsl(var(--warning))',
           foreground: 'hsl(var(--warning-foreground))',
         },
+        // The tokens apex-tire-diagram expects (the garage app's names),
+        // mapped onto this palette: fitted = success, still sending =
+        // warning, spare = info.
+        'border-strong': 'hsl(var(--border-strong))',
+        info: {
+          DEFAULT: 'hsl(var(--info))',
+          soft: 'hsl(var(--info) / 0.13)',
+        },
+        status: {
+          ok: 'hsl(var(--success))',
+          'ok-soft': 'hsl(var(--success) / 0.13)',
+          due_soon: 'hsl(var(--warning))',
+          'due_soon-soft': 'hsl(var(--warning) / 0.16)',
+        },
       },
       borderRadius: {
         lg: 'var(--radius)',
@@ -98,7 +118,11 @@ const config: Config = {
       },
     },
   },
-  plugins: [require('@tailwindcss/container-queries')],
+  plugins: [
+    require('@tailwindcss/container-queries'),
+    // Tailwind v4's `pointer-coarse:` (bigger touch targets), used by apex-tire-diagram.
+    plugin(({ addVariant }) => addVariant('pointer-coarse', '@media (pointer: coarse)')),
+  ],
 };
 
 export default config;
