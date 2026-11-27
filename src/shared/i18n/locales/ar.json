@@ -3535,7 +3535,25 @@
       "emptyTitle": "مفيش كاوتش متسجل لسه",
       "emptyDescription": "الكاوتش هيظهر هنا أول ما الورشة تسجله.",
       "emptyFilteredTitle": "مفيش كاوتش بالشكل ده",
-      "emptyFilteredDescription": "جرّب حالة أو بحث تاني."
+      "emptyFilteredDescription": "جرّب حالة أو بحث تاني.",
+      "lifted": "محور مرفوع",
+      "origin": "جت",
+      "baseKm": "المشي قبل ما تتسجل",
+      "registered": "اتسجلت",
+      "notes": "ملاحظات",
+      "kmIncomplete": "في تركيب من غير قراية عداد، فالمشي الحقيقي أكتر من كده.",
+      "thisFitting": "التركيب ده",
+      "fittedAtKm": "العداد وقت التركيب",
+      "kmThisMount": "مشي على العربية دي",
+      "fitReason": "سبب التركيب",
+      "workOrder": "أمر الشغل",
+      "openWorkOrder": "افتح أمر الشغل",
+      "fitNotes": "ملاحظات التركيب",
+      "pastMounts": "تركيبات قبل كده ({{n}})",
+      "removedOn": "اتفكت {{date}}",
+      "kmRun": "مشي",
+      "events": "تغييرات الحالة",
+      "statusChange": "{{from}} ← {{to}}"
     },
     "tireStatus": {
       "all": "الكل",
@@ -3544,6 +3562,18 @@
       "in_repair": "في التصليح",
       "retreading": "في التلبيس",
       "scrapped": "خردة"
+    },
+    "tireOrigin": {
+      "shipment": "جديدة من المخزن",
+      "legacy": "اتسجلت وهي مستعملة"
+    },
+    "tireEvent": {
+      "intake": "اتسجلت",
+      "scrap": "اتخردت",
+      "retread": "راحت تلبيس",
+      "repair_out": "راحت تصليح",
+      "repair_in": "رجعت من التصليح",
+      "restock": "رجعت المخزن"
     },
     "mountReason": {
       "new": "كاوتش جديد",

@@ -81,6 +81,44 @@ describe('toTireDiagram', () => {
     expect(positionLabel(h2lo, axles, 'ar')).toBe('الراس محور ٢ شمال برّه');
   });
 
+  it('draws a lifted axle raised and keeps the garage axle id', () => {
+    const lifted = [
+      row({
+        position_code: 'TR2LO',
+        section: 'trailer',
+        axle_index: 2,
+        side: 'left',
+        depth: 'outer',
+        axle_id: 'ax-9',
+        is_lifted: true,
+      }),
+      row({
+        position_code: 'TR2LI',
+        section: 'trailer',
+        axle_index: 2,
+        side: 'left',
+        depth: 'inner',
+        axle_id: 'ax-9',
+        is_lifted: true,
+      }),
+      row({
+        position_code: 'TR1L',
+        section: 'trailer',
+        axle_index: 1,
+        side: 'left',
+        depth: 'single',
+      }),
+    ];
+    const { axles, positions } = toTireDiagram(lifted);
+    expect(axles.map((a) => [a.id, a.section_index, a.is_lifted, a.axle_type])).toEqual([
+      ['ax-9', 2, true, 'dual'],
+      ['trailer-1', 1, false, 'single'],
+    ]);
+    expect(positions.map((p) => p.axle_id)).toEqual(['ax-9', 'ax-9', 'trailer-1']);
+    // An older server sends neither: every axle is on the road.
+    expect(tirePositionSchema.parse({ position_id: 'p' }).is_lifted).toBe(false);
+  });
+
   it('puts a position with no axle beside the spares instead of dropping it', () => {
     const { positions, axles } = toTireDiagram([row({ position_code: 'X1', side: 'left' })]);
     expect(positions[0].axle_id).toBeNull();

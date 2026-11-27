@@ -37,6 +37,7 @@ import { Skeleton } from '@/shared/ui/skeleton';
 import { maintDate } from '@/widgets/maintenance/maint-date';
 import { MaintError, MaintNotConfigured } from '@/widgets/maintenance/maint-states';
 import { WorkOrderLinkCard } from '@/widgets/maintenance/work-order-bits';
+import { TireDetails } from './tire-details';
 
 interface SectionProps {
   icon: LucideIcon;
@@ -171,9 +172,14 @@ function TireTile({ position }: { position: TirePosition }) {
         <span className="min-w-0 text-xs font-semibold">
           {label ?? (code ? <bdi dir="ltr">{code}</bdi> : '—')}
         </span>
-        {position.is_steering && (
+        {(position.is_steering || position.is_lifted) && (
           <span className="shrink-0 text-[10px] text-muted-foreground">
-            {t('maintenance.tires.steering')}
+            {[
+              position.is_steering && t('maintenance.tires.steering'),
+              position.is_lifted && t('maintenance.tires.lifted'),
+            ]
+              .filter(Boolean)
+              .join(' · ')}
           </span>
         )}
       </div>
@@ -189,9 +195,9 @@ function TireTile({ position }: { position: TirePosition }) {
           <span className="truncate text-sm font-medium" dir="ltr">
             {tire || t('maintenance.tires.unnamed')}
           </span>
-          {position.size && (
+          {(position.size || position.dot_code) && (
             <span className="truncate text-xs text-muted-foreground" dir="ltr">
-              {position.size}
+              {[position.size, position.dot_code && `DOT ${position.dot_code}`].filter(Boolean).join(' · ')}
             </span>
           )}
           <span className="text-xs tabular-nums text-muted-foreground">
@@ -246,8 +252,8 @@ function Tires({ tires }: { tires: TirePosition[] }) {
             <h4 className="text-xs font-semibold text-muted-foreground">
               {t('maintenance.tires.selected')}
             </h4>
-            <div className="max-w-xs">
-              <TireTile position={selected.row} />
+            <div className="max-w-xl">
+              <TireDetails position={selected.row} />
             </div>
           </>
         ) : (
