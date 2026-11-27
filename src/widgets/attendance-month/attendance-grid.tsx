@@ -3,13 +3,15 @@ import { useTranslation } from 'react-i18next';
 import type { AttendanceMonth, AttendanceTotals } from '@/entities/maintenance/schemas';
 import { formatCairoDay } from '@/shared/lib/cairo';
 import { cn } from '@/shared/lib/cn';
-import { KIND_TONE, cellTitle, fmtMinutes, kindCode } from './lib';
+import { KIND_TONE, SHOWN, cellTitle, kindCode } from './lib';
 
 const PINNED: { key: keyof AttendanceTotals; label: string; tone: string }[] = [
   { key: 'present', label: 'attendance.totals.present', tone: 'text-success' },
-  { key: 'late', label: 'attendance.totals.late', tone: 'text-warning' },
   { key: 'absent', label: 'attendance.totals.absent', tone: 'text-destructive' },
+  { key: 'leave', label: 'attendance.totals.leave', tone: 'text-primary' },
+  { key: 'sick', label: 'attendance.totals.sick', tone: 'text-violet-600 dark:text-violet-400' },
 ];
+const LAST = PINNED.length - 1;
 
 /**
  * The month as the garage marked it: workers down, days across. The name and
@@ -53,21 +55,12 @@ export function AttendanceGrid({ month }: { month: AttendanceMonth }) {
                 className={cn(
                   pinnedWide,
                   'w-14 min-w-14 border-b px-1 py-2 text-center font-medium md:z-20',
+                  i === LAST && 'border-e-2',
                 )}
               >
                 {t(c.label)}
               </th>
             ))}
-            <th
-              scope="col"
-              style={at(21.5)}
-              className={cn(
-                pinnedWide,
-                'w-20 min-w-20 border-b border-e-2 px-1 py-2 text-center font-medium md:z-20',
-              )}
-            >
-              {t('attendance.totals.hours')}
-            </th>
             {month.days.map((d) => (
               <th
                 key={d.date}
@@ -75,7 +68,6 @@ export function AttendanceGrid({ month }: { month: AttendanceMonth }) {
                 data-today={d.is_today || undefined}
                 className={cn(
                   'min-w-8 border-b px-0.5 py-1.5 text-center font-medium tabular-nums',
-                  d.is_weekly_off && 'bg-muted/50',
                   d.is_today && 'text-primary',
                 )}
               >
@@ -114,20 +106,12 @@ export function AttendanceGrid({ month }: { month: AttendanceMonth }) {
                     pinnedWide,
                     'border-b px-1 text-center text-sm font-semibold tabular-nums',
                     w.totals[c.key] > 0 ? c.tone : 'text-muted-foreground/50',
+                    i === LAST && 'border-e-2',
                   )}
                 >
                   {w.totals[c.key] > 0 ? w.totals[c.key] : '—'}
                 </td>
               ))}
-              <td
-                style={at(21.5)}
-                className={cn(
-                  pinnedWide,
-                  'whitespace-nowrap border-b border-e-2 px-1 text-center font-medium tabular-nums',
-                )}
-              >
-                {w.totals.worked_minutes > 0 ? fmtMinutes(w.totals.worked_minutes, t) : '—'}
-              </td>
               {w.cells.map((c, i) => {
                 const d = month.days[i];
                 const title =
@@ -135,10 +119,7 @@ export function AttendanceGrid({ month }: { month: AttendanceMonth }) {
                     ? undefined
                     : cellTitle(c, formatCairoDay(d.date, lang), t, lang);
                 return (
-                  <td
-                    key={d.date}
-                    className={cn('border-b p-0.5 text-center', d.is_weekly_off && 'bg-muted/40')}
-                  >
+                  <td key={d.date} className="border-b p-0.5 text-center">
                     <span
                       title={title}
                       aria-label={title ? `${w.name} — ${title}` : undefined}
@@ -168,20 +149,12 @@ export function AttendanceGrid({ month }: { month: AttendanceMonth }) {
                 className={cn(
                   pinnedWide,
                   'px-1 py-2 text-center text-sm font-semibold tabular-nums',
+                  i === LAST && 'border-e-2',
                 )}
               >
                 {month.totals[c.key]}
               </td>
             ))}
-            <td
-              style={at(21.5)}
-              className={cn(
-                pinnedWide,
-                'whitespace-nowrap border-e-2 px-1 py-2 text-center font-semibold tabular-nums',
-              )}
-            >
-              {fmtMinutes(month.totals.worked_minutes, t)}
-            </td>
             <td colSpan={month.days.length} />
           </tr>
         </tfoot>
@@ -198,7 +171,7 @@ export function AttendanceLegend() {
       className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted-foreground"
       aria-label={t('attendance.legend')}
     >
-      {['present', 'late', 'absent', 'leave', 'sick', 'off', 'weekly_off', 'unmarked'].map((k) => (
+      {SHOWN.map((k) => (
         <li key={k} className="inline-flex items-center gap-1.5">
           <span
             className={cn(

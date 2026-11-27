@@ -14,7 +14,7 @@ import { PageShell } from '@/shared/ui/page-shell';
 import { Skeleton } from '@/shared/ui/skeleton';
 import { StatCard } from '@/shared/ui/stat-card';
 import { AttendanceGrid, AttendanceLegend } from '@/widgets/attendance-month/attendance-grid';
-import { attendanceExcel, fmtMinutes, shiftMonth } from '@/widgets/attendance-month/lib';
+import { attendanceExcel, shiftMonth } from '@/widgets/attendance-month/lib';
 import { MaintError, MaintNotConfigured } from '@/widgets/maintenance/maint-states';
 
 const MONTH = /^\d{4}-\d{2}$/;
@@ -138,32 +138,20 @@ export default function AttendancePage() {
                       <StatCard
                         label={t('attendance.totals.present')}
                         value={shown.totals.present}
-                        tone="success"
-                      />
-                      <StatCard
-                        label={t('attendance.totals.late')}
-                        value={shown.totals.late}
                         subvalue={
-                          shown.totals.late_minutes > 0
-                            ? fmtMinutes(shown.totals.late_minutes, t)
+                          shown.totals.unmarked > 0
+                            ? t('attendance.unmarkedDays', { n: shown.totals.unmarked })
                             : undefined
                         }
-                        tone="warning"
+                        tone="success"
                       />
                       <StatCard
                         label={t('attendance.totals.absent')}
                         value={shown.totals.absent}
                         tone="destructive"
                       />
-                      <StatCard
-                        label={t('attendance.totals.hours')}
-                        value={fmtMinutes(shown.totals.worked_minutes, t)}
-                        subvalue={
-                          shown.totals.unmarked > 0
-                            ? t('attendance.unmarkedDays', { n: shown.totals.unmarked })
-                            : undefined
-                        }
-                      />
+                      <StatCard label={t('attendance.totals.leave')} value={shown.totals.leave} />
+                      <StatCard label={t('attendance.totals.sick')} value={shown.totals.sick} />
                     </div>
                     <AttendanceGrid month={shown} />
                     <AttendanceLegend />
