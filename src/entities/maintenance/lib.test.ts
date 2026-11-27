@@ -3,6 +3,10 @@ import ar from '@/shared/i18n/locales/ar.json';
 import en from '@/shared/i18n/locales/en.json';
 import { deriveMaintBaseURL } from '@/shared/api/maint-base';
 import {
+  BATTERY_STATUSES,
+  batterySlots,
+  batterySpec,
+  batteryStatusTabs,
   dueRemaining,
   dueTone,
   groupTirePositions,
@@ -10,11 +14,17 @@ import {
   pageCount,
   tireStatusTabs,
   totalOf,
+  warrantyOver,
   wheelLabel,
   workOrderSummary,
   type Translate,
 } from './lib';
-import { tirePositionSchema, workOrderDetailSchema, workOrdersPageSchema } from './schemas';
+import {
+  fittedBatterySchema,
+  tirePositionSchema,
+  workOrderDetailSchema,
+  workOrdersPageSchema,
+} from './schemas';
 
 describe('deriveMaintBaseURL', () => {
   it('uses the explicit base when there is one', () => {
@@ -221,5 +231,92 @@ describe('new work-order fields', () => {
     });
     expect(detail.tasks[0]).toMatchObject({ description_en: 'Oil', done_by: 'Mona' });
     expect(detail.tasks[1]).toMatchObject({ description_en: null, done_by: null });
+  });
+});
+
+/* -------------------------------- Batteries -------------------------------- */
+
+describe('batterySpec', () => {
+  it('says Ah and volts, and CCA only when asked and known', () => {
+    expect(batterySpec({ capacity_ah: 100, voltage: 12, cca: 800 })).toBe('100Ah · 12V');
+    expect(batterySpec({ capacity_ah: 100, voltage: 12, cca: 800 }, { cca: true })).toBe(
+      '100Ah · 12V · 800 CCA',
+    );
+    expect(batterySpec({ capacity_ah: 100, voltage: 12, cca: null }, { cca: true })).toBe('100Ah · 12V');
+    expect(batterySpec({ capacity_ah: null, voltage: 24 })).toBe('24V');
+  });
+
+  it('gives null when nothing is known', () => {
+    expect(batterySpec({ capacity_ah: null, voltage: null })).toBeNull();
+    expect(batterySpec({ capacity_ah: null, voltage: null, cca: 600 })).toBeNull();
+  });
+});
+
+describe('warrantyOver', () => {
+  const now = new Date('2026-11-27T10:00:00Z');
+  it('is over only once the end has passed', () => {
+    expect(warrantyOver('2026-11-26T10:00:00Z', now)).toBe(true);
+    expect(warrantyOver('2027-05-01T00:00:00Z', now)).toBe(false);
+  });
+
+  it('never calls an unknown warranty over', () => {
+    expect(warrantyOver(null, now)).toBe(false);
+    expect(warrantyOver(undefined, now)).toBe(false);
+    expect(warrantyOver('soon', now)).toBe(false);
+  });
+});
+
+describe('batterySlots', () => {
+  const fitted = (slot: unknown, id: string) =>
+    fittedBatterySchema.parse({ install_id: id, slot, battery: { id: `b-${id}`, brand: 'Varta' } });
+
+  it('lays out every slot, empty ones included', () => {
+    const { slots, unplaced } = batterySlots(2, [fitted(2, 'a')]);
+    expect(slots.map((s) => [s.slot, s.install?.install_id ?? null])).toEqual([
+      [1, null],
+      [2, 'a'],
+    ]);
+    expect(unplaced).toEqual([]);
+  });
+
+  it('defaults to two slots and grows to the highest fitted one', () => {
+    expect(batterySlots(null, []).slots.map((s) => s.slot)).toEqual([1, 2]);
+    expect(batterySlots(0, []).slots).toHaveLength(2);
+    expect(batterySlots(2, [fitted(3, 'c')]).slots.map((s) => s.install?.install_id ?? null)).toEqual([
+      null,
+      null,
+      'c',
+    ]);
+  });
+
+  it('keeps a battery with no usable slot, or a second in one slot, apart', () => {
+    const { slots, unplaced } = batterySlots(2, [fitted(1, 'a'), fitted(1, 'b'), fitted(null, 'c'), fitted(99, 'd')]);
+    expect(slots).toHaveLength(2);
+    expect(slots[0]?.install?.install_id).toBe('a');
+    expect(unplaced.map((u) => u.install_id)).toEqual(['b', 'c', 'd']);
+  });
+});
+
+describe('battery status tabs', () => {
+  it('lists known statuses first and keeps ones it has never heard of', () => {
+    expect(batteryStatusTabs({ installed: 4, recycled: 1 })).toEqual([...BATTERY_STATUSES, 'recycled']);
+  });
+});
+
+describe('battery words', () => {
+  const groups: Record<string, readonly string[]> = {
+    batteryStatus: ['all', ...BATTERY_STATUSES],
+    batteryOrigin: ['stock', 'legacy'],
+    batteryRemovalReason: ['dead', 'weak', 'damaged', 'moved', 'warranty', 'other'],
+    batteryOutcome: ['in_stock_used', 'charging', 'warranty', 'scrapped'],
+  };
+  it.each([
+    ['en', en],
+    ['ar', ar],
+  ])('names every status, origin, reason and outcome in %s', (_, locale) => {
+    const tr = translator(locale);
+    for (const [group, values] of Object.entries(groups)) {
+      for (const value of values) expect(tr(`maintenance.${group}.${value}`)).not.toBe('');
+    }
   });
 });

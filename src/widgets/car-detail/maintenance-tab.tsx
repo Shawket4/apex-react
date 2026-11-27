@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useTranslation } from 'react-i18next';
 import {
+  BatteryFull,
   CalendarClock,
   CircleDot,
   ClipboardList,
@@ -37,6 +38,7 @@ import { Skeleton } from '@/shared/ui/skeleton';
 import { maintDate } from '@/widgets/maintenance/maint-date';
 import { MaintError, MaintNotConfigured } from '@/widgets/maintenance/maint-states';
 import { WorkOrderLinkCard } from '@/widgets/maintenance/work-order-bits';
+import { BatterySlots } from './battery-slots';
 import { TireDetails } from './tire-details';
 
 interface SectionProps {
@@ -347,6 +349,13 @@ function Loaded({ data }: { data: VehicleMaintenance }) {
           <Tires tires={data.tires} />
         )}
       </Section>
+
+      {/* An older garage system sends no batteries: the section is left out. */}
+      {data.batteries && (
+        <Section icon={BatteryFull} title={t('maintenance.batteries.title')} className="lg:col-span-2">
+          <BatterySlots batteries={data.batteries} />
+        </Section>
+      )}
 
       <Section icon={History} title={t('maintenance.recentWorkOrders')} className="lg:col-span-2">
         <WorkOrders rows={data.recent_work_orders} empty={t('maintenance.noRecentWorkOrders')} />

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  maintBatteriesPageSchema,
   maintTiresPageSchema,
   vehicleMaintenanceSchema,
   workOrderDetailSchema,
@@ -209,5 +210,99 @@ describe('maintTiresPageSchema', () => {
     expect(page.rows[1]).toMatchObject({ status: 'quarantined', brand: null, total_km: null });
     expect(page.status_counts).toEqual({ mounted: 1, quarantined: 1 });
     expect(maintTiresPageSchema.parse({ rows: [] }).status_counts).toEqual({});
+  });
+});
+
+const battery = {
+  id: 'b1',
+  brand: 'Varta',
+  model: 'Promotive Black',
+  capacity_ah: 180,
+  voltage: 12,
+  cca: 1000,
+  serial: 'VT-55021',
+  date_code: '2526',
+  warranty_months: 12,
+  status: 'installed',
+  origin: 'stock',
+  notes: null,
+  registered_at: '2026-06-01T08:00:00Z',
+  first_installed_at: '2026-06-01T08:00:00Z',
+  warranty_until: '2027-06-01T08:00:00Z',
+};
+
+describe('vehicle batteries', () => {
+  it('reads the slots, the fitted batteries and the removed ones', () => {
+    const data = vehicleMaintenanceSchema.parse({
+      vehicle_id: 7,
+      batteries: {
+        slots: 2,
+        fitted: [
+          {
+            install_id: 'i1',
+            slot: 1,
+            battery,
+            installed_at: '2026-06-01T08:00:00Z',
+            installed_odometer: 400000,
+            work_order_id: 'w1',
+            notes: null,
+            km_this_install: '12000',
+          },
+        ],
+        removed: [
+          {
+            install_id: 'i0',
+            slot: 1,
+            battery: { ...battery, id: 'b0', status: 'scrapped', cca: null, extra: 1 },
+            installed_at: '2025-01-01T08:00:00Z',
+            installed_odometer: 300000,
+            removed_at: '2026-06-01T07:00:00Z',
+            removed_odometer: 400000,
+            removal_reason: 'dead',
+            removal_outcome: 'scrapped',
+            work_order_id: null,
+            removal_work_order_id: 'w1',
+            notes: 'مش بتشحن',
+            km_run: 100000,
+          },
+        ],
+      },
+    });
+    expect(data.batteries?.slots).toBe(2);
+    expect(data.batteries?.fitted[0]).toMatchObject({ slot: 1, km_this_install: 12000 });
+    expect(data.batteries?.fitted[0]?.battery).toMatchObject({ serial: 'VT-55021', warranty_months: 12 });
+    expect(data.batteries?.removed[0]).toMatchObject({ removal_reason: 'dead', removal_outcome: 'scrapped', km_run: 100000 });
+    expect(data.batteries?.removed[0]?.battery).toMatchObject({ cca: null, extra: 1 });
+  });
+
+  it('reads an older server that sends no batteries', () => {
+    const data = vehicleMaintenanceSchema.parse({ vehicle_id: 7, tires: [] });
+    expect(data.batteries).toBeNull();
+  });
+
+  it('survives gaps: no battery on an install, no lists', () => {
+    const data = vehicleMaintenanceSchema.parse({
+      vehicle_id: 7,
+      batteries: { slots: null, fitted: [{ install_id: 'i1', slot: '2' }] },
+    });
+    expect(data.batteries).toMatchObject({ slots: null, removed: [] });
+    expect(data.batteries?.fitted[0]).toMatchObject({ slot: 2, battery: null, installed_odometer: null });
+  });
+});
+
+describe('maintBatteriesPageSchema', () => {
+  it('reads rows, where each is, unknown statuses and the counts', () => {
+    const page = maintBatteriesPageSchema.parse({
+      rows: [
+        { ...battery, vehicle_id: 7, plate: 'أ ب ج 1234', slot: 1, installed_at: '2026-06-01T08:00:00Z' },
+        { id: 'b2', brand: 'Bosch', status: 'recycled', vehicle_id: null, plate: null, slot: null },
+      ],
+      total: 2,
+      status_counts: { installed: 1, recycled: '1' },
+    });
+    expect(page.rows[0]).toMatchObject({ plate: 'أ ب ج 1234', slot: 1, warranty_until: '2027-06-01T08:00:00Z' });
+    expect(page.rows[1]).toMatchObject({ status: 'recycled', serial: null, warranty_months: null, installed_at: null });
+    expect(page.status_counts).toEqual({ installed: 1, recycled: 1 });
+    expect(maintBatteriesPageSchema.parse({}).rows).toEqual([]);
   });
 });

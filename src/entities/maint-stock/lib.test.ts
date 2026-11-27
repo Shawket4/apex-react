@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { attemptFor, countChange, parseCounted } from './lib';
-import { oilCountResultSchema, tireCountResultSchema } from './schemas';
+import {
+  batteryCountResultSchema,
+  batteryCreditInputSchema,
+  batteryStockSchema,
+  oilCountResultSchema,
+  tireCountResultSchema,
+} from './schemas';
 
 describe('parseCounted', () => {
   it('takes whole tires from 0 up', () => {
@@ -15,6 +21,13 @@ describe('parseCounted', () => {
     for (const raw of ['', ' ', '-1', '2.5', 'abc', '1e3', '100001', '1 2']) {
       expect(parseCounted(raw, 'tires')).toBeNull();
     }
+  });
+
+  it('takes whole batteries, as tires', () => {
+    expect(parseCounted('7', 'batteries')).toBe(7);
+    expect(parseCounted('٣', 'batteries')).toBe(3);
+    expect(parseCounted('2.5', 'batteries')).toBeNull();
+    expect(parseCounted('100001', 'batteries')).toBeNull();
   });
 
   it('takes liters to two places, with a dot or a comma', () => {
@@ -64,5 +77,54 @@ describe('count results', () => {
       change: -0.75,
     });
     expect(oilCountResultSchema.parse({})).toMatchObject({ before: null, liters_on_hand: null, change: null });
+  });
+});
+
+describe('batteries', () => {
+  it('reads a stock line; a model of "" is no model', () => {
+    expect(
+      batteryStockSchema.parse({
+        id: 'p1',
+        brand: 'Varta',
+        model: '',
+        capacity_ah: 180,
+        voltage: 12,
+        cca: null,
+        on_hand_qty: 4,
+        batteries: 6,
+      }),
+    ).toMatchObject({ model: null, capacity_ah: 180, cca: null, on_hand_qty: 4, batteries: 6 });
+    expect(batteryStockSchema.parse({ brand: 'Bosch', on_hand_qty: '2' })).toMatchObject({
+      id: null,
+      capacity_ah: null,
+      voltage: null,
+      on_hand_qty: 2,
+      batteries: 0,
+    });
+  });
+
+  it('reads the count answer', () => {
+    expect(
+      batteryCountResultSchema.parse({ brand: 'Varta', model: 'Blue', capacity_ah: 100, voltage: 12, before: 5, on_hand_qty: 3, change: -2 }),
+    ).toMatchObject({ before: 5, on_hand_qty: 3, change: -2 });
+  });
+
+  it('takes a shipment with empty optional numbers as null', () => {
+    expect(
+      batteryCreditInputSchema.parse({ brand: ' Varta ', model: '', capacity_ah: '', voltage: '12', cca: null, qty: '4' }),
+    ).toEqual({ brand: 'Varta', model: '', capacity_ah: null, voltage: 12, cca: null, qty: 4 });
+    expect(
+      batteryCreditInputSchema.parse({ brand: 'Varta', model: 'Blue', capacity_ah: '100', voltage: NaN, cca: '800', qty: 1 }),
+    ).toMatchObject({ capacity_ah: 100, voltage: null, cca: 800 });
+  });
+
+  it('refuses what the garage system would refuse', () => {
+    const base = { brand: 'Varta', model: '', capacity_ah: '', voltage: '', cca: '', qty: '1' };
+    expect(batteryCreditInputSchema.safeParse({ ...base, brand: ' ' }).success).toBe(false);
+    expect(batteryCreditInputSchema.safeParse({ ...base, qty: '0' }).success).toBe(false);
+    expect(batteryCreditInputSchema.safeParse({ ...base, qty: '10001' }).success).toBe(false);
+    expect(batteryCreditInputSchema.safeParse({ ...base, capacity_ah: '2001' }).success).toBe(false);
+    expect(batteryCreditInputSchema.safeParse({ ...base, voltage: '1' }).success).toBe(false);
+    expect(batteryCreditInputSchema.safeParse({ ...base, cca: '12.5' }).success).toBe(false);
   });
 });
