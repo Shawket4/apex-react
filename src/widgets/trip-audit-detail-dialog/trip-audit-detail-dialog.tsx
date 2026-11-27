@@ -632,7 +632,7 @@ function PlaybackMap({ detail, history, previewLeg }: PlaybackMapProps) {
         <LayerChip
           active={showOsrm}
           onClick={() => setShowOsrm((v) => !v)}
-          label={t('tripAudit.detail.osrmRoute', 'OSRM optimal')}
+          label={t('tripAudit.detail.osrmRoute', 'Best truck route')}
           swatch={
             <span
               className="inline-block h-0 w-5 border-t-2 border-dashed"
@@ -832,7 +832,7 @@ function LegsList({
 /* -------------------------------------------------------------------------- */
 
 function FlagDetails({ flag }: { flag: TripFlag }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const formatDurationSecs = useFormatDurationSecs();
   const details = parseFlagDetails(flag);
 
@@ -940,6 +940,56 @@ function FlagDetails({ flag }: { flag: TripFlag }) {
             {t('tripAudit.flagDetails.bundlingBody', 'Bundled')}: {formatKm(bundled)} {t('tripAudit.units.km', 'km')} ·{' '}
             {t('tripAudit.flagDetails.bundlingSplit', 'As separate trips')}: {formatKm(split)} {t('tripAudit.units.km', 'km')}
             {savingsPct != null && <> · {t('tripAudit.flagDetails.bundlingSaves', 'bundling saves only')} {formatNumber(savingsPct, 1)}%</>}
+          </p>
+        </div>
+      );
+    }
+    case 'banned_road': {
+      // Driving a road closed to the fleet's trucks while it was closed:
+      // either at every hour (`always`) or inside its banned hours, which are
+      // local (Cairo). from/to are epoch seconds.
+      const road = asString(i18n.language === 'ar' ? details.road_ar : details.road) ?? asString(details.road);
+      const always = details.always === true;
+      const hours = always ? undefined : asString(details.banned_hours);
+      const km = asNumber(details.km);
+      const from = asNumber(details.from_ts);
+      const to = asNumber(details.to_ts);
+      const at = (s: number) => formatCairoTime(new Date(s * 1000), i18n.language);
+      return (
+        <div className="space-y-1 rounded-lg border border-destructive/40 bg-destructive/10 p-2 text-sm">
+          <p className="font-medium text-destructive" dir="auto">
+            {always
+              ? t('tripAudit.flagDetails.bannedAlwaysTitle', 'On {{road}}, closed to our trucks', { road: road ?? '—' })
+              : t('tripAudit.flagDetails.bannedTitle', 'On {{road}} during its banned hours', { road: road ?? '—' })}
+          </p>
+          <p className="text-muted-foreground">
+            {from != null && to != null && (
+              <span dir="ltr">
+                {at(from)}–{at(to)}
+              </span>
+            )}
+            {km != null && (
+              <>
+                {' · '}
+                <span dir="ltr">
+                  {formatKm(km)} {t('tripAudit.units.km', 'km')}
+                </span>
+              </>
+            )}
+            {always && (
+              <>
+                {' · '}
+                {t('tripAudit.flagDetails.bannedAlways', 'closed at all hours')}
+              </>
+            )}
+            {hours && (
+              <>
+                {' · '}
+                {/* LTR isolate: after an Arabic word the digits read as Arabic
+                    numbers and the hyphen splits "07:00-20:00" into "20:00-07:00". */}
+                {t('tripAudit.flagDetails.bannedHours', 'banned {{hours}}', { hours: `\u2066${hours}\u2069` })}
+              </>
+            )}
           </p>
         </div>
       );
@@ -1194,8 +1244,8 @@ export function TripAuditDetailDialog({ matchId, onOpenChange }: TripAuditDetail
           <DialogDescription dir="auto">
             {detail
               ? [detail.company, detail.terminal_name].filter(Boolean).join(' · ') ||
-                t('tripAudit.detail.description', 'Actual route vs OSRM optimal and raised flags.')
-              : t('tripAudit.detail.description', 'Actual route vs OSRM optimal and raised flags.')}
+                t('tripAudit.detail.description', 'Actual route vs the best legal truck route, and the flags raised.')
+              : t('tripAudit.detail.description', 'Actual route vs the best legal truck route, and the flags raised.')}
           </DialogDescription>
         </DialogHeader>
 
@@ -1233,7 +1283,7 @@ export function TripAuditDetailDialog({ matchId, onOpenChange }: TripAuditDetail
                   }
                 />
                 <SummaryItem
-                  label={t('tripAudit.detail.kmActualVsOsrm', 'km (actual / OSRM)')}
+                  label={t('tripAudit.detail.kmActualVsOsrm', 'km (actual / truck route)')}
                   value={
                     <span dir="ltr" className="tabular-nums">
                       {formatKm(detail.actual_km)} / {formatKm(detail.osrm_km)}
@@ -1241,7 +1291,7 @@ export function TripAuditDetailDialog({ matchId, onOpenChange }: TripAuditDetail
                   }
                 />
                 <SummaryItem
-                  label={t('tripAudit.legs.duration', 'Duration (actual / OSRM)')}
+                  label={t('tripAudit.legs.duration', 'Duration (actual / truck route)')}
                   value={
                     <span dir="ltr" className="tabular-nums">
                       {formatDurationSecs(detail.actual_secs)} /{' '}

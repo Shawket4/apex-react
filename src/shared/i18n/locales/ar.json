@@ -1363,18 +1363,18 @@
       "accurate": "دقيق",
       "conservative": "محافظ",
       "overestimate": "زائد",
-      "unknown": "بدون OSRM"
+      "unknown": "بدون مسار شاحنة"
     },
     "accuracy": {
       "accurate": "دقيق",
       "conservative": "محافظ",
       "overestimate": "زائد",
-      "unknown": "بدون OSRM"
+      "unknown": "بدون مسار شاحنة"
     },
     "actions": {
       "setLocation": "تعيين الموقع",
       "updateLocation": "تحديث الموقع",
-      "bulkEnrich": "إثراء OSRM المجمع",
+      "bulkEnrich": "إعادة حساب مسارات الشاحنات",
       "export": "تصدير",
       "viewRoute": "عرض المسار على الخريطة",
       "noPin": "لا يوجد موقع — يتم تحديده من شاشة المواقع"
@@ -1384,13 +1384,13 @@
       "latitude": "خط العرض",
       "longitude": "خط الطول",
       "hint": "انقر على الخريطة أو اسحب الدبوس لتعيين الموقع",
-      "saveAndEnrich": "حفظ وحساب OSRM",
-      "saveSuccess": "تم حفظ الموقع وتحديث بيانات OSRM",
+      "saveAndEnrich": "حفظ وحساب مسار الشاحنة",
+      "saveSuccess": "تم حفظ الموقع وتحديث مسار الشاحنة",
       "saveFailed": "فشل حفظ الموقع",
       "invalidCoords": "يرجى إدخال أو اختيار إحداثيات صحيحة"
     },
     "bulkEnrich": {
-      "title": "إثراء OSRM المجمع",
+      "title": "إعادة حساب مسارات الشاحنات",
       "processed": "تمت المعالجة",
       "succeeded": "نجحت",
       "failed": "فشلت",
@@ -2324,7 +2324,7 @@
   },
   "tripAudit": {
     "title": "تدقيق الرحلات",
-    "description": "مراجعة الرحلات المدققة عبر GPS — المسار الفعلي مقابل المسار الأمثل من OSRM — والتنبيهات المرفوعة.",
+    "description": "مراجعة الرحلات المدققة عبر GPS — المسار الفعلي مقابل أفضل مسار مسموح للشاحنة — والتنبيهات المرفوعة.",
     "filters": {
       "status": "الحالة",
       "allStatuses": "كل الحالات",
@@ -2370,7 +2370,7 @@
       "driver": "السائق",
       "deliveries": "التسليمات",
       "actualKm": "كم الفعلي",
-      "osrmKm": "كم OSRM",
+      "osrmKm": "كم مسار الشاحنة",
       "distanceRatio": "نسبة المسافة",
       "durationRatio": "نسبة المدة",
       "flags": "التنبيهات",
@@ -2381,11 +2381,11 @@
     },
     "detail": {
       "title": "تدقيق الرحلة",
-      "description": "المسار الفعلي مقابل المسار الأمثل من OSRM والتنبيهات المرفوعة.",
+      "description": "المسار الفعلي مقابل أفضل مسار مسموح للشاحنة، والتنبيهات المرفوعة.",
       "loadError": "فشل تحميل تفاصيل الرحلة.",
-      "kmActualVsOsrm": "كم (فعلي / OSRM)",
+      "kmActualVsOsrm": "كم (فعلي / مسار الشاحنة)",
       "actualRoute": "المسار الفعلي",
-      "osrmRoute": "المسار الأمثل OSRM",
+      "osrmRoute": "أفضل مسار للشاحنة",
       "unplannedStops": "توقفات غير مخططة",
       "legs": "مراحل الرحلة",
       "noLegs": "لا توجد مراحل مسجلة لهذه الرحلة.",
@@ -2409,9 +2409,9 @@
       "fromTo": "من ← إلى",
       "depart": "المغادرة",
       "arrive": "الوصول",
-      "km": "كم (فعلي / OSRM)",
+      "km": "كم (فعلي / مسار الشاحنة)",
       "ratio": "النسبة",
-      "duration": "المدة (فعلي / OSRM)",
+      "duration": "المدة (فعلي / مسار الشاحنة)",
       "maxDeviation": "أقصى انحراف",
       "night": "فترة ليلية",
       "sentence": "خرج من {{from}} في {{depart}} ← وصل {{to}} في {{arrive}} — {{actual}} كم فعلي مقابل {{osrm}} كم مثالية",
@@ -2435,7 +2435,8 @@
       "suboptimal_order": "ترتيب نقاط التسليم أطول من الترتيب الأمثل",
       "allowed_stop": "توقف في نقطة مسموح بها (جراج)",
       "return_pending": "الرحلة ما زالت مفتوحة — في انتظار العودة للمستودع",
-      "ineffective_bundling": "نقاط تسليم في اتجاهات مختلفة"
+      "ineffective_bundling": "نقاط تسليم في اتجاهات مختلفة",
+      "banned_road": "سار على طريق ممنوع على شاحناتنا"
     },
     "severity": {
       "info": "معلومة",
@@ -2462,7 +2463,11 @@
       "bundlingTitle": "نقاط التسليم في اتجاهات مختلفة",
       "bundlingBody": "مجمعة",
       "bundlingSplit": "كرحلات منفصلة",
-      "bundlingSaves": "التجميع يوفر فقط"
+      "bundlingSaves": "التجميع يوفر فقط",
+      "bannedTitle": "على {{road}} في ساعات الحظر",
+      "bannedHours": "محظور {{hours}}",
+      "bannedAlwaysTitle": "على {{road}} الممنوع على شاحناتنا",
+      "bannedAlways": "مغلق في كل الأوقات"
     },
     "toast": {
       "reviewSuccess": "تم وضع علامة تمت المراجعة",
