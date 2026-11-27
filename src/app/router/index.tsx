@@ -67,6 +67,7 @@ const OilChangeHistoryPage = React.lazy(
 );
 const FeeMappingsPage = React.lazy(() => import('@/pages/fee-mappings/fee-mappings'));
 const PricingPage = React.lazy(() => import('@/pages/pricing/pricing'));
+const FeeLookupPage = React.lazy(() => import('@/pages/fee-lookup/fee-lookup'));
 const ReceiptPilesPage = React.lazy(() => import('@/pages/receipt-piles/receipt-piles'));
 const UsersPage = React.lazy(() => import('@/pages/users/users'));
 const WorkOrdersPage = React.lazy(() => import('@/pages/work-orders/work-orders'));
@@ -286,6 +287,9 @@ export const router = createBrowserRouter([
               </ProtectedRoute>
             ),
           },
+          // Ungated: any office user may look a route up. falcon-fees decides
+          // who sees fees (3 and up); below that the finder shows distances.
+          { path: 'fee-lookup', element: <FeeLookupPage /> },
           // Stored pricing rules and truck-month rental: read at 3 (revenue is
           // financial data), edited at 4 — matching FalconGo's /api/pricing.
           {

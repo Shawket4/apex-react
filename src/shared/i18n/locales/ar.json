@@ -109,6 +109,7 @@
     "speedViolations": "مخالفات السرعة",
     "tablets": "الأجهزة اللوحية",
     "feeMappings": "خرائط الأسعار",
+    "feeLookup": "استعلام الأجرة",
     "etit": "التتبع المباشر",
     "serviceInvoices": "فواتير قديمة",
     "zones": "المناطق الميتة",
@@ -1313,6 +1314,14 @@
     "actionsFor": "إجراءات لـ {{name}}...",
     "searchCompanies": "ابحث عن الشركات...",
     "searchTerminals": "ابحث عن المستودعات في {{company}}..."
+  },
+  "feeLookup": {
+    "title": "استعلام الأجرة",
+    "subtitle": "اختار الشركة والمستودع ونقطة التسليم، وشوف الطريق ومسافته وأجرته.",
+    "notConfigured": {
+      "title": "استعلام الأجرة مش متظبط",
+      "description": "النسخة دي من اللوحة مش معاها عنوان خدمة الأجرة."
+    }
   },
   "feeMappings": {
     "pageTitle": "خرائط الأسعار",

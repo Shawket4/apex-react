@@ -6,6 +6,8 @@ const envSchema = z.object({
   VITE_API_BASE_URL_ETIT: z.string().url().optional(),
   /** The garage maintenance system (maint-rust). Absent: derived from the Go base. */
   VITE_API_BASE_URL_MAINT: z.string().url().optional(),
+  /** The route fee lookup service (falcon-fees). Absent: derived from the Go base. */
+  VITE_API_BASE_URL_FEES: z.string().url().optional(),
   VITE_APP_NAME: z.string().default('Apex'),
 });
 

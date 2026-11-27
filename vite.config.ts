@@ -171,6 +171,12 @@ export default defineConfig({
         changeOrigin: true,
         secure: true,
       },
+      // The route fee lookup service (falcon-fees), for the fee lookup page.
+      '/public/distance-fetcher/api': {
+        target: 'https://apextransport.ddns.net',
+        changeOrigin: true,
+        secure: true,
+      },
     },
   },
 
