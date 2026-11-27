@@ -44,6 +44,9 @@
     --border: 213 13% 86%;
     --input: 213 13% 86%;
     --ring: 217 60% 26%;
+    /* Used by the shared wheel diagram: spare tires, and the empty-wheel outline. */
+    --info: 202 85% 36%;
+    --border-strong: 213 13% 72%;
 
     --radius: 0.75rem;
   }
@@ -75,6 +78,8 @@
     --border: 212 15% 17%;
     --input: 212 15% 17%;
     --ring: 217 64% 57%;
+    --info: 200 80% 58%;
+    --border-strong: 212 15% 30%;
   }
 }
 
