@@ -99,7 +99,7 @@
     "oilChanges": "Oil Changes",
     "trucks": "Trucks",
     "cars": "Cars",
-    "tires": "Tires",
+    "tires": "Tires & batteries",
     "drivers": "Drivers",
     "vendors": "Vendors",
     "fleetExpenses": "Fleet Expenses",
@@ -1853,7 +1853,7 @@
     }
   },
   "tiresStock": {
-    "title": "Tire & Oil Stock",
+    "title": "Tire, Battery & Oil Stock",
     "subtitle": "Shipments — the authoritative ledger the maintenance system mirrors and debits",
     "tires": "New tires",
     "sizePlaceholder": "315/80R22.5…",
@@ -1869,12 +1869,23 @@
     "addLiters": "Liters to add",
     "addShipment": "Add tire shipment",
     "addOil": "Add oil",
+    "batteries": "New batteries",
+    "batteriesHint": "Counted in the garage system alone. A battery gets its own record (serial, date code, warranty) when the garage fits it.",
+    "battery": "Battery",
+    "spec": "Spec",
+    "capacity": "Capacity (Ah)",
+    "voltage": "Voltage (V)",
+    "cca": "CCA (optional)",
+    "onRecord": "{{n}} on record",
+    "addBatteries": "Add battery shipment",
+    "batteryValidation": "Enter a brand and a quantity above zero; Ah, volts and CCA are whole numbers",
     "added": "Recorded — balance updated",
     "empty": "No stock recorded yet",
     "validation": "Enter a brand/type and a quantity above zero",
     "tabs": {
       "stock": "Stock",
-      "all": "All tires"
+      "all": "All tires",
+      "batteries": "All batteries"
     },
     "count": {
       "action": "Stock count",
@@ -1900,6 +1911,7 @@
         "add": "The garage system had {{before}} on its books. {{amount}} added; it now holds {{after}}.",
         "same": "The garage system already had {{after}} on its books. Nothing changed.",
         "bookDiffered": "That is not the {{book}} this page showed: the two systems had not caught up with each other.",
+        "bookMoved": "That is not the {{book}} this page showed: the stock moved since the page loaded (a battery fitted in the garage, or another count).",
         "lag": "The table on this page reads the fleet ledger, which follows a moment later."
       },
       "errors": {
@@ -3486,6 +3498,75 @@
       "puncture": "Puncture",
       "retread": "Sent for retreading",
       "other": "Other"
+    },
+    "batteries": {
+      "title": "Batteries",
+      "slot": "Slot {{n}}",
+      "emptySlot": "Empty slot",
+      "unplaced": "Slot not recorded",
+      "unnamed": "Battery",
+      "battery": "Battery",
+      "spec": "Spec",
+      "serial": "Serial",
+      "dateCode": "Date code",
+      "status": "Status",
+      "where": "Truck / slot",
+      "fitted": "Fitted",
+      "fittedOn": "Fitted {{date}}",
+      "removedOn": "Removed {{date}}",
+      "warranty": "Warranty",
+      "warrantyMonths_one": "{{n}} month",
+      "warrantyMonths_other": "{{n}} months",
+      "noWarranty": "No warranty",
+      "warrantyUntil": "Warranty until",
+      "untilDate": "until {{date}}",
+      "warrantyOver": "Warranty over",
+      "origin": "Came as",
+      "registered": "Registered",
+      "notes": "Notes",
+      "thisFitting": "This fitting",
+      "fittedAtKm": "Odometer at fitting",
+      "kmThisInstall": "Run on this truck",
+      "workOrder": "Work order",
+      "openWorkOrder": "Open the work order",
+      "fitNotes": "Fitting notes",
+      "removedTitle": "Removed batteries ({{n}})",
+      "kmRun": "Run",
+      "wentTo": "Went to",
+      "fittingOrder": "Fitting work order",
+      "removalOrder": "Removal work order",
+      "listHint": "View only. Batteries are fitted, moved and removed in the garage app.",
+      "searchPlaceholder": "Search brand, serial, date code or plate…",
+      "emptyTitle": "No batteries recorded yet",
+      "emptyDescription": "A battery appears here once the garage fits one or registers one already on a truck.",
+      "emptyFilteredTitle": "No batteries match",
+      "emptyFilteredDescription": "Try another status or search."
+    },
+    "batteryStatus": {
+      "all": "All",
+      "installed": "On a truck",
+      "in_stock_used": "Used, in stock",
+      "charging": "Charging",
+      "warranty": "Warranty claim",
+      "scrapped": "Scrapped"
+    },
+    "batteryOrigin": {
+      "stock": "New, from stock",
+      "legacy": "Registered already on a truck"
+    },
+    "batteryRemovalReason": {
+      "dead": "Dead",
+      "weak": "Weak",
+      "damaged": "Damaged",
+      "moved": "Moved to another truck",
+      "warranty": "Warranty",
+      "other": "Other"
+    },
+    "batteryOutcome": {
+      "in_stock_used": "Back to stock as used",
+      "charging": "Sent to charging",
+      "warranty": "Warranty claim",
+      "scrapped": "Scrapped"
     },
     "wheel": {
       "front": "Front",

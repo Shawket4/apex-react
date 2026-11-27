@@ -262,6 +262,90 @@ export const tirePositionSchema = z
   .passthrough();
 export type TirePosition = z.infer<typeof tirePositionSchema>;
 
+/* -------------------------------- Batteries ------------------------------- */
+
+/** One battery as the garage records it: what it is, where it came from and
+ * its warranty. A record exists once a battery is fitted from stock or
+ * registered as already on a truck; new ones on the shelf are only a count. */
+export const batterySchema = z
+  .object({
+    id: text,
+    brand: text,
+    model: text,
+    capacity_ah: num,
+    voltage: num,
+    /** Cold cranking amps, when the garage recorded them. */
+    cca: num,
+    serial: text,
+    date_code: text,
+    warranty_months: num,
+    /** 'installed' | 'in_stock_used' | 'charging' | 'warranty' | 'scrapped'. */
+    status: text,
+    /** 'stock' (new from the shelf) | 'legacy' (registered already on a truck). */
+    origin: text,
+    notes: text,
+    registered_at: text,
+    first_installed_at: text,
+    /** First fitting + the warranty months; null when either is unknown. */
+    warranty_until: text,
+  })
+  .passthrough();
+export type Battery = z.infer<typeof batterySchema>;
+
+const maybeBattery = batterySchema.nullish().transform((value) => value ?? null);
+
+/** A battery in one of the truck's slots now. */
+export const fittedBatterySchema = z
+  .object({
+    install_id: text,
+    /** 1-based. */
+    slot: num,
+    battery: maybeBattery,
+    installed_at: text,
+    installed_odometer: num,
+    work_order_id: text,
+    /** Notes on this fitting (the battery's own are `battery.notes`). */
+    notes: text,
+    /** Km since this fitting; null with no odometer at fitting. */
+    km_this_install: num,
+  })
+  .passthrough();
+export type FittedBattery = z.infer<typeof fittedBatterySchema>;
+
+/** An earlier fitting on this truck, taken off since. */
+export const removedBatterySchema = z
+  .object({
+    install_id: text,
+    slot: num,
+    battery: maybeBattery,
+    installed_at: text,
+    installed_odometer: num,
+    removed_at: text,
+    removed_odometer: num,
+    /** 'dead' | 'weak' | 'damaged' | 'moved' | 'warranty' | 'other'. */
+    removal_reason: text,
+    /** Where it went: 'in_stock_used' | 'charging' | 'warranty' | 'scrapped'. */
+    removal_outcome: text,
+    work_order_id: text,
+    removal_work_order_id: text,
+    notes: text,
+    /** Km between fitting and removal; null when either reading is missing. */
+    km_run: num,
+  })
+  .passthrough();
+export type RemovedBattery = z.infer<typeof removedBatterySchema>;
+
+export const vehicleBatteriesSchema = z
+  .object({
+    /** How many battery slots the truck has (the garage's default is 2). */
+    slots: num,
+    fitted: list(fittedBatterySchema),
+    /** The last 20, newest first. */
+    removed: list(removedBatterySchema),
+  })
+  .passthrough();
+export type VehicleBatteries = z.infer<typeof vehicleBatteriesSchema>;
+
 const odometerSchema = z
   .object({ km: num, source: text, observed_at: text })
   .passthrough();
@@ -281,6 +365,8 @@ export const vehicleMaintenanceSchema = z
     due: list(dueRowSchema),
     /** Empty: no wheel layout recorded yet. */
     tires: list(tirePositionSchema),
+    /** null: an older garage system, which keeps no batteries. */
+    batteries: vehicleBatteriesSchema.nullish().transform((value) => value ?? null),
   })
   .passthrough();
 export type VehicleMaintenance = z.infer<typeof vehicleMaintenanceSchema>;
@@ -316,6 +402,28 @@ export const maintTiresPageSchema = z
   .passthrough();
 export type MaintTiresPage = z.infer<typeof maintTiresPageSchema>;
 
+/** A battery in the list of every battery, with where it is fitted now. */
+export const maintBatterySchema = batterySchema
+  .extend({
+    id: z.string(),
+    /** null: not on a truck. */
+    vehicle_id: num,
+    plate: text,
+    slot: num,
+    installed_at: text,
+  })
+  .passthrough();
+export type MaintBattery = z.infer<typeof maintBatterySchema>;
+
+export const maintBatteriesPageSchema = z
+  .object({
+    rows: list(maintBatterySchema),
+    total: count,
+    status_counts: statusCounts,
+  })
+  .passthrough();
+export type MaintBatteriesPage = z.infer<typeof maintBatteriesPageSchema>;
+
 /* -------------------------------- Requests -------------------------------- */
 
 export interface WorkOrdersParams {
@@ -336,6 +444,9 @@ export interface MaintTiresParams {
   limit: number;
   offset: number;
 }
+
+/** Brand, model, serial, date code or plate in `q`. */
+export type MaintBatteriesParams = MaintTiresParams;
 
 /* -------------------------------------------------------------------------- */
 /* Garage attendance: one month (GET /office/attendance?month=YYYY-MM)          */

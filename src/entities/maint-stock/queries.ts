@@ -1,10 +1,18 @@
 import { type QueryClient, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { maintStockApi } from './api';
-import type { OilCountInput, OilCreditInput, TireCountInput, TireCreditInput } from './schemas';
+import type {
+  BatteryCountInput,
+  BatteryCreditInput,
+  OilCountInput,
+  OilCreditInput,
+  TireCountInput,
+  TireCreditInput,
+} from './schemas';
 
 const keys = {
   tires: ['maint-stock', 'tires'] as const,
   oil: ['maint-stock', 'oil'] as const,
+  batteries: ['maint-stock', 'batteries'] as const,
 };
 
 export function useTireStock() {
@@ -13,6 +21,10 @@ export function useTireStock() {
 
 export function useOilStock() {
   return useQuery({ queryKey: keys.oil, queryFn: maintStockApi.listOil });
+}
+
+export function useBatteryStock() {
+  return useQuery({ queryKey: keys.batteries, queryFn: maintStockApi.listBatteries });
 }
 
 export function useCreditTires() {
@@ -33,8 +45,17 @@ export function useCreditOil() {
   });
 }
 
+export function useCreditBatteries() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ input, refId }: { input: BatteryCreditInput; refId: string }) =>
+      maintStockApi.creditBatteries(input, refId),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: keys.batteries }),
+  });
+}
+
 /**
- * The stock shown on the page is Falcon's; a count lands in the garage system
+ * The tire and oil stock shown on the page is Falcon's; a count lands in the garage system
  * first and is mirrored up in the background. Re-read at once (the mirror is
  * usually that quick) and once more a few seconds later for when it is not.
  */
@@ -52,6 +73,16 @@ export function useCountTires() {
     mutationKey: ['maint-stock', 'count', 'tires'],
     mutationFn: (input: TireCountInput) => maintStockApi.countTires(input),
     onSuccess: () => rereadStock(qc),
+  });
+}
+
+/** Battery stock is the garage system's own figure: nothing to wait for. */
+export function useCountBatteries() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationKey: ['maint-stock', 'count', 'batteries'],
+    mutationFn: (input: BatteryCountInput) => maintStockApi.countBatteries(input),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: keys.batteries }),
   });
 }
 
@@ -74,4 +105,5 @@ export function useCountOil() {
 export function prefetchMaintStock(qc: QueryClient): void {
   void qc.prefetchQuery({ queryKey: keys.tires, queryFn: maintStockApi.listTires });
   void qc.prefetchQuery({ queryKey: keys.oil, queryFn: maintStockApi.listOil });
+  void qc.prefetchQuery({ queryKey: keys.batteries, queryFn: maintStockApi.listBatteries });
 }

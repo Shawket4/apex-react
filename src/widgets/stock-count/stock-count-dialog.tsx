@@ -8,7 +8,8 @@ import {
   type CountAttempt,
   type StockKind,
 } from '@/entities/maint-stock/lib';
-import { useCountOil, useCountTires } from '@/entities/maint-stock/queries';
+import { useCountBatteries, useCountOil, useCountTires } from '@/entities/maint-stock/queries';
+import { batterySpec } from '@/entities/maintenance/lib';
 import { ApiError, extractErrorMessage } from '@/shared/api/errors';
 import { formatNumber } from '@/shared/lib/format';
 import { Button } from '@/shared/ui/button';
@@ -26,9 +27,18 @@ import { Label } from '@/shared/ui/label';
 /** The stock line being counted, with the book figure the page shows. */
 export type StockCountLine =
   | { kind: 'tires'; brand: string; model: string; size: string; book: number }
-  | { kind: 'oil'; oilType: string; book: number };
+  | { kind: 'oil'; oilType: string; book: number }
+  | {
+      kind: 'batteries';
+      brand: string;
+      model: string | null;
+      capacity_ah: number | null;
+      voltage: number | null;
+      cca: number | null;
+      book: number;
+    };
 
-/** What the garage system answered, in one shape for both kinds. */
+/** What the garage system answered, in one shape for every kind. */
 interface Outcome {
   before: number | null;
   after: number | null;
@@ -39,9 +49,14 @@ interface Outcome {
 const NOTE_MAX = 120;
 
 function lineName(line: StockCountLine): string {
-  return line.kind === 'tires'
-    ? [line.brand, line.model, line.size].filter(Boolean).join(' · ')
-    : line.oilType;
+  switch (line.kind) {
+    case 'tires':
+      return [line.brand, line.model, line.size].filter(Boolean).join(' · ');
+    case 'batteries':
+      return [line.brand, line.model, batterySpec(line)].filter(Boolean).join(' · ');
+    case 'oil':
+      return line.oilType;
+  }
 }
 
 function CountForm({ line, onClose }: { line: StockCountLine; onClose: () => void }) {
@@ -49,14 +64,15 @@ function CountForm({ line, onClose }: { line: StockCountLine; onClose: () => voi
   const kind: StockKind = line.kind;
   const countTires = useCountTires();
   const countOil = useCountOil();
+  const countBatteries = useCountBatteries();
   const [raw, setRaw] = React.useState('');
   const [note, setNote] = React.useState('');
   const [outcome, setOutcome] = React.useState<Outcome | null>(null);
   const [error, setError] = React.useState<string | null>(null);
   const attempt = React.useRef<CountAttempt | null>(null);
-  const pending = countTires.isPending || countOil.isPending;
+  const pending = countTires.isPending || countOil.isPending || countBatteries.isPending;
 
-  /** A figure as this stock is counted: tires bare, oil in liters. */
+  /** A figure as this stock is counted: tires and batteries bare, oil in liters. */
   const amount = (value: number | null) =>
     value === null
       ? '—'
@@ -89,6 +105,23 @@ function CountForm({ line, onClose }: { line: StockCountLine; onClose: () => voi
     if (line.kind === 'tires') {
       countTires.mutate(
         { brand: line.brand, model: line.model, size: line.size, counted, ...shared },
+        {
+          onSuccess: (result) =>
+            setOutcome({ before: result.before, after: result.on_hand_qty, change: result.change }),
+          onError: fail,
+        },
+      );
+    } else if (line.kind === 'batteries') {
+      countBatteries.mutate(
+        {
+          brand: line.brand,
+          model: line.model,
+          capacity_ah: line.capacity_ah,
+          voltage: line.voltage,
+          cca: line.cca,
+          counted,
+          ...shared,
+        },
         {
           onSuccess: (result) =>
             setOutcome({ before: result.before, after: result.on_hand_qty, change: result.change }),
@@ -135,10 +168,19 @@ function CountForm({ line, onClose }: { line: StockCountLine; onClose: () => voi
           </p>
           {outcome.before !== null && outcome.before !== line.book && (
             <p className="text-muted-foreground">
-              {t('tiresStock.count.result.bookDiffered', { book: amount(line.book) })}
+              {t(
+                // Battery stock has one book: a different figure means it moved meanwhile.
+                kind === 'batteries'
+                  ? 'tiresStock.count.result.bookMoved'
+                  : 'tiresStock.count.result.bookDiffered',
+                { book: amount(line.book) },
+              )}
             </p>
           )}
-          <p className="text-xs text-muted-foreground">{t('tiresStock.count.result.lag')}</p>
+          {/* Tire and oil figures on the page are Falcon's, mirrored a moment later. */}
+          {kind !== 'batteries' && (
+            <p className="text-xs text-muted-foreground">{t('tiresStock.count.result.lag')}</p>
+          )}
         </div>
         <DialogFooter>
           <Button type="button" onClick={onClose}>

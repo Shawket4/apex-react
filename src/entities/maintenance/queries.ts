@@ -2,13 +2,14 @@ import { keepPreviousData, useQuery, type QueryClient } from '@tanstack/react-qu
 import { NotFoundError } from '@/shared/api/errors';
 import {
   getAttendanceMonth,
+  getMaintBatteries,
   getMaintTires,
   getVehicleMaintenance,
   getWorkOrder,
   getWorkOrders,
   isMaintConfigured,
 } from './api';
-import type { MaintTiresParams, WorkOrdersParams } from './schemas';
+import type { MaintBatteriesParams, MaintTiresParams, WorkOrdersParams } from './schemas';
 
 /**
  * Query keys for the garage maintenance system. Local to the entity, like
@@ -21,6 +22,7 @@ export const MAINTENANCE_KEYS = {
   workOrder: (id: string) => ['maintenance', 'work-order', id] as const,
   vehicle: (carId: number | string) => ['maintenance', 'vehicle', String(carId)] as const,
   tires: (params: MaintTiresParams) => ['maintenance', 'tires', params] as const,
+  batteries: (params: MaintBatteriesParams) => ['maintenance', 'batteries', params] as const,
   attendance: (month: string) => ['maintenance', 'attendance', month] as const,
 } as const;
 
@@ -68,6 +70,15 @@ export function useMaintTires(params: MaintTiresParams, enabled = true) {
   return useQuery({
     queryKey: MAINTENANCE_KEYS.tires(params),
     queryFn: () => getMaintTires(params),
+    enabled: isMaintConfigured && enabled,
+    placeholderData: keepPreviousData,
+  });
+}
+
+export function useMaintBatteries(params: MaintBatteriesParams, enabled = true) {
+  return useQuery({
+    queryKey: MAINTENANCE_KEYS.batteries(params),
+    queryFn: () => getMaintBatteries(params),
     enabled: isMaintConfigured && enabled,
     placeholderData: keepPreviousData,
   });

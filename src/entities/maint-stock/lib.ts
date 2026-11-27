@@ -1,9 +1,9 @@
 /* Pure arithmetic of a stock count: no React, no i18n. */
 
-export type StockKind = 'tires' | 'oil';
+export type StockKind = 'tires' | 'oil' | 'batteries';
 
 /** The server refuses anything outside these. */
-const MAX_COUNT: Record<StockKind, number> = { tires: 100_000, oil: 1_000_000 };
+const MAX_COUNT: Record<StockKind, number> = { tires: 100_000, oil: 1_000_000, batteries: 100_000 };
 
 function round2(value: number): number {
   return Math.round(value * 100) / 100;
@@ -11,8 +11,8 @@ function round2(value: number): number {
 
 /**
  * What someone typed as "how many are there", as a number the server will
- * take: tires are whole, oil is liters to two places. null for anything else
- * (empty, negative, a fraction of a tire, too large).
+ * take: tires and batteries are whole, oil is liters to two places. null for
+ * anything else (empty, negative, a fraction of a tire, too large).
  */
 export function parseCounted(raw: string, kind: StockKind): number | null {
   // An Arabic keyboard types ٠-٩; they are the same figures.
@@ -23,7 +23,7 @@ export function parseCounted(raw: string, kind: StockKind): number | null {
   if (!/^\d+([.,]\d+)?$/.test(trimmed)) return null;
   const value = Number(trimmed.replace(',', '.'));
   if (!Number.isFinite(value) || value < 0 || value > MAX_COUNT[kind]) return null;
-  if (kind === 'tires') return Number.isInteger(value) ? value : null;
+  if (kind !== 'oil') return Number.isInteger(value) ? value : null;
   return round2(value);
 }
 

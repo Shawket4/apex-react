@@ -1,4 +1,4 @@
-import type { DueRow, TirePosition, WorkOrderRow } from './schemas';
+import type { DueRow, FittedBattery, TirePosition, WorkOrderRow } from './schemas';
 
 /* -------------------------------------------------------------------------- */
 /* Pure reading of maintenance rows: no React, no i18n                         */
@@ -72,17 +72,25 @@ export function groupTirePositions(positions: TirePosition[]): TireGroups {
 
 /** The statuses the garage uses, in the order the tabs show them. */
 export const TIRE_STATUSES = ['mounted', 'in_stock_used', 'in_repair', 'retreading', 'scrapped'] as const;
+export const BATTERY_STATUSES = ['installed', 'in_stock_used', 'charging', 'warranty', 'scrapped'] as const;
 
 /**
- * Tabs for the tire list: the known statuses, then any the server counts that
- * this build has never heard of, so a new status is reachable, not hidden.
+ * Tabs for a list: the known statuses, then any the server counts that this
+ * build has never heard of, so a new status is reachable, not hidden.
  */
-export function tireStatusTabs(counts: Record<string, number>): string[] {
-  const known: readonly string[] = TIRE_STATUSES;
+function statusTabs(known: readonly string[], counts: Record<string, number>): string[] {
   const extra = Object.keys(counts)
     .filter((status) => !known.includes(status))
     .sort();
   return [...known, ...extra];
+}
+
+export function tireStatusTabs(counts: Record<string, number>): string[] {
+  return statusTabs(TIRE_STATUSES, counts);
+}
+
+export function batteryStatusTabs(counts: Record<string, number>): string[] {
+  return statusTabs(BATTERY_STATUSES, counts);
 }
 
 export function totalOf(counts: Record<string, number>): number {
@@ -134,7 +142,7 @@ export type WheelWhere = Pick<
 export type Translate = (key: string, vars?: Record<string, string>) => string;
 
 /** Digits the way the reader writes them: ١ ٢ ٣ in Arabic, 1 2 3 otherwise. */
-function digits(value: number, language: string | undefined): string {
+export function digits(value: number, language: string | undefined): string {
   return new Intl.NumberFormat(language?.startsWith('ar') ? 'ar-EG' : 'en', {
     useGrouping: false,
     maximumFractionDigits: 0,
@@ -187,4 +195,74 @@ export function wheelLabel(
 
   const parts = [where, which].filter((part): part is string => !!part);
   return parts.length > 0 ? parts.join(' · ') : null;
+}
+
+/* -------------------------------- Batteries -------------------------------- */
+
+/** What names a battery's electrics; CCA rides along when it is known. */
+export interface BatterySpecFields {
+  capacity_ah: number | null;
+  voltage: number | null;
+  cca?: number | null;
+}
+
+/**
+ * "100Ah · 12V", with " · 800 CCA" when asked for and known. Units stay Latin
+ * in either language, as they are printed on the battery. null when nothing
+ * is known, so the caller shows a dash or leaves the line out.
+ */
+export function batterySpec(
+  spec: BatterySpecFields,
+  { cca = false }: { cca?: boolean } = {},
+): string | null {
+  const parts = [
+    spec.capacity_ah !== null ? `${spec.capacity_ah}Ah` : null,
+    spec.voltage !== null ? `${spec.voltage}V` : null,
+    cca && spec.cca !== null && spec.cca !== undefined ? `${spec.cca} CCA` : null,
+  ].filter((part): part is string => part !== null);
+  return parts.length > 0 ? parts.join(' · ') : null;
+}
+
+/** True only for a warranty end that has passed; unknown is not "over". */
+export function warrantyOver(until: string | null | undefined, now: Date = new Date()): boolean {
+  if (!isReadableInstant(until)) return false;
+  return new Date(until).getTime() < now.getTime();
+}
+
+/** The garage allows 12; past this a slot number is taken for a mistake. */
+const MAX_SLOT = 24;
+
+export interface BatterySlot {
+  slot: number;
+  /** null: the slot is empty. */
+  install: FittedBattery | null;
+}
+
+/**
+ * The truck's slots 1..n, each with the battery fitted in it. n is the
+ * layout's count, or more when a battery sits in a higher slot. A fitted
+ * battery with no usable slot number, or a second one in a slot, is kept
+ * apart rather than dropped.
+ */
+export function batterySlots(
+  slots: number | null,
+  fitted: FittedBattery[],
+): { slots: BatterySlot[]; unplaced: FittedBattery[] } {
+  const bySlot = new Map<number, FittedBattery>();
+  const unplaced: FittedBattery[] = [];
+  for (const install of fitted) {
+    const slot = install.slot;
+    if (slot !== null && Number.isInteger(slot) && slot >= 1 && slot <= MAX_SLOT && !bySlot.has(slot)) {
+      bySlot.set(slot, install);
+    } else {
+      unplaced.push(install);
+    }
+  }
+  const layout =
+    slots !== null && Number.isInteger(slots) && slots >= 1 ? Math.min(slots, MAX_SLOT) : 2;
+  const count = Math.max(layout, ...bySlot.keys());
+  return {
+    slots: Array.from({ length: count }, (_, i) => ({ slot: i + 1, install: bySlot.get(i + 1) ?? null })),
+    unplaced,
+  };
 }

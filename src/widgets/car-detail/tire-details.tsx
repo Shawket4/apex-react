@@ -1,57 +1,14 @@
-import * as React from 'react';
-import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { ArrowUpFromLine, ChevronRight, TriangleAlert } from 'lucide-react';
+import { ArrowUpFromLine, TriangleAlert } from 'lucide-react';
 import { wheelLabel } from '@/entities/maintenance/lib';
 import type { TireEvent, TirePastMount, TirePosition } from '@/entities/maintenance/schemas';
 import { formatNumber } from '@/shared/lib/format';
 import { Badge } from '@/shared/ui/badge';
 import { maintDate } from '@/widgets/maintenance/maint-date';
+import { Block, Facts, Km, WorkOrderLink } from './detail-bits';
+import { useGarageWord as useWord } from './use-garage-word';
 
 const DASH = '—';
-
-/** A garage word (status, reason, origin, event) in the reader's language;
- * one this build has never heard of is shown as it came. */
-function useWord() {
-  const { t } = useTranslation();
-  return (group: string, value: string | null) =>
-    value ? t(`maintenance.${group}.${value}`, { defaultValue: value }) : DASH;
-}
-
-function Km({ value }: { value: number | null }) {
-  const { t } = useTranslation();
-  if (value === null) return <>{DASH}</>;
-  return (
-    <span className="tabular-nums">
-      {formatNumber(value)} {t('common.unit.km')}
-    </span>
-  );
-}
-
-/** Label / value rows; a value of null or '' is left out, not dashed. */
-function Facts({ rows }: { rows: Array<[string, React.ReactNode]> }) {
-  const shown = rows.filter(([, v]) => v !== null && v !== undefined && v !== '');
-  if (shown.length === 0) return null;
-  return (
-    <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-sm sm:grid-cols-[11rem_1fr]">
-      {shown.map(([label, value]) => (
-        <React.Fragment key={label}>
-          <dt className="text-muted-foreground">{label}</dt>
-          <dd className="min-w-0 break-words font-medium">{value}</dd>
-        </React.Fragment>
-      ))}
-    </dl>
-  );
-}
-
-function Block({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="space-y-2 border-t pt-3">
-      <h5 className="text-xs font-semibold text-muted-foreground">{title}</h5>
-      {children}
-    </div>
-  );
-}
 
 function PastMount({ mount }: { mount: TirePastMount }) {
   const { t, i18n } = useTranslation();
@@ -252,13 +209,10 @@ export function TireDetails({ position }: { position: TirePosition }) {
                 [
                   t('maintenance.tires.workOrder'),
                   position.mounted_work_order_id && (
-                    <Link
-                      to={`/work-orders/${position.mounted_work_order_id}`}
-                      className="inline-flex items-center gap-0.5 text-primary hover:underline"
-                    >
-                      {t('maintenance.tires.openWorkOrder')}
-                      <ChevronRight className="h-3.5 w-3.5 rtl:rotate-180" aria-hidden="true" />
-                    </Link>
+                    <WorkOrderLink
+                      id={position.mounted_work_order_id}
+                      label={t('maintenance.tires.openWorkOrder')}
+                    />
                   ),
                 ],
                 [

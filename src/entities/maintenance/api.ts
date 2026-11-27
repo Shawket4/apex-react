@@ -2,11 +2,14 @@ import type { AxiosInstance } from 'axios';
 import { apiClientMaint } from '@/shared/api/client';
 import {
   attendanceMonthSchema,
+  maintBatteriesPageSchema,
   maintTiresPageSchema,
   vehicleMaintenanceSchema,
   workOrderDetailSchema,
   workOrdersPageSchema,
   type AttendanceMonth,
+  type MaintBatteriesPage,
+  type MaintBatteriesParams,
   type MaintTiresPage,
   type MaintTiresParams,
   type VehicleMaintenance,
@@ -77,6 +80,19 @@ export async function getMaintTires(params: MaintTiresParams): Promise<MaintTire
     }),
   });
   return maintTiresPageSchema.parse(res.data);
+}
+
+/** Every battery the garage keeps a record of, with where each is fitted now. */
+export async function getMaintBatteries(params: MaintBatteriesParams): Promise<MaintBatteriesPage> {
+  const res = await client().get('/office/batteries', {
+    params: cleanParams({
+      status: params.status,
+      q: params.q?.trim(),
+      limit: params.limit,
+      offset: params.offset,
+    }),
+  });
+  return maintBatteriesPageSchema.parse(res.data);
 }
 
 /** The garage's attendance for one month (YYYY-MM, Cairo calendar). */

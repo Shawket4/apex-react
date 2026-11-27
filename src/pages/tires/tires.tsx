@@ -2,7 +2,7 @@ import { useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { CircleDot, ClipboardCheck, Droplets, Loader2, Plus } from 'lucide-react';
+import { BatteryFull, CircleDot, ClipboardCheck, Droplets, Loader2, Plus } from 'lucide-react';
 
 import { toast } from '@/shared/ui/toast';
 import { Button } from '@/shared/ui/button';
@@ -13,18 +13,24 @@ import { PageShell } from '@/shared/ui/page-shell';
 import { Skeleton } from '@/shared/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/tabs';
 import { useTabParam } from '@/shared/hooks/use-tab-param';
+import { MaintBatteriesList } from '@/widgets/maint-batteries-list/maint-batteries-list';
 import { MaintTiresList } from '@/widgets/maint-tires-list/maint-tires-list';
 import { StockCountDialog } from '@/widgets/stock-count/stock-count-dialog';
 import { useStockCount } from '@/widgets/stock-count/use-stock-count';
 import { canCountStock } from '@/entities/maint-stock/api';
+import { batterySpec } from '@/entities/maintenance/lib';
 import { extractErrorMessage } from '@/shared/api/errors';
 import {
+  batteryCreditInputSchema,
   oilCreditInputSchema,
   tireCreditInputSchema,
+  type BatteryCreditInput,
   type OilCreditInput,
   type TireCreditInput,
 } from '@/entities/maint-stock/schemas';
 import {
+  useBatteryStock,
+  useCreditBatteries,
   useCreditOil,
   useCreditTires,
   useOilStock,
@@ -39,15 +45,19 @@ import {
  * Tires are fungible counts — individual tire identity (DOT, km, history)
  * is captured in the maintenance app at mount time, never here.
  *
- * The second tab is the other half: every individual tire as the garage
- * system holds it, read-only.
+ * Batteries are the third stock item: new ones are counted per product
+ * (brand, model, Ah, volts) in the garage system alone — no Falcon ledger —
+ * and each gets a record of its own once the garage fits it.
+ *
+ * The other tabs are the other half: every individual tire, and every
+ * battery, as the garage system holds them, read-only.
  *
  * A stock count ("we counted N") is the one thing here that goes the other
  * way: it is posted to the garage system, which corrects its book figure and
  * mirrors the movement up to Falcon. The figures in these tables are still
  * Falcon's, so they follow a count a moment later.
  */
-const TABS = ['stock', 'all'] as const;
+const TABS = ['stock', 'all', 'batteries'] as const;
 
 export function TiresPage() {
   const { t, i18n } = useTranslation();
@@ -62,11 +72,14 @@ export function TiresPage() {
         <TabsList>
           <TabsTrigger value="stock">{t('tiresStock.tabs.stock')}</TabsTrigger>
           <TabsTrigger value="all">{t('tiresStock.tabs.all')}</TabsTrigger>
+          <TabsTrigger value="batteries">{t('tiresStock.tabs.batteries')}</TabsTrigger>
         </TabsList>
         <TabsContent value="stock">
-          <div className="grid gap-3 lg:grid-cols-2">
+          {/* min-w-0: a wide table scrolls in its card instead of widening the column. */}
+          <div className="grid gap-3 lg:grid-cols-2 [&>*]:min-w-0">
             <TireStockCard />
             <OilStockCard />
+            <BatteryStockCard className="lg:col-span-2" />
           </div>
           {!canCountStock && (
             <p className="pt-3 text-xs text-muted-foreground">
@@ -76,6 +89,9 @@ export function TiresPage() {
         </TabsContent>
         <TabsContent value="all">
           <MaintTiresList />
+        </TabsContent>
+        <TabsContent value="batteries">
+          <MaintBatteriesList />
         </TabsContent>
       </Tabs>
     </PageShell>
@@ -99,7 +115,8 @@ function CountCell({ onClick }: { onClick: () => void }) {
     <td className="w-px whitespace-nowrap px-2 py-1 text-end">
       <Button type="button" variant="ghost" size="sm" onClick={onClick}>
         <ClipboardCheck aria-hidden="true" />
-        {t('tiresStock.count.action')}
+        {/* The icon alone on a phone, so the table fits. */}
+        <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">{t('tiresStock.count.action')}</span>
       </Button>
     </td>
   );
@@ -145,7 +162,7 @@ function TireStockCard() {
         ) : (stock.data ?? []).length === 0 ? (
           <p className="py-6 text-center text-xs text-muted-foreground">{t('tiresStock.empty')}</p>
         ) : (
-          <div className="overflow-hidden rounded-lg border">
+          <div className="overflow-x-auto rounded-lg border">
             <table className="w-full text-sm">
               <thead className="bg-muted/60 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                 <tr>
@@ -277,7 +294,7 @@ function OilStockCard() {
         ) : (stock.data ?? []).length === 0 ? (
           <p className="py-6 text-center text-xs text-muted-foreground">{t('tiresStock.empty')}</p>
         ) : (
-          <div className="overflow-hidden rounded-lg border">
+          <div className="overflow-x-auto rounded-lg border">
             <table className="w-full text-sm">
               <thead className="bg-muted/60 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                 <tr>
@@ -344,6 +361,193 @@ function OilStockCard() {
               <Plus aria-hidden="true" />
             )}
             {t('tiresStock.addOil')}
+          </Button>
+        </form>
+      </CardContent>
+      <StockCountDialog {...counting.dialog} />
+    </Card>
+  );
+}
+
+/* ── batteries ──────────────────────────────────────────────────────────── */
+
+function BatteryStockCard({ className }: { className?: string }) {
+  const { t } = useTranslation();
+  const stock = useBatteryStock();
+  const credit = useCreditBatteries();
+  const refId = useRef<string | null>(null);
+  const counting = useStockCount();
+  const form = useForm<BatteryCreditInput>({
+    resolver: zodResolver(batteryCreditInputSchema),
+    defaultValues: { brand: '', model: '', capacity_ah: null, voltage: null, cca: null, qty: 0 },
+  });
+  const errors = form.formState.errors;
+
+  const submit = form.handleSubmit((values) => {
+    // One id per shipment: a retry after a failure adds it once, not twice.
+    refId.current ??= crypto.randomUUID();
+    credit.mutate({ input: values, refId: refId.current }, {
+      onSuccess: () => {
+        refId.current = null;
+        toast.success(t('tiresStock.added'));
+        form.reset();
+      },
+      onError: (e) => toast.error(extractErrorMessage(e)),
+    });
+  });
+
+  const rows = stock.data ?? [];
+
+  return (
+    <Card className={className}>
+      <CardHeader className="space-y-1">
+        <CardTitle className="flex items-center gap-2 text-base">
+          <BatteryFull className="h-4 w-4 text-primary" aria-hidden="true" />
+          {t('tiresStock.batteries')}
+        </CardTitle>
+        <p className="text-xs text-muted-foreground">{t('tiresStock.batteriesHint')}</p>
+      </CardHeader>
+      <CardContent className="grid gap-4 lg:grid-cols-2 lg:items-start">
+        {stock.isLoading ? (
+          <Skeleton className="h-24 rounded-lg" />
+        ) : rows.length === 0 ? (
+          <p className="py-6 text-center text-xs text-muted-foreground">{t('tiresStock.empty')}</p>
+        ) : (
+          <div className="overflow-x-auto rounded-lg border">
+            <table className="w-full text-sm">
+              <thead className="bg-muted/60 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                <tr>
+                  <th className="px-3 py-2 text-start">{t('tiresStock.battery')}</th>
+                  <th className="px-3 py-2 text-start">{t('tiresStock.spec')}</th>
+                  <th className="px-3 py-2 text-end">{t('tiresStock.qty')}</th>
+                  {canCountStock && <CountHeader />}
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((row) => {
+                  const spec = batterySpec(row);
+                  return (
+                    <tr
+                      key={row.id ?? `${row.brand}|${row.model ?? ''}|${row.capacity_ah ?? ''}|${row.voltage ?? ''}`}
+                      className="border-t"
+                    >
+                      <td className="px-3 py-2">
+                        <div className="font-medium" dir="ltr">
+                          {[row.brand, row.model].filter(Boolean).join(' ')}
+                        </div>
+                        {row.batteries > 0 && (
+                          <div className="text-[11px] text-muted-foreground">
+                            {t('tiresStock.onRecord', { n: row.batteries })}
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-3 py-2">
+                        <div className="whitespace-nowrap" dir="ltr">
+                          {spec ?? '—'}
+                        </div>
+                        {row.cca !== null && (
+                          <div className="whitespace-nowrap text-[11px] text-muted-foreground" dir="ltr">
+                            {row.cca} CCA
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-3 py-2 text-end font-mono tabular-nums">{row.on_hand_qty}</td>
+                      {canCountStock && (
+                        <CountCell
+                          onClick={() =>
+                            counting.count({
+                              kind: 'batteries',
+                              brand: row.brand,
+                              model: row.model,
+                              capacity_ah: row.capacity_ah,
+                              voltage: row.voltage,
+                              cca: row.cca,
+                              book: row.on_hand_qty,
+                            })
+                          }
+                        />
+                      )}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        <form onSubmit={(e) => void submit(e)} className="space-y-3 rounded-lg border p-3">
+          <div className="text-sm font-semibold">{t('tiresStock.addBatteries')}</div>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="bs-brand">{t('tiresStock.brand')}</Label>
+              <Input id="bs-brand" dir="ltr" aria-invalid={!!errors.brand} {...form.register('brand')} />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="bs-model">{t('tiresStock.model')}</Label>
+              <Input id="bs-model" dir="ltr" {...form.register('model')} />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="bs-ah">{t('tiresStock.capacity')}</Label>
+              <Input
+                id="bs-ah"
+                type="number"
+                inputMode="numeric"
+                min={1}
+                placeholder="100"
+                className="tabular-nums"
+                aria-invalid={!!errors.capacity_ah}
+                {...form.register('capacity_ah')}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="bs-v">{t('tiresStock.voltage')}</Label>
+              <Input
+                id="bs-v"
+                type="number"
+                inputMode="numeric"
+                min={2}
+                placeholder="12"
+                className="tabular-nums"
+                aria-invalid={!!errors.voltage}
+                {...form.register('voltage')}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="bs-cca">{t('tiresStock.cca')}</Label>
+              <Input
+                id="bs-cca"
+                type="number"
+                inputMode="numeric"
+                min={1}
+                placeholder="800"
+                className="tabular-nums"
+                aria-invalid={!!errors.cca}
+                {...form.register('cca')}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="bs-qty">{t('tiresStock.addQty')}</Label>
+              <Input
+                id="bs-qty"
+                type="number"
+                inputMode="numeric"
+                min={1}
+                className="tabular-nums"
+                aria-invalid={!!errors.qty}
+                {...form.register('qty')}
+              />
+            </div>
+          </div>
+          {(errors.brand ?? errors.qty ?? errors.capacity_ah ?? errors.voltage ?? errors.cca) && (
+            <p className="text-[11px] font-medium text-destructive">{t('tiresStock.batteryValidation')}</p>
+          )}
+          <Button type="submit" disabled={credit.isPending} className="w-full">
+            {credit.isPending ? (
+              <Loader2 className="animate-spin" aria-hidden="true" />
+            ) : (
+              <Plus aria-hidden="true" />
+            )}
+            {t('tiresStock.addBatteries')}
           </Button>
         </form>
       </CardContent>
