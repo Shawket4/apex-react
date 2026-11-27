@@ -286,38 +286,26 @@ export interface MaintTiresParams {
 const attendanceTotalsSchema = z
   .object({
     present: count,
-    late: count,
-    late_minutes: count,
     absent: count,
     leave: count,
     sick: count,
-    off: count,
     unmarked: count,
-    worked_minutes: count,
-    extra_minutes: count,
   })
   .partial()
   .transform((t) => ({
     present: t.present ?? 0,
-    late: t.late ?? 0,
-    late_minutes: t.late_minutes ?? 0,
     absent: t.absent ?? 0,
     leave: t.leave ?? 0,
     sick: t.sick ?? 0,
-    off: t.off ?? 0,
     unmarked: t.unmarked ?? 0,
-    worked_minutes: t.worked_minutes ?? 0,
-    extra_minutes: t.extra_minutes ?? 0,
   }));
 
 export const attendanceCellSchema = z.object({
-  /** present, late, absent, leave, sick, off, weekly_off, unmarked, future, outside */
+  /** present, absent, leave, sick, unmarked, future, outside */
   kind: z.string(),
   check_in_at: text,
   check_out_at: text,
   note: text,
-  late_minutes: count,
-  worked_minutes: num,
   marked_by: text,
 });
 
@@ -326,19 +314,11 @@ export const attendanceMonthSchema = z.object({
   first: z.string(),
   last: z.string(),
   today: z.string(),
-  settings: z.object({
-    work_start: z.string(),
-    work_end: z.string(),
-    late_grace_minutes: count,
-    weekly_off_days: z.array(z.number()).catch([]),
-    saved: flag,
-  }),
   days: z.array(
     z.object({
       date: z.string(),
       day: z.number(),
       weekday: z.number(),
-      is_weekly_off: flag,
       is_today: flag,
       is_future: flag,
     }),

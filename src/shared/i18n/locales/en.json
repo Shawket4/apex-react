@@ -3543,7 +3543,6 @@
     "exportTitle": "Garage attendance — {{month}}",
     "sheetGrid": "Sheet",
     "sheetTotals": "Totals",
-    "hours": "Hours {{start}}–{{end}}, {{grace}} minutes' grace",
     "worker": "Worker",
     "job": "Job",
     "total": "Total",
@@ -3551,7 +3550,6 @@
     "unmarkedDays": "{{n}} days not marked",
     "inAt": "In {{time}}",
     "outAt": "Out {{time}}",
-    "lateBy": "Late {{d}}",
     "markedBy": "Marked by {{name}}",
     "empty": {
       "title": "No workers this month",
@@ -3559,36 +3557,25 @@
     },
     "totals": {
       "present": "Present",
-      "late": "Late",
-      "lateMinutes": "Late minutes",
       "absent": "Absent",
       "leave": "Leave",
       "sick": "Sick",
-      "off": "Off",
-      "unmarked": "Not marked",
-      "hours": "Hours worked",
-      "extra": "Extra hours"
+      "unmarked": "Not marked"
     },
     "status": {
       "present": "Present",
-      "late": "Late",
       "absent": "Absent",
       "leave": "Leave",
       "sick": "Sick",
-      "off": "Off",
-      "weekly_off": "Weekly day off",
       "unmarked": "Not marked",
       "outside": "Not on the list",
       "future": "Not yet"
     },
     "code": {
       "present": "P",
-      "late": "L",
       "absent": "A",
       "leave": "V",
       "sick": "S",
-      "off": "O",
-      "weekly_off": "·",
       "unmarked": "?"
     },
     "weekdayShort": {
@@ -3599,11 +3586,6 @@
       "5": "F",
       "6": "S",
       "7": "S"
-    },
-    "duration": {
-      "hm": "{{h}}h {{m}}m",
-      "h": "{{h}}h",
-      "m": "{{m}}m"
     }
   }
 }

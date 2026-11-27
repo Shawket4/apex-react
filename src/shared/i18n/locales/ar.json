@@ -3646,7 +3646,6 @@
     "exportTitle": "حضور عمال الورشة — {{month}}",
     "sheetGrid": "الكشف",
     "sheetTotals": "الإجمالي",
-    "hours": "المواعيد {{start}} – {{end}}، سماح {{grace}} دقيقة",
     "worker": "العامل",
     "job": "الشغلانة",
     "total": "الإجمالي",
@@ -3654,7 +3653,6 @@
     "unmarkedDays": "أيام مش متسجلة: {{n}}",
     "inAt": "حضر {{time}}",
     "outAt": "انصرف {{time}}",
-    "lateBy": "متأخر {{d}}",
     "markedBy": "سجّله {{name}}",
     "empty": {
       "title": "مفيش عمال في الشهر ده",
@@ -3662,36 +3660,25 @@
     },
     "totals": {
       "present": "حضور",
-      "late": "تأخير",
-      "lateMinutes": "دقايق التأخير",
       "absent": "غياب",
       "leave": "إجازة",
       "sick": "مرضي",
-      "off": "راحة",
-      "unmarked": "مش متسجل",
-      "hours": "ساعات الشغل",
-      "extra": "ساعات زيادة"
+      "unmarked": "مش متسجل"
     },
     "status": {
       "present": "حاضر",
-      "late": "متأخر",
       "absent": "غايب",
       "leave": "إجازة",
       "sick": "مرضي",
-      "off": "راحة",
-      "weekly_off": "راحة أسبوعية",
       "unmarked": "مش متسجل",
       "outside": "مش في الكشف",
       "future": "لسه مجاش"
     },
     "code": {
       "present": "ح",
-      "late": "ت",
       "absent": "غ",
       "leave": "إ",
       "sick": "م",
-      "off": "ر",
-      "weekly_off": "·",
       "unmarked": "؟"
     },
     "weekdayShort": {
@@ -3702,11 +3689,6 @@
       "5": "ج",
       "6": "س",
       "7": "ح"
-    },
-    "duration": {
-      "hm": "{{h}} س {{m}} د",
-      "h": "{{h}} س",
-      "m": "{{m}} د"
     }
   }
 }
